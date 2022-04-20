@@ -13,7 +13,6 @@ WORKDIR /build
 # use modules
 COPY . .
 
-ENV GO111MODULE=on
 RUN go mod download
 RUN go mod verify
 
