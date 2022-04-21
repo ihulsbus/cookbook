@@ -64,7 +64,7 @@ import Menu from 'primevue/menu';
     goHome() {
       this.$router.push({ name: 'HomeView' });
     },
-    toggle(event:any) {
+    toggle(event:Event) {
       this.$refs.menu.toggle(event);
     },
   },

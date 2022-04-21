@@ -47,7 +47,7 @@ html, body {
 }
 
 .content {
-  flex: 1;
+  flex-grow: 1;
   overflow-y: scroll;
 }
 </style>

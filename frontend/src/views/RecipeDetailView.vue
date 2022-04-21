@@ -104,8 +104,7 @@ export default class RecipeView extends Vue {}
 <style lang="scss" scoped>
   .surface-ground {
     /* mobile viewport bug fix */
-    min-height: -webkit-fill-available;
-    min-height: 100vh;
+    min-height: 100%;
   }
 
   .recipeDetail {
