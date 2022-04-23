@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -71,6 +72,42 @@ func RecipeCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, 201, data)
+}
+
+func RecipeImageUpload(w http.ResponseWriter, r *http.Request) {
+	var uploadedFiles []m.RecipeFile
+	var err error
+	vars := mux.Vars(r)
+
+	err = r.ParseMultipartForm(200000) // grab the multipart form
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+
+	formdata := r.MultipartForm // ok, no problem so far, read the Form data
+
+	//get the *fileheaders
+	files := formdata.File["multiplefiles"] // grab the filenames
+
+	for i := range files { // loop through the files one by one
+		var uploadedFile m.RecipeFile
+
+		uploadedFile.ID, err = strconv.Atoi(vars["recipeID"])
+		if err != nil {
+			response500WithDetails(w, err.Error())
+		}
+
+		uploadedFile.File = files[i]
+
+		uploadedFiles = append(uploadedFiles, uploadedFile)
+	}
+
+	if err = c.RecipeService.UploadRecipeImages(c.RecipeService, uploadedFiles); err != nil {
+		response500WithDetails(w, err.Error())
+	}
+
+	respondWithJSON(w, 201, nil)
 }
 
 func RecipeUpdate(w http.ResponseWriter, r *http.Request) {

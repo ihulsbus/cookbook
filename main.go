@@ -55,6 +55,7 @@ func main() {
 
 	// Recipes
 	v1post.Path("/recipe").HandlerFunc(h.RecipeCreate)
+	v1post.Path("/recipe/{recipeID}/upload").HandlerFunc(h.RecipeImageUpload)
 
 	// Ingredients
 	v1post.Path("/ingredients").HandlerFunc(h.IngredientCreate)
@@ -73,10 +74,11 @@ func main() {
 
 	// CORS handler
 	crs := cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
-		AllowCredentials: false,
-		AllowedHeaders:   []string{"Authorization"},
-		Debug:            true,
+		AllowedOrigins:   c.Configuration.Cors.AllowedOrigins,
+		AllowedHeaders:   c.Configuration.Cors.AllowedHeaders,
+		AllowedMethods:   c.Configuration.Cors.AllowedMethods,
+		AllowCredentials: c.Configuration.Cors.AllowCredentials,
+		Debug:            c.Configuration.Cors.Debug,
 	})
 	handler := crs.Handler(router)
 

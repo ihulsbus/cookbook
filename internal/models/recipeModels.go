@@ -1,5 +1,7 @@
 package models
 
+import "mime/multipart"
+
 type Recipe struct {
 	ID                int                 `gorm:"primaryKey;serial;unique;not null;autoIncrement" json:"id"`
 	Title             string              `gorm:"not null" json:"title"`
@@ -21,6 +23,11 @@ type RecipeDTO struct {
 	PrepTime       int          `json:"preptime"`
 	CookTime       int          `json:"cooktime"`
 	Amount_Persons int          `json:"persons"`
+}
+
+type RecipeFile struct {
+	ID   int
+	File *multipart.FileHeader
 }
 
 // ConvertToDTO converts a single m.Recipe to a single m.RecipeDTO object

@@ -1,36 +1,48 @@
 package services
 
 import (
+	"errors"
+	"fmt"
+	"io"
+	"log"
+	"os"
+
 	m "github.com/ihulsbus/cookbook/internal/models"
 	r "github.com/ihulsbus/cookbook/internal/repositories"
+	u "github.com/ihulsbus/cookbook/internal/utils"
 )
 
 type FindAllRecipes func(s *RecipeService) ([]m.RecipeDTO, error)
 type FindSingleRecipe func(s *RecipeService, recipeID int) (m.Recipe, error)
 type CreateRecipe func(s *RecipeService, recipe m.RecipeDTO) (m.RecipeDTO, error)
 type UpdateRecipe func(s *RecipeService, recipe m.RecipeDTO) (m.RecipeDTO, error)
+type UploadRecipeImages func(s *RecipeService, files []m.RecipeFile) error
 type DeleteRecipe func(s *RecipeService, recipe m.RecipeDTO) error
 
 type RecipeService struct {
-	repo *r.RecipeRepository
+	repo        *r.RecipeRepository
+	imageFolder string
 
-	FindAllRecipes   FindAllRecipes
-	FindSingleRecipe FindSingleRecipe
-	CreateRecipe     CreateRecipe
-	UpdateRecipe     UpdateRecipe
-	DeleteRecipe     DeleteRecipe
+	FindAllRecipes     FindAllRecipes
+	FindSingleRecipe   FindSingleRecipe
+	CreateRecipe       CreateRecipe
+	UpdateRecipe       UpdateRecipe
+	UploadRecipeImages UploadRecipeImages
+	DeleteRecipe       DeleteRecipe
 }
 
 // NewRecipeService creates a new RecipeService instance
-func NewRecipeService(recipeRepo *r.RecipeRepository) *RecipeService {
+func NewRecipeService(recipeRepo *r.RecipeRepository, ImageStorePath string) *RecipeService {
 	return &RecipeService{
-		repo: recipeRepo,
+		repo:        recipeRepo,
+		imageFolder: ImageStorePath,
 
-		FindAllRecipes:   findAllRecipes,
-		FindSingleRecipe: findSingleRecipe,
-		CreateRecipe:     createRecipe,
-		UpdateRecipe:     updateRecipe,
-		DeleteRecipe:     deleteRecipe,
+		FindAllRecipes:     findAllRecipes,
+		FindSingleRecipe:   findSingleRecipe,
+		CreateRecipe:       createRecipe,
+		UpdateRecipe:       updateRecipe,
+		UploadRecipeImages: uploadRecipeImages,
+		DeleteRecipe:       deleteRecipe,
 	}
 }
 
@@ -104,6 +116,46 @@ func updateRecipe(s *RecipeService, recipe m.RecipeDTO) (m.RecipeDTO, error) {
 	}
 
 	return updatedRecipe.ConvertToDTO(), nil
+}
+
+func uploadRecipeImages(s *RecipeService, files []m.RecipeFile) error {
+
+	for i := range files {
+		filePath := fmt.Sprintf("%s/%d/", s.imageFolder, files[i].ID)
+
+		err := u.InitFolder(filePath)
+		if err != nil {
+			log.Fatal("Unable to create or detect image folder: %v", err)
+		}
+
+		file, err := files[i].File.Open()
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		out, err := os.Create(filePath + files[i].File.Filename)
+		if err != nil {
+			return err
+		}
+
+		defer out.Close()
+		if err != nil {
+			return errors.New("unable to create the file for writing. Check your write access privilege")
+		}
+
+		_, err = io.Copy(out, file) // file not files[i] !
+
+		if err != nil {
+			return err
+		}
+	}
+	// defer file.
+	// 	initRecipeImageFolder(filePath)
+
+	// f, err := os.OpenFile(filePath+fileHeader.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+
+	return nil
 }
 
 func deleteRecipe(s *RecipeService, recipe m.RecipeDTO) error {

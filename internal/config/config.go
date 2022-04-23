@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/ihulsbus/cookbook/internal/repositories"
 	"github.com/ihulsbus/cookbook/internal/services"
+	u "github.com/ihulsbus/cookbook/internal/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -49,6 +50,14 @@ func init() {
 	if err := initViper(); err != nil {
 		log.Fatalf("Error reading config: %v", err.Error())
 	}
+
+	// Init image folder
+	err := u.InitFolder(Configuration.Global.ImageFolder)
+	if err != nil {
+		log.Fatal("Unable to create or detect image folder: %v", err)
+	}
+
+	// Init Database
 	Configuration.DatabaseClient = initDatabase(Configuration.Database.Host, Configuration.Database.Username, Configuration.Database.Password, Configuration.Database.Database, Configuration.Database.Port, Configuration.Database.SSLMode, Configuration.Database.Timezone)
 
 	// Init repositories
@@ -56,7 +65,7 @@ func init() {
 	IngredientRepository = repositories.NewIngredientRepository(Configuration.DatabaseClient)
 
 	// Init services
-	RecipeService = services.NewRecipeService(RecipeRepository)
+	RecipeService = services.NewRecipeService(RecipeRepository, Configuration.Global.ImageFolder)
 	IngredientService = services.NewIngredientService(IngredientRepository)
 
 }

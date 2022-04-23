@@ -52,7 +52,7 @@ func (oidcmw *OidcMW) Middleware(next http.Handler) http.Handler {
 		token := r.Header.Get("Authorization")
 
 		if token == "" {
-			http.Error(w, "unauthorized. No token supplied", http.StatusForbidden)
+			http.Error(w, "unauthorized. No token supplied", http.StatusUnauthorized)
 			return
 		}
 		bearer := strings.Split(token, " ")

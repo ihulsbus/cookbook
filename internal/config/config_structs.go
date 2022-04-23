@@ -4,6 +4,7 @@ import "gorm.io/gorm"
 
 type Config struct {
 	Global         GlobalConfig
+	Cors           CorsConfig
 	Oidc           OidcConfig
 	Database       DatabaseConfig
 	DatabaseClient *gorm.DB
@@ -11,7 +12,8 @@ type Config struct {
 
 // GlobalConfig holds global configuration items
 type GlobalConfig struct {
-	Debug bool
+	Debug       bool
+	ImageFolder string
 }
 
 // DatabaseConfig holds database configuration items
@@ -32,4 +34,12 @@ type OidcConfig struct {
 	SkipClientIDCheck bool
 	SkipExpiryCheck   bool
 	SkipIssuerCheck   bool
+}
+
+type CorsConfig struct {
+	AllowedOrigins   []string
+	AllowCredentials bool
+	AllowedHeaders   []string
+	AllowedMethods   []string
+	Debug            bool
 }
