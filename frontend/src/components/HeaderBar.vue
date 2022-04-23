@@ -17,9 +17,9 @@
     class="flex-initial flex align-items-center justify-content-center title"
     v-on:click="goHome()">
       <img
-        src="~@/assets/images/logos/logo-placeholder.png"
+        src="~@/assets/images/logos/cb_large.png"
         alt="Logo Image"
-        height="50"
+        height="55"
         class="mb-3 logo">
     </div>
     <div class="hide-mobile">

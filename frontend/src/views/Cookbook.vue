@@ -1,5 +1,6 @@
 <template>
 <div class="container">
+  <Toast />
   <div class="header">
     <HeaderBar/>
   </div>

@@ -3,9 +3,9 @@
     <div class="surface-card p-4 shadow-2 border-round w-full lg:w-2 splash">
       <div class="text-center mb-5">
         <img
-          src="~@/assets/images/logos/logo-placeholder.png"
+          src="~@/assets/images/logos/cb_large.png"
           alt="Logo Image"
-          height="50"
+          height="130"
           class="mb-3 logo">
         <div class="text-900 text-3xl font-medium mb-3">Welcome to the cookbook</div>
       </div>
