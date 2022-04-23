@@ -16,7 +16,6 @@ import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 
 import router from './router';
-import store from './store';
 import idsrvAuth from '@/lib/auth/auth';
 import App from './App.vue';
 
@@ -26,7 +25,6 @@ idsrvAuth.startup().then((ok) => {
 
     app.config.globalProperties.$oidc = idsrvAuth;
 
-    app.use(store);
     app.use(router);
     app.use(PrimeVue, { ripple: true });
     app.use(ToastService);

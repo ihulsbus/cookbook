@@ -1,4 +1,4 @@
-# frontend
+# Cookbook
 
 ## Project setup
 ```
