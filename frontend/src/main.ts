@@ -1,5 +1,4 @@
 import { createApp, h } from 'vue';
-import Vuelidate from 'vuelidate';
 
 import PrimeVue from 'primevue/config';
 import 'primeflex/primeflex.css';
@@ -15,8 +14,8 @@ import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
-import router from './router';
 import idsrvAuth from '@/lib/auth/auth';
+import router from './router';
 import App from './App.vue';
 
 idsrvAuth.startup().then((ok) => {
@@ -31,7 +30,6 @@ idsrvAuth.startup().then((ok) => {
     app.use(PrimeVue, { ripple: true });
     app.use(ToastService);
     app.use(ConfirmationService);
-    app.use(Vuelidate)
 
     app.component('InputText', InputText);
     app.component('Dialog', Dialog);

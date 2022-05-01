@@ -1,5 +1,5 @@
 <template>
-  <Button class="p-button-outlined" label="New" icon="pi pi-plus" @click="toggleDialog()"/>
+  <Button class="p-button-outlined" label="New" icon="pi pi-plus" @click="openDialog()"/>
   <Dialog
     header="New recipe"
     :breakpoints="{'960px': '75vw', '640px': '100vw'}"
@@ -7,95 +7,157 @@
     :modal="true"
     v-model:visible="visible"
   >
-    <h5 class="text-center">Create Recipe</h5>
-    <form class="p-fluid" @submit.prevent="onSubmit">
-      <div class="field">
-          <div class="p-float-label">
-            <InputText
-              id="recipetitle"
-              type="text"
-              v-model.trim="recipe.title"
-              autofocus
-            />
-          </div>
-          <small
-            class="error"
-            v-for="(error, index) of v$.title.$errors"
-            :key="index"
-          >
-          {{ error.$message }}
+    <div class="p-fluid">
+      <div class="p-field">
+        <label for="recipetitle">Title</label>
+        <InputText
+          id="recipetitle"
+          type="text"
+          v-model="recipe.title"
+          :class="{'p-invalid': validationErrors.title && submitted}"
+          autofocus
+        />
+        <small
+          v-show="validationErrors.title && submitted"
+          class="p-error">
+            Recipe title is required.
         </small>
       </div>
-      <Button type="cancel" label="Cancel" class="mt-2" />
-      <Button type="submit" label="Submit" class="mt-2" />
-    </form>
+
+      <div class="p-field">
+        <label for="recipedescription">Description</label>
+        <br/>
+        <Textarea
+          id="recipedescription"
+          type="text"
+          v-model="recipe.description"
+          :autoResize="true"
+          :class="{'p-invalid': validationErrors.description && submitted}"
+        />
+        <small
+          v-show="validationErrors.description && submitted"
+          class="p-error">
+            Recipe description is required.
+        </small>
+      </div>
+
+      <div class="p-field">
+        <label for="recipepreptime">Preparation duration in minutes</label>
+        <InputNumber
+          id="recipepreptime"
+          v-model="recipe.prepTime"
+          mode="decimal" showButtons
+          :class="{'p-invalid': validationErrors.prepTime && submitted}"
+        />
+        <small
+          v-show="validationErrors.prepTime && submitted"
+          class="p-error">
+            Preparation time is required.
+        </small>
+      </div>
+
+      <div class="p-field">
+        <label for="recipecooktime">Cooking duration in minutes</label>
+        <InputNumber
+          id="recipecooktime"
+          v-model="recipe.cookTime"
+          mode="decimal" showButtons
+          :class="{'p-invalid': validationErrors.cookTime && submitted}"
+        />
+        <small
+          v-show="validationErrors.cookTime && submitted"
+          class="p-error">
+            Cooking duration is required.
+        </small>
+      </div>
+
+      <div class="p-field">
+        <label for="persons">Amount of persons</label>
+        <InputNumber
+          id="persons"
+          v-model="recipe.persons"
+          mode="decimal" showButtons
+          :class="{'p-invalid': validationErrors.persons && submitted}"
+        />
+        <small
+          v-show="validationErrors.persons && submitted"
+          class="p-error">
+            Amount of persons
+        </small>
+      </div>
+
+    </div>
+
+    <template #footer>
+      <Button label="Cancel" icon="pi pi-cross" @click="closeDialog()"/>
+      <Button label="Create" icon="pi pi-check" @click="createRecipe()"/>
+    </template>
+
   </Dialog>
+
 </template>
 
 <script lang="ts">
+/* eslint-disable */
 import { Options, Vue } from 'vue-class-component';
-import { required, minLength, between } from '@vuelidate/validators';
+import Dialog from 'primevue/dialog';
+import { Recipes } from '@/lib/http/http';
 
 @Options({
   components: {
+    Dialog,
   },
   data() {
     return {
       visible: false,
+      submitted: false,
       recipe: {
-        title: '',
-        description: '',
-        preptime: 0,
-        cooktime: 0,
-        persons: 0,
+        type: Object
       },
-    };
-  },
-  validations() {
-    return {
-      visible: false,
-      recipe: {
-        title: {
-          required,
-          minLength: minLength(2),
-        },
-        description: {
-          required,
-        },
-        preptime: {
-          required,
-          between: between(1, 120),
-        },
-        cooktime: {
-          required,
-          between: between(1, 10080),
-        },
-        persons: {
-          required,
-          between: between(1, 10),
-        },
+      validationErrors: {
+        type: Object
       },
-    };
+    }; 
   },
   methods: {
-    onSubmit() {
-      this.v$.$touch();
-      if (this.v$.$error) return;
-      console.log('Form is valid');
+    openDialog() {
+      this.visible = true
     },
-    toggleDialog() {
-      this.visible = !this.visible;
-      if (!this.visible) {
-        this.resetForm();
+    closeDialog() {
+      this.visible = false
+    },
+    createRecipe() {
+      let validate = this.validateForm()
+      if (validate) {
+        Recipes.createRecipe(this.recipe)
       }
     },
-    resetForm() {
-      this.recipe = {};
-    },
-  },
-})
+    validateForm() {
+      if (!this.recipe.title.trim()) {
+        this.validationErrors['title'] = true;
+      } else { delete this.validationErrors['title']; }
 
-export default class RecipeCreate extends Vue {}
+      if (!this.recipe.description.trim()) {
+        this.validationErrors['description'] = true;
+      } else { delete this.validationErrors['description']; }
+
+      if (!this.recipe.prepTime) {
+        this.validationErrors['prepTime'] = true;
+      } else { delete this.validationErrors['prepTime']; }
+
+      if (!this.recipe.cookTime) {
+        this.validationErrors['cookTime'] = true;
+      } else { delete this.validationErrors['cookTime']; }
+
+      if (!this.recipe.persons) {
+        this.validationErrors['persons'] = true;
+      } else { delete this.validationErrors['persons']; }
+      console.log(Object.keys(this.validationErrors).length)
+      return !Object.keys(this.validationErrors).length;
+    },
+  }
+})
+export default class CreateRecipe extends Vue {}
 </script>
 
 <style lang="scss" scoped>
