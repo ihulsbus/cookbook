@@ -4,42 +4,10 @@
       <div
       class="card"
       v-for="recipe in recipes"
-      :key="recipe.title"
+      :key="recipe.id"
       v-on:click="onClick(recipe.id)">
           <img alt="Header image" :src="require(`@/assets/images/placeholder/${image}`)">
-          <span class="title">{{recipe.title}}</span>
-      </div>
-      <div
-      class="card"
-      v-for="recipe in recipes"
-      :key="recipe.title"
-      v-on:click="onClick(recipe.id)">
-          <img alt="Header image" :src="require(`@/assets/images/placeholder/${image}`)">
-          <span class="title">{{recipe.title}}</span>
-      </div>
-      <div
-      class="card"
-      v-for="recipe in recipes"
-      :key="recipe.title"
-      v-on:click="onClick(recipe.id)">
-          <img alt="Header image" :src="require(`@/assets/images/placeholder/${image}`)">
-          <span class="title">{{recipe.title}}</span>
-      </div>
-      <div
-      class="card"
-      v-for="recipe in recipes"
-      :key="recipe.title"
-      v-on:click="onClick(recipe.id)">
-          <img alt="Header image" :src="require(`@/assets/images/placeholder/${image}`)">
-          <span class="title">{{recipe.title}}</span>
-      </div>
-      <div
-      class="card"
-      v-for="recipe in recipes"
-      :key="recipe.title"
-      v-on:click="onClick(recipe.id)">
-          <img alt="Header image" :src="require(`@/assets/images/placeholder/${image}`)">
-          <span class="title">{{recipe.title}}</span>
+          <span class="title">{{ recipe.title }}</span>
       </div>
     </div>
   </div>

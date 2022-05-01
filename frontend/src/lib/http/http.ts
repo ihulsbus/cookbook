@@ -18,52 +18,34 @@ instance.interceptors.request.use((config) => {
   return conf;
 });
 
-export interface IngredientInput {
-  ID: number;
-  amount: number;
-  unit: string;
-}
-
 export interface Ingredient {
   id: number;
   name: string;
 }
 
-export interface Section {
+export interface Tag {
   id: number;
   name: string;
 }
 
-export interface RecipeInput {
-  ID: number;
-  Title: string;
-  Description: string;
-  Ingredients: Array<IngredientInput>;
-  Method: string;
-  PrepTime: number;
-  CookTime: number;
-  AmountPersons: number;
-}
-
-export interface IngredientAmounts {
+export interface IngredientAmount {
   recipeid: number;
   ingredientid: number;
-  sectionid: number;
   amount: number;
   unit: string;
 }
 
-export interface RecipeResponse {
-  id: number;
-  title: string;
-  description: string;
-  ingredients: Array<Ingredient>;
-  sections: Array<Section>;
-  method: string;
-  preptime: number;
-  cooktime: number;
-  persons: number;
-  ingredientamounts: Array<IngredientAmounts>;
+export interface Recipe {
+  ID: number;
+  Title: string;
+  Description: string;
+  Method: string;
+  Preptime: number;
+  Cooktime: number;
+  Persons: number;
+  Ingredients: Array<Ingredient>;
+  Ingredientamounts: Array<IngredientAmount>;
+  Tags: Array<Tag>;
 }
 
 const responseBody = (response: AxiosResponse) => response.data;
@@ -72,22 +54,19 @@ const requests = {
   get: (url: string) => instance.get(url).then(responseBody),
   post: (url: string, body: string) => instance.post(url, body).then(responseBody),
   put: (url: string, body: string) => instance.put(url, body).then(responseBody),
-  delete: (url: string) => instance.delete(url).then(responseBody),
+  delete: (url: string, body: string) => instance.delete(url, { data: body }).then(responseBody),
 };
 
 export const Recipes = {
-  getAllRecipes: (): Promise<RecipeResponse[]> => requests.get('/recipe'),
-  getSingleRecipe: (id: number): Promise<RecipeResponse> => requests.get(`/recipe/${id}`),
-  createRecipe: (item: RecipeInput): Promise<AxiosResponse> => requests.post('/recipe', JSON.stringify(item)),
+  getAllRecipes: (): Promise<Recipe[]> => requests.get('/recipe'),
+  getSingleRecipe: (id: number): Promise<Recipe> => requests.get(`/recipe/${id}`),
+  createRecipe: (item: Recipe): Promise<Recipe> => requests.post('/recipe', JSON.stringify(item)),
+  updateRecipe: (item: Recipe): Promise<Recipe> => requests.put('/recipe', JSON.stringify(item)),
 };
 
 export const Ingredients = {
   getAllIngredients: (): Promise<Ingredient[]> => requests.get('/ingredients'),
   getSingleIngredient: (ingredientID: number): Promise<Ingredient[]> => requests.get(`/ingredients/${ingredientID}`),
-  createIngredient: (item: IngredientInput): Promise<AxiosResponse> => requests.post('/ingredients', JSON.stringify(item)),
-};
-
-export const Sections = {
-  getAllIngredientSections: (): Promise<Section[]> => requests.get('/sections'),
-  getSingleIngredientSection: (sectionID: number): Promise<Section[]> => requests.get(`/sections/${sectionID}`),
+  createIngredient: (item: Ingredient): Promise<Ingredient> => requests.post('/ingredients', JSON.stringify(item)),
+  deleteIngredient: (item: Ingredient): Promise<Ingredient> => requests.delete('/ingredients', JSON.stringify(item)),
 };

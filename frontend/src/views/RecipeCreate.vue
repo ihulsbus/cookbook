@@ -1,5 +1,5 @@
 <template>
-  <Button label="New" icon="pi pi-plus" @click="openDialog()"/>
+  <Button class="p-button-outlined" label="New" icon="pi pi-plus" @click="openDialog()"/>
   <Dialog
     header="New recipe"
     :breakpoints="{'960px': '75vw', '640px': '100vw'}"
@@ -71,11 +71,26 @@
         </small>
       </div>
 
+      <div class="p-field">
+        <label for="persons">Amount of persons</label>
+        <InputNumber
+          id="persons"
+          v-model="recipe.persons"
+          mode="decimal" showButtons
+          :class="{'p-invalid': validationErrors.persons && submitted}"
+        />
+        <small
+          v-show="validationErrors.persons && submitted"
+          class="p-error">
+            Amount of persons
+        </small>
+      </div>
+
     </div>
 
     <template #footer>
       <Button label="Cancel" icon="pi pi-cross" @click="closeDialog()"/>
-      <Button label="Create" icon="pi pi-check" @click="closeDialog()"/>
+      <Button label="Create" icon="pi pi-check" @click="createRecipe()"/>
     </template>
 
   </Dialog>
@@ -86,14 +101,16 @@
 /* eslint-disable */
 import { Options, Vue } from 'vue-class-component';
 import Dialog from 'primevue/dialog';
+import { Recipes } from '@/lib/http/http';
 
 @Options({
   components: {
-    Dialog
+    Dialog,
   },
   data() {
     return {
       visible: false,
+      submited: false,
       recipe: {
         type: Object
       },
@@ -108,6 +125,13 @@ import Dialog from 'primevue/dialog';
     },
     closeDialog() {
       this.visible = false
+    },
+    createRecipe() {
+      let validate = this.validateForm()
+      console.log(validate)
+      if (validate) {
+        Recipes.createRecipe(this.recipe)
+      }
     },
     validateForm() {
       if (!this.recipe.title.trim()) {
@@ -126,13 +150,17 @@ import Dialog from 'primevue/dialog';
         this.validationErrors['cookTime'] = true;
       } else { delete this.validationErrors['cookTime']; }
 
+      if (!this.recipe.persons) {
+        this.validationErrors['persons'] = true;
+      } else { delete this.validationErrors['persons']; }
+
       return !Object.keys(this.validationErrors).length;
     },
     
 
   }
 })
-export default class CreateRecipe extends Vue {}
+export default class RecipeCreate extends Vue {}
 </script>
 
 <style lang="scss" scoped>

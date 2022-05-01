@@ -12,7 +12,7 @@
 import { Options, Vue } from 'vue-class-component';
 import { Recipes } from '@/lib/http/http';
 import RecipeTable from '@/components/RecipeTable.vue';
-import CreateRecipe from '@/views/CreateRecipe.vue';
+import CreateRecipe from '@/components/CreateRecipe.vue';
 
 @Options({
   components: {
@@ -35,7 +35,6 @@ export default class RecipeView extends Vue {}
 
 <style lang="scss" scoped>
   .surface-ground {
-    /* mobile viewport bug fix */
     min-height: 100%;
   }
 

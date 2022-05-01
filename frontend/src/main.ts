@@ -1,4 +1,5 @@
-import { createApp } from 'vue';
+import { createApp, h } from 'vue';
+import Vuelidate from 'vuelidate';
 
 import PrimeVue from 'primevue/config';
 import 'primeflex/primeflex.css';
@@ -14,14 +15,15 @@ import Toast from 'primevue/toast';
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
-
 import router from './router';
 import idsrvAuth from '@/lib/auth/auth';
 import App from './App.vue';
 
 idsrvAuth.startup().then((ok) => {
   if (ok) {
-    const app = createApp(App);
+    const app = createApp({
+      render: () => h(App),
+    });
 
     app.config.globalProperties.$oidc = idsrvAuth;
 
@@ -29,6 +31,7 @@ idsrvAuth.startup().then((ok) => {
     app.use(PrimeVue, { ripple: true });
     app.use(ToastService);
     app.use(ConfirmationService);
+    app.use(Vuelidate)
 
     app.component('InputText', InputText);
     app.component('Dialog', Dialog);
