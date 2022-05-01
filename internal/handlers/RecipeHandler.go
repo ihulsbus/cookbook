@@ -27,7 +27,7 @@ func RecipeGetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecipeGet(w http.ResponseWriter, r *http.Request) {
-	var data m.Recipe
+	var data m.RecipeDTO
 	var responseCode int
 
 	vars := mux.Vars(r)
@@ -37,7 +37,7 @@ func RecipeGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = c.RecipeService.FindSingleRecipe(c.RecipeService, rID)
+	data, err = c.RecipeService.FindSingleRecipe(c.RecipeService, uint(rID))
 	if err != nil {
 		response500WithDetails(w, err.Error())
 		return
@@ -48,7 +48,7 @@ func RecipeGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecipeCreate(w http.ResponseWriter, r *http.Request) {
-	var recipe m.RecipeDTO
+	var recipe m.Recipe
 	var data m.RecipeDTO
 
 	buffer := new(bytes.Buffer)
@@ -107,11 +107,11 @@ func RecipeImageUpload(w http.ResponseWriter, r *http.Request) {
 		response500WithDetails(w, err.Error())
 	}
 
-	respondWithJSON(w, 201, nil)
+	response201(w)
 }
 
 func RecipeUpdate(w http.ResponseWriter, r *http.Request) {
-	var recipe m.RecipeDTO
+	var recipe m.Recipe
 	var data m.RecipeDTO
 
 	buffer := new(bytes.Buffer)
@@ -143,7 +143,7 @@ func RecipeUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func RecipeDelete(w http.ResponseWriter, r *http.Request) {
-	var recipe m.RecipeDTO
+	var recipe m.Recipe
 
 	buffer := new(bytes.Buffer)
 	_, err := buffer.ReadFrom(r.Body)
@@ -170,5 +170,5 @@ func RecipeDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response200(w)
+	response204(w)
 }

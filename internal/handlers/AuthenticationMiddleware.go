@@ -67,7 +67,7 @@ func (oidcmw *OidcMW) Middleware(next http.Handler) http.Handler {
 		}
 
 		if user != nil {
-			log.Infof("Authenticated user as %s (%s)", user.Username, user.Email)
+			log.Debugf("Authenticated user as %s (%s)", user.Username, user.Email)
 			// Pass down the request to the next middleware (or final handler)
 			r = r.WithContext(WithUser(r.Context(), user))
 			next.ServeHTTP(w, r)

@@ -13,7 +13,15 @@ func NotImplemented(w http.ResponseWriter, r *http.Request) {
 }
 
 func response200(w http.ResponseWriter) {
-	respondWithJSON(w, 200, "Object deleted")
+	respondWithJSON(w, 200, "OK")
+}
+
+func response201(w http.ResponseWriter) {
+	respondWithJSON(w, 201, "Object created")
+}
+
+func response204(w http.ResponseWriter) {
+	respondWithJSON(w, 204, "Object deleted")
 }
 
 func response501(w http.ResponseWriter) {
@@ -39,7 +47,7 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 	_, err := w.Write(response)
 
-	log.Warnf("Sending response %s", response)
+	log.Debugf("Sending response %s", response)
 
 	if err != nil {
 		log.Warnf("Error occurred while returning error response to client: %s", err)

@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	m "github.com/ihulsbus/cookbook/internal/models"
 	r "github.com/ihulsbus/cookbook/internal/repositories"
@@ -13,11 +14,11 @@ import (
 )
 
 type FindAllRecipes func(s *RecipeService) ([]m.RecipeDTO, error)
-type FindSingleRecipe func(s *RecipeService, recipeID int) (m.Recipe, error)
-type CreateRecipe func(s *RecipeService, recipe m.RecipeDTO) (m.RecipeDTO, error)
-type UpdateRecipe func(s *RecipeService, recipe m.RecipeDTO) (m.RecipeDTO, error)
+type FindSingleRecipe func(s *RecipeService, recipeID uint) (m.RecipeDTO, error)
+type CreateRecipe func(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error)
+type UpdateRecipe func(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error)
 type UploadRecipeImages func(s *RecipeService, files []m.RecipeFile) error
-type DeleteRecipe func(s *RecipeService, recipe m.RecipeDTO) error
+type DeleteRecipe func(s *RecipeService, recipe m.Recipe) error
 
 type RecipeService struct {
 	repo        *r.RecipeRepository
@@ -59,35 +60,35 @@ func findAllRecipes(s *RecipeService) ([]m.RecipeDTO, error) {
 }
 
 // Find contains the business logic to get a specific recipe
-func findSingleRecipe(s *RecipeService, recipeID int) (m.Recipe, error) {
+func findSingleRecipe(s *RecipeService, recipeID uint) (m.RecipeDTO, error) {
 	var recipe m.Recipe
 
 	recipe, err := s.repo.Find(s.repo, recipeID)
 	if err != nil {
-		return recipe, err
+		return recipe.ConvertToDTO(), err
 	}
 
-	return recipe, nil
+	return recipe.ConvertToDTO(), nil
 }
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing
-func createRecipe(s *RecipeService, recipe m.RecipeDTO) (m.RecipeDTO, error) {
+func createRecipe(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error) {
 
-	response, err := s.repo.Create(s.repo, recipe.ConvertFromDTO())
+	recipe, err := s.repo.Create(s.repo, recipe)
 	if err != nil {
-		return response.ConvertToDTO(), err
+		return recipe.ConvertToDTO(), err
 	}
 
-	return response.ConvertToDTO(), nil
+	return recipe.ConvertToDTO(), nil
 }
 
-func updateRecipe(s *RecipeService, recipe m.RecipeDTO) (m.RecipeDTO, error) {
+func updateRecipe(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error) {
 	var updatedRecipe m.Recipe
 	var originalRecipe m.Recipe
 
 	originalRecipe, err := s.repo.Find(s.repo, recipe.ID)
 	if err != nil {
-		return recipe, err
+		return updatedRecipe.ConvertToDTO(), err
 	}
 
 	if recipe.Title == "" {
@@ -106,11 +107,11 @@ func updateRecipe(s *RecipeService, recipe m.RecipeDTO) (m.RecipeDTO, error) {
 		recipe.CookTime = originalRecipe.CookTime
 	}
 
-	if recipe.Amount_Persons == 0 {
-		recipe.Amount_Persons = originalRecipe.Amount_Persons
+	if recipe.Persons == 0 {
+		recipe.Persons = originalRecipe.Persons
 	}
 
-	updatedRecipe, err = s.repo.Update(s.repo, recipe.ConvertFromDTO())
+	updatedRecipe, err = s.repo.Update(s.repo, recipe)
 	if err != nil {
 		return updatedRecipe.ConvertToDTO(), err
 	}
@@ -125,7 +126,7 @@ func uploadRecipeImages(s *RecipeService, files []m.RecipeFile) error {
 
 		err := u.InitFolder(filePath)
 		if err != nil {
-			log.Fatal("Unable to create or detect image folder: %v", err)
+			log.Fatalf("Unable to create or detect image folder: %v", err)
 		}
 
 		file, err := files[i].File.Open()
@@ -150,17 +151,13 @@ func uploadRecipeImages(s *RecipeService, files []m.RecipeFile) error {
 			return err
 		}
 	}
-	// defer file.
-	// 	initRecipeImageFolder(filePath)
-
-	// f, err := os.OpenFile(filePath+fileHeader.Filename, os.O_WRONLY|os.O_CREATE, 0666)
 
 	return nil
 }
 
-func deleteRecipe(s *RecipeService, recipe m.RecipeDTO) error {
+func deleteRecipe(s *RecipeService, recipe m.Recipe) error {
 
-	if err := s.repo.Delete(s.repo, recipe.ConvertFromDTO()); err != nil {
+	if err := s.repo.Delete(s.repo, recipe); err != nil {
 		return err
 	}
 

@@ -8,23 +8,14 @@ import (
 	h "github.com/ihulsbus/cookbook/internal/handlers"
 	"github.com/rs/cors"
 
+	httplogger "github.com/gleicon/go-httplogger"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.WithFields(log.Fields{"remote_addr": r.RemoteAddr, "method": r.Method, "uri": r.RequestURI}).Info()
-
-		// Call the next handler, which can be another middleware in the chain, or the final handler.
-		next.ServeHTTP(w, r)
-	})
-}
-
 func main() {
 	router := mux.NewRouter()
 	omw := h.OidcMW{}
-	router.Use(loggingMiddleware)
 
 	// API versioning setup
 	v1 := router.PathPrefix("/v1").Subrouter()
@@ -36,7 +27,6 @@ func main() {
 	// Recipes
 	v1get.Path("/recipe").HandlerFunc(h.RecipeGetAll)
 	v1get.Path("/recipe/{recipeID}").HandlerFunc(h.RecipeGet)
-	v1get.Path("/recipe/{recipeID}/ingredients").HandlerFunc(h.RecipeIngredientGet)
 
 	// Ingredients
 	v1get.Path("/ingredients").HandlerFunc(h.IngredientGetAll)
@@ -80,7 +70,7 @@ func main() {
 		AllowCredentials: c.Configuration.Cors.AllowCredentials,
 		Debug:            c.Configuration.Cors.Debug,
 	})
-	handler := crs.Handler(router)
+	handler := httplogger.HTTPLogger(crs.Handler(router))
 
 	// Server startup
 	srv := &http.Server{
@@ -91,7 +81,6 @@ func main() {
 	}
 
 	log.Info("server available on port 8080")
-	log.Debug(c.Configuration)
 	log.Fatal(srv.ListenAndServe())
 
 }

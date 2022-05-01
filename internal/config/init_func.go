@@ -14,7 +14,7 @@ func initDatabase(host string, user string, password string, dbname string, port
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s", host, user, password, dbname, port, sslmode, timezone)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Error),
+		Logger: logger.Default.LogMode(logger.Info),
 	})
 
 	if err != nil {
@@ -29,6 +29,7 @@ func initDatabase(host string, user string, password string, dbname string, port
 	err = db.AutoMigrate(
 		&m.Recipe{},
 		&m.Ingredient{},
+		&m.Tags{},
 	)
 
 	if err != nil {

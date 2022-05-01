@@ -9,7 +9,7 @@ type FindAllIngredients func(s *IngredientService) ([]m.Ingredient, error)
 type FindSingleIngredient func(s *IngredientService, ingredientID int) ([]m.Ingredient, error)
 type FindAllSections func(s *IngredientService) error
 type FindSingleSection func(s *IngredientService, sectionID int) error
-type FindRecipeIngredients func(s *IngredientService, recipeID int) ([]m.IngredientDTO, error)
+type FindRecipeIngredients func(s *IngredientService, recipeID int) ([]m.Recipe_Ingredient, error)
 type CreateIngredient func(s *IngredientService, ingredient m.Ingredient) (m.Ingredient, error)
 type UpdateIngredient func(s *IngredientService, ingredient m.Ingredient) (m.Ingredient, error)
 type DeleteIngredient func(s *IngredientService, ingredient m.Ingredient) error
@@ -39,8 +39,6 @@ func NewIngredientService(ingredientRepo *r.IngredientRepository) *IngredientSer
 		CreateIngredient:     createIngredient,
 		UpdateIngredient:     updateIngredient,
 		DeleteIngredient:     deleteIngredient,
-
-		FindRecipeIngredients: findRecipeIngredients,
 	}
 }
 
@@ -64,17 +62,6 @@ func findSingleIngredient(s *IngredientService, ingredientID int) ([]m.Ingredien
 	}
 
 	return ingredients, nil
-}
-
-func findRecipeIngredients(s *IngredientService, recipeID int) ([]m.IngredientDTO, error) {
-	var data []m.Recipe_Ingredient
-
-	data, err := s.repo.FindRecipeIngredients(s.repo, recipeID)
-	if err != nil {
-		return nil, err
-	}
-
-	return m.Recipe_Ingredient{}.ConvertAllToDTO(data), nil
 }
 
 func createIngredient(s *IngredientService, ingredient m.Ingredient) (m.Ingredient, error) {

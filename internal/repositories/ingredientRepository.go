@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"fmt"
-
 	m "github.com/ihulsbus/cookbook/internal/models"
 	"gorm.io/gorm"
 )
@@ -44,9 +42,6 @@ func NewIngredientRepository(db *gorm.DB) *IngredientRepository {
 		CreateIngredient:     createIngredient,
 		UpdateIngredient:     updateIngredient,
 		DeleteIngredient:     deleteIngredient,
-
-		// Recipes
-		FindRecipeIngredients: findRecipeIngredients,
 	}
 }
 
@@ -68,16 +63,6 @@ func ingredientFindSingle(r *IngredientRepository, ingredientID int) ([]m.Ingred
 	}
 
 	return ingredient, nil
-}
-
-func findRecipeIngredients(r *IngredientRepository, recipeID int) ([]m.Recipe_Ingredient, error) {
-	var RecipeIngredients []m.Recipe_Ingredient
-
-	if err := r.db.Preload("SectionID").Where("recipe_id = ?", recipeID).Find(&RecipeIngredients).Error; err != nil {
-		return nil, err
-	}
-	fmt.Println(RecipeIngredients)
-	return RecipeIngredients, nil
 }
 
 func createIngredient(r *IngredientRepository, ingredient m.Ingredient) (m.Ingredient, error) {

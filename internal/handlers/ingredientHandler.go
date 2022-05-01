@@ -46,27 +46,6 @@ func IngredientGetSingle(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, responseCode, data)
 }
 
-// Get ingredients belonging to a recipe
-func RecipeIngredientGet(w http.ResponseWriter, r *http.Request) {
-	var data []m.IngredientDTO
-	var responseCode int
-
-	vars := mux.Vars(r)
-	rID, err := strconv.Atoi(vars["recipeID"])
-	if err != nil {
-		response500WithDetails(w, err.Error())
-		return
-	}
-
-	data, err = c.IngredientService.FindRecipeIngredients(c.IngredientService, rID)
-	if err != nil {
-		response500WithDetails(w, err.Error())
-	}
-
-	responseCode = 200
-	respondWithJSON(w, responseCode, data)
-}
-
 // Create an ingredient
 func IngredientCreate(w http.ResponseWriter, r *http.Request) {
 	var ingredient m.Ingredient
