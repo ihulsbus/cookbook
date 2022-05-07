@@ -20,6 +20,13 @@ func main() {
 	// API versioning setup
 	v1 := router.PathPrefix("/v1").Subrouter()
 
+	/*~~~~~~~~~~~~~~~~~~~ Image folder ~~~~~~~~~~~~~~~~~~~~~*/
+	imageRouter := router.PathPrefix("/images/").Subrouter()
+	// imageRouter.Use(omw.Middleware)
+
+	fs := http.FileServer(http.Dir(c.Configuration.Global.ImageFolder))
+	imageRouter.NewRoute().Handler(http.StripPrefix("/images/", fs))
+
 	/*~~~~~~~~~~~~~~~~~~~ All GET routes ~~~~~~~~~~~~~~~~~~~*/
 	v1get := v1.Methods("GET").Subrouter()
 	v1get.Use(omw.Middleware)

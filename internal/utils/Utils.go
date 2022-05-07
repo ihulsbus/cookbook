@@ -1,6 +1,8 @@
 package utils
 
-import "os"
+import (
+	"os"
+)
 
 func InitFolder(path string) error {
 	_, err := os.Stat(path)

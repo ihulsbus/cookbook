@@ -7,6 +7,7 @@ import (
 	"os"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/sunshineplan/imgconv"
 
 	m "github.com/ihulsbus/cookbook/internal/models"
 	r "github.com/ihulsbus/cookbook/internal/repositories"
@@ -135,7 +136,7 @@ func uploadRecipeImages(s *RecipeService, files []m.RecipeFile) error {
 		}
 		defer file.Close()
 
-		out, err := os.Create(filePath + files[i].File.Filename)
+		out, err := os.Create(filePath + "cover.orig")
 		if err != nil {
 			return err
 		}
@@ -150,6 +151,25 @@ func uploadRecipeImages(s *RecipeService, files []m.RecipeFile) error {
 		if err != nil {
 			return err
 		}
+
+		src, err := imgconv.Open(filePath + "cover.orig")
+		if err != nil {
+			os.Remove(filePath + "cover.orig")
+			return errors.New("unable to open image for conversion")
+		}
+
+		coverFile, err := os.Create(filePath + "cover.jpg")
+		if err != nil {
+			return err
+		}
+
+		defer coverFile.Close()
+		err = imgconv.Write(coverFile, src, imgconv.FormatOption{Format: imgconv.JPEG})
+		if err != nil {
+			return errors.New("could not convert image")
+		}
+
+		os.Remove(filePath + "cover.orig")
 	}
 
 	return nil

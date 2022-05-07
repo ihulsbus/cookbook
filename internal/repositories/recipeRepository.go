@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"errors"
-
 	"golang.org/x/exp/slices"
 
 	m "github.com/ihulsbus/cookbook/internal/models"
@@ -203,7 +201,7 @@ func updateTagRelations(tx *gorm.DB, recipe m.Recipe) (m.Recipe, error) {
 				return recipe, err
 			}
 		} else {
-			return recipe, errors.New("cannot update tags. nothing to update")
+			return recipe, nil
 		}
 	}
 
