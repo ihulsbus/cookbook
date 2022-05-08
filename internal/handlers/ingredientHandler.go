@@ -72,3 +72,29 @@ func IngredientCreate(w http.ResponseWriter, r *http.Request) {
 
 	respondWithJSON(w, 201, data)
 }
+
+// Delete an ingredient
+func IngredientDelete(w http.ResponseWriter, r *http.Request) {
+	var ingredient m.Ingredient
+
+	buffer := new(bytes.Buffer)
+	_, err := buffer.ReadFrom(r.Body)
+	if err != nil {
+		response500WithDetails(w, err.Error())
+		return
+	}
+
+	body := buffer.String()
+
+	if err = json.Unmarshal([]byte(body), &ingredient); err != nil {
+		response500WithDetails(w, err.Error())
+		return
+	}
+
+	err = c.IngredientService.DeleteIngredient(c.IngredientService, ingredient)
+	if err != nil {
+		response500WithDetails(w, err.Error())
+	}
+
+	response204(w)
+}

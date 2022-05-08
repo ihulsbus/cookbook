@@ -22,7 +22,6 @@ func main() {
 
 	/*~~~~~~~~~~~~~~~~~~~ Image folder ~~~~~~~~~~~~~~~~~~~~~*/
 	imageRouter := router.PathPrefix("/images/").Subrouter()
-	// imageRouter.Use(omw.Middleware)
 
 	fs := http.FileServer(http.Dir(c.Configuration.Global.ImageFolder))
 	imageRouter.NewRoute().Handler(http.StripPrefix("/images/", fs))
@@ -65,7 +64,7 @@ func main() {
 	v1del.Path("/recipe").HandlerFunc(h.RecipeDelete)
 
 	// Ingredients
-	v1del.Path("/ingredients").HandlerFunc(h.NotImplemented)
+	v1del.Path("/ingredients").HandlerFunc(h.IngredientDelete)
 
 	/*~~~~~~~~~~~~~~~~~~~*/
 
