@@ -8,73 +8,72 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	c "github.com/ihulsbus/cookbook/internal/config"
 	m "github.com/ihulsbus/cookbook/internal/models"
 )
 
-func RecipeGetAll(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) RecipeGetAll(w http.ResponseWriter, r *http.Request) {
 	var data []m.RecipeDTO
 	var responseCode int
 
-	data, err := c.RecipeService.FindAllRecipes(c.RecipeService)
+	data, err := h.recipeService.FindAllRecipes()
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
 	responseCode = 200
-	respondWithJSON(w, responseCode, data)
+	h.respondWithJSON(w, responseCode, data)
 }
 
-func RecipeGet(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request) {
 	var data m.RecipeDTO
 	var responseCode int
 
 	vars := mux.Vars(r)
 	rID, err := strconv.Atoi(vars["recipeID"])
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
-	data, err = c.RecipeService.FindSingleRecipe(c.RecipeService, uint(rID))
+	data, err = h.recipeService.FindSingleRecipe(uint(rID))
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
 	responseCode = 200
-	respondWithJSON(w, responseCode, data)
+	h.respondWithJSON(w, responseCode, data)
 }
 
-func RecipeCreate(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) RecipeCreate(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 	var data m.RecipeDTO
 
 	buffer := new(bytes.Buffer)
 	_, err := buffer.ReadFrom(r.Body)
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
 	body := buffer.String()
 
 	if err = json.Unmarshal([]byte(body), &recipe); err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
-	data, err = c.RecipeService.CreateRecipe(c.RecipeService, recipe)
+	data, err = h.recipeService.CreateRecipe(recipe)
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
-	respondWithJSON(w, 201, data)
+	h.respondWithJSON(w, 201, data)
 }
 
-func RecipeImageUpload(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) RecipeImageUpload(w http.ResponseWriter, r *http.Request) {
 	var uploadedFiles []m.RecipeFile
 	var err error
 	vars := mux.Vars(r)
@@ -95,7 +94,7 @@ func RecipeImageUpload(w http.ResponseWriter, r *http.Request) {
 
 		uploadedFile.ID, err = strconv.Atoi(vars["recipeID"])
 		if err != nil {
-			response500WithDetails(w, err.Error())
+			h.response500WithDetails(w, err.Error())
 		}
 
 		uploadedFile.File = files[i]
@@ -103,72 +102,72 @@ func RecipeImageUpload(w http.ResponseWriter, r *http.Request) {
 		uploadedFiles = append(uploadedFiles, uploadedFile)
 	}
 
-	if err = c.RecipeService.UploadRecipeImages(c.RecipeService, uploadedFiles); err != nil {
-		response500WithDetails(w, err.Error())
+	if err = h.recipeService.UploadRecipeImages(uploadedFiles); err != nil {
+		h.response500WithDetails(w, err.Error())
 	}
 
-	response201(w)
+	h.response201(w)
 }
 
-func RecipeUpdate(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) RecipeUpdate(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 	var data m.RecipeDTO
 
 	buffer := new(bytes.Buffer)
 	_, err := buffer.ReadFrom(r.Body)
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
 	body := buffer.String()
 
 	if err = json.Unmarshal([]byte(body), &recipe); err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
 	if recipe.ID == 0 {
-		response400WithDetails(w, "ID is required")
+		h.response400WithDetails(w, "ID is required")
 		return
 	}
 
-	data, err = c.RecipeService.UpdateRecipe(c.RecipeService, recipe)
+	data, err = h.recipeService.UpdateRecipe(recipe)
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
-	respondWithJSON(w, 200, data)
+	h.respondWithJSON(w, 200, data)
 }
 
-func RecipeDelete(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) RecipeDelete(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 
 	buffer := new(bytes.Buffer)
 	_, err := buffer.ReadFrom(r.Body)
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
 	body := buffer.String()
 
 	if err = json.Unmarshal([]byte(body), &recipe); err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
 	if recipe.ID == 0 {
-		response400WithDetails(w, "ID is required")
+		h.response400WithDetails(w, "ID is required")
 		return
 	}
 
-	err = c.RecipeService.DeleteRecipe(c.RecipeService, recipe)
+	err = h.recipeService.DeleteRecipe(recipe)
 	if err != nil {
-		response500WithDetails(w, err.Error())
+		h.response500WithDetails(w, err.Error())
 		return
 	}
 
-	response204(w)
+	h.response204(w)
 }

@@ -14,45 +14,26 @@ import (
 	u "github.com/ihulsbus/cookbook/internal/utils"
 )
 
-type FindAllRecipes func(s *RecipeService) ([]m.RecipeDTO, error)
-type FindSingleRecipe func(s *RecipeService, recipeID uint) (m.RecipeDTO, error)
-type CreateRecipe func(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error)
-type UpdateRecipe func(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error)
-type UploadRecipeImages func(s *RecipeService, files []m.RecipeFile) error
-type DeleteRecipe func(s *RecipeService, recipe m.Recipe) error
-
 type RecipeService struct {
 	repo        *r.RecipeRepository
+	logger      *log.Logger
 	imageFolder string
-
-	FindAllRecipes     FindAllRecipes
-	FindSingleRecipe   FindSingleRecipe
-	CreateRecipe       CreateRecipe
-	UpdateRecipe       UpdateRecipe
-	UploadRecipeImages UploadRecipeImages
-	DeleteRecipe       DeleteRecipe
 }
 
 // NewRecipeService creates a new RecipeService instance
-func NewRecipeService(recipeRepo *r.RecipeRepository, ImageStorePath string) *RecipeService {
+func NewRecipeService(recipeRepo *r.RecipeRepository, ImageStorePath string, logger *log.Logger) *RecipeService {
 	return &RecipeService{
 		repo:        recipeRepo,
+		logger:      logger,
 		imageFolder: ImageStorePath,
-
-		FindAllRecipes:     findAllRecipes,
-		FindSingleRecipe:   findSingleRecipe,
-		CreateRecipe:       createRecipe,
-		UpdateRecipe:       updateRecipe,
-		UploadRecipeImages: uploadRecipeImages,
-		DeleteRecipe:       deleteRecipe,
 	}
 }
 
 // Find contains the business logic to get all recipes
-func findAllRecipes(s *RecipeService) ([]m.RecipeDTO, error) {
+func (s RecipeService) FindAllRecipes() ([]m.RecipeDTO, error) {
 	var recipes []m.Recipe
 
-	recipes, err := s.repo.FindAll(s.repo)
+	recipes, err := s.repo.FindAll()
 	if err != nil {
 		return nil, err
 	}
@@ -61,10 +42,10 @@ func findAllRecipes(s *RecipeService) ([]m.RecipeDTO, error) {
 }
 
 // Find contains the business logic to get a specific recipe
-func findSingleRecipe(s *RecipeService, recipeID uint) (m.RecipeDTO, error) {
+func (s RecipeService) FindSingleRecipe(recipeID uint) (m.RecipeDTO, error) {
 	var recipe m.Recipe
 
-	recipe, err := s.repo.Find(s.repo, recipeID)
+	recipe, err := s.repo.Find(recipeID)
 	if err != nil {
 		return recipe.ConvertToDTO(), err
 	}
@@ -73,9 +54,9 @@ func findSingleRecipe(s *RecipeService, recipeID uint) (m.RecipeDTO, error) {
 }
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing
-func createRecipe(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error) {
+func (s RecipeService) CreateRecipe(recipe m.Recipe) (m.RecipeDTO, error) {
 
-	recipe, err := s.repo.Create(s.repo, recipe)
+	recipe, err := s.repo.Create(recipe)
 	if err != nil {
 		return recipe.ConvertToDTO(), err
 	}
@@ -83,11 +64,11 @@ func createRecipe(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error) {
 	return recipe.ConvertToDTO(), nil
 }
 
-func updateRecipe(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error) {
+func (s RecipeService) UpdateRecipe(recipe m.Recipe) (m.RecipeDTO, error) {
 	var updatedRecipe m.Recipe
 	var originalRecipe m.Recipe
 
-	originalRecipe, err := s.repo.Find(s.repo, recipe.ID)
+	originalRecipe, err := s.repo.Find(recipe.ID)
 	if err != nil {
 		return updatedRecipe.ConvertToDTO(), err
 	}
@@ -112,7 +93,7 @@ func updateRecipe(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error) {
 		recipe.Persons = originalRecipe.Persons
 	}
 
-	updatedRecipe, err = s.repo.Update(s.repo, recipe)
+	updatedRecipe, err = s.repo.Update(recipe)
 	if err != nil {
 		return updatedRecipe.ConvertToDTO(), err
 	}
@@ -120,14 +101,14 @@ func updateRecipe(s *RecipeService, recipe m.Recipe) (m.RecipeDTO, error) {
 	return updatedRecipe.ConvertToDTO(), nil
 }
 
-func uploadRecipeImages(s *RecipeService, files []m.RecipeFile) error {
+func (s RecipeService) UploadRecipeImages(files []m.RecipeFile) error {
 
 	for i := range files {
 		filePath := fmt.Sprintf("%s/%d/", s.imageFolder, files[i].ID)
 
 		err := u.InitFolder(filePath)
 		if err != nil {
-			log.Fatalf("Unable to create or detect image folder: %v", err)
+			s.logger.Fatalf("Unable to create or detect image folder: %v", err)
 		}
 
 		file, err := files[i].File.Open()
@@ -175,9 +156,9 @@ func uploadRecipeImages(s *RecipeService, files []m.RecipeFile) error {
 	return nil
 }
 
-func deleteRecipe(s *RecipeService, recipe m.Recipe) error {
+func (s RecipeService) DeleteRecipe(recipe m.Recipe) error {
 
-	if err := s.repo.Delete(s.repo, recipe); err != nil {
+	if err := s.repo.Delete(recipe); err != nil {
 		return err
 	}
 

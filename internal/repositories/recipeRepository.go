@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	log "github.com/sirupsen/logrus"
+
 	"golang.org/x/exp/slices"
 
 	m "github.com/ihulsbus/cookbook/internal/models"
@@ -9,36 +11,20 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type Find func(r *RecipeRepository, recipeID uint) (m.Recipe, error)
-type FindAll func(r *RecipeRepository) ([]m.Recipe, error)
-type Create func(r *RecipeRepository, recipe m.Recipe) (m.Recipe, error)
-type Update func(r *RecipeRepository, recipe m.Recipe) (m.Recipe, error)
-type Delete func(r *RecipeRepository, recipe m.Recipe) error
-
 type RecipeRepository struct {
-	db *gorm.DB
-
-	Find    Find
-	FindAll FindAll
-	Create  Create
-	Update  Update
-	Delete  Delete
+	db     *gorm.DB
+	logger *log.Logger
 }
 
-func NewRecipeRepository(db *gorm.DB) *RecipeRepository {
+func NewRecipeRepository(db *gorm.DB, logger *log.Logger) *RecipeRepository {
 	return &RecipeRepository{
-		db: db,
-
-		Find:    find,
-		FindAll: findAll,
-		Create:  create,
-		Update:  update,
-		Delete:  delete,
+		db:     db,
+		logger: logger,
 	}
 }
 
 // FindAll retrieves all recipes from the database and returns them in a slice
-func findAll(r *RecipeRepository) ([]m.Recipe, error) {
+func (r RecipeRepository) FindAll() ([]m.Recipe, error) {
 	var recipes []m.Recipe
 
 	if err := r.db.Preload(clause.Associations).Find(&recipes).Error; err != nil {
@@ -49,7 +35,7 @@ func findAll(r *RecipeRepository) ([]m.Recipe, error) {
 }
 
 // Find searches for a specific recipe in the database and returns it when found.
-func find(r *RecipeRepository, recipeID uint) (m.Recipe, error) {
+func (r RecipeRepository) Find(recipeID uint) (m.Recipe, error) {
 	var recipe m.Recipe
 	recipe.ID = recipeID
 
@@ -68,7 +54,7 @@ func find(r *RecipeRepository, recipeID uint) (m.Recipe, error) {
 // }
 
 // Create handles the creation of a recipe and stores the relevant information in the database
-func create(r *RecipeRepository, recipe m.Recipe) (m.Recipe, error) {
+func (r RecipeRepository) Create(recipe m.Recipe) (m.Recipe, error) {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
@@ -98,7 +84,7 @@ func create(r *RecipeRepository, recipe m.Recipe) (m.Recipe, error) {
 	return recipe, nil
 }
 
-func update(r *RecipeRepository, recipe m.Recipe) (m.Recipe, error) {
+func (r RecipeRepository) Update(recipe m.Recipe) (m.Recipe, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
 
@@ -124,7 +110,7 @@ func update(r *RecipeRepository, recipe m.Recipe) (m.Recipe, error) {
 	return recipe, nil
 }
 
-func delete(r *RecipeRepository, recipe m.Recipe) error {
+func (r RecipeRepository) Delete(recipe m.Recipe) error {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 

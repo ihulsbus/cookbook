@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	m "github.com/ihulsbus/cookbook/internal/models"
-	log "github.com/sirupsen/logrus"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -18,12 +17,12 @@ func initDatabase(host string, user string, password string, dbname string, port
 	})
 
 	if err != nil {
-		log.Fatalf("Unable to connect to the database. Exiting..\n%v\n", err)
+		Logger.Fatalf("Unable to connect to the database. Exiting..\n%v\n", err)
 	}
 
 	err = db.SetupJoinTable(&m.Recipe{}, "Ingredients", &m.Recipe_Ingredient{})
 	if err != nil {
-		log.Errorf("Error while creating recipe join tables: %s", err.Error())
+		Logger.Errorf("Error while creating recipe join tables: %s", err.Error())
 	}
 
 	err = db.AutoMigrate(
@@ -33,7 +32,7 @@ func initDatabase(host string, user string, password string, dbname string, port
 	)
 
 	if err != nil {
-		log.Errorf("Error while automigrating database: %s", err.Error())
+		Logger.Errorf("Error while automigrating database: %s", err.Error())
 	}
 
 	return db

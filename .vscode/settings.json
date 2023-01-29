@@ -11,5 +11,6 @@
       "username": "cookbook",
       "password": "mysecretpassword"
     }
-  ]
+  ],
+  "editor.fontFamily": "Menlo, Monaco, 'Courier New', monospace, MesloLGS NF"
 }

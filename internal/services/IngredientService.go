@@ -3,49 +3,26 @@ package services
 import (
 	m "github.com/ihulsbus/cookbook/internal/models"
 	r "github.com/ihulsbus/cookbook/internal/repositories"
+	log "github.com/sirupsen/logrus"
 )
 
-type FindAllIngredients func(s *IngredientService) ([]m.Ingredient, error)
-type FindSingleIngredient func(s *IngredientService, ingredientID int) ([]m.Ingredient, error)
-type FindAllSections func(s *IngredientService) error
-type FindSingleSection func(s *IngredientService, sectionID int) error
-type FindRecipeIngredients func(s *IngredientService, recipeID int) ([]m.Recipe_Ingredient, error)
-type CreateIngredient func(s *IngredientService, ingredient m.Ingredient) (m.Ingredient, error)
-type UpdateIngredient func(s *IngredientService, ingredient m.Ingredient) (m.Ingredient, error)
-type DeleteIngredient func(s *IngredientService, ingredient m.Ingredient) error
-
 type IngredientService struct {
-	repo *r.IngredientRepository
-
-	FindAllIngredients   FindAllIngredients
-	FindSingleIngredient FindSingleIngredient
-	CreateIngredient     CreateIngredient
-	UpdateIngredient     UpdateIngredient
-	DeleteIngredient     DeleteIngredient
-
-	FindAllSections   FindAllSections
-	FindSingleSection FindSingleSection
-
-	FindRecipeIngredients FindRecipeIngredients
+	repo   *r.IngredientRepository
+	logger *log.Logger
 }
 
 // NewRecipeService creates a new RecipeService instance
-func NewIngredientService(ingredientRepo *r.IngredientRepository) *IngredientService {
+func NewIngredientService(ingredientRepo *r.IngredientRepository, logger *log.Logger) *IngredientService {
 	return &IngredientService{
-		repo: ingredientRepo,
-
-		FindAllIngredients:   findAllIngredients,
-		FindSingleIngredient: findSingleIngredient,
-		CreateIngredient:     createIngredient,
-		UpdateIngredient:     updateIngredient,
-		DeleteIngredient:     deleteIngredient,
+		repo:   ingredientRepo,
+		logger: logger,
 	}
 }
 
-func findAllIngredients(s *IngredientService) ([]m.Ingredient, error) {
+func (s IngredientService) FindAllIngredients() ([]m.Ingredient, error) {
 	var ingredients []m.Ingredient
 
-	ingredients, err := s.repo.IngredientFindAll(s.repo)
+	ingredients, err := s.repo.IngredientFindAll()
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +30,10 @@ func findAllIngredients(s *IngredientService) ([]m.Ingredient, error) {
 	return ingredients, nil
 }
 
-func findSingleIngredient(s *IngredientService, ingredientID int) ([]m.Ingredient, error) {
+func (s IngredientService) FindSingleIngredient(ingredientID int) ([]m.Ingredient, error) {
 	var ingredients []m.Ingredient
 
-	ingredients, err := s.repo.IngredientFindSingle(s.repo, ingredientID)
+	ingredients, err := s.repo.IngredientFindSingle(ingredientID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,10 +41,10 @@ func findSingleIngredient(s *IngredientService, ingredientID int) ([]m.Ingredien
 	return ingredients, nil
 }
 
-func createIngredient(s *IngredientService, ingredient m.Ingredient) (m.Ingredient, error) {
+func (s IngredientService) CreateIngredient(ingredient m.Ingredient) (m.Ingredient, error) {
 	var response m.Ingredient
 
-	response, err := s.repo.CreateIngredient(s.repo, ingredient)
+	response, err := s.repo.CreateIngredient(ingredient)
 	if err != nil {
 		return response, err
 	}
@@ -75,10 +52,10 @@ func createIngredient(s *IngredientService, ingredient m.Ingredient) (m.Ingredie
 	return response, nil
 }
 
-func updateIngredient(s *IngredientService, ingredient m.Ingredient) (m.Ingredient, error) {
+func (s IngredientService) UpdateIngredient(ingredient m.Ingredient) (m.Ingredient, error) {
 	var response m.Ingredient
 
-	response, err := s.repo.UpdateIngredient(s.repo, ingredient)
+	response, err := s.repo.UpdateIngredient(ingredient)
 	if err != nil {
 		return response, err
 	}
@@ -86,10 +63,10 @@ func updateIngredient(s *IngredientService, ingredient m.Ingredient) (m.Ingredie
 	return response, nil
 }
 
-func deleteIngredient(s *IngredientService, ingredient m.Ingredient) error {
+func (s IngredientService) DeleteIngredient(ingredient m.Ingredient) error {
 
 	// TODO: check if there are recipies using the ingredient. If so, an error should be returned and the ingredient should not be deleted.
-	err := s.repo.DeleteIngredient(s.repo, ingredient)
+	err := s.repo.DeleteIngredient(ingredient)
 	if err != nil {
 		return err
 	}

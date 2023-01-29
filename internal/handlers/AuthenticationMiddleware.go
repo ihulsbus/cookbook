@@ -8,21 +8,21 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/ihulsbus/cookbook/internal/config"
 	m "github.com/ihulsbus/cookbook/internal/models"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	userCtxKey  = userContextKey("user")
-	ctx         = context.Background()
-	provider, _ = oidc.NewProvider(ctx, config.Configuration.Oidc.URL)
+	userCtxKey = userContextKey("user")
+	ctx        = context.Background()
+	// provider, _ = oidc.NewProvider(ctx, config.Configuration.Oidc.URL)
+	provider, _ = oidc.NewProvider(ctx, "")
 	verifier    = provider.Verifier(&oidc.Config{
-		ClientID:             config.Configuration.Oidc.ClientID,
-		SupportedSigningAlgs: config.Configuration.Oidc.SigningAlgs,
-		SkipClientIDCheck:    config.Configuration.Oidc.SkipClientIDCheck,
-		SkipExpiryCheck:      config.Configuration.Oidc.SkipExpiryCheck,
-		SkipIssuerCheck:      config.Configuration.Oidc.SkipIssuerCheck,
+		// ClientID:             config.Configuration.Oidc.ClientID,
+		// SupportedSigningAlgs: config.Configuration.Oidc.SigningAlgs,
+		// SkipClientIDCheck:    config.Configuration.Oidc.SkipClientIDCheck,
+		// SkipExpiryCheck:      config.Configuration.Oidc.SkipExpiryCheck,
+		// SkipIssuerCheck:      config.Configuration.Oidc.SkipIssuerCheck,
 	})
 
 	claims struct {

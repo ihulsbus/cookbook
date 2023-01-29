@@ -1,19 +1,33 @@
 package config
 
 import (
-	"github.com/ihulsbus/cookbook/internal/repositories"
-	"github.com/ihulsbus/cookbook/internal/services"
+	e "github.com/ihulsbus/cookbook/internal/endpoints"
+	h "github.com/ihulsbus/cookbook/internal/handlers"
+	r "github.com/ihulsbus/cookbook/internal/repositories"
+	s "github.com/ihulsbus/cookbook/internal/services"
 	u "github.com/ihulsbus/cookbook/internal/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 var (
-	Configuration        Config
-	RecipeRepository     *repositories.RecipeRepository
-	IngredientRepository *repositories.IngredientRepository
-	RecipeService        *services.RecipeService
-	IngredientService    *services.IngredientService
+	// Generic
+	Configuration Config
+	Logger        *log.Logger
+
+	// Repositories
+	RecipeRepository     *r.RecipeRepository
+	IngredientRepository *r.IngredientRepository
+
+	// Services
+	RecipeService     *s.RecipeService
+	IngredientService *s.IngredientService
+
+	// Handlers
+	Handlers *h.Handlers
+
+	// Endpoints
+	Endpoints *e.Endpoints
 )
 
 func initViper() error {
@@ -24,48 +38,70 @@ func initViper() error {
 
 	if err := viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Fatalf("Config file not found! Error was: %v", err)
+			Logger.Fatalf("Config file not found! Error was: %v", err)
 		} else {
-			log.Fatalf("Unknown config error occured. Error is: %v", err)
+			Logger.Fatalf("Unknown config error occured. Error is: %v", err)
 		}
 	}
 
 	err := viper.Unmarshal(&Configuration)
 	if err != nil {
-		log.Fatalf("Error unmarshalling config file: %v", err)
+		Logger.Fatalf("Error unmarshalling config file: %v", err)
 	}
 
 	viper.WatchConfig()
 
-	log.Infof("Using config file found at: %s", viper.GetViper().ConfigFileUsed())
+	Logger.Infof("Using config file found at: %s", viper.GetViper().ConfigFileUsed())
 	if Configuration.Global.Debug {
-		log.SetLevel(log.DebugLevel)
-		log.Debugln("Enabled DEBUG logging level")
+		Logger.SetLevel(log.DebugLevel)
+		Logger.Debugln("Enabled DEBUG logging level")
 	}
 
 	return err
 }
 
 func init() {
+	// Init logger
+	Logger = log.New()
+	Logger.SetFormatter(&log.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+
+	// Init Viper
 	if err := initViper(); err != nil {
-		log.Fatalf("Error reading config: %v", err.Error())
+		Logger.Fatalf("Error reading config: %v", err.Error())
 	}
 
 	// Init image folder
 	err := u.InitFolder(Configuration.Global.ImageFolder)
 	if err != nil {
-		log.Fatal("Unable to create or detect image folder: %v", err)
+		Logger.Fatal("Unable to create or detect image folder: %v", err)
 	}
 
 	// Init Database
-	Configuration.DatabaseClient = initDatabase(Configuration.Database.Host, Configuration.Database.Username, Configuration.Database.Password, Configuration.Database.Database, Configuration.Database.Port, Configuration.Database.SSLMode, Configuration.Database.Timezone)
+	Configuration.DatabaseClient = initDatabase(
+		Configuration.Database.Host,
+		Configuration.Database.Username,
+		Configuration.Database.Password,
+		Configuration.Database.Database,
+		Configuration.Database.Port,
+		Configuration.Database.SSLMode,
+		Configuration.Database.Timezone,
+	)
 
 	// Init repositories
-	RecipeRepository = repositories.NewRecipeRepository(Configuration.DatabaseClient)
-	IngredientRepository = repositories.NewIngredientRepository(Configuration.DatabaseClient)
+	RecipeRepository = r.NewRecipeRepository(Configuration.DatabaseClient, Logger)
+	IngredientRepository = r.NewIngredientRepository(Configuration.DatabaseClient, Logger)
 
 	// Init services
-	RecipeService = services.NewRecipeService(RecipeRepository, Configuration.Global.ImageFolder)
-	IngredientService = services.NewIngredientService(IngredientRepository)
+	RecipeService = s.NewRecipeService(RecipeRepository, Configuration.Global.ImageFolder, Logger)
+	IngredientService = s.NewIngredientService(IngredientRepository, Logger)
+
+	// Init handlers
+	Handlers = h.NewHandlers(RecipeService, IngredientService, Logger)
+
+	// Init endpoints
+	Endpoints = e.NewEndpoints(Handlers)
 
 }

@@ -4,67 +4,55 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	c "github.com/ihulsbus/cookbook/internal/config"
-	h "github.com/ihulsbus/cookbook/internal/handlers"
 	"github.com/rs/cors"
+	log "github.com/sirupsen/logrus"
 
 	httplogger "github.com/gleicon/go-httplogger"
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 )
 
 func main() {
-	router := mux.NewRouter()
-	omw := h.OidcMW{}
+	router := gin.New()
+	router.Use(gin.Recovery())
+	router.Use(loggingMiddleware())
 
 	// API versioning setup
-	v1 := router.PathPrefix("/v1").Subrouter()
+	v1 := router.Group("/v1")
 
 	/*~~~~~~~~~~~~~~~~~~~ Image folder ~~~~~~~~~~~~~~~~~~~~~*/
-	imageRouter := router.PathPrefix("/images/").Subrouter()
+	// imageRouter := router.PathPrefix("/images/").Subrouter()
 
-	fs := http.FileServer(http.Dir(c.Configuration.Global.ImageFolder))
-	imageRouter.NewRoute().Handler(http.StripPrefix("/images/", fs))
+	// fs := http.FileServer(http.Dir(c.Configuration.Global.ImageFolder))
+	// imageRouter.NewRoute().Handler(http.StripPrefix("/images/", fs))
 
 	/*~~~~~~~~~~~~~~~~~~~ All GET routes ~~~~~~~~~~~~~~~~~~~*/
-	v1get := v1.Methods("GET").Subrouter()
-	v1get.Use(omw.Middleware)
-
 	// Recipes
-	v1get.Path("/recipe").HandlerFunc(h.RecipeGetAll)
-	v1get.Path("/recipe/{recipeID}").HandlerFunc(h.RecipeGet)
+	v1.GET("/recipe", c.Endpoints.RecipeGetAll)
+	v1.GET("/recipe/{recipeID}", c.Endpoints.RecipeGet)
 
 	// Ingredients
-	v1get.Path("/ingredients").HandlerFunc(h.IngredientGetAll)
-	v1get.Path("/ingredients/{ingredientID}").HandlerFunc(h.IngredientGetSingle)
+	v1.GET("/ingredients", c.Endpoints.IngredientGetAll)
+	v1.GET("/ingredients/{ingredientID}", c.Endpoints.IngredientGetSingle)
 
 	/*~~~~~~~~~~~~~~~~~~~ All PUT routes ~~~~~~~~~~~~~~~~~~~*/
-	v1put := v1.Methods("PUT").Subrouter()
-	v1put.Use(omw.Middleware)
-
 	// Recipes
-	v1put.Path("/recipe").HandlerFunc(h.RecipeUpdate)
+	v1.PUT("/recipe", c.Endpoints.RecipeUpdate)
 
 	/*~~~~~~~~~~~~~~~~~~~ All POST routes ~~~~~~~~~~~~~~~~~~~*/
-	v1post := v1.Methods("POST").Subrouter()
-	v1post.Use(omw.Middleware)
-
 	// Recipes
-	v1post.Path("/recipe").HandlerFunc(h.RecipeCreate)
-	v1post.Path("/recipe/{recipeID}/upload").HandlerFunc(h.RecipeImageUpload)
+	v1.POST("/recipe", c.Endpoints.RecipeCreate)
+	v1.POST("/recipe/{recipeID}/upload", c.Endpoints.RecipeImageUpload)
 
 	// Ingredients
-	v1post.Path("/ingredients").HandlerFunc(h.IngredientCreate)
+	v1.POST("/ingredients", c.Endpoints.IngredientCreate)
 
 	/*~~~~~~~~~~~~~~~~~~~ All DELETE routes ~~~~~~~~~~~~~~~~~~~*/
-	v1del := v1.Methods("DELETE").Subrouter()
-	v1del.Use(omw.Middleware)
-
 	// Recipes
-	v1del.Path("/recipe").HandlerFunc(h.RecipeDelete)
+	v1.POST("/recipe", c.Endpoints.RecipeDelete)
 
 	// Ingredients
-	v1del.Path("/ingredients").HandlerFunc(h.IngredientDelete)
+	v1.POST("/ingredients", c.Endpoints.IngredientDelete)
 
 	/*~~~~~~~~~~~~~~~~~~~*/
 
@@ -86,7 +74,15 @@ func main() {
 		ReadTimeout:  15 * time.Second,
 	}
 
-	log.Info("server available on port 8080")
-	log.Fatal(srv.ListenAndServe())
+	c.Logger.Info("server available on port 8080")
+	c.Logger.Fatal(srv.ListenAndServe())
 
+}
+
+func loggingMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		c.Logger.WithFields(log.Fields{"remote": ctx.Request.RemoteAddr, "method": ctx.Request.Method, "uri": ctx.Request.RequestURI})
+
+		ctx.Next()
+	}
 }
