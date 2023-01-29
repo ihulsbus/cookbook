@@ -10,7 +10,6 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.8.1
 	github.com/sunshineplan/imgconv v1.0.5
-	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 	gorm.io/driver/postgres v1.1.1
 	gorm.io/gorm v1.21.15
 )
@@ -25,7 +24,6 @@ require (
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
-	github.com/graphql-go/graphql v0.8.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hhrutter/lzw v0.0.0-20190829144645-6f07a24e8650 // indirect
 	github.com/hhrutter/tiff v0.0.0-20190829141212-736cae8d0bc7 // indirect
