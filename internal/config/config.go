@@ -51,6 +51,7 @@ func initViper() error {
 
 	Configuration.Oidc.URL = viper.GetString("oidc_url")
 	Configuration.Oidc.ClientID = viper.GetString("oidc_clientid")
+	Configuration.Oidc.SigningAlgs = append(Configuration.Oidc.SigningAlgs, "RS256")
 	Configuration.Oidc.SkipClientIDCheck = viper.GetBool("oidc_clientidcheck")
 	Configuration.Oidc.SkipExpiryCheck = viper.GetBool("oidc_expirycheck")
 	Configuration.Oidc.SkipIssuerCheck = viper.GetBool("oidc_issuercheck")
