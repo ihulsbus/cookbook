@@ -7,7 +7,6 @@ import (
 	m "github.com/ihulsbus/cookbook/internal/models"
 	r "github.com/ihulsbus/cookbook/internal/repositories"
 	s "github.com/ihulsbus/cookbook/internal/services"
-	u "github.com/ihulsbus/cookbook/internal/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -36,33 +35,62 @@ var (
 )
 
 func initViper() error {
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/etc/cookbook/")
-	viper.AddConfigPath(".")
+	viper.SetEnvPrefix("cbb")
 
-	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			Logger.Fatalf("Config file not found! Error was: %v", err)
-		} else {
-			Logger.Fatalf("Unknown config error occured. Error is: %v", err)
-		}
-	}
+	// global
+	viper.BindEnv("debug")
 
-	err := viper.Unmarshal(&Configuration)
-	if err != nil {
-		Logger.Fatalf("Error unmarshalling config file: %v", err)
-	}
+	Configuration.Global.Debug = viper.GetBool("debug")
 
-	viper.WatchConfig()
+	// oidc
+	viper.BindEnv("oidc_url")
+	viper.BindEnv("oidc_clientid")
+	viper.BindEnv("oidc_clientidcheck")
+	viper.BindEnv("oidc_expirycheck")
+	viper.BindEnv("oidc_issuercheck")
 
-	Logger.Infof("Using config file found at: %s", viper.GetViper().ConfigFileUsed())
-	if Configuration.Global.Debug {
-		Logger.SetLevel(log.DebugLevel)
-		Logger.Debugln("Enabled DEBUG logging level")
-	}
+	Configuration.Oidc.URL = viper.GetString("oidc_url")
+	Configuration.Oidc.ClientID = viper.GetString("oidc_clientid")
+	Configuration.Oidc.SkipClientIDCheck = viper.GetBool("oidc_clientidcheck")
+	Configuration.Oidc.SkipExpiryCheck = viper.GetBool("oidc_expirycheck")
+	Configuration.Oidc.SkipIssuerCheck = viper.GetBool("oidc_issuercheck")
 
-	return err
+	// database
+	viper.BindEnv("database_host")
+	viper.BindEnv("database_port")
+	viper.BindEnv("database_database")
+	viper.BindEnv("database_username")
+	viper.BindEnv("database_password")
+	viper.BindEnv("database_sslmode")
+	viper.BindEnv("database_timezone")
+
+	Configuration.Database.Host = viper.GetString("database_host")
+	Configuration.Database.Port = viper.GetInt("database_port")
+	Configuration.Database.Database = viper.GetString("database_database")
+	Configuration.Database.Username = viper.GetString("database_username")
+	Configuration.Database.Password = viper.GetString("database_password")
+	Configuration.Database.SSLMode = viper.GetString("database_sslmode")
+	Configuration.Database.Timezone = viper.GetString("database_timezone")
+
+	return nil
+}
+
+func initCors() {
+	Configuration.Cors.AllowedOrigins = append(Configuration.Cors.AllowedOrigins, "*")
+	Configuration.Cors.AllowCredentials = false
+	Configuration.Cors.AllowedHeaders = append(Configuration.Cors.AllowedHeaders,
+		"Authorization",
+		"Content-Type",
+	)
+	Configuration.Cors.AllowedMethods = append(Configuration.Cors.AllowedMethods,
+		"GET",
+		"POST",
+		"PUT",
+		"DELETE",
+		"HEAD",
+	)
+	Configuration.Cors.Debug = Configuration.Global.Debug
+
 }
 
 func init() {
@@ -78,11 +106,18 @@ func init() {
 		Logger.Fatalf("Error reading config: %v", err.Error())
 	}
 
-	// Init image folder
-	err := u.InitFolder(Configuration.Global.ImageFolder)
-	if err != nil {
-		Logger.Fatal("Unable to create or detect image folder: %v", err)
+	initCors()
+
+	if Configuration.Global.Debug {
+		Logger.SetLevel(log.DebugLevel)
+		Logger.Debugln("Enabled DEBUG logging level")
 	}
+
+	// // Init image folder
+	// err := u.InitFolder(Configuration.Global.ImageFolder)
+	// if err != nil {
+	// 	Logger.Fatal("Unable to create or detect image folder: %v", err)
+	// }
 
 	// Init Database
 	Configuration.DatabaseClient = initDatabase(

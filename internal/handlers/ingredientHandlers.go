@@ -13,21 +13,18 @@ import (
 // Get all ingredients
 func (h Handlers) IngredientGetAll(w http.ResponseWriter, r *http.Request) {
 	var data []m.Ingredient
-	var responseCode int
 
 	data, err := h.ingredientService.FindAllIngredients()
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 	}
 
-	responseCode = 200
-	h.respondWithJSON(w, responseCode, data)
+	h.respondWithJSON(w, http.StatusOK, data)
 }
 
 // Get a single ingredient
 func (h Handlers) IngredientGetSingle(w http.ResponseWriter, r *http.Request) {
-	var data []m.Ingredient
-	var responseCode int
+	var data m.Ingredient
 
 	vars := mux.Vars(r)
 	iID, err := strconv.Atoi(vars["ingredientID"])
@@ -41,8 +38,7 @@ func (h Handlers) IngredientGetSingle(w http.ResponseWriter, r *http.Request) {
 		h.response500WithDetails(w, err.Error())
 	}
 
-	responseCode = 200
-	h.respondWithJSON(w, responseCode, data)
+	h.respondWithJSON(w, http.StatusOK, data)
 }
 
 // Create an ingredient
@@ -69,7 +65,7 @@ func (h Handlers) IngredientCreate(w http.ResponseWriter, r *http.Request) {
 		h.response500WithDetails(w, err.Error())
 	}
 
-	h.respondWithJSON(w, 201, data)
+	h.respondWithJSON(w, http.StatusCreated, data)
 }
 
 // Delete an ingredient

@@ -30,15 +30,15 @@ func (s IngredientService) FindAllIngredients() ([]m.Ingredient, error) {
 	return ingredients, nil
 }
 
-func (s IngredientService) FindSingleIngredient(ingredientID int) ([]m.Ingredient, error) {
-	var ingredients []m.Ingredient
+func (s IngredientService) FindSingleIngredient(ingredientID int) (m.Ingredient, error) {
+	var ingredient m.Ingredient
 
-	ingredients, err := s.repo.IngredientFindSingle(ingredientID)
+	ingredient, err := s.repo.IngredientFindSingle(ingredientID)
 	if err != nil {
-		return nil, err
+		return ingredient, err
 	}
 
-	return ingredients, nil
+	return ingredient, nil
 }
 
 func (s IngredientService) CreateIngredient(ingredient m.Ingredient) (m.Ingredient, error) {

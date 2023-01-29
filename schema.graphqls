@@ -1,0 +1,135 @@
+# GraphQL schema 
+
+type Recipe {
+	ID: ID!
+	CreatedAt: String!
+	UpdatedAt: String!
+	DeletedAt: String
+	RecipeName: String!
+	Description: String!
+	DifficultyLevel: Int!
+	CookingTime: Int!
+	ServingCount: Int!
+	Ingredients: [Ingredient]!
+	Categories: [Category]!
+	Tags: [Tag]!
+}
+
+type Instruction {
+	ID: ID!
+	CreatedAt: String!
+	UpdatedAt: String!
+	DeletedAt: String
+	RecipeID: Int!
+	StepNumber: Int!
+	Description: String!
+}
+
+type Ingredient {
+	ID: ID!
+	CreatedAt: String!
+	UpdatedAt: String!
+	DeletedAt: String
+	IngredientName: String!
+}
+
+type Category {
+	ID: ID!
+	CreatedAt: String!
+	UpdatedAt: String!
+	DeletedAt: String
+	CategoryName: String!
+}
+
+type Tag {
+	ID: ID!
+	CreatedAt: String!
+	UpdatedAt: String!
+	DeletedAt: String
+	TagName: String!
+}
+
+input IngredientInput {
+  IngredientName: String!
+}
+
+input CategoryInput {
+  CategoryName: String!
+}
+
+input TagInput {
+  TagName: String!
+}
+
+type Query {
+  getRecipe(id: ID!): Recipe
+  getAllRecipes: [Recipe]
+  getInstruction(id: ID!): Instruction
+  getAllInstructions(recipeID: ID!): [Instruction]
+  getIngredient(id: ID!): Ingredient
+  getAllIngredients: [Ingredient]
+  getCategory(id: ID!): Category
+  getAllCategories: [Category]
+  getTag(id: ID!): Tag
+  getAllTags: [Tag]
+}
+
+type Mutation {
+  createRecipe(
+    RecipeName: String!
+    Description: String!
+    DifficultyLevel: Int!
+    CookingTime: Int!
+    ServingCount: Int!
+    Ingredients: [String]!
+    Categories: [String]!
+    Tags: [String]!
+  ): Recipe
+
+  updateRecipe(
+    id: ID!
+    RecipeName: String
+    Description: String
+    DifficultyLevel: Int
+    CookingTime: Int
+    ServingCount: Int
+    Ingredients: [String]
+    Categories: [String]
+    Tags: [String]
+  ): Recipe
+
+  deleteRecipe(id: ID!): Recipe
+
+  createInstruction(
+    RecipeID: ID!
+    StepNumber: Int!
+    Description: String!
+  ): Instruction
+
+  updateInstruction(
+    id: ID!
+    RecipeID: ID
+    StepNumber: Int
+    Description: String
+  ): Instruction
+
+  deleteInstruction(id: ID!): Instruction
+
+  createIngredient(IngredientName: String!): Ingredient
+
+  updateIngredient(id: ID!, IngredientName: String!): Ingredient
+
+  deleteIngredient(id: ID!): Ingredient
+
+  createCategory(CategoryName: String!): Category
+
+  updateCategory(id: ID!, CategoryName: String!): Category
+
+  deleteCategory(id: ID!): Category
+
+  createTag(TagName: String!): Tag
+
+  updateTag(id: ID!, TagName: String!): Tag
+
+  deleteTag(id: ID!): Tag
+}

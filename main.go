@@ -22,31 +22,28 @@ func main() {
 	/*~~~~~~~~~~~~~~~~~~~ Image folder ~~~~~~~~~~~~~~~~~~~~~*/
 	router.Static("/images", c.Configuration.Global.ImageFolder)
 
-	// fs := http.FileServer(http.Dir(c.Configuration.Global.ImageFolder))
-	// imageRouter.NewRoute().Handler(http.StripPrefix("/images/", fs))
-
 	/*~~~~~~~~~~~~~~~~~~~ All GET routes ~~~~~~~~~~~~~~~~~~~*/
 	// Recipes
 	v1.GET("/recipe", c.Endpoints.RecipeGetAll)
-	v1.GET("/recipe/{recipeID}", c.Endpoints.RecipeGet)
+	v1.GET("/recipe/:recipeID", c.Endpoints.RecipeGet)
 
 	// Ingredients
 	v1.GET("/ingredients", c.Endpoints.IngredientGetAll)
-	v1.GET("/ingredients/{ingredientID}", c.Endpoints.IngredientGetSingle)
+	v1.GET("/ingredients/:ingredientID", c.Endpoints.IngredientGetSingle)
 
 	/*~~~~~~~~~~~~~~~~~~~ All PUT routes ~~~~~~~~~~~~~~~~~~~*/
 	// Recipes
 	v1.PUT("/recipe", c.Endpoints.RecipeUpdate)
 
-	/*~~~~~~~~~~~~~~~~~~~ All POST routes ~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~ All POST routes ~~~~~~~~~~~~~~~~~~*/
 	// Recipes
 	v1.POST("/recipe", c.Endpoints.RecipeCreate)
-	v1.POST("/recipe/{recipeID}/upload", c.Endpoints.RecipeImageUpload)
+	v1.POST("/recipe/:recipeID/upload", c.Endpoints.RecipeImageUpload)
 
 	// Ingredients
 	v1.POST("/ingredients", c.Endpoints.IngredientCreate)
 
-	/*~~~~~~~~~~~~~~~~~~~ All DELETE routes ~~~~~~~~~~~~~~~~~~~*/
+	/*~~~~~~~~~~~~~~~~~~~ All DELETE routes ~~~~~~~~~~~~~~~~*/
 	// Recipes
 	v1.DELETE("/recipe", c.Endpoints.RecipeDelete)
 

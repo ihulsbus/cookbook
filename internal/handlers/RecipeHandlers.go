@@ -12,7 +12,7 @@ import (
 )
 
 func (h Handlers) RecipeGetAll(w http.ResponseWriter, r *http.Request) {
-	var data []m.RecipeDTO
+	var data []m.Recipe
 	var responseCode int
 
 	data, err := h.recipeService.FindAllRecipes()
@@ -26,7 +26,7 @@ func (h Handlers) RecipeGetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request) {
-	var data m.RecipeDTO
+	var data m.Recipe
 	var responseCode int
 
 	vars := mux.Vars(r)
@@ -36,7 +36,7 @@ func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = h.recipeService.FindSingleRecipe(uint(rID))
+	data, err = h.recipeService.FindSingleRecipe(rID)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -48,7 +48,7 @@ func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request) {
 
 func (h Handlers) RecipeCreate(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
-	var data m.RecipeDTO
+	var data m.Recipe
 
 	buffer := new(bytes.Buffer)
 	_, err := buffer.ReadFrom(r.Body)
@@ -111,7 +111,7 @@ func (h Handlers) RecipeImageUpload(w http.ResponseWriter, r *http.Request) {
 
 func (h Handlers) RecipeUpdate(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
-	var data m.RecipeDTO
+	var data m.Recipe
 
 	buffer := new(bytes.Buffer)
 	_, err := buffer.ReadFrom(r.Body)

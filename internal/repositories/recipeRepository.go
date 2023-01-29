@@ -3,8 +3,6 @@ package repositories
 import (
 	log "github.com/sirupsen/logrus"
 
-	"golang.org/x/exp/slices"
-
 	m "github.com/ihulsbus/cookbook/internal/models"
 
 	"gorm.io/gorm"
@@ -69,12 +67,12 @@ func (r RecipeRepository) Create(recipe m.Recipe) (m.Recipe, error) {
 	}
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		var err error
+		// var err error
 
-		recipe, err = updateIngredientRelations(tx, recipe)
-		if err != nil {
-			return err
-		}
+		// recipe, err = updateIngredientRelations(tx, recipe)
+		// if err != nil {
+		// 	return err
+		// }
 
 		return nil
 	}); err != nil {
@@ -93,15 +91,15 @@ func (r RecipeRepository) Update(recipe m.Recipe) (m.Recipe, error) {
 			return err
 		}
 
-		recipe, err = updateIngredientRelations(tx, recipe)
-		if err != nil {
-			return err
-		}
+		// recipe, err = updateIngredientRelations(tx, recipe)
+		// if err != nil {
+		// 	return err
+		// }
 
-		recipe, err = updateTagRelations(tx, recipe)
-		if err != nil {
-			return err
-		}
+		// recipe, err = updateTagRelations(tx, recipe)
+		// if err != nil {
+		// 	return err
+		// }
 
 		return nil
 	}); err != nil {
@@ -126,74 +124,74 @@ func (r RecipeRepository) Delete(recipe m.Recipe) error {
 	return nil
 }
 
-func updateIngredientRelations(tx *gorm.DB, recipe m.Recipe) (m.Recipe, error) {
-	var ingredientIDs []int
+// func updateIngredientRelations(tx *gorm.DB, recipe m.Recipe) (m.Recipe, error) {
+// 	var ingredientIDs []int
 
-	for i := range recipe.IngredientAmounts {
-		ingredientIDs = append(ingredientIDs, recipe.IngredientAmounts[i].IngredientID)
-	}
+// 	for i := range recipe.IngredientAmounts {
+// 		ingredientIDs = append(ingredientIDs, recipe.IngredientAmounts[i].IngredientID)
+// 	}
 
-	// GORM update relations is very broken... we'll have to do it ourselves
-	var existing []m.Recipe_Ingredient
+// 	// GORM update relations is very broken... we'll have to do it ourselves
+// 	var existing []m.Recipe_Ingredient
 
-	if err := tx.Raw("SELECT * FROM recipe_ingredients WHERE recipe_id = ?", recipe.ID).Scan(&existing).Error; err != nil {
-		return recipe, err
-	}
+// 	if err := tx.Raw("SELECT * FROM recipe_ingredients WHERE recipe_id = ?", recipe.RecipeID).Scan(&existing).Error; err != nil {
+// 		return recipe, err
+// 	}
 
-	for _, ingredientAmount := range recipe.IngredientAmounts {
-		args := map[string]interface{}{"recipeid": recipe.ID, "ingredientid": ingredientAmount.IngredientID, "amount": ingredientAmount.Amount, "unit": ingredientAmount.Unit}
+// 	for _, ingredientAmount := range recipe.IngredientAmounts {
+// 		args := map[string]interface{}{"recipeid": recipe.RecipeID, "ingredientid": ingredientAmount.IngredientID, "amount": ingredientAmount.Amount, "unit": ingredientAmount.Unit}
 
-		idx := slices.IndexFunc(existing, func(r m.Recipe_Ingredient) bool { return r.IngredientID == ingredientAmount.IngredientID })
+// 		idx := slices.IndexFunc(existing, func(r m.Recipe_Ingredient) bool { return r.IngredientID == ingredientAmount.IngredientID })
 
-		if idx == -1 {
-			if err := tx.Raw("INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit) VALUES(@recipeid, @ingredientid, @amount, @unit)", args).Scan(&recipe.IngredientAmounts).Error; err != nil {
-				return recipe, err
-			}
-		} else {
-			if err := tx.Raw("UPDATE recipe_ingredients SET amount = @amount, unit = @unit WHERE recipe_id = @recipeid AND ingredient_id = @ingredientid", args).Scan(&recipe.IngredientAmounts).Error; err != nil {
-				return recipe, err
-			}
-		}
-	}
+// 		if idx == -1 {
+// 			if err := tx.Raw("INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit) VALUES(@recipeid, @ingredientid, @amount, @unit)", args).Scan(&recipe.IngredientAmounts).Error; err != nil {
+// 				return recipe, err
+// 			}
+// 		} else {
+// 			if err := tx.Raw("UPDATE recipe_ingredients SET amount = @amount, unit = @unit WHERE recipe_id = @recipeid AND ingredient_id = @ingredientid", args).Scan(&recipe.IngredientAmounts).Error; err != nil {
+// 				return recipe, err
+// 			}
+// 		}
+// 	}
 
-	if err := tx.Unscoped().Exec("DELETE FROM recipe_ingredients WHERE recipe_id = ? AND ingredient_id NOT IN ?", recipe.ID, ingredientIDs).Error; err != nil {
-		return recipe, err
-	}
+// 	if err := tx.Unscoped().Exec("DELETE FROM recipe_ingredients WHERE recipe_id = ? AND ingredient_id NOT IN ?", recipe.RecipeID, ingredientIDs).Error; err != nil {
+// 		return recipe, err
+// 	}
 
-	return recipe, nil
-}
+// 	return recipe, nil
+// }
 
-func updateTagRelations(tx *gorm.DB, recipe m.Recipe) (m.Recipe, error) {
-	var tagIDs []int
+// func updateTagRelations(tx *gorm.DB, recipe m.Recipe) (m.Recipe, error) {
+// 	var tagIDs []int
 
-	for i := range recipe.Tags {
-		tagIDs = append(tagIDs, recipe.Tags[i].ID)
-	}
+// 	for i := range recipe.Tags {
+// 		tagIDs = append(tagIDs, recipe.Tags[i].TagID)
+// 	}
 
-	// GORM update relations is very broken... we'll have to do it ourselves
-	var existing []m.Recipe_Tag
+// 	// GORM update relations is very broken... we'll have to do it ourselves
+// 	var existing []m.RecipeTag
 
-	if err := tx.Raw("SELECT * FROM recipe_tags WHERE recipe_id = ?", recipe.ID).Scan(&existing).Error; err != nil {
-		return recipe, err
-	}
+// 	if err := tx.Raw("SELECT * FROM recipe_tags WHERE recipe_id = ?", recipe.RecipeID).Scan(&existing).Error; err != nil {
+// 		return recipe, err
+// 	}
 
-	for _, tag := range recipe.Tags {
-		args := map[string]interface{}{"recipeid": recipe.ID, "tagid": tag.ID}
+// 	for _, tag := range recipe.Tags {
+// 		args := map[string]interface{}{"recipeid": recipe.RecipeID, "tagid": tag.TagID}
 
-		idx := slices.IndexFunc(existing, func(r m.Recipe_Tag) bool { return r.TagsID == tag.ID })
+// 		idx := slices.IndexFunc(existing, func(r m.RecipeTag) bool { return r.TagID == tag.TagID })
 
-		if idx == -1 {
-			if err := tx.Raw("INSERT INTO recipe_tags (recipe_id, tags_id) VALUES(@recipeid, @tagid)", args).Scan(&recipe.IngredientAmounts).Error; err != nil {
-				return recipe, err
-			}
-		} else {
-			return recipe, nil
-		}
-	}
+// 		if idx == -1 {
+// 			if err := tx.Raw("INSERT INTO recipe_tags (recipe_id, tags_id) VALUES(@recipeid, @tagid)", args).Scan(&recipe.IngredientAmounts).Error; err != nil {
+// 				return recipe, err
+// 			}
+// 		} else {
+// 			return recipe, nil
+// 		}
+// 	}
 
-	if err := tx.Unscoped().Exec("DELETE FROM recipe_tags WHERE recipe_id = ? AND tags_id NOT IN ?", recipe.ID, tagIDs).Error; err != nil {
-		return recipe, err
-	}
+// 	if err := tx.Unscoped().Exec("DELETE FROM recipe_tags WHERE recipe_id = ? AND tags_id NOT IN ?", recipe.RecipeID, tagIDs).Error; err != nil {
+// 		return recipe, err
+// 	}
 
-	return recipe, nil
-}
+// 	return recipe, nil
+// }

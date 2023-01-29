@@ -20,15 +20,17 @@ func initDatabase(host string, user string, password string, dbname string, port
 		Logger.Fatalf("Unable to connect to the database. Exiting..\n%v\n", err)
 	}
 
-	err = db.SetupJoinTable(&m.Recipe{}, "Ingredients", &m.Recipe_Ingredient{})
+	err = db.SetupJoinTable(&m.Recipe{}, "Ingredient", &m.RecipeIngredient{})
 	if err != nil {
-		Logger.Errorf("Error while creating recipe join tables: %s", err.Error())
+		Logger.Errorf("Error while creating RecipeIngredient join tables: %s", err.Error())
 	}
 
 	err = db.AutoMigrate(
 		&m.Recipe{},
 		&m.Ingredient{},
-		&m.Tags{},
+		&m.Instruction{},
+		&m.Category{},
+		&m.Tag{},
 	)
 
 	if err != nil {

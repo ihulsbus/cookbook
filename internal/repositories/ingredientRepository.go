@@ -29,11 +29,11 @@ func (r IngredientRepository) IngredientFindAll() ([]m.Ingredient, error) {
 	return ingredients, nil
 }
 
-func (r IngredientRepository) IngredientFindSingle(ingredientID int) ([]m.Ingredient, error) {
-	var ingredient []m.Ingredient
+func (r IngredientRepository) IngredientFindSingle(ingredientID int) (m.Ingredient, error) {
+	var ingredient m.Ingredient
 
 	if err := r.db.Where("id = ?", ingredientID).Find(&ingredient).Error; err != nil {
-		return nil, err
+		return ingredient, err
 	}
 
 	return ingredient, nil

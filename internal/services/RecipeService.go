@@ -30,7 +30,7 @@ func NewRecipeService(recipeRepo *r.RecipeRepository, ImageStorePath string, log
 }
 
 // Find contains the business logic to get all recipes
-func (s RecipeService) FindAllRecipes() ([]m.RecipeDTO, error) {
+func (s RecipeService) FindAllRecipes() ([]m.Recipe, error) {
 	var recipes []m.Recipe
 
 	recipes, err := s.repo.FindAll()
@@ -38,67 +38,63 @@ func (s RecipeService) FindAllRecipes() ([]m.RecipeDTO, error) {
 		return nil, err
 	}
 
-	return m.Recipe{}.ConvertAllToDTO(recipes), nil
+	return recipes, nil
 }
 
 // Find contains the business logic to get a specific recipe
-func (s RecipeService) FindSingleRecipe(recipeID uint) (m.RecipeDTO, error) {
+func (s RecipeService) FindSingleRecipe(recipeID int) (m.Recipe, error) {
 	var recipe m.Recipe
 
-	recipe, err := s.repo.Find(recipeID)
+	recipe, err := s.repo.Find(uint(recipeID))
 	if err != nil {
-		return recipe.ConvertToDTO(), err
+		return recipe, err
 	}
 
-	return recipe.ConvertToDTO(), nil
+	return recipe, nil
 }
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing
-func (s RecipeService) CreateRecipe(recipe m.Recipe) (m.RecipeDTO, error) {
+func (s RecipeService) CreateRecipe(recipe m.Recipe) (m.Recipe, error) {
 
 	recipe, err := s.repo.Create(recipe)
 	if err != nil {
-		return recipe.ConvertToDTO(), err
+		return recipe, err
 	}
 
-	return recipe.ConvertToDTO(), nil
+	return recipe, nil
 }
 
-func (s RecipeService) UpdateRecipe(recipe m.Recipe) (m.RecipeDTO, error) {
+func (s RecipeService) UpdateRecipe(recipe m.Recipe) (m.Recipe, error) {
 	var updatedRecipe m.Recipe
 	var originalRecipe m.Recipe
 
 	originalRecipe, err := s.repo.Find(recipe.ID)
 	if err != nil {
-		return updatedRecipe.ConvertToDTO(), err
+		return updatedRecipe, err
 	}
 
-	if recipe.Title == "" {
-		recipe.Title = originalRecipe.Title
+	if recipe.RecipeName == "" {
+		recipe.RecipeName = originalRecipe.RecipeName
 	}
 
 	if recipe.Description == "" {
 		recipe.Description = originalRecipe.Description
 	}
 
-	if recipe.PrepTime == 0 {
-		recipe.PrepTime = originalRecipe.PrepTime
+	if recipe.CookingTime == 0 {
+		recipe.CookingTime = originalRecipe.CookingTime
 	}
 
-	if recipe.CookTime == 0 {
-		recipe.CookTime = originalRecipe.CookTime
-	}
-
-	if recipe.Persons == 0 {
-		recipe.Persons = originalRecipe.Persons
+	if recipe.ServingCount == 0 {
+		recipe.ServingCount = originalRecipe.ServingCount
 	}
 
 	updatedRecipe, err = s.repo.Update(recipe)
 	if err != nil {
-		return updatedRecipe.ConvertToDTO(), err
+		return updatedRecipe, err
 	}
 
-	return updatedRecipe.ConvertToDTO(), nil
+	return updatedRecipe, nil
 }
 
 func (s RecipeService) UploadRecipeImages(files []m.RecipeFile) error {
