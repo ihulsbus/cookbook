@@ -3,6 +3,8 @@ package config
 import (
 	e "github.com/ihulsbus/cookbook/internal/endpoints"
 	h "github.com/ihulsbus/cookbook/internal/handlers"
+	mi "github.com/ihulsbus/cookbook/internal/middleware"
+	m "github.com/ihulsbus/cookbook/internal/models"
 	r "github.com/ihulsbus/cookbook/internal/repositories"
 	s "github.com/ihulsbus/cookbook/internal/services"
 	u "github.com/ihulsbus/cookbook/internal/utils"
@@ -12,8 +14,11 @@ import (
 
 var (
 	// Generic
-	Configuration Config
+	Configuration m.Config
 	Logger        *log.Logger
+
+	// Middleware
+	Middleware *mi.Middleware
 
 	// Repositories
 	RecipeRepository     *r.RecipeRepository
@@ -89,6 +94,9 @@ func init() {
 		Configuration.Database.SSLMode,
 		Configuration.Database.Timezone,
 	)
+
+	// Init middleware
+	Middleware = mi.NewMiddleware(&Configuration.Oidc, Logger)
 
 	// Init repositories
 	RecipeRepository = r.NewRecipeRepository(Configuration.DatabaseClient, Logger)

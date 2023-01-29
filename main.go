@@ -6,22 +6,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	c "github.com/ihulsbus/cookbook/internal/config"
-	"github.com/rs/cors"
-	log "github.com/sirupsen/logrus"
 
-	httplogger "github.com/gleicon/go-httplogger"
+	"github.com/rs/cors"
 )
 
 func main() {
 	router := gin.New()
 	router.Use(gin.Recovery())
-	router.Use(loggingMiddleware())
+	router.Use(c.Middleware.LoggingMiddleware())
 
 	// API versioning setup
 	v1 := router.Group("/v1")
+	v1.Use(c.Middleware.OidcMW.Middleware())
 
 	/*~~~~~~~~~~~~~~~~~~~ Image folder ~~~~~~~~~~~~~~~~~~~~~*/
-	// imageRouter := router.PathPrefix("/images/").Subrouter()
+	router.Static("/images", c.Configuration.Global.ImageFolder)
 
 	// fs := http.FileServer(http.Dir(c.Configuration.Global.ImageFolder))
 	// imageRouter.NewRoute().Handler(http.StripPrefix("/images/", fs))
@@ -49,10 +48,10 @@ func main() {
 
 	/*~~~~~~~~~~~~~~~~~~~ All DELETE routes ~~~~~~~~~~~~~~~~~~~*/
 	// Recipes
-	v1.POST("/recipe", c.Endpoints.RecipeDelete)
+	v1.DELETE("/recipe", c.Endpoints.RecipeDelete)
 
 	// Ingredients
-	v1.POST("/ingredients", c.Endpoints.IngredientDelete)
+	v1.DELETE("/ingredients", c.Endpoints.IngredientDelete)
 
 	/*~~~~~~~~~~~~~~~~~~~*/
 
@@ -64,7 +63,7 @@ func main() {
 		AllowCredentials: c.Configuration.Cors.AllowCredentials,
 		Debug:            c.Configuration.Cors.Debug,
 	})
-	handler := httplogger.HTTPLogger(crs.Handler(router))
+	handler := crs.Handler(router)
 
 	// Server startup
 	srv := &http.Server{
@@ -77,12 +76,4 @@ func main() {
 	c.Logger.Info("server available on port 8080")
 	c.Logger.Fatal(srv.ListenAndServe())
 
-}
-
-func loggingMiddleware() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		c.Logger.WithFields(log.Fields{"remote": ctx.Request.RemoteAddr, "method": ctx.Request.Method, "uri": ctx.Request.RequestURI})
-
-		ctx.Next()
-	}
 }

@@ -1,4 +1,4 @@
-package handlers
+package middleware
 
 import (
 	"context"
@@ -8,24 +8,14 @@ import (
 	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/gin-gonic/gin"
 	m "github.com/ihulsbus/cookbook/internal/models"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
 	userCtxKey = userContextKey("user")
-	ctx        = context.Background()
-	// provider, _ = oidc.NewProvider(ctx, config.Configuration.Oidc.URL)
-	provider, _ = oidc.NewProvider(ctx, "")
-	verifier    = provider.Verifier(&oidc.Config{
-		// ClientID:             config.Configuration.Oidc.ClientID,
-		// SupportedSigningAlgs: config.Configuration.Oidc.SigningAlgs,
-		// SkipClientIDCheck:    config.Configuration.Oidc.SkipClientIDCheck,
-		// SkipExpiryCheck:      config.Configuration.Oidc.SkipExpiryCheck,
-		// SkipIssuerCheck:      config.Configuration.Oidc.SkipIssuerCheck,
-	})
-
-	claims struct {
+	claims     struct {
 		Name           string `json:"name"`
 		Nickname       string `json:"nickname"`
 		Picture        string `json:"picture"`
@@ -43,41 +33,44 @@ var (
 )
 
 type OidcMW struct {
+	oidcConfig *m.OidcConfig
+	context    context.Context
+	provider   *oidc.Provider
+	verifier   *oidc.IDTokenVerifier
+	logger     *log.Logger
 }
 
 type userContextKey string
 
-func (oidcmw *OidcMW) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("Authorization")
-
+func (o *OidcMW) Middleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		token := ctx.Request.Header.Get("Authorization")
 		if token == "" {
-			http.Error(w, "unauthorized. No token supplied", http.StatusUnauthorized)
+			http.Error(ctx.Writer, "unauthorized. No token supplied", http.StatusUnauthorized)
 			return
 		}
 		bearer := strings.Split(token, " ")
 		if len(bearer) != 2 || bearer[0] != "Bearer" {
-			http.Error(w, "no valid token found", http.StatusForbidden)
+			http.Error(ctx.Writer, "no valid token found", http.StatusForbidden)
 			return
 		}
 
-		user, err := authorizeUser(bearer[1])
+		user, err := o.authorizeUser(bearer[1])
 		if err != nil {
-			http.Error(w, fmt.Sprintf("forbidden %v", err.Error()), http.StatusBadRequest)
+			http.Error(ctx.Writer, fmt.Sprintf("forbidden %v", err.Error()), http.StatusBadRequest)
 		}
 
 		if user != nil {
-			log.Debugf("Authenticated user as %s (%s)", user.Username, user.Email)
+			o.logger.Debugf("Authenticated user as %s (%s)", user.Username, user.Email)
 			// Pass down the request to the next middleware (or final handler)
-			r = r.WithContext(WithUser(r.Context(), user))
-			next.ServeHTTP(w, r)
+			ctx.Request = ctx.Request.Clone(o.WithUser(ctx.Request.Context(), user))
+			ctx.Next()
 		}
-
-	})
+	}
 }
 
-func authorizeUser(bearer string) (*m.User, error) {
-	idToken, err := verifier.Verify(ctx, bearer)
+func (o *OidcMW) authorizeUser(bearer string) (*m.User, error) {
+	idToken, err := o.verifier.Verify(o.context, bearer)
 
 	if err != nil {
 		err = fmt.Errorf("unable to verify token: %v", bearer)
@@ -96,12 +89,12 @@ func authorizeUser(bearer string) (*m.User, error) {
 }
 
 // WithUser puts the authenticated user information into the current context.
-func WithUser(cntx context.Context, authenticatedUser *m.User) context.Context {
+func (o *OidcMW) WithUser(cntx context.Context, authenticatedUser *m.User) context.Context {
 	return context.WithValue(cntx, userCtxKey, authenticatedUser)
 }
 
 // UserFromContext retrieves information about the authenticated user from the context of the request.
-func UserFromContext(ctx context.Context) (*m.User, error) {
+func (o *OidcMW) UserFromContext(ctx context.Context) (*m.User, error) {
 	v := ctx.Value(userCtxKey)
 
 	if v == nil {
