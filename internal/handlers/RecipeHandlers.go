@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -73,40 +72,35 @@ func (h Handlers) RecipeCreate(w http.ResponseWriter, r *http.Request) {
 	h.respondWithJSON(w, 201, data)
 }
 
-func (h Handlers) RecipeImageUpload(w http.ResponseWriter, r *http.Request) {
-	var uploadedFiles []m.RecipeFile
-	var err error
-	vars := mux.Vars(r)
+func (h Handlers) RecipeImageUpload(w http.ResponseWriter, r *http.Request, recipeID string) {
+	// var uploadedFiles []m.RecipeFile
+	// var err error
+	// vars := mux.Vars(r)
 
-	err = r.ParseMultipartForm(200000) // grab the multipart form
+	file, _, err := r.FormFile("file")
 	if err != nil {
-		fmt.Fprintln(w, err)
+		h.response400WithDetails(w, "joehoe")
 		return
 	}
 
-	formdata := r.MultipartForm // ok, no problem so far, read the Form data
-
-	//get the *fileheaders
-	files := formdata.File["multiplefiles"] // grab the filenames
-
-	for i := range files { // loop through the files one by one
-		var uploadedFile m.RecipeFile
-
-		uploadedFile.ID, err = strconv.Atoi(vars["recipeID"])
-		if err != nil {
-			h.response500WithDetails(w, err.Error())
-		}
-
-		uploadedFile.File = files[i]
-
-		uploadedFiles = append(uploadedFiles, uploadedFile)
+	ID, err := strconv.Atoi(recipeID)
+	if err != nil {
+		h.response500(w)
+		return
 	}
 
-	if err = h.recipeService.UploadRecipeImages(uploadedFiles); err != nil {
-		h.response500WithDetails(w, err.Error())
+	_, err = h.recipeService.FindSingleRecipe(ID)
+	if err != nil {
+		h.response400WithDetails(w, "recipe does not exist")
 	}
 
-	h.response201(w)
+	if s := h.imageService.UploadImage(file, ID); s {
+		h.response201(w)
+		return
+	}
+
+	h.response500(w)
+
 }
 
 func (h Handlers) RecipeUpdate(w http.ResponseWriter, r *http.Request) {

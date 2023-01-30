@@ -9,13 +9,15 @@ import (
 type Handlers struct {
 	recipeService     *s.RecipeService
 	ingredientService *s.IngredientService
+	imageService      *s.ImageService
 	logger            *log.Logger
 }
 
-func NewHandlers(recipes *s.RecipeService, ingredients *s.IngredientService, logger *log.Logger) *Handlers {
+func NewHandlers(recipes *s.RecipeService, ingredients *s.IngredientService, imageService *s.ImageService, logger *log.Logger) *Handlers {
 	return &Handlers{
 		recipeService:     recipes,
-		logger:            logger,
+		imageService:      imageService,
 		ingredientService: ingredients,
+		logger:            logger,
 	}
 }

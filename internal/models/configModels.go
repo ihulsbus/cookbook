@@ -1,13 +1,18 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"github.com/aws/aws-sdk-go/service/s3"
+	"gorm.io/gorm"
+)
 
 type Config struct {
-	Global         GlobalConfig
-	Cors           CorsConfig
-	Oidc           OidcConfig
-	Database       DatabaseConfig
-	DatabaseClient *gorm.DB
+	Global          GlobalConfig
+	Cors            CorsConfig
+	Oidc            OidcConfig
+	Database        DatabaseConfig
+	S3              S3Config
+	DatabaseClient  *gorm.DB
+	S3ClientSession *s3.S3
 }
 
 // GlobalConfig holds global configuration items
@@ -42,4 +47,12 @@ type CorsConfig struct {
 	AllowedHeaders   []string
 	AllowedMethods   []string
 	Debug            bool
+}
+
+type S3Config struct {
+	AWSRegion       string
+	AWSAccessKey    string
+	AWSAccessSecret string
+	BucketName      string
+	Endpoint        string
 }

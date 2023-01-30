@@ -3,6 +3,7 @@ module github.com/ihulsbus/cookbook
 go 1.18
 
 require (
+	github.com/aws/aws-sdk-go v1.44.189
 	github.com/coreos/go-oidc/v3 v3.1.0
 	github.com/gin-gonic/gin v1.8.2
 	github.com/gorilla/mux v1.8.0
@@ -23,6 +24,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/goccy/go-json v0.10.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20200217142428-fce0ec30dd00 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hhrutter/lzw v0.0.0-20190829144645-6f07a24e8650 // indirect
@@ -37,6 +39,7 @@ require (
 	github.com/jackc/pgx/v4 v4.16.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.10.4 // indirect

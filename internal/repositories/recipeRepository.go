@@ -57,7 +57,7 @@ func (r RecipeRepository) Create(recipe m.Recipe) (m.Recipe, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
 
-		if err = tx.Omit("IngredientAmounts").Create(&recipe).Error; err != nil {
+		if err = tx.Create(&recipe).Error; err != nil {
 			return err
 		}
 
@@ -87,7 +87,7 @@ func (r RecipeRepository) Update(recipe m.Recipe) (m.Recipe, error) {
 		var err error
 
 		// update the recipe while skipping associations as this is very very
-		if err = tx.Omit(clause.Associations).Updates(&recipe).Error; err != nil {
+		if err = tx.Updates(&recipe).Error; err != nil {
 			return err
 		}
 

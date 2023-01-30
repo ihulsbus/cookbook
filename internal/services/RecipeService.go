@@ -1,17 +1,10 @@
 package services
 
 import (
-	"errors"
-	"fmt"
-	"io"
-	"os"
-
 	log "github.com/sirupsen/logrus"
-	"github.com/sunshineplan/imgconv"
 
 	m "github.com/ihulsbus/cookbook/internal/models"
 	r "github.com/ihulsbus/cookbook/internal/repositories"
-	u "github.com/ihulsbus/cookbook/internal/utils"
 )
 
 type RecipeService struct {
@@ -95,61 +88,6 @@ func (s RecipeService) UpdateRecipe(recipe m.Recipe) (m.Recipe, error) {
 	}
 
 	return updatedRecipe, nil
-}
-
-func (s RecipeService) UploadRecipeImages(files []m.RecipeFile) error {
-
-	for i := range files {
-		filePath := fmt.Sprintf("%s/%d/", s.imageFolder, files[i].ID)
-
-		err := u.InitFolder(filePath)
-		if err != nil {
-			s.logger.Fatalf("Unable to create or detect image folder: %v", err)
-		}
-
-		file, err := files[i].File.Open()
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		out, err := os.Create(filePath + "cover.orig")
-		if err != nil {
-			return err
-		}
-
-		defer out.Close()
-		if err != nil {
-			return errors.New("unable to create the file for writing. Check your write access privilege")
-		}
-
-		_, err = io.Copy(out, file) // file not files[i] !
-
-		if err != nil {
-			return err
-		}
-
-		src, err := imgconv.Open(filePath + "cover.orig")
-		if err != nil {
-			os.Remove(filePath + "cover.orig")
-			return errors.New("unable to open image for conversion")
-		}
-
-		coverFile, err := os.Create(filePath + "cover.jpg")
-		if err != nil {
-			return err
-		}
-
-		defer coverFile.Close()
-		err = imgconv.Write(coverFile, src, imgconv.FormatOption{Format: imgconv.JPEG})
-		if err != nil {
-			return errors.New("could not convert image")
-		}
-
-		os.Remove(filePath + "cover.orig")
-	}
-
-	return nil
 }
 
 func (s RecipeService) DeleteRecipe(recipe m.Recipe) error {

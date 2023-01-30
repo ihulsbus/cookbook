@@ -1,8 +1,6 @@
 package models
 
 import (
-	"mime/multipart"
-
 	"gorm.io/gorm"
 )
 
@@ -17,6 +15,7 @@ type Recipe struct {
 	Ingredient      []Ingredient `gorm:"many2many:recipe_ingredient;" json:"Ingredients"`
 	Category        []Category   `gorm:"many2many:recipe_category;" json:"Categories"`
 	Tags            []Tag        `gorm:"many2many:recipe_tag;" json:"Tags"`
+	ImageName       string
 }
 
 // Instruction struct to hold instruction data
@@ -52,9 +51,4 @@ type Category struct {
 type Tag struct {
 	gorm.Model
 	TagName string `gorm:"not null;unique" json:"TagName"`
-}
-
-type RecipeFile struct {
-	ID   int
-	File *multipart.FileHeader
 }

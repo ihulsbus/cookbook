@@ -22,6 +22,10 @@ func (h Handlers) response204(w http.ResponseWriter) {
 	h.respondWithJSON(w, http.StatusNoContent, "Object deleted")
 }
 
+func (h Handlers) response500(w http.ResponseWriter) {
+	h.respondWithError(w, http.StatusInternalServerError, "Internal server error")
+}
+
 func (h Handlers) response501(w http.ResponseWriter) {
 	h.respondWithError(w, http.StatusNotImplemented, "Not Implemented")
 }

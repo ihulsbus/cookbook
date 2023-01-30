@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	c "github.com/ihulsbus/cookbook/internal/config"
-
 	"github.com/rs/cors"
 )
 

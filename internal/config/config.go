@@ -22,10 +22,12 @@ var (
 	// Repositories
 	RecipeRepository     *r.RecipeRepository
 	IngredientRepository *r.IngredientRepository
+	S3Repository         *r.S3Repository
 
 	// Services
 	RecipeService     *s.RecipeService
 	IngredientService *s.IngredientService
+	ImageService      *s.ImageService
 
 	// Handlers
 	Handlers *h.Handlers
@@ -34,7 +36,7 @@ var (
 	Endpoints *e.Endpoints
 )
 
-func initViper() error {
+func initViper() {
 	viper.SetEnvPrefix("cbb")
 
 	// global
@@ -45,16 +47,13 @@ func initViper() error {
 	// oidc
 	viper.BindEnv("oidc_url")
 	viper.BindEnv("oidc_clientid")
-	viper.BindEnv("oidc_clientidcheck")
-	viper.BindEnv("oidc_expirycheck")
-	viper.BindEnv("oidc_issuercheck")
 
 	Configuration.Oidc.URL = viper.GetString("oidc_url")
 	Configuration.Oidc.ClientID = viper.GetString("oidc_clientid")
 	Configuration.Oidc.SigningAlgs = append(Configuration.Oidc.SigningAlgs, "RS256")
-	Configuration.Oidc.SkipClientIDCheck = viper.GetBool("oidc_clientidcheck")
-	Configuration.Oidc.SkipExpiryCheck = viper.GetBool("oidc_expirycheck")
-	Configuration.Oidc.SkipIssuerCheck = viper.GetBool("oidc_issuercheck")
+	Configuration.Oidc.SkipClientIDCheck = true // static for now. figure out if configurability is needed in our case
+	Configuration.Oidc.SkipExpiryCheck = true
+	Configuration.Oidc.SkipIssuerCheck = true
 
 	// database
 	viper.BindEnv("database_host")
@@ -73,7 +72,17 @@ func initViper() error {
 	Configuration.Database.SSLMode = viper.GetString("database_sslmode")
 	Configuration.Database.Timezone = viper.GetString("database_timezone")
 
-	return nil
+	// S3
+	viper.BindEnv("s3_endpoint")
+	viper.BindEnv("s3_key")
+	viper.BindEnv("s3_secret")
+	viper.BindEnv("s3_bucket")
+
+	Configuration.S3.Endpoint = viper.GetString("s3_endpoint")
+	Configuration.S3.AWSAccessKey = viper.GetString("s3_key")
+	Configuration.S3.AWSAccessSecret = viper.GetString("s3_secret")
+	Configuration.S3.BucketName = viper.GetString("s3_bucket")
+
 }
 
 func initCors() {
@@ -103,22 +112,15 @@ func init() {
 	})
 
 	// Init Viper
-	if err := initViper(); err != nil {
-		Logger.Fatalf("Error reading config: %v", err.Error())
-	}
+	initViper()
 
+	// Init CORS rules
 	initCors()
 
 	if Configuration.Global.Debug {
 		Logger.SetLevel(log.DebugLevel)
 		Logger.Debugln("Enabled DEBUG logging level")
 	}
-
-	// // Init image folder
-	// err := u.InitFolder(Configuration.Global.ImageFolder)
-	// if err != nil {
-	// 	Logger.Fatal("Unable to create or detect image folder: %v", err)
-	// }
 
 	// Init Database
 	Configuration.DatabaseClient = initDatabase(
@@ -131,19 +133,24 @@ func init() {
 		Configuration.Database.Timezone,
 	)
 
+	// Init S3 session
+	Configuration.S3ClientSession = connectS3(Configuration.S3.Endpoint, Configuration.S3.AWSAccessSecret, Configuration.S3.AWSAccessKey, "us-east-1")
+
 	// Init middleware
 	Middleware = mi.NewMiddleware(&Configuration.Oidc, Logger)
 
 	// Init repositories
 	RecipeRepository = r.NewRecipeRepository(Configuration.DatabaseClient, Logger)
 	IngredientRepository = r.NewIngredientRepository(Configuration.DatabaseClient, Logger)
+	S3Repository = r.NewS3Repository(Configuration.DatabaseClient, Configuration.S3, Configuration.S3ClientSession, Logger)
 
 	// Init services
 	RecipeService = s.NewRecipeService(RecipeRepository, Configuration.Global.ImageFolder, Logger)
 	IngredientService = s.NewIngredientService(IngredientRepository, Logger)
+	ImageService = s.NewImageService(S3Repository, Logger)
 
 	// Init handlers
-	Handlers = h.NewHandlers(RecipeService, IngredientService, Logger)
+	Handlers = h.NewHandlers(RecipeService, IngredientService, ImageService, Logger)
 
 	// Init endpoints
 	Endpoints = e.NewEndpoints(Handlers)

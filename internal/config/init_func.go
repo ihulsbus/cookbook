@@ -3,11 +3,31 @@ package config
 import (
 	"fmt"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
 	m "github.com/ihulsbus/cookbook/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+func connectS3(endpoint string, secret, key, region string) *s3.S3 {
+	sess, err := session.NewSession(
+		&aws.Config{
+			Credentials:      credentials.NewStaticCredentials(key, secret, ""),
+			Endpoint:         aws.String(endpoint),
+			Region:           aws.String(region),
+			S3ForcePathStyle: aws.Bool(false),
+		})
+	if err != nil {
+		panic(err)
+	}
+
+	client := s3.New(sess)
+	return client
+}
 
 func initDatabase(host string, user string, password string, dbname string, port int, sslmode string, timezone string) *gorm.DB {
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s", host, user, password, dbname, port, sslmode, timezone)

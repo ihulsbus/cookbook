@@ -20,37 +20,38 @@ func (e Endpoints) RecipeGetAll(ctx *gin.Context) {
 }
 
 func (e Endpoints) RecipeGet(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	e.handlers.RecipeGet(ctx.Writer, ctx.Request)
 }
 
 func (e Endpoints) RecipeUpdate(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	e.handlers.RecipeUpdate(ctx.Writer, ctx.Request)
 }
 
 func (e Endpoints) RecipeCreate(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	e.handlers.RecipeCreate(ctx.Writer, ctx.Request)
 }
 
 func (e Endpoints) RecipeDelete(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	e.handlers.RecipeDelete(ctx.Writer, ctx.Request)
 }
 
 func (e Endpoints) RecipeImageUpload(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	// This is dirty, but I do not want gin awareness beyond the endpoints level
+	e.handlers.RecipeImageUpload(ctx.Writer, ctx.Request, ctx.Param("recipeID"))
 }
 
 func (e Endpoints) IngredientGetAll(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	e.handlers.IngredientGetAll(ctx.Writer, ctx.Request)
 }
 
 func (e Endpoints) IngredientGetSingle(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	e.handlers.IngredientGetSingle(ctx.Writer, ctx.Request)
 }
 
 func (e Endpoints) IngredientCreate(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	e.handlers.IngredientCreate(ctx.Writer, ctx.Request)
 }
 
 func (e Endpoints) IngredientDelete(ctx *gin.Context) {
-	e.handlers.RecipeGetAll(ctx.Writer, ctx.Request)
+	e.handlers.IngredientDelete(ctx.Writer, ctx.Request)
 }
