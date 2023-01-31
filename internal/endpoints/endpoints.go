@@ -20,7 +20,7 @@ func (e Endpoints) RecipeGetAll(ctx *gin.Context) {
 }
 
 func (e Endpoints) RecipeGet(ctx *gin.Context) {
-	e.handlers.RecipeGet(ctx.Writer, ctx.Request)
+	e.handlers.RecipeGet(ctx.Writer, ctx.Request, ctx.Param("recipeID"))
 }
 
 func (e Endpoints) RecipeUpdate(ctx *gin.Context) {
@@ -45,7 +45,7 @@ func (e Endpoints) IngredientGetAll(ctx *gin.Context) {
 }
 
 func (e Endpoints) IngredientGetSingle(ctx *gin.Context) {
-	e.handlers.IngredientGetSingle(ctx.Writer, ctx.Request)
+	e.handlers.IngredientGetSingle(ctx.Writer, ctx.Request, ctx.Param("ingredientID"))
 }
 
 func (e Endpoints) IngredientCreate(ctx *gin.Context) {

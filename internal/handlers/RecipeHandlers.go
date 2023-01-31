@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	m "github.com/ihulsbus/cookbook/internal/models"
 )
 
@@ -24,12 +23,11 @@ func (h Handlers) RecipeGetAll(w http.ResponseWriter, r *http.Request) {
 	h.respondWithJSON(w, responseCode, data)
 }
 
-func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request, recipeID string) {
 	var data m.Recipe
 	var responseCode int
 
-	vars := mux.Vars(r)
-	rID, err := strconv.Atoi(vars["recipeID"])
+	rID, err := strconv.Atoi(recipeID)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -73,13 +71,10 @@ func (h Handlers) RecipeCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handlers) RecipeImageUpload(w http.ResponseWriter, r *http.Request, recipeID string) {
-	// var uploadedFiles []m.RecipeFile
-	// var err error
-	// vars := mux.Vars(r)
 
 	file, _, err := r.FormFile("file")
 	if err != nil {
-		h.response400WithDetails(w, "joehoe")
+		h.response400WithDetails(w, "bad request")
 		return
 	}
 

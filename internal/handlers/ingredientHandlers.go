@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
 	m "github.com/ihulsbus/cookbook/internal/models"
 )
 
@@ -23,11 +22,10 @@ func (h Handlers) IngredientGetAll(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get a single ingredient
-func (h Handlers) IngredientGetSingle(w http.ResponseWriter, r *http.Request) {
+func (h Handlers) IngredientGetSingle(w http.ResponseWriter, r *http.Request, ingredientID string) {
 	var data m.Ingredient
 
-	vars := mux.Vars(r)
-	iID, err := strconv.Atoi(vars["ingredientID"])
+	iID, err := strconv.Atoi(ingredientID)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
