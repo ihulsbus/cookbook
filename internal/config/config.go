@@ -86,7 +86,7 @@ func initViper() {
 }
 
 func initCors() {
-	Configuration.Cors.AllowedOrigins = append(Configuration.Cors.AllowedOrigins, "*")
+	Configuration.Cors.AllowedOrigins = append(Configuration.Cors.AllowedOrigins, "https://cookbook.hulsbus.be")
 	Configuration.Cors.AllowCredentials = false
 	Configuration.Cors.AllowedHeaders = append(Configuration.Cors.AllowedHeaders,
 		"Authorization",
