@@ -4,15 +4,29 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	c "github.com/ihulsbus/cookbook/internal/config"
-	"github.com/rs/cors"
 )
 
 func main() {
 	router := gin.New()
+
+	// Panic recovery
 	router.Use(gin.Recovery())
+
+	// Logging
 	router.Use(c.Middleware.LoggingMiddleware())
+
+	// CORS handler
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     c.Configuration.Cors.AllowedOrigins,
+		AllowMethods:     c.Configuration.Cors.AllowedMethods,
+		AllowHeaders:     c.Configuration.Cors.AllowedHeaders,
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: c.Configuration.Cors.AllowCredentials,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// API versioning setup
 	v1 := router.Group("/v1")
@@ -51,19 +65,9 @@ func main() {
 
 	/*~~~~~~~~~~~~~~~~~~~*/
 
-	// CORS handler
-	crs := cors.New(cors.Options{
-		AllowedOrigins:   c.Configuration.Cors.AllowedOrigins,
-		AllowedHeaders:   c.Configuration.Cors.AllowedHeaders,
-		AllowedMethods:   c.Configuration.Cors.AllowedMethods,
-		AllowCredentials: c.Configuration.Cors.AllowCredentials,
-		Debug:            c.Configuration.Cors.Debug,
-	})
-	handler := crs.Handler(router)
-
 	// Server startup
 	srv := &http.Server{
-		Handler:      handler,
+		Handler:      router,
 		Addr:         ":8080",
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,

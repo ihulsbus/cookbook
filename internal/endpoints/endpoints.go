@@ -1,15 +1,30 @@
 package endpoints
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
-	h "github.com/ihulsbus/cookbook/internal/handlers"
 )
 
-type Endpoints struct {
-	handlers *h.Handlers
+type Handlers interface {
+	IngredientCreate(w http.ResponseWriter, r *http.Request)
+	IngredientDelete(w http.ResponseWriter, r *http.Request)
+	IngredientGetAll(w http.ResponseWriter, r *http.Request)
+	IngredientGetSingle(w http.ResponseWriter, r *http.Request, ingredientID string)
+	NotImplemented(w http.ResponseWriter, r *http.Request)
+	RecipeCreate(w http.ResponseWriter, r *http.Request)
+	RecipeDelete(w http.ResponseWriter, r *http.Request)
+	RecipeGet(w http.ResponseWriter, r *http.Request, recipeID string)
+	RecipeGetAll(w http.ResponseWriter, r *http.Request)
+	RecipeImageUpload(w http.ResponseWriter, r *http.Request, recipeID string)
+	RecipeUpdate(w http.ResponseWriter, r *http.Request)
 }
 
-func NewEndpoints(handlers *h.Handlers) *Endpoints {
+type Endpoints struct {
+	handlers Handlers
+}
+
+func NewEndpoints(handlers Handlers) *Endpoints {
 	return &Endpoints{
 		handlers: handlers,
 	}
