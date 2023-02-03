@@ -16,7 +16,9 @@ jobs:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       
       - name: Download Go deps
-        run: go mod download
+        run: |
+          go mod download
+          go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
           
       - name: Go tests
         run: |
