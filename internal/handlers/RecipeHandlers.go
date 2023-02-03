@@ -3,15 +3,27 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 
 	m "github.com/ihulsbus/cookbook/internal/models"
 )
 
+type RecipeService interface {
+	FindAllRecipes() ([]m.Recipe, error)
+	FindSingleRecipe(recipeID int) (m.Recipe, error)
+	CreateRecipe(recipe m.Recipe) (m.Recipe, error)
+	UpdateRecipe(recipe m.Recipe) (m.Recipe, error)
+	DeleteRecipe(recipe m.Recipe) error
+}
+
+type ImageService interface {
+	UploadImage(file multipart.File, recipeID int) bool
+}
+
 func (h Handlers) RecipeGetAll(w http.ResponseWriter, r *http.Request) {
 	var data []m.Recipe
-	var responseCode int
 
 	data, err := h.recipeService.FindAllRecipes()
 	if err != nil {
@@ -19,13 +31,11 @@ func (h Handlers) RecipeGetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseCode = 200
-	h.respondWithJSON(w, responseCode, data)
+	h.respondWithJSON(w, http.StatusOK, data)
 }
 
 func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request, recipeID string) {
 	var data m.Recipe
-	var responseCode int
 
 	rID, err := strconv.Atoi(recipeID)
 	if err != nil {
@@ -39,8 +49,7 @@ func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request, recipeID str
 		return
 	}
 
-	responseCode = 200
-	h.respondWithJSON(w, responseCode, data)
+	h.respondWithJSON(w, http.StatusOK, data)
 }
 
 func (h Handlers) RecipeCreate(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +66,7 @@ func (h Handlers) RecipeCreate(w http.ResponseWriter, r *http.Request) {
 	body := buffer.String()
 
 	if err = json.Unmarshal([]byte(body), &recipe); err != nil {
-		h.response500WithDetails(w, err.Error())
+		h.response400WithDetails(w, err.Error())
 		return
 	}
 
@@ -67,7 +76,7 @@ func (h Handlers) RecipeCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.respondWithJSON(w, 201, data)
+	h.respondWithJSON(w, http.StatusCreated, data)
 }
 
 func (h Handlers) RecipeImageUpload(w http.ResponseWriter, r *http.Request, recipeID string) {
@@ -127,7 +136,7 @@ func (h Handlers) RecipeUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.respondWithJSON(w, 200, data)
+	h.respondWithJSON(w, http.StatusOK, data)
 }
 
 func (h Handlers) RecipeDelete(w http.ResponseWriter, r *http.Request) {

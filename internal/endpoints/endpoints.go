@@ -11,7 +11,6 @@ type Handlers interface {
 	IngredientDelete(w http.ResponseWriter, r *http.Request)
 	IngredientGetAll(w http.ResponseWriter, r *http.Request)
 	IngredientGetSingle(w http.ResponseWriter, r *http.Request, ingredientID string)
-	NotImplemented(w http.ResponseWriter, r *http.Request)
 	RecipeCreate(w http.ResponseWriter, r *http.Request)
 	RecipeDelete(w http.ResponseWriter, r *http.Request)
 	RecipeGet(w http.ResponseWriter, r *http.Request, recipeID string)

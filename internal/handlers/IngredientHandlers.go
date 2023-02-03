@@ -9,6 +9,14 @@ import (
 	m "github.com/ihulsbus/cookbook/internal/models"
 )
 
+type IngredientService interface {
+	FindAllIngredients() ([]m.Ingredient, error)
+	FindSingleIngredient(ingredientID int) (m.Ingredient, error)
+	CreateIngredient(ingredient m.Ingredient) (m.Ingredient, error)
+	UpdateIngredient(ingredient m.Ingredient) (m.Ingredient, error)
+	DeleteIngredient(ingredient m.Ingredient) error
+}
+
 // Get all ingredients
 func (h Handlers) IngredientGetAll(w http.ResponseWriter, r *http.Request) {
 	var data []m.Ingredient

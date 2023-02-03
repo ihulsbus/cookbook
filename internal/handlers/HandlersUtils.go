@@ -6,14 +6,6 @@ import (
 	"net/http"
 )
 
-func (h Handlers) NotImplemented(w http.ResponseWriter, r *http.Request) {
-	h.response501(w)
-}
-
-func (h Handlers) response200(w http.ResponseWriter) {
-	h.respondWithJSON(w, http.StatusOK, "OK")
-}
-
 func (h Handlers) response201(w http.ResponseWriter) {
 	h.respondWithJSON(w, http.StatusCreated, "Object created")
 }
@@ -24,10 +16,6 @@ func (h Handlers) response204(w http.ResponseWriter) {
 
 func (h Handlers) response500(w http.ResponseWriter) {
 	h.respondWithError(w, http.StatusInternalServerError, "Internal server error")
-}
-
-func (h Handlers) response501(w http.ResponseWriter) {
-	h.respondWithError(w, http.StatusNotImplemented, "Not Implemented")
 }
 
 func (h Handlers) response400WithDetails(w http.ResponseWriter, detail string) {
