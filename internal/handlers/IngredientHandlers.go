@@ -24,6 +24,7 @@ func (h Handlers) IngredientGetAll(w http.ResponseWriter, r *http.Request) {
 	data, err := h.ingredientService.FindAllIngredients()
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
+		return
 	}
 
 	h.respondWithJSON(w, http.StatusOK, data)
@@ -42,6 +43,7 @@ func (h Handlers) IngredientGetSingle(w http.ResponseWriter, r *http.Request, in
 	data, err = h.ingredientService.FindSingleIngredient(iID)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
+		return
 	}
 
 	h.respondWithJSON(w, http.StatusOK, data)
@@ -69,6 +71,7 @@ func (h Handlers) IngredientCreate(w http.ResponseWriter, r *http.Request) {
 	data, err = h.ingredientService.CreateIngredient(ingredient)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
+		return
 	}
 
 	h.respondWithJSON(w, http.StatusCreated, data)
@@ -92,9 +95,15 @@ func (h Handlers) IngredientDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if ingredient.ID == 0 {
+		h.response400WithDetails(w, "ID is required")
+		return
+	}
+
 	err = h.ingredientService.DeleteIngredient(ingredient)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
+		return
 	}
 
 	h.response204(w)

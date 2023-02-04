@@ -96,6 +96,7 @@ func (h Handlers) RecipeImageUpload(w http.ResponseWriter, r *http.Request, reci
 	_, err = h.recipeService.FindSingleRecipe(ID)
 	if err != nil {
 		h.response400WithDetails(w, "recipe does not exist")
+		return
 	}
 
 	if s := h.imageService.UploadImage(file, ID); s {
