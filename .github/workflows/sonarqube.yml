@@ -23,7 +23,6 @@ jobs:
       - name: Go tests
         run: |
           go test -json -coverprofile=coverage.out ./... > test-report.out
-          golangci-lint run --out-format checkstyle --build-tags=integration --timeout 10m --issues-exit-code 0 ./... > lint-report.xml
           
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
