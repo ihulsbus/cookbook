@@ -17,8 +17,7 @@ type Config struct {
 
 // GlobalConfig holds global configuration items
 type GlobalConfig struct {
-	Debug       bool
-	ImageFolder string
+	Debug bool
 }
 
 // DatabaseConfig holds database configuration items

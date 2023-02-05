@@ -33,9 +33,6 @@ func main() {
 	v1 := router.Group("/v1")
 	v1.Use(c.Middleware.OidcMW.Middleware())
 
-	/*~~~~~~~~~~~~~~~~~~~ Image folder ~~~~~~~~~~~~~~~~~~~~~*/
-	router.Static("/images", c.Configuration.Global.ImageFolder)
-
 	/*~~~~~~~~~~~~~~~~~~~ All GET routes ~~~~~~~~~~~~~~~~~~~*/
 	// Recipes
 	v1.GET("/recipe", c.Endpoints.RecipeGetAll)

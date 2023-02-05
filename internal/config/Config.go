@@ -145,8 +145,8 @@ func init() {
 	S3Repository = r.NewS3Repository(Configuration.DatabaseClient, Configuration.S3, Configuration.S3ClientSession, Logger)
 
 	// Init services
-	RecipeService = s.NewRecipeService(RecipeRepository, Configuration.Global.ImageFolder, Logger)
-	IngredientService = s.NewIngredientService(IngredientRepository, Logger)
+	RecipeService = s.NewRecipeService(RecipeRepository)
+	IngredientService = s.NewIngredientService(IngredientRepository)
 	ImageService = s.NewImageService(S3Repository, Logger)
 
 	// Init handlers

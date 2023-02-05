@@ -1,8 +1,6 @@
 package services
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	m "github.com/ihulsbus/cookbook/internal/models"
 )
 
@@ -14,17 +12,13 @@ type RecipeRepository interface {
 	Delete(recipe m.Recipe) error
 }
 type RecipeService struct {
-	repo        RecipeRepository
-	logger      *log.Logger
-	imageFolder string
+	repo RecipeRepository
 }
 
 // NewRecipeService creates a new RecipeService instance
-func NewRecipeService(recipeRepo RecipeRepository, ImageStorePath string, logger *log.Logger) *RecipeService {
+func NewRecipeService(recipeRepo RecipeRepository) *RecipeService {
 	return &RecipeService{
-		repo:        recipeRepo,
-		logger:      logger,
-		imageFolder: ImageStorePath,
+		repo: recipeRepo,
 	}
 }
 

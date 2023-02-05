@@ -4,16 +4,22 @@ import (
 	"mime/multipart"
 
 	"github.com/google/uuid"
-	r "github.com/ihulsbus/cookbook/internal/repositories"
-	log "github.com/sirupsen/logrus"
 )
 
-type ImageService struct {
-	repo   *r.S3Repository
-	logger *log.Logger
+type S3Repository interface {
+	UploadImage(file multipart.File, filename string, recipeID int) bool
 }
 
-func NewImageService(repo *r.S3Repository, logger *log.Logger) *ImageService {
+type LoggerInterface interface {
+	Errorf(format string, args ...interface{})
+}
+
+type ImageService struct {
+	repo   S3Repository
+	logger LoggerInterface
+}
+
+func NewImageService(repo S3Repository, logger LoggerInterface) *ImageService {
 	return &ImageService{
 		repo:   repo,
 		logger: logger,
