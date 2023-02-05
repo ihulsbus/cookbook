@@ -45,18 +45,27 @@ func (o *OidcMW) Middleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		token := ctx.Request.Header.Get("Authorization")
 		if token == "" {
-			ctx.AbortWithError(http.StatusUnauthorized, errors.New("unauthorized"))
+			err := ctx.AbortWithError(http.StatusUnauthorized, errors.New("unauthorized"))
+			if err != nil {
+				o.logger.Error(err)
+			}
 			return
 		}
 		bearer := strings.Split(token, " ")
 		if len(bearer) != 2 || bearer[0] != "Bearer" {
-			ctx.AbortWithError(http.StatusForbidden, errors.New("no valid token found"))
+			err := ctx.AbortWithError(http.StatusForbidden, errors.New("no valid token found"))
+			if err != nil {
+				o.logger.Error(err)
+			}
 			return
 		}
 
 		user, err := o.authorizeUser(bearer[1])
 		if err != nil {
-			ctx.AbortWithError(http.StatusUnauthorized, errors.New("bad request"))
+			err := ctx.AbortWithError(http.StatusUnauthorized, errors.New("bad request"))
+			if err != nil {
+				o.logger.Error(err)
+			}
 			return
 		}
 

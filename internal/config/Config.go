@@ -40,13 +40,23 @@ func initViper() {
 	viper.SetEnvPrefix("cbb")
 
 	// global
-	viper.BindEnv("debug")
+	err := viper.BindEnv("debug")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'debug': %s", err.Error())
+	}
 
 	Configuration.Global.Debug = viper.GetBool("debug")
 
 	// oidc
-	viper.BindEnv("oidc_url")
-	viper.BindEnv("oidc_clientid")
+	err = viper.BindEnv("oidc_url")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'oidc_url': %s", err.Error())
+	}
+
+	err = viper.BindEnv("oidc_clientid")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'oidc_clientid': %s", err.Error())
+	}
 
 	Configuration.Oidc.URL = viper.GetString("oidc_url")
 	Configuration.Oidc.ClientID = viper.GetString("oidc_clientid")
@@ -56,13 +66,40 @@ func initViper() {
 	Configuration.Oidc.SkipIssuerCheck = true
 
 	// database
-	viper.BindEnv("database_host")
-	viper.BindEnv("database_port")
-	viper.BindEnv("database_database")
-	viper.BindEnv("database_username")
-	viper.BindEnv("database_password")
-	viper.BindEnv("database_sslmode")
-	viper.BindEnv("database_timezone")
+	err = viper.BindEnv("database_host")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'database_host': %s", err.Error())
+	}
+
+	err = viper.BindEnv("database_port")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'database_port': %s", err.Error())
+	}
+
+	err = viper.BindEnv("database_database")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'database_database': %s", err.Error())
+	}
+
+	err = viper.BindEnv("database_username")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'database_username': %s", err.Error())
+	}
+
+	err = viper.BindEnv("database_password")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'database_password': %s", err.Error())
+	}
+
+	err = viper.BindEnv("database_sslmode")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'database_sslmode': %s", err.Error())
+	}
+
+	err = viper.BindEnv("database_timezone")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 'database_timezone': %s", err.Error())
+	}
 
 	Configuration.Database.Host = viper.GetString("database_host")
 	Configuration.Database.Port = viper.GetInt("database_port")
@@ -73,10 +110,25 @@ func initViper() {
 	Configuration.Database.Timezone = viper.GetString("database_timezone")
 
 	// S3
-	viper.BindEnv("s3_endpoint")
-	viper.BindEnv("s3_key")
-	viper.BindEnv("s3_secret")
-	viper.BindEnv("s3_bucket")
+	err = viper.BindEnv("s3_endpoint")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 's3_endpoint': %s", err.Error())
+	}
+
+	err = viper.BindEnv("s3_key")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 's3_key': %s", err.Error())
+	}
+
+	err = viper.BindEnv("s3_secret")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 's3_secret': %s", err.Error())
+	}
+
+	err = viper.BindEnv("s3_bucket")
+	if err != nil {
+		Logger.Fatalf("error binding to env var 's3_bucket': %s", err.Error())
+	}
 
 	Configuration.S3.Endpoint = viper.GetString("s3_endpoint")
 	Configuration.S3.AWSAccessKey = viper.GetString("s3_key")
