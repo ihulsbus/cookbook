@@ -13,8 +13,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-playground/assert/v2"
 	m "github.com/ihulsbus/cookbook/internal/models"
+	"github.com/stretchr/testify/assert"
 )
 
 type RecipeServiceMock struct {
@@ -32,11 +32,11 @@ var (
 
 // ====== RecipeService ======
 
-func (s *RecipeServiceMock) FindAllRecipes() ([]m.Recipe, error) {
+func (s *RecipeServiceMock) FindAll() ([]m.Recipe, error) {
 	return recipes, nil
 }
 
-func (s *RecipeServiceMock) FindSingleRecipe(recipeID int) (m.Recipe, error) {
+func (s *RecipeServiceMock) FindSingle(recipeID int) (m.Recipe, error) {
 	switch recipeID {
 	case 1:
 		return m.Recipe{RecipeName: "recipe1"}, nil
@@ -47,7 +47,7 @@ func (s *RecipeServiceMock) FindSingleRecipe(recipeID int) (m.Recipe, error) {
 	}
 }
 
-func (s *RecipeServiceMock) CreateRecipe(recipe m.Recipe) (m.Recipe, error) {
+func (s *RecipeServiceMock) Create(recipe m.Recipe) (m.Recipe, error) {
 	switch recipe.RecipeName {
 	case "recipe":
 		return recipe, nil
@@ -56,7 +56,7 @@ func (s *RecipeServiceMock) CreateRecipe(recipe m.Recipe) (m.Recipe, error) {
 	}
 }
 
-func (s *RecipeServiceMock) UpdateRecipe(recipe m.Recipe) (m.Recipe, error) {
+func (s *RecipeServiceMock) Update(recipe m.Recipe) (m.Recipe, error) {
 	switch recipe.RecipeName {
 	case "recipe":
 		return recipe, nil
@@ -65,7 +65,7 @@ func (s *RecipeServiceMock) UpdateRecipe(recipe m.Recipe) (m.Recipe, error) {
 	}
 }
 
-func (s *RecipeServiceMock) DeleteRecipe(recipe m.Recipe) error {
+func (s *RecipeServiceMock) Delete(recipe m.Recipe) error {
 	switch recipe.ID {
 	case 1:
 		return nil

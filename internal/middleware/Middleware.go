@@ -9,12 +9,17 @@ import (
 )
 
 type Middleware struct {
-	logger *log.Logger
+	logger LoggingInterface
 	OidcMW OidcMW
 }
 
+type LoggingInterface interface {
+	Debugf(format string, args ...interface{})
+	WithFields(fields log.Fields) *log.Entry
+}
+
 // Init a new middleware instance
-func NewMiddleware(oidcConfig *m.OidcConfig, logger *log.Logger) *Middleware {
+func NewMiddleware(oidcConfig *m.OidcConfig, logger LoggingInterface) *Middleware {
 	ctx := context.Background()
 	provider, _ := oidc.NewProvider(ctx, oidcConfig.URL)
 	verifier := provider.Verifier(&oidc.Config{

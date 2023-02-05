@@ -11,6 +11,7 @@ import (
 
 func main() {
 	router := gin.New()
+	gin.SetMode(gin.ReleaseMode)
 
 	// Panic recovery
 	router.Use(gin.Recovery())

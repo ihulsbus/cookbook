@@ -140,8 +140,8 @@ func init() {
 	Middleware = mi.NewMiddleware(&Configuration.Oidc, Logger)
 
 	// Init repositories
-	RecipeRepository = r.NewRecipeRepository(Configuration.DatabaseClient, Logger)
-	IngredientRepository = r.NewIngredientRepository(Configuration.DatabaseClient, Logger)
+	RecipeRepository = r.NewRecipeRepository(Configuration.DatabaseClient)
+	IngredientRepository = r.NewIngredientRepository(Configuration.DatabaseClient)
 	S3Repository = r.NewS3Repository(Configuration.DatabaseClient, Configuration.S3, Configuration.S3ClientSession, Logger)
 
 	// Init services

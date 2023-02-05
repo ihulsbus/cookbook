@@ -10,18 +10,18 @@ import (
 )
 
 type IngredientService interface {
-	FindAllIngredients() ([]m.Ingredient, error)
-	FindSingleIngredient(ingredientID int) (m.Ingredient, error)
-	CreateIngredient(ingredient m.Ingredient) (m.Ingredient, error)
-	UpdateIngredient(ingredient m.Ingredient) (m.Ingredient, error)
-	DeleteIngredient(ingredient m.Ingredient) error
+	FindAll() ([]m.Ingredient, error)
+	FindSingle(ingredientID int) (m.Ingredient, error)
+	Create(ingredient m.Ingredient) (m.Ingredient, error)
+	Update(ingredient m.Ingredient) (m.Ingredient, error)
+	Delete(ingredient m.Ingredient) error
 }
 
 // Get all ingredients
 func (h Handlers) IngredientGetAll(w http.ResponseWriter, r *http.Request) {
 	var data []m.Ingredient
 
-	data, err := h.ingredientService.FindAllIngredients()
+	data, err := h.ingredientService.FindAll()
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -40,7 +40,7 @@ func (h Handlers) IngredientGetSingle(w http.ResponseWriter, r *http.Request, in
 		return
 	}
 
-	data, err = h.ingredientService.FindSingleIngredient(iID)
+	data, err = h.ingredientService.FindSingle(iID)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -68,7 +68,7 @@ func (h Handlers) IngredientCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = h.ingredientService.CreateIngredient(ingredient)
+	data, err = h.ingredientService.Create(ingredient)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -76,6 +76,8 @@ func (h Handlers) IngredientCreate(w http.ResponseWriter, r *http.Request) {
 
 	h.respondWithJSON(w, http.StatusCreated, data)
 }
+
+// TODO: Update handler
 
 // Delete an ingredient
 func (h Handlers) IngredientDelete(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +102,7 @@ func (h Handlers) IngredientDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.ingredientService.DeleteIngredient(ingredient)
+	err = h.ingredientService.Delete(ingredient)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return

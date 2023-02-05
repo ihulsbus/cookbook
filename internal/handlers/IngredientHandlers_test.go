@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-playground/assert/v2"
 	m "github.com/ihulsbus/cookbook/internal/models"
+	"github.com/stretchr/testify/assert"
 )
 
 type IngredientServiceMock struct {
@@ -23,12 +23,12 @@ var (
 	}
 )
 
-func (s *IngredientServiceMock) FindAllIngredients() ([]m.Ingredient, error) {
+func (s *IngredientServiceMock) FindAll() ([]m.Ingredient, error) {
 	ingredients = append(ingredients, m.Ingredient{IngredientName: "ingredient1"}, m.Ingredient{IngredientName: "ingredient2"})
 	return ingredients, nil
 }
 
-func (s *IngredientServiceMock) FindSingleIngredient(ingredientID int) (m.Ingredient, error) {
+func (s *IngredientServiceMock) FindSingle(ingredientID int) (m.Ingredient, error) {
 	switch ingredientID {
 	case 1:
 		return ingredient, nil
@@ -37,7 +37,7 @@ func (s *IngredientServiceMock) FindSingleIngredient(ingredientID int) (m.Ingred
 	}
 }
 
-func (s *IngredientServiceMock) CreateIngredient(ingredient m.Ingredient) (m.Ingredient, error) {
+func (s *IngredientServiceMock) Create(ingredient m.Ingredient) (m.Ingredient, error) {
 	switch ingredient.IngredientName {
 	case "ingredient":
 		return ingredient, nil
@@ -46,7 +46,7 @@ func (s *IngredientServiceMock) CreateIngredient(ingredient m.Ingredient) (m.Ing
 	}
 }
 
-func (s *IngredientServiceMock) UpdateIngredient(ingredient m.Ingredient) (m.Ingredient, error) {
+func (s *IngredientServiceMock) Update(ingredient m.Ingredient) (m.Ingredient, error) {
 	switch ingredient.IngredientName {
 	case "update":
 		return ingredient, nil
@@ -55,7 +55,7 @@ func (s *IngredientServiceMock) UpdateIngredient(ingredient m.Ingredient) (m.Ing
 	}
 }
 
-func (s *IngredientServiceMock) DeleteIngredient(ingredient m.Ingredient) error {
+func (s *IngredientServiceMock) Delete(ingredient m.Ingredient) error {
 	switch ingredient.ID {
 	case 1:
 		return nil

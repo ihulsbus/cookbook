@@ -10,7 +10,6 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-gonic/gin"
 	m "github.com/ihulsbus/cookbook/internal/models"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -37,7 +36,7 @@ type OidcMW struct {
 	context    context.Context
 	provider   *oidc.Provider
 	verifier   *oidc.IDTokenVerifier
-	logger     *log.Logger
+	logger     LoggingInterface
 }
 
 type userContextKey string

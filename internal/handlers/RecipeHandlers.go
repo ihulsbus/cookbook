@@ -11,11 +11,11 @@ import (
 )
 
 type RecipeService interface {
-	FindAllRecipes() ([]m.Recipe, error)
-	FindSingleRecipe(recipeID int) (m.Recipe, error)
-	CreateRecipe(recipe m.Recipe) (m.Recipe, error)
-	UpdateRecipe(recipe m.Recipe) (m.Recipe, error)
-	DeleteRecipe(recipe m.Recipe) error
+	FindAll() ([]m.Recipe, error)
+	FindSingle(recipeID int) (m.Recipe, error)
+	Create(recipe m.Recipe) (m.Recipe, error)
+	Update(recipe m.Recipe) (m.Recipe, error)
+	Delete(recipe m.Recipe) error
 }
 
 type ImageService interface {
@@ -25,7 +25,7 @@ type ImageService interface {
 func (h Handlers) RecipeGetAll(w http.ResponseWriter, r *http.Request) {
 	var data []m.Recipe
 
-	data, err := h.recipeService.FindAllRecipes()
+	data, err := h.recipeService.FindAll()
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -43,7 +43,7 @@ func (h Handlers) RecipeGet(w http.ResponseWriter, r *http.Request, recipeID str
 		return
 	}
 
-	data, err = h.recipeService.FindSingleRecipe(rID)
+	data, err = h.recipeService.FindSingle(rID)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -70,7 +70,7 @@ func (h Handlers) RecipeCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = h.recipeService.CreateRecipe(recipe)
+	data, err = h.recipeService.Create(recipe)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -93,7 +93,7 @@ func (h Handlers) RecipeImageUpload(w http.ResponseWriter, r *http.Request, reci
 		return
 	}
 
-	_, err = h.recipeService.FindSingleRecipe(ID)
+	_, err = h.recipeService.FindSingle(ID)
 	if err != nil {
 		h.response400WithDetails(w, "recipe does not exist")
 		return
@@ -131,7 +131,7 @@ func (h Handlers) RecipeUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data, err = h.recipeService.UpdateRecipe(recipe)
+	data, err = h.recipeService.Update(recipe)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return
@@ -162,7 +162,7 @@ func (h Handlers) RecipeDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.recipeService.DeleteRecipe(recipe)
+	err = h.recipeService.Delete(recipe)
 	if err != nil {
 		h.response500WithDetails(w, err.Error())
 		return

@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	log "github.com/sirupsen/logrus"
-
 	m "github.com/ihulsbus/cookbook/internal/models"
 
 	"gorm.io/gorm"
@@ -10,14 +8,12 @@ import (
 )
 
 type RecipeRepository struct {
-	db     *gorm.DB
-	logger *log.Logger
+	db *gorm.DB
 }
 
-func NewRecipeRepository(db *gorm.DB, logger *log.Logger) *RecipeRepository {
+func NewRecipeRepository(db *gorm.DB) *RecipeRepository {
 	return &RecipeRepository{
-		db:     db,
-		logger: logger,
+		db: db,
 	}
 }
 
@@ -33,7 +29,7 @@ func (r RecipeRepository) FindAll() ([]m.Recipe, error) {
 }
 
 // Find searches for a specific recipe in the database and returns it when found.
-func (r RecipeRepository) Find(recipeID uint) (m.Recipe, error) {
+func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
 	var recipe m.Recipe
 	recipe.ID = recipeID
 
@@ -66,18 +62,18 @@ func (r RecipeRepository) Create(recipe m.Recipe) (m.Recipe, error) {
 		return recipe, err
 	}
 
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		// var err error
+	// if err := r.db.Transaction(func(tx *gorm.DB) error {
+	// 	var err error
 
-		// recipe, err = updateIngredientRelations(tx, recipe)
-		// if err != nil {
-		// 	return err
-		// }
+	// 	recipe, err = updateIngredientRelations(tx, recipe)
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		return nil
-	}); err != nil {
-		return recipe, err
-	}
+	// 	return nil
+	// }); err != nil {
+	// 	return recipe, err
+	// }
 
 	return recipe, nil
 }

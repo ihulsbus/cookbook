@@ -4,17 +4,23 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	m "github.com/ihulsbus/cookbook/internal/models"
-	r "github.com/ihulsbus/cookbook/internal/repositories"
 )
 
+type RecipeRepository interface {
+	FindAll() ([]m.Recipe, error)
+	FindSingle(recipeID uint) (m.Recipe, error)
+	Create(recipe m.Recipe) (m.Recipe, error)
+	Update(recipe m.Recipe) (m.Recipe, error)
+	Delete(recipe m.Recipe) error
+}
 type RecipeService struct {
-	repo        *r.RecipeRepository
+	repo        RecipeRepository
 	logger      *log.Logger
 	imageFolder string
 }
 
 // NewRecipeService creates a new RecipeService instance
-func NewRecipeService(recipeRepo *r.RecipeRepository, ImageStorePath string, logger *log.Logger) *RecipeService {
+func NewRecipeService(recipeRepo RecipeRepository, ImageStorePath string, logger *log.Logger) *RecipeService {
 	return &RecipeService{
 		repo:        recipeRepo,
 		logger:      logger,
@@ -23,7 +29,7 @@ func NewRecipeService(recipeRepo *r.RecipeRepository, ImageStorePath string, log
 }
 
 // Find contains the business logic to get all recipes
-func (s RecipeService) FindAllRecipes() ([]m.Recipe, error) {
+func (s RecipeService) FindAll() ([]m.Recipe, error) {
 	var recipes []m.Recipe
 
 	recipes, err := s.repo.FindAll()
@@ -35,10 +41,10 @@ func (s RecipeService) FindAllRecipes() ([]m.Recipe, error) {
 }
 
 // Find contains the business logic to get a specific recipe
-func (s RecipeService) FindSingleRecipe(recipeID int) (m.Recipe, error) {
+func (s RecipeService) FindSingle(recipeID int) (m.Recipe, error) {
 	var recipe m.Recipe
 
-	recipe, err := s.repo.Find(uint(recipeID))
+	recipe, err := s.repo.FindSingle(uint(recipeID))
 	if err != nil {
 		return recipe, err
 	}
@@ -47,7 +53,7 @@ func (s RecipeService) FindSingleRecipe(recipeID int) (m.Recipe, error) {
 }
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing
-func (s RecipeService) CreateRecipe(recipe m.Recipe) (m.Recipe, error) {
+func (s RecipeService) Create(recipe m.Recipe) (m.Recipe, error) {
 
 	recipe, err := s.repo.Create(recipe)
 	if err != nil {
@@ -57,11 +63,11 @@ func (s RecipeService) CreateRecipe(recipe m.Recipe) (m.Recipe, error) {
 	return recipe, nil
 }
 
-func (s RecipeService) UpdateRecipe(recipe m.Recipe) (m.Recipe, error) {
+func (s RecipeService) Update(recipe m.Recipe) (m.Recipe, error) {
 	var updatedRecipe m.Recipe
 	var originalRecipe m.Recipe
 
-	originalRecipe, err := s.repo.Find(recipe.ID)
+	originalRecipe, err := s.repo.FindSingle(recipe.ID)
 	if err != nil {
 		return updatedRecipe, err
 	}
@@ -90,7 +96,7 @@ func (s RecipeService) UpdateRecipe(recipe m.Recipe) (m.Recipe, error) {
 	return updatedRecipe, nil
 }
 
-func (s RecipeService) DeleteRecipe(recipe m.Recipe) error {
+func (s RecipeService) Delete(recipe m.Recipe) error {
 
 	if err := s.repo.Delete(recipe); err != nil {
 		return err

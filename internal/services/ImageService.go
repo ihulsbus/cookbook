@@ -29,7 +29,7 @@ func (s ImageService) UploadImage(file multipart.File, recipeID int) bool {
 		return false
 	}
 
-	if b := s.repo.UploadImage(file, filename, recipeID); b {
+	if b := s.repo.UploadImage(file, filename.String(), recipeID); b {
 		return true
 	}
 
