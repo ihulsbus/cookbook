@@ -6,10 +6,28 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	docs "github.com/ihulsbus/cookbook/docs"
 	c "github.com/ihulsbus/cookbook/internal/config"
+	swaggerFiles "github.com/swaggo/files"     // swagger embed files
+	ginSwagger "github.com/swaggo/gin-swagger" // gin-swagger middleware
 )
 
+// @contact.name	Ian Hulsbus
+// @contact.url	https://github.com/ihulsbus/cookbook
+
+// @license.name	GNU Affero General Public License v3.0
+// @license.url	https://www.gnu.org/licenses/agpl-3.0.en.html
+
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Bearer Token
 func main() {
+	docs.SwaggerInfo.Title = "Cookbook API"
+	docs.SwaggerInfo.Version = "0.0.1"
+	docs.SwaggerInfo.Description = "Backend API of the cookbook application. Source code and support can be found at [https://github.com/ihulsbus/cookbook](https://github.com/ihulsbus/cookbook)"
+	docs.SwaggerInfo.Host = "http://localhost:8080"
+	docs.SwaggerInfo.BasePath = "/api/v1"
+
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
@@ -30,36 +48,31 @@ func main() {
 	}))
 
 	// API versioning setup
-	v1 := router.Group("/v1")
+	v1 := router.Group("/api/v1")
 	v1.Use(c.Middleware.OidcMW.Middleware())
+	{
+		recipe := v1.Group("/recipe")
+		{
+			recipe.GET("", c.RecipeEndpoints.GetAll)
+			recipe.GET(":recipeID", c.RecipeEndpoints.Get)
+			recipe.POST("", c.RecipeEndpoints.Create)
+			recipe.POST(":recipeID/cover", c.RecipeEndpoints.ImageUpload)
+			recipe.PUT(":recipeID", c.RecipeEndpoints.Update)
+			recipe.DELETE(":recipeID", c.RecipeEndpoints.Delete)
+		}
 
-	/*~~~~~~~~~~~~~~~~~~~ All GET routes ~~~~~~~~~~~~~~~~~~~*/
-	// Recipes
-	v1.GET("/recipe", c.Endpoints.RecipeGetAll)
-	v1.GET("/recipe/:recipeID", c.Endpoints.RecipeGet)
+		ingredient := v1.Group("/ingredient")
+		{
+			ingredient.GET("", c.IngredientEndpoints.GetAll)
+			ingredient.GET(":ingredientID", c.IngredientEndpoints.GetSingle)
+			ingredient.POST("", c.IngredientEndpoints.Create)
+			ingredient.PUT(":ingredientID", c.IngredientEndpoints.Update)
+			ingredient.DELETE(":ingredientID", c.IngredientEndpoints.Delete)
+		}
+	}
 
-	// Ingredients
-	v1.GET("/ingredients", c.Endpoints.IngredientGetAll)
-	v1.GET("/ingredients/:ingredientID", c.Endpoints.IngredientGetSingle)
-
-	/*~~~~~~~~~~~~~~~~~~~ All PUT routes ~~~~~~~~~~~~~~~~~~~*/
-	// Recipes
-	v1.PUT("/recipe", c.Endpoints.RecipeUpdate)
-
-	/*~~~~~~~~~~~~~~~~~~~ All POST routes ~~~~~~~~~~~~~~~~~~*/
-	// Recipes
-	v1.POST("/recipe", c.Endpoints.RecipeCreate)
-	v1.POST("/recipe/:recipeID/upload", c.Endpoints.RecipeImageUpload)
-
-	// Ingredients
-	v1.POST("/ingredients", c.Endpoints.IngredientCreate)
-
-	/*~~~~~~~~~~~~~~~~~~~ All DELETE routes ~~~~~~~~~~~~~~~~*/
-	// Recipes
-	v1.DELETE("/recipe", c.Endpoints.RecipeDelete)
-
-	// Ingredients
-	v1.DELETE("/ingredients", c.Endpoints.IngredientDelete)
+	// Swagger docs
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	/*~~~~~~~~~~~~~~~~~~~*/
 

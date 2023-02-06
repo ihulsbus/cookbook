@@ -13,6 +13,22 @@ import (
 
 var (
 	// Generic
+	envBinds []string = []string{
+		"debug",
+		"oidc_url",
+		"oidc_clientid",
+		"database_host",
+		"database_port",
+		"database_database",
+		"database_username",
+		"database_password",
+		"database_sslmode",
+		"database_timezone",
+		"s3_endpoint",
+		"s3_key",
+		"s3_secret",
+		"s3_bucket",
+	}
 	Configuration m.Config
 	Logger        *log.Logger
 
@@ -30,34 +46,28 @@ var (
 	ImageService      *s.ImageService
 
 	// Handlers
-	Handlers *h.Handlers
+	RecipeHandlers     *h.RecipeHandlers
+	IngredientHandlers *h.IngredientHandlers
 
 	// Endpoints
-	Endpoints *e.Endpoints
+	RecipeEndpoints     *e.RecipeEndpoints
+	IngredientEndpoints *e.IngredientEndpoints
 )
 
 func initViper() {
 	viper.SetEnvPrefix("cbb")
 
-	// global
-	err := viper.BindEnv("debug")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'debug': %s", err.Error())
+	for i := range envBinds {
+		err := viper.BindEnv(envBinds[i])
+		if err != nil {
+			Logger.Fatalf("error binding to env var '%s': %s", envBinds[i], err.Error())
+		}
 	}
 
+	// global
 	Configuration.Global.Debug = viper.GetBool("debug")
 
 	// oidc
-	err = viper.BindEnv("oidc_url")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'oidc_url': %s", err.Error())
-	}
-
-	err = viper.BindEnv("oidc_clientid")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'oidc_clientid': %s", err.Error())
-	}
-
 	Configuration.Oidc.URL = viper.GetString("oidc_url")
 	Configuration.Oidc.ClientID = viper.GetString("oidc_clientid")
 	Configuration.Oidc.SigningAlgs = append(Configuration.Oidc.SigningAlgs, "RS256")
@@ -66,41 +76,6 @@ func initViper() {
 	Configuration.Oidc.SkipIssuerCheck = true
 
 	// database
-	err = viper.BindEnv("database_host")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'database_host': %s", err.Error())
-	}
-
-	err = viper.BindEnv("database_port")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'database_port': %s", err.Error())
-	}
-
-	err = viper.BindEnv("database_database")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'database_database': %s", err.Error())
-	}
-
-	err = viper.BindEnv("database_username")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'database_username': %s", err.Error())
-	}
-
-	err = viper.BindEnv("database_password")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'database_password': %s", err.Error())
-	}
-
-	err = viper.BindEnv("database_sslmode")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'database_sslmode': %s", err.Error())
-	}
-
-	err = viper.BindEnv("database_timezone")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 'database_timezone': %s", err.Error())
-	}
-
 	Configuration.Database.Host = viper.GetString("database_host")
 	Configuration.Database.Port = viper.GetInt("database_port")
 	Configuration.Database.Database = viper.GetString("database_database")
@@ -110,26 +85,6 @@ func initViper() {
 	Configuration.Database.Timezone = viper.GetString("database_timezone")
 
 	// S3
-	err = viper.BindEnv("s3_endpoint")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 's3_endpoint': %s", err.Error())
-	}
-
-	err = viper.BindEnv("s3_key")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 's3_key': %s", err.Error())
-	}
-
-	err = viper.BindEnv("s3_secret")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 's3_secret': %s", err.Error())
-	}
-
-	err = viper.BindEnv("s3_bucket")
-	if err != nil {
-		Logger.Fatalf("error binding to env var 's3_bucket': %s", err.Error())
-	}
-
 	Configuration.S3.Endpoint = viper.GetString("s3_endpoint")
 	Configuration.S3.AWSAccessKey = viper.GetString("s3_key")
 	Configuration.S3.AWSAccessSecret = viper.GetString("s3_secret")
@@ -202,9 +157,11 @@ func init() {
 	ImageService = s.NewImageService(S3Repository, Logger)
 
 	// Init handlers
-	Handlers = h.NewHandlers(RecipeService, IngredientService, ImageService, Logger)
+	RecipeHandlers = h.NewRecipeHandlers(RecipeService, ImageService, Logger)
+	IngredientHandlers = h.NewIngredientHandlers(IngredientService, Logger)
 
 	// Init endpoints
-	Endpoints = e.NewEndpoints(Handlers)
+	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers)
+	IngredientEndpoints = e.NewIngredientEndpoints(IngredientHandlers)
 
 }

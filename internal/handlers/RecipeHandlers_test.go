@@ -89,12 +89,12 @@ func (S *ImageServiceMock) UploadImage(file multipart.File, recipeID int) bool {
 
 func TestRecipeGetAll_OK(t *testing.T) {
 	recipes = append(recipes, m.Recipe{RecipeName: "recipe1"}, m.Recipe{RecipeName: "recipe2"})
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/v1/recipe", nil)
 	w := httptest.NewRecorder()
 
-	h.RecipeGetAll(w, req)
+	h.GetAll(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -106,12 +106,12 @@ func TestRecipeGetAll_OK(t *testing.T) {
 }
 
 func TestRecipeGet_OK(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
-	h.RecipeGet(w, req, "1")
+	h.Get(w, req, "1")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -123,12 +123,12 @@ func TestRecipeGet_OK(t *testing.T) {
 }
 
 func TestRecipeGet_AtoiErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
-	h.RecipeGet(w, req, "")
+	h.Get(w, req, "")
 
 	resp := w.Result()
 
@@ -136,12 +136,12 @@ func TestRecipeGet_AtoiErr(t *testing.T) {
 }
 
 func TestRecipeGet_FindErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
-	h.RecipeGet(w, req, "0")
+	h.Get(w, req, "0")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -151,14 +151,14 @@ func TestRecipeGet_FindErr(t *testing.T) {
 }
 
 func TestRecipeCreate_OK(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(recipe)
 
 	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.RecipeCreate(w, req)
+	h.Create(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -168,12 +168,12 @@ func TestRecipeCreate_OK(t *testing.T) {
 }
 
 func TestRecipeCreate_UnmarshalErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
-	h.RecipeCreate(w, req)
+	h.Create(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -183,7 +183,7 @@ func TestRecipeCreate_UnmarshalErr(t *testing.T) {
 }
 
 func TestRecipeCreate_CreateErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	recipe.RecipeName = "err"
 	reqBody, _ := json.Marshal(recipe)
@@ -191,7 +191,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.RecipeCreate(w, req)
+	h.Create(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -201,7 +201,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 }
 
 func TestRecipeImageUpload_OK(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	// Set up a pipe to avoid buffering
 	pr, pw := io.Pipe()
@@ -237,7 +237,7 @@ func TestRecipeImageUpload_OK(t *testing.T) {
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 
-	h.RecipeImageUpload(w, req, "1")
+	h.ImageUpload(w, req, "1")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -247,7 +247,7 @@ func TestRecipeImageUpload_OK(t *testing.T) {
 }
 
 func TestRecipeImageUpload_FormErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	// Set up a pipe to avoid buffering
 	pr, pw := io.Pipe()
@@ -282,7 +282,7 @@ func TestRecipeImageUpload_FormErr(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1/upload", pr)
 	w := httptest.NewRecorder()
 
-	h.RecipeImageUpload(w, req, "1")
+	h.ImageUpload(w, req, "1")
 
 	resp := w.Result()
 
@@ -290,7 +290,7 @@ func TestRecipeImageUpload_FormErr(t *testing.T) {
 }
 
 func TestRecipeImageUpload_AtoiErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	// Set up a pipe to avoid buffering
 	pr, pw := io.Pipe()
@@ -326,7 +326,7 @@ func TestRecipeImageUpload_AtoiErr(t *testing.T) {
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 
-	h.RecipeImageUpload(w, req, "")
+	h.ImageUpload(w, req, "")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -336,7 +336,7 @@ func TestRecipeImageUpload_AtoiErr(t *testing.T) {
 }
 
 func TestRecipeImageUpload_RecipeDoesNotExistErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	// Set up a pipe to avoid buffering
 	pr, pw := io.Pipe()
@@ -372,7 +372,7 @@ func TestRecipeImageUpload_RecipeDoesNotExistErr(t *testing.T) {
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 
-	h.RecipeImageUpload(w, req, "0")
+	h.ImageUpload(w, req, "0")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -382,7 +382,7 @@ func TestRecipeImageUpload_RecipeDoesNotExistErr(t *testing.T) {
 }
 
 func TestRecipeImageUpload_UploadErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	// Set up a pipe to avoid buffering
 	pr, pw := io.Pipe()
@@ -418,7 +418,7 @@ func TestRecipeImageUpload_UploadErr(t *testing.T) {
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 
-	h.RecipeImageUpload(w, req, "0")
+	h.ImageUpload(w, req, "0")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -428,7 +428,7 @@ func TestRecipeImageUpload_UploadErr(t *testing.T) {
 }
 
 func TestRecipeUpdate_OK(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	updateRecipe := recipe
 	updateRecipe.ID = 1
@@ -438,7 +438,7 @@ func TestRecipeUpdate_OK(t *testing.T) {
 	req := httptest.NewRequest("PUT", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.RecipeUpdate(w, req)
+	h.Update(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -448,12 +448,12 @@ func TestRecipeUpdate_OK(t *testing.T) {
 }
 
 func TestRecipeUpdate_UnmarshalErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
-	h.RecipeUpdate(w, req)
+	h.Update(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -463,7 +463,7 @@ func TestRecipeUpdate_UnmarshalErr(t *testing.T) {
 }
 
 func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	updateRecipe := recipe
 	updateRecipe.ID = 0
@@ -473,7 +473,7 @@ func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
 	req := httptest.NewRequest("PUT", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.RecipeUpdate(w, req)
+	h.Update(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -483,7 +483,7 @@ func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
 }
 
 func TestRecipeUpdate_UpdateErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	updateRecipe := recipe
 	updateRecipe.ID = 2
@@ -493,7 +493,7 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 	req := httptest.NewRequest("PUT", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.RecipeUpdate(w, req)
+	h.Update(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -503,7 +503,7 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 }
 
 func TestRecipeDelete_OK(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	deleteRecipe := recipe
 	deleteRecipe.ID = 1
@@ -513,7 +513,7 @@ func TestRecipeDelete_OK(t *testing.T) {
 	req := httptest.NewRequest("DELETE", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.RecipeDelete(w, req)
+	h.Delete(w, req)
 
 	resp := w.Result()
 
@@ -521,12 +521,12 @@ func TestRecipeDelete_OK(t *testing.T) {
 }
 
 func TestRecipeDelete_UnmarshalErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
-	h.RecipeDelete(w, req)
+	h.Delete(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -536,7 +536,7 @@ func TestRecipeDelete_UnmarshalErr(t *testing.T) {
 }
 
 func TestRecipeDelete_IDRequiredErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	deleteRecipe := recipe
 	deleteRecipe.ID = 0
@@ -546,7 +546,7 @@ func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 	req := httptest.NewRequest("DELETE", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.RecipeDelete(w, req)
+	h.Delete(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -556,7 +556,7 @@ func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 }
 
 func TestRecipeDelete_DeleteErr(t *testing.T) {
-	h := NewHandlers(&RecipeServiceMock{}, &IngredientServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	deleteRecipe := recipe
 	deleteRecipe.ID = 2
@@ -566,7 +566,7 @@ func TestRecipeDelete_DeleteErr(t *testing.T) {
 	req := httptest.NewRequest("DELETE", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.RecipeDelete(w, req)
+	h.Delete(w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
