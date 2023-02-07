@@ -10,6 +10,7 @@ definitions:
   models.Category:
     properties:
       CategoryName:
+        example: desserts
         type: string
       createdAt:
         type: string
@@ -23,6 +24,7 @@ definitions:
   models.Ingredient:
     properties:
       IngredientName:
+        example: apple
         type: string
       createdAt:
         type: string
@@ -33,6 +35,28 @@ definitions:
       updatedAt:
         type: string
     type: object
+  models.Instruction:
+    properties:
+      Description:
+        example: lorem ipsum dolor sit amet
+        type: string
+      RecipeID:
+        example: 1
+        type: integer
+      StepNumber:
+        example: 1
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      recipe:
+        $ref: '#/definitions/models.Recipe'
+      updatedAt:
+        type: string
+    type: object
   models.Recipe:
     properties:
       Categories:
@@ -40,18 +64,26 @@ definitions:
           $ref: '#/definitions/models.Category'
         type: array
       CookTime:
+        example: 23
         type: integer
       Description:
+        example: pie with apples
         type: string
       DifficultyLevel:
+        example: 1
         type: integer
+      ImageName:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
       Ingredients:
         items:
           $ref: '#/definitions/models.Ingredient'
         type: array
       RecipeName:
+        example: apple pie
         type: string
       ServingCount:
+        example: 4
         type: integer
       Tags:
         items:
@@ -63,14 +95,27 @@ definitions:
         $ref: '#/definitions/gorm.DeletedAt'
       id:
         type: integer
-      imageName:
-        type: string
       updatedAt:
         type: string
     type: object
   models.Tag:
     properties:
       TagName:
+        example: pies
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  models.Unit:
+    properties:
+      UnitName:
+        example: grams
         type: string
       createdAt:
         type: string
@@ -89,6 +134,164 @@ info:
     name: GNU Affero General Public License v3.0
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
 paths:
+  /category:
+    get:
+      description: Returns a JSON array of all available tags
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Category'
+            type: array
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Get a list of all available tags
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tag and returns the JSON object of the created tag
+      parameters:
+      - description: Create a category
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Category'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Category'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Create a new tag
+      tags:
+      - categories
+  /category/{id}:
+    delete:
+      description: Delete an existing tag and returns a simple HTTP code
+      parameters:
+      - description: category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Deletes a tag
+      tags:
+      - categories
+    get:
+      description: Returns the JSON object of a single tag
+      parameters:
+      - description: category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Category'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Get a single tag
+      tags:
+      - categories
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing tag and returns the JSON object of the updated
+        tag
+      parameters:
+      - description: category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update a category
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Category'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Category'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Updates an existing tag
+      tags:
+      - categories
   /ingredient:
     get:
       description: Returns a JSON array of all available ingredients
@@ -120,6 +323,13 @@ paths:
       consumes:
       - application/json
       description: Create a new ingredient and return its JSON object
+      parameters:
+      - description: Create an ingredient
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Ingredient'
       produces:
       - application/json
       responses:
@@ -143,9 +353,7 @@ paths:
       tags:
       - ingredients
   /ingredient/{id}:
-    get:
-      consumes:
-      - application/json
+    delete:
       description: Returns a JSON array of all available ingredients
       parameters:
       - description: Ingredient ID
@@ -153,6 +361,72 @@ paths:
         name: id
         required: true
         type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Delete
+      tags:
+      - ingredients
+    get:
+      description: Returns a JSON object of a single ingredient
+      parameters:
+      - description: Ingredient ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Ingredient'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Get a single ingredient
+      tags:
+      - ingredients
+    put:
+      consumes:
+      - application/json
+      description: Update an ingredient and return the updated object's JSON object
+      parameters:
+      - description: Ingredient ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update an ingredient
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Ingredient'
       produces:
       - application/json
       responses:
@@ -174,7 +448,34 @@ paths:
           description: Any error
           schema:
             type: string
-      summary: Get a list of all available ingredients
+      summary: Update an Ingredient
+      tags:
+      - ingredients
+  /ingredient/units:
+    get:
+      description: Returns a JSON array of all available ingredient units
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Unit'
+            type: array
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Get a list of all available ingredient units
       tags:
       - ingredients
   /recipe:
@@ -208,6 +509,13 @@ paths:
       consumes:
       - application/json
       description: Creates a new recipe and returns a JSON object of the created recipe
+      parameters:
+      - description: Create a recipe
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Recipe'
       produces:
       - application/json
       responses:
@@ -300,6 +608,12 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Update a recipe
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Recipe'
       produces:
       - application/json
       responses:
@@ -354,6 +668,273 @@ paths:
       summary: Upload a recipe image
       tags:
       - recipes
+  /recipe/{id}/instruction:
+    get:
+      description: Returns the JSON object of the recipe's instructions
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Instruction'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Get a recipe's instruction text
+      tags:
+      - recipes
+    post:
+      consumes:
+      - application/json
+      description: Creates the instruction text for a recipe and returns the JSON
+        object of the created instructions
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Create an instruction
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Instruction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Instruction'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Create a recipe's instruction text
+      tags:
+      - recipes
+    put:
+      consumes:
+      - application/json
+      description: Updates the instruction text for a recipe and returns the JSON
+        object of the updated instructions
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update an instruction
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Instruction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Instruction'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Update a recipe's instruction text
+      tags:
+      - recipes
+  /tag:
+    get:
+      description: Returns a JSON array of all available tags
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Tag'
+            type: array
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Get a list of all available tags
+      tags:
+      - tags
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tag and returns the JSON object of the created tag
+      parameters:
+      - description: Create a tag
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Tag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tag'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Create a new tag
+      tags:
+      - tags
+  /tag/{id}:
+    delete:
+      description: Delete an existing tag and returns a simple HTTP code
+      parameters:
+      - description: tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Deletes a tag
+      tags:
+      - tags
+    get:
+      description: Returns the JSON object of a single tag
+      parameters:
+      - description: tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tag'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Get a single tag
+      tags:
+      - tags
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing tag and returns the JSON object of the updated
+        tag
+      parameters:
+      - description: tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update a tag
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Tag'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Tag'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Updates an existing tag
+      tags:
+      - tags
 securityDefinitions:
   ApiKeyAuth:
     in: header

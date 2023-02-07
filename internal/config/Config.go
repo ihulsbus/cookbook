@@ -52,6 +52,8 @@ var (
 	// Endpoints
 	RecipeEndpoints     *e.RecipeEndpoints
 	IngredientEndpoints *e.IngredientEndpoints
+	TagEndpoints        *e.TagEndpoints
+	CategoryEndpoints   *e.CategoryEndpoints
 )
 
 func initViper() {
@@ -163,5 +165,7 @@ func init() {
 	// Init endpoints
 	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers)
 	IngredientEndpoints = e.NewIngredientEndpoints(IngredientHandlers)
+	TagEndpoints = e.NewTagEndpoints()
+	CategoryEndpoints = e.NewCategoryEndpoints()
 
 }

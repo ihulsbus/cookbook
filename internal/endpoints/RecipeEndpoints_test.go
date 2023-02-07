@@ -44,6 +44,17 @@ func (h *RecipeHandlersMock) Delete(w http.ResponseWriter, r *http.Request) {
 
 // ==================================================================================================
 
+func Test_RecipeNotImplemented(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.NotImplemented(c)
+
+	assert.Equal(t, 501, w.Code)
+	assert.Equal(t, `"not implemented"`, w.Body.String())
+}
+
 func Test_RecipeGetAll(t *testing.T) {
 	e := NewRecipeEndpoints(&RecipeHandlersMock{})
 	w := httptest.NewRecorder()
