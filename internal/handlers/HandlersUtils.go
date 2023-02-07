@@ -1,10 +1,18 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 )
+
+type LoggerInterface interface {
+	Debugf(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+}
 
 type HanderUtils struct {
 	logger LoggerInterface
@@ -52,4 +60,16 @@ func (h HanderUtils) respondWithJSON(w http.ResponseWriter, code int, payload in
 	if err != nil {
 		h.logger.Warnf("Error occurred while returning error response to client: %s", err)
 	}
+}
+
+func (h HanderUtils) getBody(r io.ReadCloser) ([]byte, error) {
+	buffer := new(bytes.Buffer)
+	_, err := buffer.ReadFrom(r)
+	if err != nil {
+		return nil, errors.New("unable to get body from request")
+	}
+
+	body := buffer.Bytes()
+
+	return body, nil
 }

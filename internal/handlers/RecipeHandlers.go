@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
@@ -72,16 +71,12 @@ func (h RecipeHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 	var data m.Recipe
 
-	buffer := new(bytes.Buffer)
-	_, err := buffer.ReadFrom(r.Body)
+	body, err := h.utils.getBody(r.Body)
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		h.utils.response400WithDetails(w, err.Error())
 	}
 
-	body := buffer.String()
-
-	if err = json.Unmarshal([]byte(body), &recipe); err != nil {
+	if err = json.Unmarshal(body, &recipe); err != nil {
 		h.utils.response400WithDetails(w, err.Error())
 		return
 	}
@@ -128,16 +123,12 @@ func (h RecipeHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 	var data m.Recipe
 
-	buffer := new(bytes.Buffer)
-	_, err := buffer.ReadFrom(r.Body)
+	body, err := h.utils.getBody(r.Body)
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		h.utils.response400WithDetails(w, err.Error())
 	}
 
-	body := buffer.String()
-
-	if err = json.Unmarshal([]byte(body), &recipe); err != nil {
+	if err = json.Unmarshal(body, &recipe); err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
 	}
@@ -159,16 +150,12 @@ func (h RecipeHandlers) Update(w http.ResponseWriter, r *http.Request) {
 func (h RecipeHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 
-	buffer := new(bytes.Buffer)
-	_, err := buffer.ReadFrom(r.Body)
+	body, err := h.utils.getBody(r.Body)
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		h.utils.response400WithDetails(w, err.Error())
 	}
 
-	body := buffer.String()
-
-	if err = json.Unmarshal([]byte(body), &recipe); err != nil {
+	if err = json.Unmarshal(body, &recipe); err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
 	}

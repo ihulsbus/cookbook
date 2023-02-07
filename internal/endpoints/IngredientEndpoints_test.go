@@ -33,7 +33,7 @@ func (h *IngredientHandlersMock) Create(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *IngredientHandlersMock) Update(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
@@ -80,6 +80,17 @@ func Test_IngredientGetSingle(t *testing.T) {
 	assert.Equal(t, w.Body.String(), "{}")
 }
 
+func Test_IngredientGetUnits(t *testing.T) {
+	e := NewIngredientEndpoints(&IngredientHandlersMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.GetUnits(c)
+
+	assert.Equal(t, 501, w.Code)
+	assert.Equal(t, `"not implemented"`, w.Body.String())
+}
+
 func Test_IngredientCreate(t *testing.T) {
 	e := NewIngredientEndpoints(&IngredientHandlersMock{})
 	w := httptest.NewRecorder()
@@ -88,6 +99,18 @@ func Test_IngredientCreate(t *testing.T) {
 	e.Create(c)
 
 	assert.Equal(t, w.Code, http.StatusCreated)
+	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, w.Body.String(), "{}")
+}
+
+func Test_IngredientUpdate(t *testing.T) {
+	e := NewIngredientEndpoints(&IngredientHandlersMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.Update(c)
+
+	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
 	assert.Equal(t, w.Body.String(), "{}")
 }

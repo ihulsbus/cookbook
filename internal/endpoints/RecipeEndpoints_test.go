@@ -78,6 +78,18 @@ func Test_RecipeGet(t *testing.T) {
 	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
 	assert.Equal(t, w.Body.String(), "{}")
 }
+
+func Test_GetInstruction(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.GetInstruction(c)
+
+	assert.Equal(t, 501, w.Code)
+	assert.Equal(t, `"not implemented"`, w.Body.String())
+}
+
 func Test_RecipeCreate(t *testing.T) {
 	e := NewRecipeEndpoints(&RecipeHandlersMock{})
 	w := httptest.NewRecorder()
@@ -89,6 +101,18 @@ func Test_RecipeCreate(t *testing.T) {
 	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
 	assert.Equal(t, w.Body.String(), "{}")
 }
+
+func Test_CreateInstruction(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.CreateInstruction(c)
+
+	assert.Equal(t, 501, w.Code)
+	assert.Equal(t, `"not implemented"`, w.Body.String())
+}
+
 func Test_RecipeImageUpload(t *testing.T) {
 	e := NewRecipeEndpoints(&RecipeHandlersMock{})
 	w := httptest.NewRecorder()
@@ -110,6 +134,17 @@ func Test_RecipeUpdate(t *testing.T) {
 	assert.Equal(t, w.Code, http.StatusOK)
 	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
 	assert.Equal(t, w.Body.String(), "{}")
+}
+
+func Test_UpdateInstruction(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.UpdateInstruction(c)
+
+	assert.Equal(t, 501, w.Code)
+	assert.Equal(t, `"not implemented"`, w.Body.String())
 }
 
 func Test_RecipeDelete(t *testing.T) {

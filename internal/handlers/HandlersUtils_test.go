@@ -8,6 +8,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type LoggerInterfaceMock struct{}
+
+func (l *LoggerInterfaceMock) Debugf(format string, args ...interface{}) {}
+func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
+
 func TestResponse201(t *testing.T) {
 	h := NewHanderUtils(&LoggerInterfaceMock{})
 	w := httptest.NewRecorder()

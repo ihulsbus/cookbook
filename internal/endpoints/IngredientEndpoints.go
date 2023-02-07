@@ -51,7 +51,7 @@ func (e IngredientEndpoints) GetAll(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/ingredient/units [get]
 func (e IngredientEndpoints) GetUnits(ctx *gin.Context) {
-	e.handlers.GetAll(ctx.Writer, ctx.Request)
+	e.NotImplemented(ctx)
 }
 
 // @Summary		Get a single ingredient
