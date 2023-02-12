@@ -14,7 +14,6 @@ type Middleware struct {
 }
 
 type LoggingInterface interface {
-	Error(args ...interface{})
 	Debugf(format string, args ...interface{})
 	WithFields(fields log.Fields) *log.Entry
 }

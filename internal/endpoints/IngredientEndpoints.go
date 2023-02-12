@@ -8,6 +8,7 @@ import (
 
 type IngredientHandlers interface {
 	GetAll(w http.ResponseWriter, r *http.Request)
+	GetUnits(w http.ResponseWriter, r *http.Request)
 	GetSingle(w http.ResponseWriter, r *http.Request, ingredientID string)
 	Create(w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request)
@@ -51,7 +52,7 @@ func (e IngredientEndpoints) GetAll(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/ingredient/units [get]
 func (e IngredientEndpoints) GetUnits(ctx *gin.Context) {
-	e.NotImplemented(ctx)
+	e.handlers.GetUnits(ctx.Writer, ctx.Request)
 }
 
 // @Summary		Get a single ingredient

@@ -25,6 +25,16 @@ func (r IngredientRepository) FindAll() ([]m.Ingredient, error) {
 	return ingredients, nil
 }
 
+func (r IngredientRepository) FindUnits() ([]m.Unit, error) {
+	var units []m.Unit
+
+	if err := r.db.Find(&units).Error; err != nil {
+		return nil, err
+	}
+
+	return units, nil
+}
+
 func (r IngredientRepository) FindSingle(ingredientID int) (m.Ingredient, error) {
 	var ingredient m.Ingredient
 

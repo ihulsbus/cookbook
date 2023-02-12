@@ -6,6 +6,7 @@ import (
 
 type IngredientRepository interface {
 	FindAll() ([]m.Ingredient, error)
+	FindUnits() ([]m.Unit, error)
 	FindSingle(ingredientID int) (m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
 	Update(ingredient m.Ingredient) (m.Ingredient, error)
@@ -31,6 +32,17 @@ func (s IngredientService) FindAll() ([]m.Ingredient, error) {
 	}
 
 	return ingredients, nil
+}
+
+func (s IngredientService) FindUnits() ([]m.Unit, error) {
+	var units []m.Unit
+
+	units, err := s.repo.FindUnits()
+	if err != nil {
+		return nil, err
+	}
+
+	return units, nil
 }
 
 func (s IngredientService) FindSingle(ingredientID int) (m.Ingredient, error) {

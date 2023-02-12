@@ -95,6 +95,31 @@ func TestIngredientFindAll_Err(t *testing.T) {
 	assert.Len(t, result, 0)
 }
 
+func TestIngredientFindUnits_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM units]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+	result, err := r.FindUnits()
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+}
+
+func TestIngredientFindUnits_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM units]`).
+		WillReturnError(errors.New("error"))
+
+	result, err := r.FindUnits()
+
+	assert.EqualError(t, err, "error")
+	assert.Len(t, result, 0)
+}
+
 func TestIngredientFindSingle_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)

@@ -10,6 +10,7 @@ import (
 
 type IngredientService interface {
 	FindAll() ([]m.Ingredient, error)
+	FindUnits() ([]m.Unit, error)
 	FindSingle(ingredientID int) (m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
 	Update(ingredient m.Ingredient) (m.Ingredient, error)
@@ -35,6 +36,19 @@ func (h IngredientHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
 	var data []m.Ingredient
 
 	data, err := h.ingredientService.FindAll()
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	h.utils.respondWithJSON(w, http.StatusOK, data)
+}
+
+// Get all units
+func (h IngredientHandlers) GetUnits(w http.ResponseWriter, r *http.Request) {
+	var data []m.Unit
+
+	data, err := h.ingredientService.FindUnits()
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return

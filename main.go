@@ -12,15 +12,13 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger" // gin-swagger middleware
 )
 
-//	@contact.name	Ian Hulsbus
-//	@contact.url	https://github.com/ihulsbus/cookbook
-
-//	@license.name	GNU Affero General Public License v3.0
-//	@license.url	https://www.gnu.org/licenses/agpl-3.0.en.html
-
-//	@securityDefinitions.apikey	ApiKeyAuth
-//	@in							header
-//	@name						Bearer Token
+// @contact.name	Ian Hulsbus
+// @contact.url	https://github.com/ihulsbus/cookbook
+// @license.name	GNU Affero General Public License v3.0
+// @license.url	https://www.gnu.org/licenses/agpl-3.0.en.html
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Bearer Token
 func main() {
 	docs.SwaggerInfo.Title = "Cookbook API"
 	docs.SwaggerInfo.Version = "0.0.1"
@@ -63,7 +61,6 @@ func main() {
 			recipe.PUT(":id/instruction", c.RecipeEndpoints.UpdateInstruction)
 			recipe.DELETE(":id", c.RecipeEndpoints.Delete)
 		}
-
 		ingredient := v1.Group("/ingredient")
 		{
 			ingredient.GET("", c.IngredientEndpoints.GetAll)
@@ -71,7 +68,7 @@ func main() {
 			ingredient.POST("", c.IngredientEndpoints.Create)
 			ingredient.PUT(":id", c.IngredientEndpoints.Update)
 			ingredient.DELETE(":id", c.IngredientEndpoints.Delete)
-			ingredient.GET("units", c.IngredientEndpoints.GetUnits) // implement
+			ingredient.GET("unit", c.IngredientEndpoints.GetUnits)
 		}
 		tag := v1.Group("/tag")
 		{

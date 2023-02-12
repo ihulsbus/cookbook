@@ -10,6 +10,7 @@ import (
 
 var (
 	ingredient m.Ingredient = m.Ingredient{IngredientName: "ingredient"}
+	unit       m.Unit       = m.Unit{ID: 1, FullName: "Fluid Ounce", ShortName: "fl oz"}
 )
 
 type IngredientRepositoryMock struct{}
@@ -20,6 +21,14 @@ func (IngredientRepositoryMock) FindAll() ([]m.Ingredient, error) {
 
 	return ingredients, nil
 }
+
+func (IngredientRepositoryMock) FindUnits() ([]m.Unit, error) {
+	var units []m.Unit
+	units = append(units, unit)
+
+	return units, nil
+}
+
 func (IngredientRepositoryMock) FindSingle(ingredientID int) (m.Ingredient, error) {
 	switch ingredientID {
 	case 1:
@@ -29,6 +38,7 @@ func (IngredientRepositoryMock) FindSingle(ingredientID int) (m.Ingredient, erro
 		return ingredient, errors.New("error")
 	}
 }
+
 func (IngredientRepositoryMock) Create(ingredient m.Ingredient) (m.Ingredient, error) {
 	switch ingredient.ID {
 	case 1:
@@ -37,6 +47,7 @@ func (IngredientRepositoryMock) Create(ingredient m.Ingredient) (m.Ingredient, e
 		return ingredient, errors.New("error")
 	}
 }
+
 func (IngredientRepositoryMock) Update(ingredient m.Ingredient) (m.Ingredient, error) {
 	switch ingredient.ID {
 	case 1:
@@ -45,6 +56,7 @@ func (IngredientRepositoryMock) Update(ingredient m.Ingredient) (m.Ingredient, e
 		return ingredient, errors.New("error")
 	}
 }
+
 func (IngredientRepositoryMock) Delete(ingredient m.Ingredient) error {
 	switch ingredient.ID {
 	case 1:
@@ -62,6 +74,18 @@ func TestIngredientFindAll_OK(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, result[0].IngredientName, "ingredient")
+}
+
+func TestIngredientFindUnits_OK(t *testing.T) {
+	s := NewIngredientService(&IngredientRepositoryMock{})
+
+	result, err := s.FindUnits()
+
+	assert.NoError(t, err)
+	assert.Len(t, result, 1)
+	assert.Equal(t, result[0].ID, uint(1))
+	assert.Equal(t, result[0].FullName, "Fluid Ounce")
+	assert.Equal(t, result[0].ShortName, "fl oz")
 }
 
 func TestIngredientFindSingle_OK(t *testing.T) {

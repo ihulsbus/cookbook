@@ -11,6 +11,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	InitNOK = "> Init NOK"
+	InitOK  = "> Init OK"
+)
+
 var (
 	// Generic
 	envBinds []string = []string{
@@ -62,7 +67,8 @@ func initViper() {
 	for i := range envBinds {
 		err := viper.BindEnv(envBinds[i])
 		if err != nil {
-			Logger.Fatalf("error binding to env var '%s': %s", envBinds[i], err.Error())
+			Logger.Errorf("error binding to env var '%s': %s", envBinds[i], err.Error())
+			Logger.Fatal(InitNOK)
 		}
 	}
 
@@ -120,17 +126,20 @@ func init() {
 		FullTimestamp: true,
 	})
 
+	Logger.Info("> init config")
 	// Init Viper
 	initViper()
 
+	Logger.Info("> init cors")
 	// Init CORS rules
 	initCors()
 
 	if Configuration.Global.Debug {
 		Logger.SetLevel(log.DebugLevel)
-		Logger.Debugln("Enabled DEBUG logging level")
+		Logger.Debugln("> Enabled DEBUG logging level")
 	}
 
+	Logger.Info("> init DB")
 	// Init Database
 	Configuration.DatabaseClient = initDatabase(
 		Configuration.Database.Host,
@@ -142,9 +151,16 @@ func init() {
 		Configuration.Database.Timezone,
 	)
 
+	if err := initUnits(); err != nil {
+		Logger.Error(err)
+		Logger.Fatal(InitNOK)
+	}
+
+	Logger.Info("> init S3")
 	// Init S3 session
 	Configuration.S3ClientSession = connectS3(Configuration.S3.Endpoint, Configuration.S3.AWSAccessSecret, Configuration.S3.AWSAccessKey, "us-east-1")
 
+	Logger.Info("> init application")
 	// Init middleware
 	Middleware = mi.NewMiddleware(&Configuration.Oidc, Logger)
 
@@ -168,4 +184,5 @@ func init() {
 	TagEndpoints = e.NewTagEndpoints()
 	CategoryEndpoints = e.NewCategoryEndpoints()
 
+	Logger.Info(InitOK)
 }

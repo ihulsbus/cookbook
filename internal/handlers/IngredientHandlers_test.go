@@ -18,14 +18,24 @@ type IngredientServiceMock struct {
 
 var (
 	ingredients []m.Ingredient
+	units       []m.Unit
 	ingredient  m.Ingredient = m.Ingredient{
 		IngredientName: "ingredient",
 	}
+	unit m.Unit = m.Unit{
+		ID:        1,
+		FullName:  "Fluid Ounce",
+		ShortName: "fl oz"}
 )
 
 func (s *IngredientServiceMock) FindAll() ([]m.Ingredient, error) {
 	ingredients = append(ingredients, m.Ingredient{IngredientName: "ingredient1"}, m.Ingredient{IngredientName: "ingredient2"})
 	return ingredients, nil
+}
+
+func (s *IngredientServiceMock) FindUnits() ([]m.Unit, error) {
+	units = append(units, unit, m.Unit{ID: 2, FullName: "Ounce", ShortName: "oz"})
+	return units, nil
 }
 
 func (s *IngredientServiceMock) FindSingle(ingredientID int) (m.Ingredient, error) {
@@ -70,7 +80,7 @@ func TestIngredientGetAll_OK(t *testing.T) {
 	expected = append(expected, m.Ingredient{IngredientName: "ingredient1"}, m.Ingredient{IngredientName: "ingredient2"})
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/v1/ingredients", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredients", nil)
 	w := httptest.NewRecorder()
 
 	h.GetAll(w, req)
@@ -84,10 +94,29 @@ func TestIngredientGetAll_OK(t *testing.T) {
 	assert.Equal(t, body, expectedBody)
 }
 
+func TestIngredientGetUnits_OK(t *testing.T) {
+	var expected []m.Unit
+	expected = append(expected, unit, m.Unit{ID: 2, FullName: "Ounce", ShortName: "oz"})
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/units", nil)
+	w := httptest.NewRecorder()
+
+	h.GetUnits(w, req)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	expectedBody, _ := json.Marshal(expected)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, expectedBody, body)
+}
+
 func TestIngredientGet_OK(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/v1/ingredient/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/1", nil)
 	w := httptest.NewRecorder()
 
 	h.GetSingle(w, req, "1")
@@ -104,7 +133,7 @@ func TestIngredientGet_OK(t *testing.T) {
 func TestIngredientGet_AtoiErr(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/v1/ingredient/", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/", nil)
 	w := httptest.NewRecorder()
 
 	h.GetSingle(w, req, "")
@@ -119,7 +148,7 @@ func TestIngredientGet_AtoiErr(t *testing.T) {
 func TestIngredientGet_FindErr(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/v1/ingredient/0", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/0", nil)
 	w := httptest.NewRecorder()
 
 	h.GetSingle(w, req, "0")
@@ -136,7 +165,7 @@ func TestIngredientCreate_OK(t *testing.T) {
 
 	reqBody, _ := json.Marshal(ingredient)
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/ingredient", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/ingredient", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Create(w, req)
@@ -151,7 +180,7 @@ func TestIngredientCreate_OK(t *testing.T) {
 func TestIngredientCreate_UnmarshallErr(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/ingredient", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/ingredient", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.Create(w, req)
@@ -171,7 +200,7 @@ func TestIngredientCreate_CreateErr(t *testing.T) {
 
 	reqBody, _ := json.Marshal(errIngredient)
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/ingredient", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/ingredient", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Create(w, req)
@@ -191,7 +220,7 @@ func TestIngredientUpdate_OK(t *testing.T) {
 	updateIngredient.IngredientName = "update"
 	reqBody, _ := json.Marshal(updateIngredient)
 
-	req := httptest.NewRequest("PUT", "http://example.com/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req)
@@ -206,7 +235,7 @@ func TestIngredientUpdate_OK(t *testing.T) {
 func TestIngredientUpdate_UnmarshalErr(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("PUT", "http://example.com/v1/ingredient/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v1/ingredient/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req)
@@ -226,7 +255,7 @@ func TestIngredientUpdate_IDRequiredErr(t *testing.T) {
 	updateIngredient.IngredientName = "ingredient"
 	reqBody, _ := json.Marshal(updateIngredient)
 
-	req := httptest.NewRequest("PUT", "http://example.com/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req)
@@ -246,7 +275,7 @@ func TestIngredientUpdate_UpdateErr(t *testing.T) {
 	updateIngredient.IngredientName = "fail"
 	reqBody, _ := json.Marshal(updateIngredient)
 
-	req := httptest.NewRequest("PUT", "http://example.com/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req)
@@ -266,7 +295,7 @@ func TestIngredientDelete_OK(t *testing.T) {
 	deleteIngredient.IngredientName = "ingredient"
 	reqBody, _ := json.Marshal(deleteIngredient)
 
-	req := httptest.NewRequest("DELETE", "http://example.com/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req)
@@ -279,7 +308,7 @@ func TestIngredientDelete_OK(t *testing.T) {
 func TestIngredientDelete_UnmarshalErr(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/v1/ingredient/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/ingredient/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req)
@@ -299,7 +328,7 @@ func TestIngredientDelete_IDRequiredErr(t *testing.T) {
 	deleteIngredient.IngredientName = "ingredient"
 	reqBody, _ := json.Marshal(deleteIngredient)
 
-	req := httptest.NewRequest("DELETE", "http://example.com/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req)
@@ -319,7 +348,7 @@ func TestIngredientDelete_DeleteErr(t *testing.T) {
 	deleteIngredient.IngredientName = "ingredient"
 	reqBody, _ := json.Marshal(deleteIngredient)
 
-	req := httptest.NewRequest("DELETE", "http://example.com/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req)

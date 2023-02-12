@@ -35,10 +35,11 @@ type Ingredient struct {
 
 // RecipeIngredient struct to hold recipe ingredient data
 type RecipeIngredient struct {
-	RecipeID     int    `gorm:"primaryKey" json:"RecipeID" example:"1"`
-	IngredientID int    `gorm:"primaryKey" json:"IngredientID" example:"1"`
-	Quantity     int    `json:"Quantity" example:"40"`
-	Unit         string `json:"Unit" example:"grams"`
+	RecipeID     int  `gorm:"primaryKey" json:"RecipeID" example:"1"`
+	IngredientID int  `gorm:"primaryKey" json:"IngredientID" example:"1"`
+	Quantity     int  `json:"Quantity" example:"40"`
+	UnitID       int  `json:"UnitID" example:"1"`
+	Unit         Unit `gorm:"references:ID"`
 }
 
 // Category struct to hold category data
@@ -54,6 +55,7 @@ type Tag struct {
 }
 
 type Unit struct {
-	gorm.Model
-	UnitName string `gorm:"not null;unique" json:"UnitName" example:"grams"`
+	ID        uint   `gorm:"primaryKey;not null;unique;index" json:"ID" example:"1"`
+	FullName  string `gorm:"not null;unique" json:"FullName" example:"Fluid ounce"`
+	ShortName string `gorm:"not null;unique" json:"ShortName" example:"fl oz"`
 }

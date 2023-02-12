@@ -10,7 +10,30 @@ import (
 	m "github.com/ihulsbus/cookbook/internal/models"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"gorm.io/gorm/logger"
+)
+
+var (
+	units = []m.Unit{
+		// US units
+		{ID: 1, FullName: "Teaspoon", ShortName: "tsp"},
+		{ID: 2, FullName: "Tablespoon", ShortName: "tbsp"},
+		{ID: 3, FullName: "Fluid Ounce", ShortName: "fl oz"},
+		{ID: 4, FullName: "Ounce", ShortName: "oz"},
+		{ID: 5, FullName: "Pound", ShortName: "lb"},
+		{ID: 6, FullName: "Cup", ShortName: "c"},
+		{ID: 7, FullName: "Pint", ShortName: "pt"},
+		{ID: 8, FullName: "Quart", ShortName: "qt"},
+		{ID: 9, FullName: "Gallon", ShortName: "gal"},
+		// Metric units
+		{ID: 10, FullName: "Milliliter", ShortName: "ml"},
+		{ID: 11, FullName: "Deciliter", ShortName: "dl"},
+		{ID: 12, FullName: "Liter", ShortName: "l"},
+		{ID: 13, FullName: "Milligram", ShortName: "mg"},
+		{ID: 14, FullName: "Gram", ShortName: "g"},
+		{ID: 15, FullName: "Kilogram", ShortName: "kg"},
+	}
 )
 
 func connectS3(endpoint string, secret, key, region string) *s3.S3 {
@@ -37,12 +60,14 @@ func initDatabase(host string, user string, password string, dbname string, port
 	})
 
 	if err != nil {
-		Logger.Fatalf("Unable to connect to the database. Exiting..\n%v\n", err)
+		Logger.Errorf("Unable to connect to the database. Exiting..\n%v\n", err)
+		Logger.Fatal(InitNOK)
 	}
 
 	err = db.SetupJoinTable(&m.Recipe{}, "Ingredient", &m.RecipeIngredient{})
 	if err != nil {
 		Logger.Errorf("Error while creating RecipeIngredient join tables: %s", err.Error())
+		Logger.Fatal(InitNOK)
 	}
 
 	err = db.AutoMigrate(
@@ -51,11 +76,30 @@ func initDatabase(host string, user string, password string, dbname string, port
 		&m.Instruction{},
 		&m.Category{},
 		&m.Tag{},
+		&m.Unit{},
 	)
 
 	if err != nil {
 		Logger.Errorf("Error while automigrating database: %s", err.Error())
+		Logger.Fatal(InitNOK)
 	}
 
 	return db
+}
+
+func initUnits() error {
+	if err := Configuration.DatabaseClient.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(units).Error; err != nil {
+			return err
+		}
+
+		return nil
+
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }

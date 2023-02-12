@@ -20,6 +20,12 @@ func (h *IngredientHandlersMock) GetAll(w http.ResponseWriter, r *http.Request) 
 	_, _ = w.Write([]byte("{}"))
 }
 
+func (h *IngredientHandlersMock) GetUnits(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte("{}"))
+}
+
 func (h *IngredientHandlersMock) GetSingle(w http.ResponseWriter, r *http.Request, recipeID string) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
@@ -87,8 +93,9 @@ func Test_IngredientGetUnits(t *testing.T) {
 
 	e.GetUnits(c)
 
-	assert.Equal(t, 501, w.Code)
-	assert.Equal(t, `"not implemented"`, w.Body.String())
+	assert.Equal(t, w.Code, http.StatusOK)
+	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, w.Body.String(), "{}")
 }
 
 func Test_IngredientCreate(t *testing.T) {
