@@ -9,7 +9,9 @@ import (
 type RecipeHandlers interface {
 	GetAll(w http.ResponseWriter, r *http.Request)
 	Get(w http.ResponseWriter, r *http.Request, recipeID string)
+	GetInstruction(w http.ResponseWriter, r *http.Request, recipeID string)
 	Create(w http.ResponseWriter, r *http.Request)
+	CreateInstruction(w http.ResponseWriter, r *http.Request)
 	ImageUpload(w http.ResponseWriter, r *http.Request, recipeID string)
 	Update(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
@@ -68,7 +70,7 @@ func (e RecipeEndpoints) Get(ctx *gin.Context) {
 // @Failure		500			{string}	string	"Any error"
 // @Router			/recipe/{id}/instruction [get]
 func (e RecipeEndpoints) GetInstruction(ctx *gin.Context) {
-	e.NotImplemented(ctx)
+	e.handlers.GetInstruction(ctx.Writer, ctx.Request, ctx.Param("id"))
 }
 
 // @Summary		Create a recipe
@@ -99,7 +101,7 @@ func (e RecipeEndpoints) Create(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/recipe/{id}/instruction [post]
 func (e RecipeEndpoints) CreateInstruction(ctx *gin.Context) {
-	e.NotImplemented(ctx)
+	e.handlers.CreateInstruction(ctx.Writer, ctx.Request)
 }
 
 // @Summary		Update a recipe

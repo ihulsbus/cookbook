@@ -7,6 +7,8 @@ import (
 type RecipeRepository interface {
 	FindAll() ([]m.Recipe, error)
 	FindSingle(recipeID uint) (m.Recipe, error)
+	FindInstruction(recipeID uint) ([]m.Instruction, error)
+	CreateInstruction(instructions []m.Instruction) ([]m.Instruction, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
 	Update(recipe m.Recipe) (m.Recipe, error)
 	Delete(recipe m.Recipe) error
@@ -44,6 +46,26 @@ func (s RecipeService) FindSingle(recipeID int) (m.Recipe, error) {
 	}
 
 	return recipe, nil
+}
+
+func (s RecipeService) FindInstruction(recipeID int) ([]m.Instruction, error) {
+	// TODO create logic
+	instructions, err := s.repo.FindInstruction(uint(recipeID))
+	if err != nil {
+		return nil, err
+	}
+
+	return instructions, nil
+}
+
+func (s RecipeService) CreateInstruction(instruction []m.Instruction) ([]m.Instruction, error) {
+	// TODO create logic
+	instruction, err := s.repo.CreateInstruction(instruction)
+	if err != nil {
+		return nil, err
+	}
+
+	return instruction, nil
 }
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing
@@ -91,7 +113,7 @@ func (s RecipeService) Update(recipe m.Recipe) (m.Recipe, error) {
 }
 
 func (s RecipeService) Delete(recipe m.Recipe) error {
-
+	// TODO create safety logic
 	if err := s.repo.Delete(recipe); err != nil {
 		return err
 	}

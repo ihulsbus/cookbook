@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -28,6 +29,11 @@ var (
 	recipe  m.Recipe = m.Recipe{
 		RecipeName: "recipe",
 	}
+	instruction m.Instruction = m.Instruction{
+		RecipeID:    1,
+		StepNumber:  1,
+		Description: "instruction",
+	}
 )
 
 // ====== RecipeService ======
@@ -47,12 +53,35 @@ func (s *RecipeServiceMock) FindSingle(recipeID int) (m.Recipe, error) {
 	}
 }
 
+func (s *RecipeServiceMock) FindInstruction(recipeID int) ([]m.Instruction, error) {
+	var instructions []m.Instruction
+	switch recipeID {
+	case 1:
+		instructions := append(instructions, m.Instruction{})
+		return instructions, nil
+	case 2:
+		instructions := append(instructions, m.Instruction{})
+		return instructions, nil
+	default:
+		return nil, errors.New("error")
+	}
+}
+
 func (s *RecipeServiceMock) Create(recipe m.Recipe) (m.Recipe, error) {
 	switch recipe.RecipeName {
 	case "recipe":
 		return recipe, nil
 	default:
 		return recipe, errors.New("error")
+	}
+}
+
+func (s *RecipeServiceMock) CreateInstruction(instructions []m.Instruction) ([]m.Instruction, error) {
+	switch instructions[0].RecipeID {
+	case 1:
+		return instructions, nil
+	default:
+		return nil, errors.New("error")
 	}
 }
 
@@ -91,7 +120,7 @@ func TestRecipeGetAll_OK(t *testing.T) {
 	recipes = append(recipes, m.Recipe{RecipeName: "recipe1"}, m.Recipe{RecipeName: "recipe2"})
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/v1/recipe", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe", nil)
 	w := httptest.NewRecorder()
 
 	h.GetAll(w, req)
@@ -108,7 +137,7 @@ func TestRecipeGetAll_OK(t *testing.T) {
 func TestRecipeGet_OK(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/v1/recipe/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Get(w, req, "1")
@@ -125,7 +154,7 @@ func TestRecipeGet_OK(t *testing.T) {
 func TestRecipeGet_AtoiErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/v1/recipe/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Get(w, req, "")
@@ -138,7 +167,7 @@ func TestRecipeGet_AtoiErr(t *testing.T) {
 func TestRecipeGet_FindErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/v1/recipe/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Get(w, req, "0")
@@ -150,12 +179,65 @@ func TestRecipeGet_FindErr(t *testing.T) {
 	assert.Equal(t, string(body), `{"code":500,"msg":"Internal Server Error. (error)"}`)
 }
 
+func TestRecipeGetInstruction_OK(t *testing.T) {
+	var instructions []m.Instruction
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetInstruction(w, req, "1")
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	instructions = append(instructions, m.Instruction{})
+	expectedBody, _ := json.Marshal(instructions)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, expectedBody, body)
+}
+
+func TestRecipeGetInstruction_AtoiErr(t *testing.T) {
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetInstruction(w, req, "")
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	expectedBody := `{"code":500,"msg":"Internal Server Error. (strconv.Atoi: parsing \"\": invalid syntax)"}`
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, expectedBody, string(body))
+}
+
+func TestRecipeGetInstruction_FindErr(t *testing.T) {
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetInstruction(w, req, "0")
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	expectedBody := `{"code":500,"msg":"Internal Server Error. (error)"}`
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, expectedBody, string(body))
+}
+
 func TestRecipeCreate_OK(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(recipe)
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Create(w, req)
@@ -170,7 +252,7 @@ func TestRecipeCreate_OK(t *testing.T) {
 func TestRecipeCreate_UnmarshalErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.Create(w, req)
@@ -188,7 +270,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 	recipe.RecipeName = "err"
 	reqBody, _ := json.Marshal(recipe)
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Create(w, req)
@@ -197,6 +279,64 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
+	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
+}
+
+func TestRecipeCreateInstruction_OK(t *testing.T) {
+	var createInstruction []m.Instruction
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	createInstruction = append(createInstruction, instruction)
+
+	reqBody, _ := json.Marshal(createInstruction)
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1/instruction", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+
+	h.CreateInstruction(w, req)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	assert.Equal(t, body, reqBody)
+}
+
+func TestRecipeCreateInstruction_UnmarshalErr(t *testing.T) {
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
+	w := httptest.NewRecorder()
+
+	h.CreateInstruction(w, req)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, body, []byte(`{"code":400,"msg":"Bad Request. (unexpected end of JSON input)"}`))
+}
+
+func TestRecipeCreateInstruction_CreateErr(t *testing.T) {
+	var createInstruction []m.Instruction
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	cI := instruction
+	cI.RecipeID = 2
+	createInstruction = append(createInstruction, cI)
+
+	reqBody, _ := json.Marshal(createInstruction)
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+
+	h.CreateInstruction(w, req)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Print(string(body))
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
 }
 
@@ -233,7 +373,7 @@ func TestRecipeImageUpload_OK(t *testing.T) {
 		}
 	}()
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1/upload", pr)
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1/upload", pr)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 
@@ -279,7 +419,7 @@ func TestRecipeImageUpload_FormErr(t *testing.T) {
 		}
 	}()
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1/upload", pr)
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1/upload", pr)
 	w := httptest.NewRecorder()
 
 	h.ImageUpload(w, req, "1")
@@ -322,7 +462,7 @@ func TestRecipeImageUpload_AtoiErr(t *testing.T) {
 		}
 	}()
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe//upload", pr)
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe//upload", pr)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 
@@ -368,7 +508,7 @@ func TestRecipeImageUpload_RecipeDoesNotExistErr(t *testing.T) {
 		}
 	}()
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/0/upload", pr)
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/0/upload", pr)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 
@@ -414,7 +554,7 @@ func TestRecipeImageUpload_UploadErr(t *testing.T) {
 		}
 	}()
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/2/upload", pr)
+	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/2/upload", pr)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 
@@ -435,7 +575,7 @@ func TestRecipeUpdate_OK(t *testing.T) {
 	updateRecipe.RecipeName = "recipe"
 	reqBody, _ := json.Marshal(updateRecipe)
 
-	req := httptest.NewRequest("PUT", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req)
@@ -450,7 +590,7 @@ func TestRecipeUpdate_OK(t *testing.T) {
 func TestRecipeUpdate_UnmarshalErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("PUT", "http://example.com/v1/recipe/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req)
@@ -470,7 +610,7 @@ func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
 	updateRecipe.RecipeName = "recipe"
 	reqBody, _ := json.Marshal(updateRecipe)
 
-	req := httptest.NewRequest("PUT", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req)
@@ -490,7 +630,7 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 	updateRecipe.RecipeName = "fail"
 	reqBody, _ := json.Marshal(updateRecipe)
 
-	req := httptest.NewRequest("PUT", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req)
@@ -510,7 +650,7 @@ func TestRecipeDelete_OK(t *testing.T) {
 	deleteRecipe.RecipeName = "recipe"
 	reqBody, _ := json.Marshal(deleteRecipe)
 
-	req := httptest.NewRequest("DELETE", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req)
@@ -523,7 +663,7 @@ func TestRecipeDelete_OK(t *testing.T) {
 func TestRecipeDelete_UnmarshalErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/v1/recipe/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req)
@@ -543,7 +683,7 @@ func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 	deleteRecipe.RecipeName = "recipe"
 	reqBody, _ := json.Marshal(deleteRecipe)
 
-	req := httptest.NewRequest("DELETE", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req)
@@ -563,7 +703,7 @@ func TestRecipeDelete_DeleteErr(t *testing.T) {
 	deleteRecipe.RecipeName = "recipe"
 	reqBody, _ := json.Marshal(deleteRecipe)
 
-	req := httptest.NewRequest("DELETE", "http://example.com/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req)

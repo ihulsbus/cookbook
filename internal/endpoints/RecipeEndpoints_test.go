@@ -22,7 +22,18 @@ func (h *RecipeHandlersMock) Get(w http.ResponseWriter, r *http.Request, recipeI
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
+func (h *RecipeHandlersMock) GetInstruction(w http.ResponseWriter, r *http.Request, recipeID string) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte("{}"))
+}
 func (h *RecipeHandlersMock) Create(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusCreated)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte("{}"))
+}
+
+func (h *RecipeHandlersMock) CreateInstruction(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
@@ -86,8 +97,9 @@ func Test_GetInstruction(t *testing.T) {
 
 	e.GetInstruction(c)
 
-	assert.Equal(t, 501, w.Code)
-	assert.Equal(t, `"not implemented"`, w.Body.String())
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, w.Body.String(), "{}")
 }
 
 func Test_RecipeCreate(t *testing.T) {
@@ -109,8 +121,9 @@ func Test_CreateInstruction(t *testing.T) {
 
 	e.CreateInstruction(c)
 
-	assert.Equal(t, 501, w.Code)
-	assert.Equal(t, `"not implemented"`, w.Body.String())
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, w.Body.String(), "{}")
 }
 
 func Test_RecipeImageUpload(t *testing.T) {

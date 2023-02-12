@@ -40,6 +40,32 @@ func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
 	return recipe, nil
 }
 
+func (r RecipeRepository) FindInstruction(recipeID uint) ([]m.Instruction, error) {
+	var instruction m.Instruction
+	instruction.RecipeID = recipeID
+	var instructions []m.Instruction
+
+	if err := r.db.Find(&instructions).Where(&instruction).Error; err != nil {
+		return nil, err
+	}
+	return instructions, nil
+}
+
+func (r RecipeRepository) CreateInstruction(instructions []m.Instruction) ([]m.Instruction, error) {
+
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+
+		if err = tx.Create(&instructions).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return instructions, nil
+}
+
 // FindRecipeIngredients finds all ingredients associated to a recipe and returns them in a slice
 // func findRecipeIngredients(r *RecipeRepository, recipeID int) ([]m.Recipe_Ingredient, error) {
 // 	var recipeIngredients []m.Recipe_Ingredient

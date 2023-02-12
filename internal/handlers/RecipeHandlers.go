@@ -12,7 +12,9 @@ import (
 type RecipeService interface {
 	FindAll() ([]m.Recipe, error)
 	FindSingle(recipeID int) (m.Recipe, error)
+	FindInstruction(recipeID int) ([]m.Instruction, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
+	CreateInstruction(instruction []m.Instruction) ([]m.Instruction, error)
 	Update(recipe m.Recipe) (m.Recipe, error)
 	Delete(recipe m.Recipe) error
 }
@@ -67,6 +69,49 @@ func (h RecipeHandlers) Get(w http.ResponseWriter, r *http.Request, recipeID str
 	h.utils.respondWithJSON(w, http.StatusOK, data)
 }
 
+func (h RecipeHandlers) GetInstruction(w http.ResponseWriter, r *http.Request, recipeID string) {
+	var data []m.Instruction
+
+	rID, err := strconv.Atoi(recipeID)
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	data, err = h.recipeService.FindInstruction(rID)
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	h.utils.respondWithJSON(w, http.StatusOK, data)
+}
+
+func (h RecipeHandlers) CreateInstruction(w http.ResponseWriter, r *http.Request) {
+	var instructions []m.Instruction
+	var data []m.Instruction
+
+	body, err := h.utils.getBody(r.Body)
+	if err != nil {
+		h.utils.response400WithDetails(w, err.Error())
+		return
+	}
+
+	if err = json.Unmarshal(body, &instructions); err != nil {
+		h.utils.response400WithDetails(w, err.Error())
+		return
+	}
+
+	data, err = h.recipeService.CreateInstruction(instructions)
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	h.utils.respondWithJSON(w, http.StatusCreated, data)
+
+}
+
 func (h RecipeHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 	var data m.Recipe
@@ -74,6 +119,7 @@ func (h RecipeHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	body, err := h.utils.getBody(r.Body)
 	if err != nil {
 		h.utils.response400WithDetails(w, err.Error())
+		return
 	}
 
 	if err = json.Unmarshal(body, &recipe); err != nil {
@@ -126,6 +172,7 @@ func (h RecipeHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	body, err := h.utils.getBody(r.Body)
 	if err != nil {
 		h.utils.response400WithDetails(w, err.Error())
+		return
 	}
 
 	if err = json.Unmarshal(body, &recipe); err != nil {
@@ -153,6 +200,7 @@ func (h RecipeHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 	body, err := h.utils.getBody(r.Body)
 	if err != nil {
 		h.utils.response400WithDetails(w, err.Error())
+		return
 	}
 
 	if err = json.Unmarshal(body, &recipe); err != nil {

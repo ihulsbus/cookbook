@@ -21,8 +21,8 @@ type Recipe struct {
 // Instruction struct to hold instruction data
 type Instruction struct {
 	gorm.Model
-	RecipeID    int    `json:"RecipeID" example:"1"`
-	Recipe      Recipe `gorm:"references:ID"`
+	RecipeID    uint   `json:"RecipeID" example:"1"`
+	Recipe      Recipe `gorm:"references:ID" json:"-"`
 	StepNumber  int    `json:"StepNumber" example:"1"`
 	Description string `json:"Description" example:"lorem ipsum dolor sit amet"`
 }

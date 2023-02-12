@@ -27,10 +27,10 @@ func newMockDatabase(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	newLogger := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
 		logger.Config{
-			SlowThreshold:             time.Second,   // Slow SQL threshold
-			LogLevel:                  logger.Silent, // Log level
-			IgnoreRecordNotFoundError: true,          // Ignore ErrRecordNotFound error for logger
-			Colorful:                  false,         // Disable color
+			SlowThreshold:             time.Second, // Slow SQL threshold
+			LogLevel:                  logger.Info, // Log level
+			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+			Colorful:                  false,       // Disable color
 		},
 	)
 
@@ -207,6 +207,46 @@ func TestIngredientUpdate_Err(t *testing.T) {
 	mock.ExpectRollback()
 
 	_, err := r.Update(ingredient)
+
+	assert.EqualError(t, err, "error")
+}
+
+func TestIngredientDelete_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+	deleteIngredient := ingredient
+	deleteIngredient.ID = 1
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`[UPDATE "ingredients" SET "deleted_at"=$1 WHERE "ingredients"."id" = $2 AND "ingredients"."deleted_at" IS NULL]`).
+		WithArgs(
+			AnyTime{},
+			1,
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	err := r.Delete(deleteIngredient)
+
+	assert.NoError(t, err)
+}
+
+func TestIngredientDelete_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+	deleteIngredient := ingredient
+	deleteIngredient.ID = 1
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`[UPDATE "ingredients" SET "deleted_at"=$1 WHERE "ingredients"."id" = $2 AND "ingredients"."deleted_at" IS NULL]`).
+		WithArgs(
+			AnyTime{},
+			1,
+		).
+		WillReturnError(errors.New("error"))
+	mock.ExpectRollback()
+
+	err := r.Delete(deleteIngredient)
 
 	assert.EqualError(t, err, "error")
 }
