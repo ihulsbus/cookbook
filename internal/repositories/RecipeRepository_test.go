@@ -19,7 +19,6 @@ var (
 	}
 	instruction m.Instruction = m.Instruction{
 		RecipeID:    1,
-		StepNumber:  1,
 		Description: "instruction",
 	}
 )
@@ -74,84 +73,6 @@ func TestRecipeFindSingle_Err(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.IsType(t, result, m.Recipe{})
-}
-
-func TestRecipeFindInstruction_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
-
-	mock.ExpectQuery(`[SELECT * FROM "instructions" WHERE "instructions"."recipe_id" = 1]`).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-
-	result, err := r.FindInstruction(1)
-
-	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-
-}
-
-func TestRecipeFindInstruction_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
-
-	mock.ExpectQuery(`[SELECT * FROM "instructions" WHERE "instructions"."recipe_id" = 1]`).
-		WillReturnError(errors.New("error"))
-
-	_, err := r.FindInstruction(1)
-
-	assert.Error(t, err)
-}
-
-func TestRecipeCreateInstruction_OK(t *testing.T) {
-	var createInstructions []m.Instruction
-	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
-
-	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "instructions" ("created_at","updated_at","deleted_at","recipe_id","step_number","description") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"]`).
-		WithArgs(
-			AnyTime{},
-			AnyTime{},
-			nil,
-			1,
-			1,
-			"instruction",
-		).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectCommit()
-
-	createInstructions = append(createInstructions, instruction)
-
-	result, err := r.CreateInstruction(createInstructions)
-
-	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-}
-
-func TestRecipeCreateInstruction_Err(t *testing.T) {
-	var createInstructions []m.Instruction
-	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
-
-	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "instructions" ("created_at","updated_at","deleted_at","recipe_id","step_number","description") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"]`).
-		WithArgs(
-			AnyTime{},
-			AnyTime{},
-			nil,
-			1,
-			1,
-			"instruction",
-		).
-		WillReturnError(errors.New("error"))
-	mock.ExpectRollback()
-
-	createInstructions = append(createInstructions, instruction)
-
-	result, err := r.CreateInstruction(createInstructions)
-
-	assert.Error(t, err)
-	assert.Len(t, result, 0)
 }
 
 func TestRecipeCreate_Ok(t *testing.T) {
@@ -300,6 +221,157 @@ func TestRecipeDelete_Err(t *testing.T) {
 	mock.ExpectCommit()
 
 	err := r.Delete(updateRecipe)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}
+
+func TestFindInstruction_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM "instructions" WHERE "instructions"."recipe_id" = 1]`).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+
+	result, err := r.FindInstruction(1)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+
+}
+
+func TestFindInstruction_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM "instructions" WHERE "instructions"."recipe_id" = 1]`).
+		WillReturnError(errors.New("error"))
+
+	_, err := r.FindInstruction(1)
+
+	assert.Error(t, err)
+}
+
+func TestCreateInstruction_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(`[INSERT INTO "instructions" ("created_at","updated_at","deleted_at","recipe_id","description") VALUES ($1,$2,$3,$4,$6) RETURNING "id"]`).
+		WithArgs(
+			AnyTime{},
+			AnyTime{},
+			nil,
+			1,
+			"instruction",
+		).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectCommit()
+
+	result, err := r.CreateInstruction(instruction)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+}
+
+func TestCreateInstruction_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(`[INSERT INTO "instructions" ("created_at","updated_at","deleted_at","recipe_id","step_number","description") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"]`).
+		WithArgs(
+			AnyTime{},
+			AnyTime{},
+			nil,
+			1,
+			1,
+			"instruction",
+		).
+		WillReturnError(errors.New("error"))
+	mock.ExpectRollback()
+
+	result, err := r.CreateInstruction(instruction)
+
+	assert.Error(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+}
+
+func TestUpdateInstruction_Ok(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`[UPDATE "instructions" SET "updated_at"=$1,"recipe_id"=$2,"description"=$3 WHERE recipe_id = $4 AND "instructions"."deleted_at" IS NULL]`).
+		WithArgs(
+			AnyTime{},
+			1,
+			"instruction",
+			1,
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	result, err := r.UpdateInstruction(instruction)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+}
+
+func TestUpdateInstruction_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`[UPDATE "instructions" SET "updated_at"=$1,"recipe_id"=$2,"description"=$3 WHERE recipe_id = $4 AND "instructions"."deleted_at" IS NULL]`).
+		WithArgs(
+			AnyTime{},
+			1,
+			"instruction",
+			1,
+		).
+		WillReturnError(errors.New("error"))
+	mock.ExpectRollback()
+
+	result, err := r.UpdateInstruction(instruction)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+	assert.IsType(t, m.Instruction{}, result)
+}
+
+func TestDeleteInstruction_Ok(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`[UPDATE "instructions" SET "deleted_at"=$1 WHERE "instructions"."recipe_id" = $2 AND "instructions"."deleted_at" IS NULL]`).
+		WithArgs(
+			AnyTime{},
+			1,
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	err := r.DeleteInstruction(instruction)
+
+	assert.NoError(t, err)
+}
+
+func TestDeleteInstruction_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(`[UPDATE "instructions" SET "deleted_at"=$1 WHERE "instructions"."recipe_id" = $2 AND "instructions"."deleted_at" IS NULL]`).
+		WithArgs(
+			AnyTime{},
+			1,
+		).
+		WillReturnError(errors.New("error"))
+	mock.ExpectCommit()
+
+	err := r.DeleteInstruction(instruction)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

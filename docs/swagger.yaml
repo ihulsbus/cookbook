@@ -38,12 +38,11 @@ definitions:
   models.Instruction:
     properties:
       Description:
+        description: StepNumber  int    `json:"StepNumber" example:"1"` // TODO introduce
+          later
         example: lorem ipsum dolor sit amet
         type: string
       RecipeID:
-        example: 1
-        type: integer
-      StepNumber:
         example: 1
         type: integer
       createdAt:
@@ -52,8 +51,6 @@ definitions:
         $ref: '#/definitions/gorm.DeletedAt'
       id:
         type: integer
-      recipe:
-        $ref: '#/definitions/models.Recipe'
       updatedAt:
         type: string
     type: object
@@ -114,16 +111,14 @@ definitions:
     type: object
   models.Unit:
     properties:
-      UnitName:
-        example: grams
+      FullName:
+        example: Fluid ounce
         type: string
-      createdAt:
-        type: string
-      deletedAt:
-        $ref: '#/definitions/gorm.DeletedAt'
-      id:
+      ID:
+        example: 1
         type: integer
-      updatedAt:
+      ShortName:
+        example: fl oz
         type: string
     type: object
 info:
@@ -669,6 +664,43 @@ paths:
       tags:
       - recipes
   /recipe/{id}/instruction:
+    delete:
+      consumes:
+      - application/json
+      description: Updates the instruction text for a recipe and returns the JSON
+        object of the updated instructions
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Delete an instruction
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.Instruction'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: delete a recipe's instruction text
+      tags:
+      - recipes
     get:
       description: Returns the JSON object of the recipe's instructions
       parameters:

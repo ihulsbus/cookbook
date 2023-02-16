@@ -46,7 +46,6 @@ func (r S3Repository) UploadImage(file multipart.File, filename string, recipeID
 		ACL:    aws.String("public-read"),
 	})
 	if err != nil {
-		fmt.Println(err.Error())
 		return false
 	}
 

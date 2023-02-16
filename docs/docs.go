@@ -983,6 +983,60 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "delete": {
+                "description": "Updates the instruction text for a recipe and returns the JSON object of the updated instructions",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "delete a recipe's instruction text",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Delete an instruction",
+                        "name": "requestbody",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.Instruction"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Any error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
             }
         },
         "/tag": {
@@ -1282,14 +1336,11 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "Description": {
+                    "description": "StepNumber  int    ` + "`" + `json:\"StepNumber\" example:\"1\"` + "`" + ` // TODO introduce later",
                     "type": "string",
                     "example": "lorem ipsum dolor sit amet"
                 },
                 "RecipeID": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "StepNumber": {
                     "type": "integer",
                     "example": 1
                 },
@@ -1301,9 +1352,6 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
-                },
-                "recipe": {
-                    "$ref": "#/definitions/models.Recipe"
                 },
                 "updatedAt": {
                     "type": "string"
@@ -1393,21 +1441,17 @@ const docTemplate = `{
         "models.Unit": {
             "type": "object",
             "properties": {
-                "UnitName": {
+                "FullName": {
                     "type": "string",
-                    "example": "grams"
+                    "example": "Fluid ounce"
                 },
-                "createdAt": {
-                    "type": "string"
+                "ID": {
+                    "type": "integer",
+                    "example": 1
                 },
-                "deletedAt": {
-                    "$ref": "#/definitions/gorm.DeletedAt"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "updatedAt": {
-                    "type": "string"
+                "ShortName": {
+                    "type": "string",
+                    "example": "fl oz"
                 }
             }
         }

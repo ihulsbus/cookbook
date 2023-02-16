@@ -65,7 +65,7 @@ func (r IngredientRepository) Update(ingredient m.Ingredient) (m.Ingredient, err
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
-		if err := tx.Create(&ingredient).Error; err != nil {
+		if err := tx.Where("ID = ?", ingredient.ID).Updates(&ingredient).Error; err != nil {
 			return err
 		}
 

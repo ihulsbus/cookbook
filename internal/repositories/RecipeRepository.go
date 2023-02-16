@@ -40,32 +40,6 @@ func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
 	return recipe, nil
 }
 
-func (r RecipeRepository) FindInstruction(recipeID uint) ([]m.Instruction, error) {
-	var instruction m.Instruction
-	instruction.RecipeID = recipeID
-	var instructions []m.Instruction
-
-	if err := r.db.Find(&instructions).Where(&instruction).Error; err != nil {
-		return nil, err
-	}
-	return instructions, nil
-}
-
-func (r RecipeRepository) CreateInstruction(instructions []m.Instruction) ([]m.Instruction, error) {
-
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		var err error
-
-		if err = tx.Create(&instructions).Error; err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return instructions, nil
-}
-
 // FindRecipeIngredients finds all ingredients associated to a recipe and returns them in a slice
 // func findRecipeIngredients(r *RecipeRepository, recipeID int) ([]m.Recipe_Ingredient, error) {
 // 	var recipeIngredients []m.Recipe_Ingredient
@@ -135,6 +109,62 @@ func (r RecipeRepository) Delete(recipe m.Recipe) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
 		if err := tx.Delete(&recipe).Error; err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r RecipeRepository) FindInstruction(recipeID uint) (m.Instruction, error) {
+	var instruction m.Instruction
+	instruction.RecipeID = recipeID
+
+	if err := r.db.Find(&instruction).Where("recipe_id = ?", recipeID).Error; err != nil {
+		return instruction, err
+	}
+	return instruction, nil
+}
+
+func (r RecipeRepository) CreateInstruction(instruction m.Instruction) (m.Instruction, error) {
+
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+
+		if err = tx.Create(&instruction).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return instruction, err
+	}
+	return instruction, nil
+}
+
+func (r RecipeRepository) UpdateInstruction(instruction m.Instruction) (m.Instruction, error) {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+
+		if err = tx.Where("recipe_id = ?", &instruction.RecipeID).Updates(&instruction).Error; err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return instruction, err
+	}
+
+	return instruction, nil
+}
+
+func (r RecipeRepository) DeleteInstruction(instruction m.Instruction) error {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Where("recipe_id = ?", &instruction.RecipeID).Delete(&instruction).Error; err != nil {
 			return err
 		}
 

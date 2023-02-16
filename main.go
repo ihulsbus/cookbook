@@ -60,6 +60,7 @@ func main() {
 			recipe.PUT(":id", c.RecipeEndpoints.Update)
 			recipe.PUT(":id/instruction", c.RecipeEndpoints.UpdateInstruction)
 			recipe.DELETE(":id", c.RecipeEndpoints.Delete)
+			recipe.DELETE(":id/instruction", c.RecipeEndpoints.DeleteInstruction)
 		}
 		ingredient := v1.Group("/ingredient")
 		{

@@ -186,8 +186,12 @@ func TestIngredientUpdate_OK(t *testing.T) {
 	expectedIngredient := ingredient
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "ingredients"("created_at","updated_at","deleted_at","ingredient_name")]`).
-		WithArgs(AnyTime{}, AnyTime{}, nil, "").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectExec(`[UPDATE "ingredients" SET "updated_at"=$1 WHERE ID = $2 AND "ingredients"."deleted_at" IS NULL]`).
+		WithArgs(
+			AnyTime{},
+			0,
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 	_, err := r.Update(ingredient)
 
@@ -202,8 +206,12 @@ func TestIngredientUpdate_Err(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "ingredients"("created_at","updated_at","deleted_at","ingredient_name")]`).
-		WithArgs(AnyTime{}, AnyTime{}, nil, "").WillReturnError(errors.New("error"))
+	mock.ExpectExec(`[UPDATE "ingredients" SET "updated_at"=$1 WHERE ID = $2 AND "ingredients"."deleted_at" IS NULL]`).
+		WithArgs(
+			AnyTime{},
+			0,
+		).
+		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
 	_, err := r.Update(ingredient)

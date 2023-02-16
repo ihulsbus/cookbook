@@ -14,7 +14,6 @@ var (
 	}
 	instruction m.Instruction = m.Instruction{
 		RecipeID:    1,
-		StepNumber:  1,
 		Description: "instruction",
 	}
 )
@@ -32,30 +31,10 @@ func (RecipeRepositoryMock) FindSingle(recipeID uint) (m.Recipe, error) {
 	switch recipeID {
 	case 1:
 		return recipe, nil
-
+	case 3:
+		return recipe, nil
 	default:
 		return recipe, errors.New("error")
-	}
-}
-
-func (RecipeRepositoryMock) FindInstruction(recipeID uint) ([]m.Instruction, error) {
-	switch recipeID {
-	case 1:
-		var instructions []m.Instruction
-		instructions = append(instructions, instruction)
-
-		return instructions, nil
-	default:
-		return nil, errors.New("error")
-	}
-}
-
-func (RecipeRepositoryMock) CreateInstruction(instruction []m.Instruction) ([]m.Instruction, error) {
-	switch instruction[0].RecipeID {
-	case 1:
-		return instruction, nil
-	default:
-		return nil, errors.New("error")
 	}
 }
 
@@ -72,6 +51,8 @@ func (RecipeRepositoryMock) Update(recipe m.Recipe) (m.Recipe, error) {
 	switch recipe.ID {
 	case 1:
 		return recipe, nil
+	case 2:
+		return recipe, nil
 	default:
 		return recipe, errors.New("error")
 	}
@@ -79,6 +60,44 @@ func (RecipeRepositoryMock) Update(recipe m.Recipe) (m.Recipe, error) {
 
 func (RecipeRepositoryMock) Delete(recipe m.Recipe) error {
 	switch recipe.ID {
+	case 1:
+		return nil
+	default:
+		return errors.New("error")
+	}
+}
+
+func (RecipeRepositoryMock) FindInstruction(recipeID uint) (m.Instruction, error) {
+	switch recipeID {
+	case 1:
+		return instruction, nil
+	case 3:
+		return instruction, nil
+	default:
+		return instruction, errors.New("error")
+	}
+}
+
+func (RecipeRepositoryMock) CreateInstruction(instruction m.Instruction) (m.Instruction, error) {
+	switch instruction.RecipeID {
+	case 1:
+		return instruction, nil
+	default:
+		return instruction, errors.New("error")
+	}
+}
+
+func (RecipeRepositoryMock) UpdateInstruction(instruction m.Instruction) (m.Instruction, error) {
+	switch instruction.RecipeID {
+	case 1:
+		return instruction, nil
+	default:
+		return instruction, errors.New("error")
+	}
+}
+
+func (RecipeRepositoryMock) DeleteInstruction(instruction m.Instruction) error {
+	switch instruction.RecipeID {
 	case 1:
 		return nil
 	default:
@@ -116,56 +135,6 @@ func TestRecipeFindSingle_Err(t *testing.T) {
 	assert.IsType(t, result, m.Recipe{})
 }
 
-func TestRecipeFindInstruction_OK(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
-
-	result, err := s.FindInstruction(1)
-
-	assert.NoError(t, err)
-	assert.IsType(t, result, []m.Instruction{})
-	assert.Len(t, result, 1)
-	assert.Equal(t, result[0].StepNumber, 1)
-}
-
-func TestRecipeFindInstruction_Err(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
-
-	result, err := s.FindInstruction(0)
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "error")
-
-}
-
-func TestRecipeCreateInstruction_OK(t *testing.T) {
-	var createInstruction []m.Instruction
-	s := NewRecipeService(&RecipeRepositoryMock{})
-
-	createInstruction = append(createInstruction, instruction)
-
-	result, err := s.CreateInstruction(createInstruction)
-
-	assert.NoError(t, err)
-	assert.IsType(t, result, []m.Instruction{})
-	assert.Equal(t, result[0].Description, "instruction")
-}
-
-func TestRecipeCreateInstruction_Err(t *testing.T) {
-	var createInstruction []m.Instruction
-	s := NewRecipeService(&RecipeRepositoryMock{})
-
-	createInstruction = append(createInstruction, instruction)
-	createInstruction[0].RecipeID = 0
-
-	result, err := s.CreateInstruction(createInstruction)
-
-	assert.Error(t, err)
-	assert.EqualError(t, err, "error")
-	assert.IsType(t, result, []m.Instruction{})
-	assert.Len(t, result, 0)
-}
-
 func TestRecipeCreate_OK(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
@@ -197,21 +166,35 @@ func TestRecipeUpdate_Ok(t *testing.T) {
 
 	updateRecipe := recipe
 	updateRecipe.ID = 1
+	updateRecipe.RecipeName = ""
 
-	result, err := s.Update(updateRecipe)
+	result, err := s.Update(updateRecipe, uint(1))
 
 	assert.NoError(t, err)
 	assert.IsType(t, result, m.Recipe{})
 	assert.Equal(t, result.RecipeName, "recipe")
 }
 
-func TestRecipeUpdate_Err(t *testing.T) {
+func TestRecipeUpdate_FindErr(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
 	updateRecipe := recipe
 	updateRecipe.ID = 2
 
-	result, err := s.Update(updateRecipe)
+	result, err := s.Update(updateRecipe, uint(2))
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+	assert.IsType(t, result, m.Recipe{})
+}
+
+func TestRecipeUpdate_UpdateErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	updateRecipe := recipe
+	updateRecipe.ID = 3
+
+	result, err := s.Update(updateRecipe, uint(3))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
@@ -224,7 +207,7 @@ func TestRecipeDelete_Ok(t *testing.T) {
 	deleteRecipe := recipe
 	deleteRecipe.ID = 1
 
-	err := s.Delete(deleteRecipe)
+	err := s.Delete(deleteRecipe, uint(1))
 
 	assert.NoError(t, err)
 }
@@ -235,7 +218,110 @@ func TestRecipeDelete_Err(t *testing.T) {
 	deleteRecipe := recipe
 	deleteRecipe.ID = 2
 
-	err := s.Delete(deleteRecipe)
+	err := s.Delete(deleteRecipe, uint(2))
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}
+
+func TestFindInstruction_OK(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.FindInstruction(1)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+}
+
+func TestFindInstruction_Err(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.FindInstruction(0)
+
+	assert.Error(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+	assert.EqualError(t, err, "error")
+
+}
+
+func TestCreateInstruction_OK(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.CreateInstruction(instruction)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+	assert.Equal(t, result.Description, "instruction")
+}
+
+func TestCreateInstruction_Err(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	createInstruction := instruction
+	createInstruction.RecipeID = 0
+
+	result, err := s.CreateInstruction(createInstruction)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+	assert.IsType(t, m.Instruction{}, result)
+}
+
+func TestUpdateInstruction_OK(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.UpdateInstruction(instruction, uint(1))
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+	assert.Equal(t, instruction.RecipeID, result.RecipeID)
+	assert.Equal(t, instruction.Description, result.Description)
+}
+
+func TestUpdateInstruction_FindErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.UpdateInstruction(instruction, uint(2))
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unable to find existing instruction for the given recipe id")
+	assert.Equal(t, m.Instruction{}, result)
+}
+
+func TestUpdateInstruction_UpdateErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.UpdateInstruction(instruction, uint(3))
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+	assert.Equal(t, m.Instruction{}, result)
+}
+
+func TestDeleteInstruction_OK(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	err := s.DeleteInstruction(instruction, uint(1))
+
+	assert.NoError(t, err)
+}
+
+func TestDeleteInstruction_FindErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	err := s.DeleteInstruction(instruction, uint(2))
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "unable to find existing instruction for the given recipe id")
+}
+
+func TestDeleteInstruction_DeleteErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	deleteInstruction := instruction
+	deleteInstruction.RecipeID = 2
+
+	err := s.DeleteInstruction(deleteInstruction, uint(3))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
