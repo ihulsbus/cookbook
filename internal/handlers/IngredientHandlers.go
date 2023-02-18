@@ -11,10 +11,10 @@ import (
 type IngredientService interface {
 	FindAll() ([]m.Ingredient, error)
 	FindUnits() ([]m.Unit, error)
-	FindSingle(ingredientID int) (m.Ingredient, error)
+	FindSingle(ingredientID uint) (m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
-	Update(ingredient m.Ingredient) (m.Ingredient, error)
-	Delete(ingredient m.Ingredient) error
+	Update(ingredient m.Ingredient, ingredientID uint) (m.Ingredient, error)
+	Delete(ingredientID uint) error
 }
 
 type IngredientHandlers struct {
@@ -67,7 +67,7 @@ func (h IngredientHandlers) GetSingle(w http.ResponseWriter, r *http.Request, in
 		return
 	}
 
-	data, err = h.ingredientService.FindSingle(iID)
+	data, err = h.ingredientService.FindSingle(uint(iID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
@@ -100,9 +100,20 @@ func (h IngredientHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	h.utils.respondWithJSON(w, http.StatusCreated, data)
 }
 
-func (h IngredientHandlers) Update(w http.ResponseWriter, r *http.Request) {
+func (h IngredientHandlers) Update(w http.ResponseWriter, r *http.Request, ingredientID string) {
 	var ingredient m.Ingredient
 	var data m.Ingredient
+
+	iID, err := strconv.Atoi(ingredientID)
+	if err != nil {
+		h.utils.response500(w)
+		return
+	}
+
+	if iID == 0 {
+		h.utils.response400WithDetails(w, "ID is required")
+		return
+	}
 
 	body, err := h.utils.getBody(r.Body)
 	if err != nil {
@@ -114,12 +125,7 @@ func (h IngredientHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ingredient.ID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
-		return
-	}
-
-	data, err = h.ingredientService.Update(ingredient)
+	data, err = h.ingredientService.Update(ingredient, uint(iID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
@@ -129,25 +135,20 @@ func (h IngredientHandlers) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 // Delete an ingredient
-func (h IngredientHandlers) Delete(w http.ResponseWriter, r *http.Request) {
-	var ingredient m.Ingredient
+func (h IngredientHandlers) Delete(w http.ResponseWriter, r *http.Request, ingredientID string) {
 
-	body, err := h.utils.getBody(r.Body)
+	iID, err := strconv.Atoi(ingredientID)
 	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-	}
-
-	if err = json.Unmarshal(body, &ingredient); err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		h.utils.response500(w)
 		return
 	}
 
-	if ingredient.ID == 0 {
+	if iID == 0 {
 		h.utils.response400WithDetails(w, "ID is required")
 		return
 	}
 
-	err = h.ingredientService.Delete(ingredient)
+	err = h.ingredientService.Delete(uint(iID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return

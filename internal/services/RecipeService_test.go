@@ -78,7 +78,9 @@ func (RecipeRepositoryMock) FindInstruction(recipeID uint) (m.Instruction, error
 	case 1:
 		return instruction, nil
 	case 3:
-		return instruction, nil
+		ni := instruction
+		ni.RecipeID = 3
+		return ni, nil
 	default:
 		return instruction, errors.New("error")
 	}
@@ -229,7 +231,7 @@ func TestRecipeDelete_Ok(t *testing.T) {
 	deleteRecipe := recipe
 	deleteRecipe.ID = 1
 
-	err := s.Delete(deleteRecipe, uint(1))
+	err := s.Delete(uint(1))
 
 	assert.NoError(t, err)
 }
@@ -240,7 +242,7 @@ func TestRecipeDelete_Err(t *testing.T) {
 	deleteRecipe := recipe
 	deleteRecipe.ID = 2
 
-	err := s.Delete(deleteRecipe, uint(2))
+	err := s.Delete(uint(2))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
@@ -323,7 +325,7 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 func TestDeleteInstruction_OK(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
-	err := s.DeleteInstruction(instruction, uint(1))
+	err := s.DeleteInstruction(uint(1))
 
 	assert.NoError(t, err)
 }
@@ -331,7 +333,7 @@ func TestDeleteInstruction_OK(t *testing.T) {
 func TestDeleteInstruction_FindErr(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
-	err := s.DeleteInstruction(instruction, uint(2))
+	err := s.DeleteInstruction(uint(2))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "unable to find existing instruction for the given recipe id")
@@ -340,10 +342,7 @@ func TestDeleteInstruction_FindErr(t *testing.T) {
 func TestDeleteInstruction_DeleteErr(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
-	deleteInstruction := instruction
-	deleteInstruction.RecipeID = 2
-
-	err := s.DeleteInstruction(deleteInstruction, uint(3))
+	err := s.DeleteInstruction(uint(3))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

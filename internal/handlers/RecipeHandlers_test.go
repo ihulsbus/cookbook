@@ -69,8 +69,8 @@ func (s *RecipeServiceMock) Update(recipe m.Recipe, recipeID uint) (m.Recipe, er
 	}
 }
 
-func (s *RecipeServiceMock) Delete(recipe m.Recipe, recipeID uint) error {
-	switch recipe.ID {
+func (s *RecipeServiceMock) Delete(recipeID uint) error {
+	switch recipeID {
 	case 1:
 		return nil
 	default:
@@ -107,7 +107,7 @@ func (s *RecipeServiceMock) UpdateInstruction(instruction m.Instruction, recipeI
 	}
 }
 
-func (s *RecipeServiceMock) DeleteInstruction(instruction m.Instruction, recipeID uint) error {
+func (s *RecipeServiceMock) DeleteInstruction(recipeID uint) error {
 	switch recipeID {
 	case 1:
 		return nil
@@ -547,30 +547,20 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 func TestRecipeDelete_OK(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	deleteRecipe := recipe
-	deleteRecipe.ID = 1
-	deleteRecipe.RecipeName = "recipe"
-	reqBody, _ := json.Marshal(deleteRecipe)
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "1")
 
 	resp := w.Result()
 
-	assert.Equal(t, resp.StatusCode, http.StatusNoContent)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 }
 
 func TestRecipeDelete_AtoiErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	deleteRecipe := recipe
-	deleteRecipe.ID = 1
-	deleteRecipe.RecipeName = "recipe"
-	reqBody, _ := json.Marshal(deleteRecipe)
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "")
@@ -580,33 +570,13 @@ func TestRecipeDelete_AtoiErr(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
 
-func TestRecipeDelete_UnmarshalErr(t *testing.T) {
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
-	w := httptest.NewRecorder()
-
-	h.Delete(w, req, "1")
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (unexpected end of JSON input)"}`))
-}
-
 func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	deleteRecipe := recipe
-	deleteRecipe.ID = 0
-	deleteRecipe.RecipeName = "recipe"
-	reqBody, _ := json.Marshal(deleteRecipe)
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
-	h.Delete(w, req, "1")
+	h.Delete(w, req, "0")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -618,20 +588,15 @@ func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 func TestRecipeDelete_DeleteErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	deleteRecipe := recipe
-	deleteRecipe.ID = 2
-	deleteRecipe.RecipeName = "recipe"
-	reqBody, _ := json.Marshal(deleteRecipe)
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
-	h.Delete(w, req, "1")
+	h.Delete(w, req, "2")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
 }
 
@@ -797,9 +762,7 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 func TestDeleteInstruction_OK(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	reqBody, _ := json.Marshal(instruction)
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.DeleteInstruction(w, req, "1")
@@ -822,25 +785,10 @@ func TestDeleteInstruction_AtoiErr(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
 
-func TestDeleteInstruction_UnmarshalErr(t *testing.T) {
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
-	w := httptest.NewRecorder()
-
-	h.DeleteInstruction(w, req, "1")
-
-	resp := w.Result()
-
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-}
-
 func TestDeleteInstruction_UpdateErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
 
-	reqBody, _ := json.Marshal(instruction)
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.DeleteInstruction(w, req, "2")

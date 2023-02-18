@@ -172,7 +172,6 @@ func (e RecipeEndpoints) UpdateInstruction(ctx *gin.Context) {
 // @Accept		json
 // @Produce		json
 // @Param			id	path		int	true	"Recipe ID"
-// @Param			requestbody	body		models.Instruction	true	"Delete an instruction"
 // @Success		204
 // @Failure		401	{string}	string	"unauthorized"
 // @Failure		404	{string}	string	"not found"

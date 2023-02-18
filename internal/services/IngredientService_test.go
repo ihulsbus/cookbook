@@ -42,7 +42,7 @@ func (IngredientRepositoryMock) FindUnits() ([]m.Unit, error) {
 	}
 }
 
-func (IngredientRepositoryMock) FindSingle(ingredientID int) (m.Ingredient, error) {
+func (IngredientRepositoryMock) FindSingle(ingredientID uint) (m.Ingredient, error) {
 	switch ingredientID {
 	case 1:
 		return ingredient, nil
@@ -184,7 +184,7 @@ func TestIngredientUpdate_Ok(t *testing.T) {
 	updateIngredient := ingredient
 	updateIngredient.ID = 1
 
-	result, err := s.Update(updateIngredient)
+	result, err := s.Update(updateIngredient, 1)
 
 	assert.NoError(t, err)
 	assert.IsType(t, result, m.Ingredient{})
@@ -197,7 +197,7 @@ func TestIngredientUpdate_Err(t *testing.T) {
 	updateIngredient := ingredient
 	updateIngredient.ID = 2
 
-	result, err := s.Update(updateIngredient)
+	result, err := s.Update(updateIngredient, uint(2))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
@@ -210,7 +210,7 @@ func TestIngredientDelete_Ok(t *testing.T) {
 	deleteIngredient := ingredient
 	deleteIngredient.ID = 1
 
-	err := s.Delete(deleteIngredient)
+	err := s.Delete(uint(1))
 
 	assert.NoError(t, err)
 }
@@ -221,7 +221,7 @@ func TestIngredientDelete_Err(t *testing.T) {
 	deleteIngredient := ingredient
 	deleteIngredient.ID = 2
 
-	err := s.Delete(deleteIngredient)
+	err := s.Delete(uint(2))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

@@ -39,10 +39,10 @@ func (r IngredientRepository) FindUnits() ([]m.Unit, error) {
 	return units, nil
 }
 
-func (r IngredientRepository) FindSingle(ingredientID int) (m.Ingredient, error) {
+func (r IngredientRepository) FindSingle(ingredientID uint) (m.Ingredient, error) {
 	var ingredient m.Ingredient
 
-	if err := r.db.Where("id = ?", ingredientID).Find(&ingredient).Error; err != nil {
+	if err := r.db.Where(whereID, ingredientID).Find(&ingredient).Error; err != nil {
 		return ingredient, err
 	}
 
@@ -69,7 +69,7 @@ func (r IngredientRepository) Update(ingredient m.Ingredient) (m.Ingredient, err
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
-		if err := tx.Where("ID = ?", ingredient.ID).Updates(&ingredient).Error; err != nil {
+		if err := tx.Where(whereID, ingredient.ID).Updates(&ingredient).Error; err != nil {
 			return err
 		}
 

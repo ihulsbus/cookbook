@@ -84,15 +84,14 @@ func (s TagService) Update(tag m.Tag, tagID uint) (m.Tag, error) {
 	return updatedTag, nil
 }
 
-func (s TagService) Delete(tag m.Tag, tagID uint) error {
+func (s TagService) Delete(tagID uint) error {
+	var tag m.Tag
 
 	if tagID == 0 {
 		return errors.New("missing id of element to delete")
 	}
 
-	if tag.ID != tagID {
-		tag.ID = tagID
-	}
+	tag.ID = tagID
 
 	err := s.repo.Delete(tag)
 	if err != nil {

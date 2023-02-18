@@ -11,8 +11,8 @@ type IngredientHandlers interface {
 	GetUnits(w http.ResponseWriter, r *http.Request)
 	GetSingle(w http.ResponseWriter, r *http.Request, ingredientID string)
 	Create(w http.ResponseWriter, r *http.Request)
-	Update(w http.ResponseWriter, r *http.Request)
-	Delete(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request, ingredientID string)
+	Delete(w http.ResponseWriter, r *http.Request, ingredientID string)
 }
 
 type IngredientEndpoints struct {
@@ -97,7 +97,7 @@ func (e IngredientEndpoints) Create(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/ingredient/{id} [put]
 func (e IngredientEndpoints) Update(ctx *gin.Context) {
-	e.handlers.Update(ctx.Writer, ctx.Request)
+	e.handlers.Update(ctx.Writer, ctx.Request, ctx.Param("id"))
 }
 
 // @Summary		Delete
@@ -111,5 +111,5 @@ func (e IngredientEndpoints) Update(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/ingredient/{id} [delete]
 func (e IngredientEndpoints) Delete(ctx *gin.Context) {
-	e.handlers.Delete(ctx.Writer, ctx.Request)
+	e.handlers.Delete(ctx.Writer, ctx.Request, ctx.Param("id"))
 }

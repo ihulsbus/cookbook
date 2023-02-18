@@ -97,7 +97,11 @@ func (s RecipeService) Update(recipe m.Recipe, recipeID uint) (m.Recipe, error) 
 	return updatedRecipe, nil
 }
 
-func (s RecipeService) Delete(recipe m.Recipe, recipeID uint) error {
+func (s RecipeService) Delete(recipeID uint) error {
+	var recipe m.Recipe
+
+	recipe.ID = recipeID
+
 	// TODO create safety logic
 	if err := s.repo.Delete(recipe); err != nil {
 		return err
@@ -144,15 +148,12 @@ func (s RecipeService) UpdateInstruction(instruction m.Instruction, recipeID uin
 	return updated, nil
 }
 
-func (s RecipeService) DeleteInstruction(instruction m.Instruction, recipeID uint) error {
+func (s RecipeService) DeleteInstruction(recipeID uint) error {
 	var err error
 
-	if _, err = s.repo.FindInstruction(recipeID); err != nil {
+	instruction, err := s.repo.FindInstruction(recipeID)
+	if err != nil {
 		return errors.New("unable to find existing instruction for the given recipe id")
-	}
-
-	if instruction.RecipeID != recipeID {
-		instruction.RecipeID = recipeID
 	}
 
 	err = s.repo.DeleteInstruction(instruction)

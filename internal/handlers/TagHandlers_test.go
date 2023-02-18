@@ -58,8 +58,8 @@ func (s *TagServiceMock) Update(tag m.Tag, tagID uint) (m.Tag, error) {
 	}
 }
 
-func (s *TagServiceMock) Delete(tag m.Tag, tagID uint) error {
-	switch tag.ID {
+func (s *TagServiceMock) Delete(tagID uint) error {
+	switch tagID {
 	case 1:
 		return nil
 	default:
@@ -273,12 +273,7 @@ func TestTagUpdate_UpdateErr(t *testing.T) {
 func TestTagDelete_OK(t *testing.T) {
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	deleteTag := tag
-	deleteTag.ID = 1
-	deleteTag.TagName = "tag"
-	reqBody, _ := json.Marshal(deleteTag)
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "1")
@@ -291,12 +286,7 @@ func TestTagDelete_OK(t *testing.T) {
 func TestTagDelete_AtoiErr(t *testing.T) {
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	deleteTag := tag
-	deleteTag.ID = 1
-	deleteTag.TagName = "tag"
-	reqBody, _ := json.Marshal(deleteTag)
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "")
@@ -306,30 +296,10 @@ func TestTagDelete_AtoiErr(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 }
 
-func TestTagDelete_UnmarshalErr(t *testing.T) {
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", bytes.NewReader([]byte{}))
-	w := httptest.NewRecorder()
-
-	h.Delete(w, req, "1")
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (unexpected end of JSON input)"}`))
-}
-
 func TestTagDelete_IDRequiredErr(t *testing.T) {
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	deleteTag := tag
-	deleteTag.ID = 0
-	deleteTag.TagName = "tag"
-	reqBody, _ := json.Marshal(deleteTag)
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "0")
@@ -344,15 +314,10 @@ func TestTagDelete_IDRequiredErr(t *testing.T) {
 func TestTagDelete_DeleteErr(t *testing.T) {
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	deleteTag := tag
-	deleteTag.ID = 2
-	deleteTag.TagName = "tag"
-	reqBody, _ := json.Marshal(deleteTag)
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", nil)
 	w := httptest.NewRecorder()
 
-	h.Delete(w, req, "1")
+	h.Delete(w, req, "2")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)

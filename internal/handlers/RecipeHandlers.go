@@ -14,12 +14,12 @@ type RecipeService interface {
 	FindSingle(recipeID uint) (m.Recipe, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
 	Update(recipe m.Recipe, recipeID uint) (m.Recipe, error)
-	Delete(recipe m.Recipe, recipeID uint) error
+	Delete(recipeID uint) error
 
 	FindInstruction(recipeID uint) (m.Instruction, error)
 	CreateInstruction(instruction m.Instruction) (m.Instruction, error)
 	UpdateInstruction(instruction m.Instruction, recipeID uint) (m.Instruction, error)
-	DeleteInstruction(instruction m.Instruction, recipeID uint) error
+	DeleteInstruction(recipeID uint) error
 }
 
 type ImageService interface {
@@ -132,31 +132,18 @@ func (h RecipeHandlers) Update(w http.ResponseWriter, r *http.Request, recipeID 
 }
 
 func (h RecipeHandlers) Delete(w http.ResponseWriter, r *http.Request, recipeID string) {
-	var recipe m.Recipe
-
 	rID, err := strconv.Atoi(recipeID)
 	if err != nil {
 		h.utils.response500(w)
 		return
 	}
 
-	body, err := h.utils.getBody(r.Body)
-	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-		return
-	}
-
-	if err = json.Unmarshal(body, &recipe); err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	if recipe.ID == 0 {
+	if rID == 0 {
 		h.utils.response400WithDetails(w, "ID is required")
 		return
 	}
 
-	err = h.recipeService.Delete(recipe, uint(rID))
+	err = h.recipeService.Delete(uint(rID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
@@ -266,26 +253,13 @@ func (h RecipeHandlers) UpdateInstruction(w http.ResponseWriter, r *http.Request
 }
 
 func (h RecipeHandlers) DeleteInstruction(w http.ResponseWriter, r *http.Request, recipeID string) {
-	var instruction m.Instruction
-
 	rID, err := strconv.Atoi(recipeID)
 	if err != nil {
 		h.utils.response500(w)
 		return
 	}
 
-	body, err := h.utils.getBody(r.Body)
-	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-		return
-	}
-
-	if err = json.Unmarshal(body, &instruction); err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-		return
-	}
-
-	err = h.recipeService.DeleteInstruction(instruction, uint(rID))
+	err = h.recipeService.DeleteInstruction(uint(rID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return

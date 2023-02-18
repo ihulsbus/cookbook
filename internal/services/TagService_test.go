@@ -242,11 +242,7 @@ func TestTagUpdate_UpdateErr(t *testing.T) {
 func TestTagDelete_OK(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	deleteTag := tag
-	deleteTag.ID = 1
-	deleteTag.TagName = "delete"
-
-	err := s.Delete(deleteTag, uint(1))
+	err := s.Delete(uint(1))
 
 	assert.NoError(t, err)
 }
@@ -254,36 +250,16 @@ func TestTagDelete_OK(t *testing.T) {
 func TestTagDelete_IDErr(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	deleteTag := tag
-	deleteTag.ID = 0
-	deleteTag.TagName = "delete"
-
-	err := s.Delete(deleteTag, uint(0))
+	err := s.Delete(uint(0))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "missing id of element to delete")
 }
 
-func TestTagDelete_IDNotEqual(t *testing.T) {
-	s := NewTagService(&TagRepositoryMock{})
-
-	deleteTag := tag
-	deleteTag.ID = 2
-	deleteTag.TagName = "delete"
-
-	err := s.Delete(deleteTag, uint(1))
-
-	assert.NoError(t, err)
-}
-
 func TestTagDelete_DeleteErr(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	deleteTag := tag
-	deleteTag.ID = 2
-	deleteTag.TagName = "delete"
-
-	err := s.Delete(deleteTag, uint(2))
+	err := s.Delete(uint(2))
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

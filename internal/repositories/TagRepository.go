@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	whereTagID = "tag_id = ?"
+	whereTagID = "id = ?"
 )
 
 type TagRepository struct {

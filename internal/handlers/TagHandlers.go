@@ -13,7 +13,7 @@ type TagService interface {
 	FindSingle(tagID uint) (m.Tag, error)
 	Create(tag m.Tag) (m.Tag, error)
 	Update(tag m.Tag, tagID uint) (m.Tag, error)
-	Delete(tag m.Tag, tagID uint) error
+	Delete(tagID uint) error
 }
 
 type TagHandlers struct {
@@ -123,8 +123,6 @@ func (h *TagHandlers) Update(w http.ResponseWriter, r *http.Request, tagID strin
 }
 
 func (h *TagHandlers) Delete(w http.ResponseWriter, r *http.Request, tagID string) {
-	var tag m.Tag
-
 	tID, err := strconv.Atoi(tagID)
 	if err != nil {
 		h.utils.response500(w)
@@ -136,18 +134,7 @@ func (h *TagHandlers) Delete(w http.ResponseWriter, r *http.Request, tagID strin
 		return
 	}
 
-	body, err := h.utils.getBody(r.Body)
-	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-		return
-	}
-
-	if err = json.Unmarshal(body, &tag); err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	err = h.tagService.Delete(tag, uint(tID))
+	err = h.tagService.Delete(uint(tID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return

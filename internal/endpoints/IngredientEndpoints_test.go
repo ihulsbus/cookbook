@@ -38,13 +38,13 @@ func (h *IngredientHandlersMock) Create(w http.ResponseWriter, r *http.Request) 
 	_, _ = w.Write([]byte("{}"))
 }
 
-func (h *IngredientHandlersMock) Update(w http.ResponseWriter, r *http.Request) {
+func (h *IngredientHandlersMock) Update(w http.ResponseWriter, r *http.Request, recipeID string) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
 
-func (h *IngredientHandlersMock) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *IngredientHandlersMock) Delete(w http.ResponseWriter, r *http.Request, recipeID string) {
 	w.WriteHeader(http.StatusNoContent)
 	_, _ = w.Write([]byte(""))
 }

@@ -7,7 +7,7 @@ import (
 type IngredientRepository interface {
 	FindAll() ([]m.Ingredient, error)
 	FindUnits() ([]m.Unit, error)
-	FindSingle(ingredientID int) (m.Ingredient, error)
+	FindSingle(ingredientID uint) (m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
 	Update(ingredient m.Ingredient) (m.Ingredient, error)
 	Delete(ingredient m.Ingredient) error
@@ -45,7 +45,7 @@ func (s IngredientService) FindUnits() ([]m.Unit, error) {
 	return units, nil
 }
 
-func (s IngredientService) FindSingle(ingredientID int) (m.Ingredient, error) {
+func (s IngredientService) FindSingle(ingredientID uint) (m.Ingredient, error) {
 	var ingredient m.Ingredient
 
 	ingredient, err := s.repo.FindSingle(ingredientID)
@@ -67,7 +67,7 @@ func (s IngredientService) Create(ingredient m.Ingredient) (m.Ingredient, error)
 	return response, nil
 }
 
-func (s IngredientService) Update(ingredient m.Ingredient) (m.Ingredient, error) {
+func (s IngredientService) Update(ingredient m.Ingredient, ingredientID uint) (m.Ingredient, error) {
 	var response m.Ingredient
 
 	response, err := s.repo.Update(ingredient)
@@ -78,7 +78,10 @@ func (s IngredientService) Update(ingredient m.Ingredient) (m.Ingredient, error)
 	return response, nil
 }
 
-func (s IngredientService) Delete(ingredient m.Ingredient) error {
+func (s IngredientService) Delete(ingredientID uint) error {
+	var ingredient m.Ingredient
+
+	ingredient.ID = ingredientID
 
 	// TODO: check if there are recipies using the ingredient. If so, an error should be returned and the ingredient should not be deleted.
 	err := s.repo.Delete(ingredient)
