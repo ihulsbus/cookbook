@@ -13,22 +13,8 @@ import (
 )
 
 var (
-	userCtxKey = userContextKey("user")
-	claims     struct {
-		Name           string `json:"name"`
-		Nickname       string `json:"nickname"`
-		Picture        string `json:"picture"`
-		UpdatedAt      string `json:"updated_at"`
-		Email          string `json:"email"`
-		Email_verified bool   `json:"email_verified"`
-		Iss            string `json:"iss"`
-		Sub            string `json:"sub"`
-		Aud            string `json:"aud"`
-		Exp            int    `json:"exp"`
-		Iat            int    `json:"iat"`
-		Nonce          string `json:"nonce"`
-		At_hash        string `json:"at_hash"`
-	}
+	userCtxKey = "user"
+	claims     m.Claims
 )
 
 type OidcMW struct {
@@ -38,8 +24,6 @@ type OidcMW struct {
 	verifier   *oidc.IDTokenVerifier
 	logger     LoggingInterface
 }
-
-type userContextKey string
 
 func (o *OidcMW) Middleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
@@ -61,9 +45,10 @@ func (o *OidcMW) Middleware() gin.HandlerFunc {
 		}
 
 		if user != nil {
-			o.logger.Debugf("Authenticated user as %s (%s)", user.Username, user.Email)
+			o.logger.Debugf("Authenticated user as %s (%s)", user.Name, user.Email)
+			// Set user properly in Gin Context
+			ctx.Set(userCtxKey, user)
 			// Pass down the request to the next middleware (or final handler)
-			ctx.Request = ctx.Request.Clone(o.WithUser(ctx.Request.Context(), user))
 			ctx.Next()
 		}
 	}
@@ -85,12 +70,7 @@ func (o *OidcMW) authorizeUser(bearer string) (*m.User, error) {
 		return nil, fmt.Errorf("email not verified: %v", claims.Email)
 	}
 
-	return &m.User{Username: claims.Nickname, Name: claims.Name, Avatar: claims.Picture, Email: claims.Email}, nil
-}
-
-// WithUser puts the authenticated user information into the current context.
-func (o *OidcMW) WithUser(cntx context.Context, authenticatedUser *m.User) context.Context {
-	return context.WithValue(cntx, userCtxKey, authenticatedUser)
+	return &m.User{UserID: claims.FederatedClaims.UserID, Username: claims.Nickname, Name: claims.Name, Email: claims.Email, Email_verified: claims.Email_verified, Groups: claims.Groups}, nil
 }
 
 // UserFromContext retrieves information about the authenticated user from the context of the request.
