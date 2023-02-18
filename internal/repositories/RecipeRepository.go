@@ -7,6 +7,10 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+const (
+	whereRecipeID = "recipe_id = ?"
+)
+
 type RecipeRepository struct {
 	db *gorm.DB
 }
@@ -33,7 +37,7 @@ func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
 	var recipe m.Recipe
 	recipe.ID = recipeID
 
-	if err := r.db.Preload(clause.Associations).Where(&m.Recipe{}).Find(&recipe).Error; err != nil {
+	if err := r.db.Preload(clause.Associations).Where(whereRecipeID, recipeID).Find(&recipe).Error; err != nil {
 		return recipe, err
 	}
 
@@ -124,7 +128,7 @@ func (r RecipeRepository) FindInstruction(recipeID uint) (m.Instruction, error) 
 	var instruction m.Instruction
 	instruction.RecipeID = recipeID
 
-	if err := r.db.Find(&instruction).Where("recipe_id = ?", recipeID).Error; err != nil {
+	if err := r.db.Find(&instruction).Where(whereRecipeID, recipeID).Error; err != nil {
 		return instruction, err
 	}
 	return instruction, nil
@@ -149,7 +153,7 @@ func (r RecipeRepository) UpdateInstruction(instruction m.Instruction) (m.Instru
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
 
-		if err = tx.Where("recipe_id = ?", &instruction.RecipeID).Updates(&instruction).Error; err != nil {
+		if err = tx.Where(whereRecipeID, &instruction.RecipeID).Updates(&instruction).Error; err != nil {
 			return err
 		}
 
@@ -164,7 +168,7 @@ func (r RecipeRepository) UpdateInstruction(instruction m.Instruction) (m.Instru
 func (r RecipeRepository) DeleteInstruction(instruction m.Instruction) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
-		if err := tx.Where("recipe_id = ?", &instruction.RecipeID).Delete(&instruction).Error; err != nil {
+		if err := tx.Where(whereRecipeID, &instruction.RecipeID).Delete(&instruction).Error; err != nil {
 			return err
 		}
 

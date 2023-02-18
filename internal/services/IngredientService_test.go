@@ -9,24 +9,37 @@ import (
 )
 
 var (
-	ingredient m.Ingredient = m.Ingredient{IngredientName: "ingredient"}
-	unit       m.Unit       = m.Unit{ID: 1, FullName: "Fluid Ounce", ShortName: "fl oz"}
+	findAllIngredient              = ingredient
+	ingredient        m.Ingredient = m.Ingredient{IngredientName: "ingredient"}
+
+	findAllUnit        = unit
+	unit        m.Unit = m.Unit{ID: 1, FullName: "Fluid Ounce", ShortName: "fl oz"}
 )
 
 type IngredientRepositoryMock struct{}
 
 func (IngredientRepositoryMock) FindAll() ([]m.Ingredient, error) {
-	var ingredients []m.Ingredient
-	ingredients = append(ingredients, ingredient)
+	switch findAllIngredient.ID {
+	case 1:
+		var ingredients []m.Ingredient
+		ingredients = append(ingredients, ingredient)
 
-	return ingredients, nil
+		return ingredients, nil
+	default:
+		return nil, errors.New("error")
+	}
 }
 
 func (IngredientRepositoryMock) FindUnits() ([]m.Unit, error) {
-	var units []m.Unit
-	units = append(units, unit)
+	switch findAllUnit.ID {
+	case 1:
+		var units []m.Unit
+		units = append(units, unit)
 
-	return units, nil
+		return units, nil
+	default:
+		return nil, errors.New("error")
+	}
 }
 
 func (IngredientRepositoryMock) FindSingle(ingredientID int) (m.Ingredient, error) {
@@ -68,6 +81,7 @@ func (IngredientRepositoryMock) Delete(ingredient m.Ingredient) error {
 
 func TestIngredientFindAll_OK(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
+	findAllIngredient.ID = 1
 
 	result, err := s.FindAll()
 
@@ -76,8 +90,24 @@ func TestIngredientFindAll_OK(t *testing.T) {
 	assert.Equal(t, result[0].IngredientName, "ingredient")
 }
 
+func TestIngredientFindAll_Err(t *testing.T) {
+	s := NewIngredientService(&IngredientRepositoryMock{})
+
+	findAllIngredient.ID = 2
+
+	result, err := s.FindAll()
+
+	findAllIngredient.ID = 1
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "error")
+}
+
 func TestIngredientFindUnits_OK(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
+
+	findAllUnit.ID = 1
 
 	result, err := s.FindUnits()
 
@@ -86,6 +116,20 @@ func TestIngredientFindUnits_OK(t *testing.T) {
 	assert.Equal(t, result[0].ID, uint(1))
 	assert.Equal(t, result[0].FullName, "Fluid Ounce")
 	assert.Equal(t, result[0].ShortName, "fl oz")
+}
+
+func TestIngredientFindUnits_Err(t *testing.T) {
+	s := NewIngredientService(&IngredientRepositoryMock{})
+
+	findAllUnit.ID = 2
+
+	result, err := s.FindUnits()
+
+	findAllUnit.ID = 1
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "error")
 }
 
 func TestIngredientFindSingle_OK(t *testing.T) {

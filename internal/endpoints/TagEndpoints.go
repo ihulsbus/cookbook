@@ -1,15 +1,26 @@
 package endpoints
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
 
-type TagEndpoints struct{}
+	"github.com/gin-gonic/gin"
+)
 
-func NewTagEndpoints() *TagEndpoints {
-	return &TagEndpoints{}
+type TagHandlers interface {
+	GetAll(w http.ResponseWriter, r *http.Request)
+	Get(w http.ResponseWriter, r *http.Request, tagID string)
+	Create(w http.ResponseWriter, r *http.Request)
+	Update(w http.ResponseWriter, r *http.Request, tagID string)
+	Delete(w http.ResponseWriter, r *http.Request, tagID string)
+}
+type TagEndpoints struct {
+	handlers TagHandlers
 }
 
-func (e TagEndpoints) NotImplemented(ctx *gin.Context) {
-	ctx.AbortWithStatusJSON(501, "not implemented")
+func NewTagEndpoints(handers TagHandlers) *TagEndpoints {
+	return &TagEndpoints{
+		handlers: handers,
+	}
 }
 
 // @Summary		Get a list of all available tags
@@ -22,7 +33,7 @@ func (e TagEndpoints) NotImplemented(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/tag [get]
 func (e TagEndpoints) GetAll(ctx *gin.Context) {
-	e.NotImplemented(ctx)
+	e.handlers.GetAll(ctx.Writer, ctx.Request)
 }
 
 // @Summary		Get a single tag
@@ -36,7 +47,7 @@ func (e TagEndpoints) GetAll(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/tag/{id} [get]
 func (e TagEndpoints) GetSingle(ctx *gin.Context) {
-	e.NotImplemented(ctx)
+	e.handlers.Get(ctx.Writer, ctx.Request, ctx.Param("id"))
 }
 
 // @Summary		Create a new tag
@@ -51,7 +62,7 @@ func (e TagEndpoints) GetSingle(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/tag [post]
 func (e TagEndpoints) Create(ctx *gin.Context) {
-	e.NotImplemented(ctx)
+	e.handlers.Create(ctx.Writer, ctx.Request)
 }
 
 // @Summary		Updates an existing tag
@@ -67,7 +78,7 @@ func (e TagEndpoints) Create(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/tag/{id} [put]
 func (e TagEndpoints) Update(ctx *gin.Context) {
-	e.NotImplemented(ctx)
+	e.handlers.Update(ctx.Writer, ctx.Request, ctx.Param("id"))
 }
 
 // @Summary		Deletes a tag
@@ -81,5 +92,5 @@ func (e TagEndpoints) Update(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/tag/{id} [delete]
 func (e TagEndpoints) Delete(ctx *gin.Context) {
-	e.NotImplemented(ctx)
+	e.handlers.Delete(ctx.Writer, ctx.Request, ctx.Param("id"))
 }

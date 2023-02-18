@@ -5,6 +5,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	whereID = "id = ?"
+)
+
 type IngredientRepository struct {
 	db *gorm.DB
 }

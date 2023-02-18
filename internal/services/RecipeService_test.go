@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	recipe m.Recipe = m.Recipe{
+	findAllRecipe          = recipe
+	recipe        m.Recipe = m.Recipe{
 		RecipeName: "recipe",
 	}
 	instruction m.Instruction = m.Instruction{
@@ -21,10 +22,15 @@ var (
 type RecipeRepositoryMock struct{}
 
 func (RecipeRepositoryMock) FindAll() ([]m.Recipe, error) {
-	var recipes []m.Recipe
-	recipes = append(recipes, recipe)
+	switch findAllRecipe.ID {
+	case 1:
+		var recipes []m.Recipe
+		recipes = append(recipes, recipe)
 
-	return recipes, nil
+		return recipes, nil
+	default:
+		return nil, errors.New("error")
+	}
 }
 
 func (RecipeRepositoryMock) FindSingle(recipeID uint) (m.Recipe, error) {
@@ -108,11 +114,27 @@ func (RecipeRepositoryMock) DeleteInstruction(instruction m.Instruction) error {
 func TestRecipeFindAll_OK(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
+	findAllRecipe.ID = 1
+
 	result, err := s.FindAll()
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, result[0].RecipeName, "recipe")
+}
+
+func TestRecipeFindAll_Err(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	findAllRecipe.ID = 2
+
+	result, err := s.FindAll()
+
+	findAllRecipe.ID = 1
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "error")
 }
 
 func TestRecipeFindSingle_OK(t *testing.T) {

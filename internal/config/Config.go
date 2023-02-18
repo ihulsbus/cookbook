@@ -42,17 +42,20 @@ var (
 
 	// Repositories
 	RecipeRepository     *r.RecipeRepository
-	IngredientRepository *r.IngredientRepository
 	S3Repository         *r.S3Repository
+	IngredientRepository *r.IngredientRepository
+	TagRepository        *r.TagRepository
 
 	// Services
 	RecipeService     *s.RecipeService
-	IngredientService *s.IngredientService
 	ImageService      *s.ImageService
+	IngredientService *s.IngredientService
+	TagService        *s.TagService
 
 	// Handlers
 	RecipeHandlers     *h.RecipeHandlers
 	IngredientHandlers *h.IngredientHandlers
+	TagHandlers        *h.TagHandlers
 
 	// Endpoints
 	RecipeEndpoints     *e.RecipeEndpoints
@@ -166,22 +169,25 @@ func init() {
 
 	// Init repositories
 	RecipeRepository = r.NewRecipeRepository(Configuration.DatabaseClient)
-	IngredientRepository = r.NewIngredientRepository(Configuration.DatabaseClient)
 	S3Repository = r.NewS3Repository(Configuration.DatabaseClient, Configuration.S3, Configuration.S3ClientSession, Logger)
+	IngredientRepository = r.NewIngredientRepository(Configuration.DatabaseClient)
+	TagRepository = r.NewTagRepository(Configuration.DatabaseClient)
 
 	// Init services
 	RecipeService = s.NewRecipeService(RecipeRepository)
-	IngredientService = s.NewIngredientService(IngredientRepository)
 	ImageService = s.NewImageService(S3Repository, Logger)
+	IngredientService = s.NewIngredientService(IngredientRepository)
+	TagService = s.NewTagService(TagRepository)
 
 	// Init handlers
 	RecipeHandlers = h.NewRecipeHandlers(RecipeService, ImageService, Logger)
 	IngredientHandlers = h.NewIngredientHandlers(IngredientService, Logger)
+	TagHandlers = h.NewTagHandlers(TagService, Logger)
 
 	// Init endpoints
 	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers)
 	IngredientEndpoints = e.NewIngredientEndpoints(IngredientHandlers)
-	TagEndpoints = e.NewTagEndpoints()
+	TagEndpoints = e.NewTagEndpoints(TagHandlers)
 	CategoryEndpoints = e.NewCategoryEndpoints()
 
 	Logger.Info(InitOK)
