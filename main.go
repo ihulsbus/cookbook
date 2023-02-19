@@ -50,6 +50,7 @@ func main() {
 	v1.Use(c.Middleware.OidcMW.Middleware())
 	{
 		recipe := v1.Group("/recipe")
+		recipe.Use(c.Middleware.OidcMW.VerifyAuthorization("recipe"))
 		{
 			recipe.GET("", c.RecipeEndpoints.GetAll)
 			recipe.GET(":id", c.RecipeEndpoints.Get)
@@ -62,7 +63,9 @@ func main() {
 			recipe.DELETE(":id", c.RecipeEndpoints.Delete)
 			recipe.DELETE(":id/instruction", c.RecipeEndpoints.DeleteInstruction)
 		}
+
 		ingredient := v1.Group("/ingredient")
+		ingredient.Use(c.Middleware.OidcMW.VerifyAuthorization("ingredient"))
 		{
 			ingredient.GET("", c.IngredientEndpoints.GetAll)
 			ingredient.GET(":id", c.IngredientEndpoints.GetSingle)
@@ -71,7 +74,9 @@ func main() {
 			ingredient.DELETE(":id", c.IngredientEndpoints.Delete)
 			ingredient.GET("unit", c.IngredientEndpoints.GetUnits)
 		}
+
 		tag := v1.Group("/tag")
+		tag.Use(c.Middleware.OidcMW.VerifyAuthorization("tag"))
 		{
 			tag.GET("", c.TagEndpoints.GetAll)
 			tag.GET(":id", c.TagEndpoints.GetSingle)
@@ -79,7 +84,9 @@ func main() {
 			tag.PUT(":id", c.TagEndpoints.Update)
 			tag.DELETE(":id", c.TagEndpoints.Delete)
 		}
+
 		category := v1.Group("/category")
+		category.Use(c.Middleware.OidcMW.VerifyAuthorization("category"))
 		{
 			category.GET("", c.CategoryEndpoints.GetAll)
 			category.GET(":id", c.CategoryEndpoints.GetSingle)
@@ -87,6 +94,7 @@ func main() {
 			category.PUT(":id", c.CategoryEndpoints.Update)
 			category.DELETE(":id", c.CategoryEndpoints.Delete)
 		}
+
 	}
 
 	// Swagger docs

@@ -10,6 +10,7 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-gonic/gin"
 	m "github.com/ihulsbus/cookbook/internal/models"
+	"golang.org/x/exp/slices"
 )
 
 var (
@@ -81,4 +82,33 @@ func (o *OidcMW) UserFromContext(ctx context.Context) (*m.User, error) {
 		return nil, errors.New("no authenticated user found in context")
 	}
 	return v.(*m.User), nil
+}
+
+func (a *OidcMW) VerifyAuthorization(service string) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+
+		user, err := a.UserFromContext(ctx)
+		if err != nil {
+			a.logger.Debugf("eror getting user from context: %s", err)
+			ctx.AbortWithStatus(http.StatusUnauthorized)
+			return
+		}
+
+		action := ctx.Request.Method
+
+		allowedRoles := m.AuthorizationModel[service][action]
+		a.logger.Debugf("Service: %v; User: %v; action: %v; groups: %v; allowed: %v;", service, user.UserID, action, user.Groups, allowedRoles)
+		for i := range user.Groups {
+			index := slices.IndexFunc(allowedRoles, func(r string) bool { return r == user.Groups[i] })
+
+			if index != -1 {
+				a.logger.Debugf("user %s has role %s. Passed", user.UserID, allowedRoles[index])
+				ctx.Next()
+				return
+			}
+		}
+
+		a.logger.Debugf("user %s failed authorization check. Deny.", user.UserID)
+		ctx.AbortWithStatus(http.StatusUnauthorized)
+	}
 }
