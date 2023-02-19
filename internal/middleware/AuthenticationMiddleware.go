@@ -45,7 +45,7 @@ func (o *OidcMW) Middleware() gin.HandlerFunc {
 		}
 
 		if user != nil {
-			o.logger.Debugf("Authenticated user as %s (%s)", user.Name, user.Email)
+			o.logger.Debugf("Authenticated user as %s", user.UserID)
 			// Set user properly in Gin Context
 			ctx.Set(userCtxKey, user)
 			// Pass down the request to the next middleware (or final handler)
@@ -70,7 +70,7 @@ func (o *OidcMW) authorizeUser(bearer string) (*m.User, error) {
 		return nil, fmt.Errorf("email not verified: %v", claims.Email)
 	}
 
-	return &m.User{UserID: claims.FederatedClaims.UserID, Username: claims.Nickname, Name: claims.Name, Email: claims.Email, Email_verified: claims.Email_verified, Groups: claims.Groups}, nil
+	return &m.User{UserID: claims.FederatedClaims.UserID, Groups: claims.Groups}, nil
 }
 
 // UserFromContext retrieves information about the authenticated user from the context of the request.
