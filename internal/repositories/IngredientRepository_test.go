@@ -155,8 +155,9 @@ func TestIngredientCreate_OK(t *testing.T) {
 	expectedIngredient := ingredient
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "ingredients"("created_at","updated_at","deleted_at","ingredient_name")]`).
-		WithArgs(AnyTime{}, AnyTime{}, nil, "").WillReturnRows(sqlmock.NewRows([]string{"1"}).AddRow(1))
+	mock.ExpectQuery(`[INSERT INTO "ingredients"("created_at","updated_at","deleted_at","ingredient_name") VALUES ($1,$2,$3,$4) RETURNING "id"]`).
+		WithArgs(AnyTime{}, AnyTime{}, nil, "").
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	mock.ExpectCommit()
 	_, err := r.Create(ingredient)
 

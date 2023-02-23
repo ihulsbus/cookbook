@@ -72,7 +72,7 @@ func (h RecipeHandlers) Get(w http.ResponseWriter, r *http.Request, recipeID str
 	h.utils.respondWithJSON(w, http.StatusOK, data)
 }
 
-func (h RecipeHandlers) Create(w http.ResponseWriter, r *http.Request) {
+func (h RecipeHandlers) Create(user *m.User, w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 	var data m.Recipe
 
@@ -86,6 +86,8 @@ func (h RecipeHandlers) Create(w http.ResponseWriter, r *http.Request) {
 		h.utils.response400WithDetails(w, err.Error())
 		return
 	}
+
+	recipe.Author.UserID = user.UserID
 
 	data, err = h.recipeService.Create(recipe)
 	if err != nil {

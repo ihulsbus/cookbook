@@ -1,16 +1,20 @@
 package endpoints
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	m "github.com/ihulsbus/cookbook/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
 type RecipeHandlersMock struct {
 }
+
+type MiddlewareMock struct{}
 
 func (h *RecipeHandlersMock) GetAll(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
@@ -22,7 +26,7 @@ func (h *RecipeHandlersMock) Get(w http.ResponseWriter, r *http.Request, recipeI
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
-func (h *RecipeHandlersMock) Create(w http.ResponseWriter, r *http.Request) {
+func (h *RecipeHandlersMock) Create(user *m.User, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
@@ -61,9 +65,13 @@ func (h *RecipeHandlersMock) DeleteInstruction(w http.ResponseWriter, r *http.Re
 	_, _ = w.Write([]byte(""))
 }
 
+func (MiddlewareMock) UserFromContext(ctx context.Context) (*m.User, error) {
+	return &m.User{}, nil
+}
+
 // ==================================================================================================
 func Test_RecipeGetAll(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -75,7 +83,7 @@ func Test_RecipeGetAll(t *testing.T) {
 }
 
 func Test_RecipeGet(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -87,7 +95,7 @@ func Test_RecipeGet(t *testing.T) {
 }
 
 func Test_RecipeCreate(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -99,7 +107,7 @@ func Test_RecipeCreate(t *testing.T) {
 }
 
 func Test_RecipeUpdate(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -111,7 +119,7 @@ func Test_RecipeUpdate(t *testing.T) {
 }
 
 func Test_RecipeDelete(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -121,7 +129,7 @@ func Test_RecipeDelete(t *testing.T) {
 }
 
 func Test_RecipeImageUpload(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -133,7 +141,7 @@ func Test_RecipeImageUpload(t *testing.T) {
 }
 
 func Test_GetInstruction(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -145,7 +153,7 @@ func Test_GetInstruction(t *testing.T) {
 }
 
 func Test_CreateInstruction(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -157,7 +165,7 @@ func Test_CreateInstruction(t *testing.T) {
 }
 
 func Test_UpdateInstruction(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -169,7 +177,7 @@ func Test_UpdateInstruction(t *testing.T) {
 }
 
 func Test_DeleteInstruction(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{})
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 

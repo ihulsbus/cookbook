@@ -1,15 +1,17 @@
 package endpoints
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	m "github.com/ihulsbus/cookbook/internal/models"
 )
 
 type RecipeHandlers interface {
 	GetAll(w http.ResponseWriter, r *http.Request)
 	Get(w http.ResponseWriter, r *http.Request, recipeID string)
-	Create(w http.ResponseWriter, r *http.Request)
+	Create(user *m.User, w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request, recipeID string)
 	Delete(w http.ResponseWriter, r *http.Request, recipeID string)
 
@@ -21,13 +23,19 @@ type RecipeHandlers interface {
 	DeleteInstruction(w http.ResponseWriter, r *http.Request, recipeID string)
 }
 
-type RecipeEndpoints struct {
-	handlers RecipeHandlers
+type Middleware interface {
+	UserFromContext(ctx context.Context) (*m.User, error)
 }
 
-func NewRecipeEndpoints(handlers RecipeHandlers) *RecipeEndpoints {
+type RecipeEndpoints struct {
+	handlers   RecipeHandlers
+	middleware Middleware
+}
+
+func NewRecipeEndpoints(handlers RecipeHandlers, middleware Middleware) *RecipeEndpoints {
 	return &RecipeEndpoints{
-		handlers: handlers,
+		handlers:   handlers,
+		middleware: middleware,
 	}
 }
 
@@ -71,7 +79,13 @@ func (e RecipeEndpoints) Get(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/recipe [post]
 func (e RecipeEndpoints) Create(ctx *gin.Context) {
-	e.handlers.Create(ctx.Writer, ctx.Request)
+	user, err := e.middleware.UserFromContext(ctx)
+	if err != nil {
+		ctx.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	e.handlers.Create(user, ctx.Writer, ctx.Request)
 }
 
 // @Summary		Update a recipe

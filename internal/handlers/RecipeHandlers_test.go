@@ -200,7 +200,7 @@ func TestRecipeCreate_OK(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.Create(w, req)
+	h.Create(&m.User{}, w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -215,7 +215,7 @@ func TestRecipeCreate_UnmarshalErr(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
-	h.Create(w, req)
+	h.Create(&m.User{}, w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -233,7 +233,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.Create(w, req)
+	h.Create(&m.User{}, w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)

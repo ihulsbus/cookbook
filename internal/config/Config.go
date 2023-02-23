@@ -191,7 +191,7 @@ func init() {
 	CategoryHandlers = h.NewCategoryHandlers(CategoryService, Logger)
 
 	// Init endpoints
-	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers)
+	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers, &Middleware.OidcMW)
 	IngredientEndpoints = e.NewIngredientEndpoints(IngredientHandlers)
 	TagEndpoints = e.NewTagEndpoints(TagHandlers)
 	CategoryEndpoints = e.NewCategoryEndpoints(CategoryHandlers)

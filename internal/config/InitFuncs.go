@@ -77,6 +77,7 @@ func initDatabase(host string, user string, password string, dbname string, port
 		&m.Category{},
 		&m.Tag{},
 		&m.Unit{},
+		&m.Author{},
 	)
 
 	if err != nil {

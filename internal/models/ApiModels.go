@@ -8,7 +8,7 @@ import (
 type Recipe struct {
 	gorm.Model
 	RecipeName      string       `gorm:"not null" json:"RecipeName" example:"apple pie"`
-	Description     string       `gorm:"not null" json:"Description" example:"pie with apples"`
+	Description     string       `gorm:"size:65535;not null" json:"Description" example:"pie with apples"`
 	DifficultyLevel int          `gorm:"not null" json:"DifficultyLevel" example:"1"`
 	CookingTime     int          `gorm:"default:0" json:"CookTime" example:"23"`
 	ServingCount    int          `gorm:"default:0" json:"ServingCount" example:"4"`
@@ -16,6 +16,8 @@ type Recipe struct {
 	Category        []Category   `gorm:"many2many:recipe_category;" json:"Categories"`
 	Tags            []Tag        `gorm:"many2many:recipe_tag;" json:"Tags"`
 	ImageName       string       `json:"ImageName" example:"123e4567-e89b-12d3-a456-426614174000"`
+	AuthorID        string       `json:"Author" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Author          Author       `gorm:"references:UserID" json:"-"`
 }
 
 // Instruction struct to hold instruction data
@@ -24,7 +26,7 @@ type Instruction struct {
 	RecipeID uint   `json:"RecipeID" example:"1"`
 	Recipe   Recipe `gorm:"references:ID" json:"-"`
 	// StepNumber  int    `json:"StepNumber" example:"1"` // TODO introduce later
-	Description string `json:"Description" example:"lorem ipsum dolor sit amet"`
+	Description string `gorm:"size:65535" json:"Description" example:"lorem ipsum dolor sit amet"`
 }
 
 // Ingredient struct to hold ingredient data
@@ -40,6 +42,11 @@ type RecipeIngredient struct {
 	Quantity     int  `json:"Quantity" example:"40"`
 	UnitID       int  `json:"UnitID" example:"1"`
 	Unit         Unit `gorm:"references:ID"`
+}
+
+type Author struct {
+	ID     uint   `gorm:"primaryKey;not null;unique;index" json:"ID" example:"1"`
+	UserID string `gorm:"not null;unique" json:"UserID" example:"123e4567-e89b-12d3-a456-426614174000"`
 }
 
 // Category struct to hold category data
