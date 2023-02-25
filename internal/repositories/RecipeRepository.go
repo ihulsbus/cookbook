@@ -37,7 +37,7 @@ func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
 	var recipe m.Recipe
 	recipe.ID = recipeID
 
-	if err := r.db.Preload(clause.Associations).Where(whereRecipeID, recipeID).Find(&recipe).Error; err != nil {
+	if err := r.db.Preload(clause.Associations).Find(&recipe).Error; err != nil {
 		return recipe, err
 	}
 
