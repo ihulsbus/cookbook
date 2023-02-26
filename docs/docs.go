@@ -24,14 +24,11 @@ const docTemplate = `{
     "paths": {
         "/category": {
             "get": {
-                "description": "Returns a JSON array of all available tags",
+                "description": "Returns a JSON array of all available categorys",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "categories"
-                ],
-                "summary": "Get a list of all available tags",
+                "summary": "Get a list of all available categorys",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -63,17 +60,14 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "Creates a new tag and returns the JSON object of the created tag",
+                "description": "Creates a new category and returns the JSON object of the created category",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "categories"
-                ],
-                "summary": "Create a new tag",
+                "summary": "Create a new category",
                 "parameters": [
                     {
                         "description": "Create a category",
@@ -115,14 +109,11 @@ const docTemplate = `{
         },
         "/category/{id}": {
             "get": {
-                "description": "Returns the JSON object of a single tag",
+                "description": "Returns the JSON object of a single category",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "categories"
-                ],
-                "summary": "Get a single tag",
+                "summary": "Get a single category",
                 "parameters": [
                     {
                         "type": "integer",
@@ -160,17 +151,14 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "Updates an existing tag and returns the JSON object of the updated tag",
+                "description": "Updates an existing category and returns the JSON object of the updated category",
                 "consumes": [
                     "application/json"
                 ],
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "categories"
-                ],
-                "summary": "Updates an existing tag",
+                "summary": "Updates an existing category",
                 "parameters": [
                     {
                         "type": "integer",
@@ -217,14 +205,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "Delete an existing tag and returns a simple HTTP code",
+                "description": "Delete an existing category and returns a simple HTTP code",
                 "produces": [
                     "application/json"
                 ],
-                "tags": [
-                    "categories"
-                ],
-                "summary": "Deletes a tag",
+                "summary": "Deletes a category",
                 "parameters": [
                     {
                         "type": "integer",
@@ -824,6 +809,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/recipe/{id}/ingredients": {
+            "get": {
+                "description": "Returns a JSON object with the ingredients and details belonging to a recipe",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "Get a recipe's ingredients",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/models.RecipeIngredient"
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Any error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/recipe/{id}/instruction": {
             "get": {
                 "description": "Returns the JSON object of the recipe's instructions",
@@ -1003,15 +1035,6 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Delete an instruction",
-                        "name": "requestbody",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Instruction"
-                        }
                     }
                 ],
                 "responses": {
@@ -1361,6 +1384,10 @@ const docTemplate = `{
         "models.Recipe": {
             "type": "object",
             "properties": {
+                "Author": {
+                    "type": "string",
+                    "example": "123e4567-e89b-12d3-a456-426614174000"
+                },
                 "Categories": {
                     "type": "array",
                     "items": {
@@ -1414,6 +1441,30 @@ const docTemplate = `{
                 },
                 "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "models.RecipeIngredient": {
+            "type": "object",
+            "properties": {
+                "IngredientID": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "Quantity": {
+                    "type": "integer",
+                    "example": 40
+                },
+                "RecipeID": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "UnitID": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "unit": {
+                    "$ref": "#/definitions/models.Unit"
                 }
             }
         },

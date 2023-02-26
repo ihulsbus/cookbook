@@ -44,6 +44,15 @@ func (RecipeRepositoryMock) FindSingle(recipeID uint) (m.Recipe, error) {
 	}
 }
 
+func (RecipeRepositoryMock) FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error) {
+	switch recipeID {
+	case 1:
+		return []m.RecipeIngredient{}, nil
+	default:
+		return nil, errors.New("error")
+	}
+}
+
 func (RecipeRepositoryMock) Create(recipe m.Recipe) (m.Recipe, error) {
 	switch recipe.ID {
 	case 1:
@@ -157,6 +166,24 @@ func TestRecipeFindSingle_Err(t *testing.T) {
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
 	assert.IsType(t, result, m.Recipe{})
+}
+
+func TestRecipeFindIngredients_OK(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.FindRecipeIngredients(1)
+
+	assert.NoError(t, err)
+	assert.IsType(t, []m.RecipeIngredient{}, result)
+}
+
+func TestRecipeFindIngredients_Err(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.FindRecipeIngredients(uint(2))
+
+	assert.Error(t, err)
+	assert.IsType(t, []m.RecipeIngredient{}, result)
 }
 
 func TestRecipeCreate_OK(t *testing.T) {

@@ -53,9 +53,9 @@ func TestRecipeFindSingle_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewRecipeRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "recipe_category" WHERE "recipe_category"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredient" WHERE "recipe_ingredient"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
-	mock.ExpectQuery(`[SELECT * FROM "recipe_tag" WHERE "recipe_tag"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectQuery(`[SELECT * FROM "recipe_category" WHERE "recipe_category"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"recipe_id"}).AddRow(1))
+	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredient" WHERE "recipe_ingredient"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"recipe_id"}).AddRow(1))
+	mock.ExpectQuery(`[SELECT * FROM "recipe_tag" WHERE "recipe_tag"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"recipe_id"}).AddRow(1))
 	mock.ExpectQuery(`[SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL AND "recipes"."id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 	result, err := r.FindSingle(1)
@@ -75,12 +75,36 @@ func TestRecipeFindSingle_Err(t *testing.T) {
 	assert.IsType(t, result, m.Recipe{})
 }
 
+func TestRecipeFindIngredients_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredients" WHERE recipe_id = 1]`).
+		WillReturnRows(sqlmock.NewRows([]string{"recipe_id"}).AddRow(1))
+	result, err := r.FindRecipeIngredients(1)
+
+	assert.NoError(t, err)
+	assert.IsType(t, []m.RecipeIngredient{}, result)
+}
+
+func TestRecipeFindIngredients_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredients" WHERE recipe_id = 1]`).
+		WillReturnError(errors.New("error"))
+	result, err := r.FindRecipeIngredients(1)
+
+	assert.Error(t, err)
+	assert.IsType(t, []m.RecipeIngredient{}, result)
+}
+
 func TestRecipeCreate_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewRecipeRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "recipes" ("created_at","updated_at","deleted_at","recipe_name","description","difficulty_level","cooking_time","serving_count","image_name") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING "id"]`).
+	mock.ExpectQuery(`[INSERT INTO "recipes" ("created_at","updated_at","deleted_at","recipe_name","description","difficulty_level","cooking_time","serving_count","image_name","author_id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id"]`).
 		WithArgs(
 			AnyTime{},
 			AnyTime{},
@@ -91,6 +115,7 @@ func TestRecipeCreate_Ok(t *testing.T) {
 			1,
 			1,
 			"",
+			1,
 		).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	mock.ExpectCommit()
@@ -106,7 +131,7 @@ func TestRecipeCreate_Err(t *testing.T) {
 	r := NewRecipeRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "recipes" ("created_at","updated_at","deleted_at","recipe_name","description","difficulty_level","cooking_time","serving_count","image_name") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING "id"]`).
+	mock.ExpectQuery(`[INSERT INTO "recipes" ("created_at","updated_at","deleted_at","recipe_name","description","difficulty_level","cooking_time","serving_count","image_name","author_id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING "id"]`).
 		WithArgs(
 			AnyTime{},
 			AnyTime{},
@@ -117,6 +142,7 @@ func TestRecipeCreate_Err(t *testing.T) {
 			1,
 			1,
 			"",
+			1,
 		).
 		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()

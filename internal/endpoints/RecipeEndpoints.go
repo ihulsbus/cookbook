@@ -11,6 +11,7 @@ import (
 type RecipeHandlers interface {
 	GetAll(w http.ResponseWriter, r *http.Request)
 	Get(w http.ResponseWriter, r *http.Request, recipeID string)
+	GetIngredients(w http.ResponseWriter, r *http.Request, recipeID string)
 	Create(user *m.User, w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request, recipeID string)
 	Delete(w http.ResponseWriter, r *http.Request, recipeID string)
@@ -65,6 +66,20 @@ func (e RecipeEndpoints) GetAll(ctx *gin.Context) {
 func (e RecipeEndpoints) Get(ctx *gin.Context) {
 	// This is dirty, but I do not want gin awareness beyond the endpoints level
 	e.handlers.Get(ctx.Writer, ctx.Request, ctx.Param("id"))
+}
+
+// @Summary		Get a recipe's ingredients
+// @Description	Returns a JSON object with the ingredients and details belonging to a recipe
+// @tags			recipes
+// @produce		json
+// @Param			id	path		int	true	"Recipe ID"
+// @Success		200	{object}	models.RecipeIngredient
+// @Failure		401	{string}	string	"unauthorized"
+// @Failure		404	{string}	string	"not found"
+// @Failure		500	{string}	string	"Any error"
+// @Router			/recipe/{id}/ingredients [get]
+func (e RecipeEndpoints) GetIngredients(ctx *gin.Context) {
+	e.handlers.GetIngredients(ctx.Writer, ctx.Request, ctx.Param("id"))
 }
 
 // @Summary		Create a recipe

@@ -45,11 +45,15 @@ func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
 }
 
 // FindRecipeIngredients finds all ingredients associated to a recipe and returns them in a slice
-// func findRecipeIngredients(r *RecipeRepository, recipeID int) ([]m.Recipe_Ingredient, error) {
-// 	var recipeIngredients []m.Recipe_Ingredient
+func (r RecipeRepository) FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error) {
+	var recipeIngredients []m.RecipeIngredient
 
-// 	return recipeIngredients, nil
-// }
+	if err := r.db.Preload("unit").Where(whereRecipeID, &recipeID).Find(&recipeIngredients).Error; err != nil {
+		return nil, err
+	}
+
+	return recipeIngredients, nil
+}
 
 // Create handles the creation of a recipe and stores the relevant information in the database
 func (r RecipeRepository) Create(recipe m.Recipe) (m.Recipe, error) {

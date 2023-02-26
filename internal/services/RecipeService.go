@@ -9,6 +9,7 @@ import (
 type RecipeRepository interface {
 	FindAll() ([]m.Recipe, error)
 	FindSingle(recipeID uint) (m.Recipe, error)
+	FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
 	Update(recipe m.Recipe) (m.Recipe, error)
 	Delete(recipe m.Recipe) error
@@ -51,6 +52,17 @@ func (s RecipeService) FindSingle(recipeID uint) (m.Recipe, error) {
 	}
 
 	return recipe, nil
+}
+
+func (s RecipeService) FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error) {
+	var ingredients []m.RecipeIngredient
+
+	ingredients, err := s.repo.FindRecipeIngredients(recipeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return ingredients, nil
 }
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing

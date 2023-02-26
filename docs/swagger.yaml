@@ -56,6 +56,9 @@ definitions:
     type: object
   models.Recipe:
     properties:
+      Author:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
       Categories:
         items:
           $ref: '#/definitions/models.Category'
@@ -95,6 +98,23 @@ definitions:
       updatedAt:
         type: string
     type: object
+  models.RecipeIngredient:
+    properties:
+      IngredientID:
+        example: 1
+        type: integer
+      Quantity:
+        example: 40
+        type: integer
+      RecipeID:
+        example: 1
+        type: integer
+      UnitID:
+        example: 1
+        type: integer
+      unit:
+        $ref: '#/definitions/models.Unit'
+    type: object
   models.Tag:
     properties:
       TagName:
@@ -131,7 +151,7 @@ info:
 paths:
   /category:
     get:
-      description: Returns a JSON array of all available tags
+      description: Returns a JSON array of all available categorys
       produces:
       - application/json
       responses:
@@ -153,13 +173,12 @@ paths:
           description: Any error
           schema:
             type: string
-      summary: Get a list of all available tags
-      tags:
-      - categories
+      summary: Get a list of all available categorys
     post:
       consumes:
       - application/json
-      description: Creates a new tag and returns the JSON object of the created tag
+      description: Creates a new category and returns the JSON object of the created
+        category
       parameters:
       - description: Create a category
         in: body
@@ -186,12 +205,10 @@ paths:
           description: Any error
           schema:
             type: string
-      summary: Create a new tag
-      tags:
-      - categories
+      summary: Create a new category
   /category/{id}:
     delete:
-      description: Delete an existing tag and returns a simple HTTP code
+      description: Delete an existing category and returns a simple HTTP code
       parameters:
       - description: category ID
         in: path
@@ -215,11 +232,9 @@ paths:
           description: Any error
           schema:
             type: string
-      summary: Deletes a tag
-      tags:
-      - categories
+      summary: Deletes a category
     get:
-      description: Returns the JSON object of a single tag
+      description: Returns the JSON object of a single category
       parameters:
       - description: category ID
         in: path
@@ -245,14 +260,12 @@ paths:
           description: Any error
           schema:
             type: string
-      summary: Get a single tag
-      tags:
-      - categories
+      summary: Get a single category
     put:
       consumes:
       - application/json
-      description: Updates an existing tag and returns the JSON object of the updated
-        tag
+      description: Updates an existing category and returns the JSON object of the
+        updated category
       parameters:
       - description: category ID
         in: path
@@ -284,9 +297,7 @@ paths:
           description: Any error
           schema:
             type: string
-      summary: Updates an existing tag
-      tags:
-      - categories
+      summary: Updates an existing category
   /ingredient:
     get:
       description: Returns a JSON array of all available ingredients
@@ -663,6 +674,38 @@ paths:
       summary: Upload a recipe image
       tags:
       - recipes
+  /recipe/{id}/ingredients:
+    get:
+      description: Returns a JSON object with the ingredients and details belonging
+        to a recipe
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RecipeIngredient'
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Get a recipe's ingredients
+      tags:
+      - recipes
   /recipe/{id}/instruction:
     delete:
       consumes:
@@ -675,12 +718,6 @@ paths:
         name: id
         required: true
         type: integer
-      - description: Delete an instruction
-        in: body
-        name: requestbody
-        required: true
-        schema:
-          $ref: '#/definitions/models.Instruction'
       produces:
       - application/json
       responses:

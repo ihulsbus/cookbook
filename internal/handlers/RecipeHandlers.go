@@ -12,6 +12,7 @@ import (
 type RecipeService interface {
 	FindAll() ([]m.Recipe, error)
 	FindSingle(recipeID uint) (m.Recipe, error)
+	FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
 	Update(recipe m.Recipe, recipeID uint) (m.Recipe, error)
 	Delete(recipeID uint) error
@@ -64,6 +65,25 @@ func (h RecipeHandlers) Get(w http.ResponseWriter, r *http.Request, recipeID str
 	}
 
 	data, err = h.recipeService.FindSingle(uint(rID))
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	h.utils.respondWithJSON(w, http.StatusOK, data)
+}
+
+func (h RecipeHandlers) GetIngredients(w http.ResponseWriter, r *http.Request, recipeID string) {
+	var data []m.RecipeIngredient
+
+	rID, err := strconv.Atoi(recipeID)
+	if err != nil {
+		h.utils.response500(w)
+		return
+	}
+
+	h.logger.Warnf("%s", "111")
+	data, err = h.recipeService.FindRecipeIngredients(uint(rID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return

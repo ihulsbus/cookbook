@@ -51,6 +51,15 @@ func (s *RecipeServiceMock) FindSingle(recipeID uint) (m.Recipe, error) {
 	}
 }
 
+func (s *RecipeServiceMock) FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error) {
+	switch recipeID {
+	case 1:
+		return []m.RecipeIngredient{}, nil
+	default:
+		return nil, errors.New("error")
+	}
+}
+
 func (s *RecipeServiceMock) Create(recipe m.Recipe) (m.Recipe, error) {
 	switch recipe.RecipeName {
 	case "recipe":
@@ -184,6 +193,51 @@ func TestRecipeGet_FindErr(t *testing.T) {
 	w := httptest.NewRecorder()
 
 	h.Get(w, req, "0")
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
+	assert.Equal(t, `{"code":500,"msg":"Internal Server Error. (error)"}`, string(body))
+}
+
+func TestRecipeGetIngredients_OK(t *testing.T) {
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetIngredients(w, req, "1")
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	expectedBody, _ := json.Marshal([]m.RecipeIngredient{})
+
+	assert.Equal(t, resp.StatusCode, http.StatusOK)
+	assert.Equal(t, body, expectedBody)
+}
+
+func TestRecipeGetIngredients_AtoiErr(t *testing.T) {
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetIngredients(w, req, "")
+
+	resp := w.Result()
+
+	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
+}
+
+func TestRecipeGetIngredients_FindErr(t *testing.T) {
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &ImageServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	w := httptest.NewRecorder()
+
+	h.GetIngredients(w, req, "0")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)

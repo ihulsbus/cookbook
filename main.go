@@ -54,6 +54,7 @@ func main() {
 		{
 			recipe.GET("", c.RecipeEndpoints.GetAll)
 			recipe.GET(":id", c.RecipeEndpoints.Get)
+			recipe.GET(":id/ingredients", c.RecipeEndpoints.GetIngredients)
 			recipe.GET(":id/instruction", c.RecipeEndpoints.GetInstruction)
 			recipe.POST("", c.RecipeEndpoints.Create)
 			recipe.POST(":id/instruction", c.RecipeEndpoints.CreateInstruction)

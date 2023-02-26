@@ -26,6 +26,11 @@ func (h *RecipeHandlersMock) Get(w http.ResponseWriter, r *http.Request, recipeI
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
+func (h *RecipeHandlersMock) GetIngredients(w http.ResponseWriter, r *http.Request, recipeID string) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte("{}"))
+}
 func (h *RecipeHandlersMock) Create(user *m.User, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
@@ -88,6 +93,18 @@ func Test_RecipeGet(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 
 	e.Get(c)
+
+	assert.Equal(t, w.Code, http.StatusOK)
+	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, w.Body.String(), "{}")
+}
+
+func Test_RecipeGetIngredients(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.GetIngredients(c)
 
 	assert.Equal(t, w.Code, http.StatusOK)
 	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
