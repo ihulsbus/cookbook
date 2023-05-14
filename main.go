@@ -54,15 +54,18 @@ func main() {
 		{
 			recipe.GET("", c.RecipeEndpoints.GetAll)
 			recipe.GET(":id", c.RecipeEndpoints.Get)
-			recipe.GET(":id/ingredients", c.RecipeEndpoints.GetIngredients)
+			recipe.GET(":id/ingredients", c.RecipeEndpoints.GetIngredientLink)
 			recipe.GET(":id/instruction", c.RecipeEndpoints.GetInstruction)
 			recipe.POST("", c.RecipeEndpoints.Create)
 			recipe.POST(":id/instruction", c.RecipeEndpoints.CreateInstruction)
 			recipe.POST(":id/cover", c.RecipeEndpoints.ImageUpload)
+			recipe.POST(":id/ingredients", c.RecipeEndpoints.CreateIngredientLink)
 			recipe.PUT(":id", c.RecipeEndpoints.Update)
 			recipe.PUT(":id/instruction", c.RecipeEndpoints.UpdateInstruction)
+			recipe.PUT(":id/ingredients", c.RecipeEndpoints.UpdateIngredientLink)
 			recipe.DELETE(":id", c.RecipeEndpoints.Delete)
 			recipe.DELETE(":id/instruction", c.RecipeEndpoints.DeleteInstruction)
+			recipe.DELETE(":id/ingredients", c.RecipeEndpoints.DeleteIngredientLink)
 		}
 
 		ingredient := v1.Group("/ingredient")

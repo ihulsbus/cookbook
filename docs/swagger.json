@@ -17,6 +17,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "categories"
+                ],
                 "summary": "Get a list of all available categorys",
                 "responses": {
                     "200": {
@@ -55,6 +58,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "categories"
                 ],
                 "summary": "Create a new category",
                 "parameters": [
@@ -102,6 +108,9 @@
                 "produces": [
                     "application/json"
                 ],
+                "tags": [
+                    "categories"
+                ],
                 "summary": "Get a single category",
                 "parameters": [
                     {
@@ -146,6 +155,9 @@
                 ],
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "categories"
                 ],
                 "summary": "Updates an existing category",
                 "parameters": [
@@ -197,6 +209,9 @@
                 "description": "Delete an existing category and returns a simple HTTP code",
                 "produces": [
                     "application/json"
+                ],
+                "tags": [
+                    "categories"
                 ],
                 "summary": "Deletes a category",
                 "parameters": [
@@ -821,8 +836,176 @@
                     "200": {
                         "description": "OK",
                         "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.RecipeIngredient"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Any error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates the ingredient links for a recipe and returns the JSON object of the updated ingredient links",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "Update a recipe's ingredient links",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update an ingredient",
+                        "name": "requestbody",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
                             "$ref": "#/definitions/models.RecipeIngredient"
                         }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Instruction"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Any error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates the ingredient links for a recipe and returns the JSON object of the created ingredient links",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "Create a recipe's ingredient links",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Create an ingredient link",
+                        "name": "requestbody",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.RecipeIngredient"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/models.Instruction"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "not found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Any error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Updates the ingredient link for a recipe and returns the JSON object of the updated ingredient links",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "recipes"
+                ],
+                "summary": "delete a recipe's ingredient links",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Recipe ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
                     },
                     "401": {
                         "description": "unauthorized",

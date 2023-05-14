@@ -174,6 +174,8 @@ paths:
           schema:
             type: string
       summary: Get a list of all available categorys
+      tags:
+      - categories
     post:
       consumes:
       - application/json
@@ -206,6 +208,8 @@ paths:
           schema:
             type: string
       summary: Create a new category
+      tags:
+      - categories
   /category/{id}:
     delete:
       description: Delete an existing category and returns a simple HTTP code
@@ -233,6 +237,8 @@ paths:
           schema:
             type: string
       summary: Deletes a category
+      tags:
+      - categories
     get:
       description: Returns the JSON object of a single category
       parameters:
@@ -261,6 +267,8 @@ paths:
           schema:
             type: string
       summary: Get a single category
+      tags:
+      - categories
     put:
       consumes:
       - application/json
@@ -298,6 +306,8 @@ paths:
           schema:
             type: string
       summary: Updates an existing category
+      tags:
+      - categories
   /ingredient:
     get:
       description: Returns a JSON array of all available ingredients
@@ -675,6 +685,37 @@ paths:
       tags:
       - recipes
   /recipe/{id}/ingredients:
+    delete:
+      consumes:
+      - application/json
+      description: Updates the ingredient link for a recipe and returns the JSON object
+        of the updated ingredient links
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: delete a recipe's ingredient links
+      tags:
+      - recipes
     get:
       description: Returns a JSON object with the ingredients and details belonging
         to a recipe
@@ -690,7 +731,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.RecipeIngredient'
+            items:
+              $ref: '#/definitions/models.RecipeIngredient'
+            type: array
         "401":
           description: unauthorized
           schema:
@@ -704,6 +747,88 @@ paths:
           schema:
             type: string
       summary: Get a recipe's ingredients
+      tags:
+      - recipes
+    post:
+      consumes:
+      - application/json
+      description: Creates the ingredient links for a recipe and returns the JSON
+        object of the created ingredient links
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Create an ingredient link
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.RecipeIngredient'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Instruction'
+            type: array
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Create a recipe's ingredient links
+      tags:
+      - recipes
+    put:
+      consumes:
+      - application/json
+      description: Updates the ingredient links for a recipe and returns the JSON
+        object of the updated ingredient links
+      parameters:
+      - description: Recipe ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update an ingredient
+        in: body
+        name: requestbody
+        required: true
+        schema:
+          $ref: '#/definitions/models.RecipeIngredient'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Instruction'
+            type: array
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "404":
+          description: not found
+          schema:
+            type: string
+        "500":
+          description: Any error
+          schema:
+            type: string
+      summary: Update a recipe's ingredient links
       tags:
       - recipes
   /recipe/{id}/instruction:

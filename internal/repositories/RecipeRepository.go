@@ -44,17 +44,6 @@ func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
 	return recipe, nil
 }
 
-// FindRecipeIngredients finds all ingredients associated to a recipe and returns them in a slice
-func (r RecipeRepository) FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error) {
-	var recipeIngredients []m.RecipeIngredient
-
-	if err := r.db.Preload("unit").Where(whereRecipeID, &recipeID).Find(&recipeIngredients).Error; err != nil {
-		return nil, err
-	}
-
-	return recipeIngredients, nil
-}
-
 // Create handles the creation of a recipe and stores the relevant information in the database
 func (r RecipeRepository) Create(recipe m.Recipe) (m.Recipe, error) {
 
@@ -174,6 +163,71 @@ func (r RecipeRepository) DeleteInstruction(instruction m.Instruction) error {
 
 		if err := tx.Where(whereRecipeID, &instruction.RecipeID).Delete(&instruction).Error; err != nil {
 			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// FindRecipeIngredients finds all ingredients associated to a recipe and returns them in a slice
+func (r RecipeRepository) FindIngredientLink(recipeID uint) ([]m.RecipeIngredient, error) {
+	var recipeIngredients []m.RecipeIngredient
+
+	if err := r.db.Where(whereRecipeID, &recipeID).Joins("Unit").Find(&recipeIngredients).Error; err != nil {
+		return nil, err
+	}
+
+	return recipeIngredients, nil
+}
+
+func (r RecipeRepository) CreateIngredientLink(link []m.RecipeIngredient) ([]m.RecipeIngredient, error) {
+
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+
+		for i := range link {
+			if err = tx.Create(&link[i]).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return link, nil
+}
+
+func (r RecipeRepository) UpdateIngredientLink(link []m.RecipeIngredient) ([]m.RecipeIngredient, error) {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+
+		for i := range link {
+
+			if err = tx.Where(whereRecipeID, &link[i].RecipeID).Updates(&link[i]).Error; err != nil {
+				return err
+			}
+
+		}
+		return nil
+	}); err != nil {
+		return link, err
+	}
+
+	return link, nil
+}
+
+func (r RecipeRepository) DeleteIngredientLink(link []m.RecipeIngredient) error {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+
+		for i := range link {
+
+			if err := tx.Where(whereRecipeID, &link[i].RecipeID).Delete(&link[i]).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil

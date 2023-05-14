@@ -24,7 +24,7 @@ var (
 		"oidc_clientid",
 		"database_host",
 		"database_port",
-		"database_database",
+		"database_name",
 		"database_username",
 		"database_password",
 		"database_sslmode",
@@ -92,7 +92,7 @@ func initViper() {
 	// database
 	Configuration.Database.Host = viper.GetString("database_host")
 	Configuration.Database.Port = viper.GetInt("database_port")
-	Configuration.Database.Database = viper.GetString("database_database")
+	Configuration.Database.Database = viper.GetString("database_name")
 	Configuration.Database.Username = viper.GetString("database_username")
 	Configuration.Database.Password = viper.GetString("database_password")
 	Configuration.Database.SSLMode = viper.GetString("database_sslmode")

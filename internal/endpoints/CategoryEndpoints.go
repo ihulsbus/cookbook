@@ -25,7 +25,7 @@ func NewCategoryEndpoints(handers CategoryHandlers) *CategoryEndpoints {
 
 // @Summary		Get a list of all available categorys
 // @Description	Returns a JSON array of all available categorys
-// @Categorys			categorys
+// @Tags			categories
 // @Produce		json
 // @Success		200	{array}		models.Category
 // @Failure		401	{string}	string	"unauthorized"
@@ -38,7 +38,7 @@ func (e CategoryEndpoints) GetAll(ctx *gin.Context) {
 
 // @Summary		Get a single category
 // @Description	Returns the JSON object of a single category
-// @Categorys			categorys
+// @Tags			categories
 // @Produce		json
 // @Param			id	path		int	true	"category ID"
 // @Success		200	{object}	models.Category
@@ -52,7 +52,7 @@ func (e CategoryEndpoints) GetSingle(ctx *gin.Context) {
 
 // @Summary		Create a new category
 // @Description	Creates a new category and returns the JSON object of the created category
-// @Categorys			categorys
+// @Tags			categories
 // @Accept		json
 // @Produce		json
 // @Param			requestbody	body		models.Category	true	"Create a category"
@@ -67,7 +67,7 @@ func (e CategoryEndpoints) Create(ctx *gin.Context) {
 
 // @Summary		Updates an existing category
 // @Description	Updates an existing category and returns the JSON object of the updated category
-// @Categorys			categorys
+// @Tags			categories
 // @Accept		json
 // @Produce		json
 // @Param			id	path		int	true	"category ID"
@@ -83,7 +83,7 @@ func (e CategoryEndpoints) Update(ctx *gin.Context) {
 
 // @Summary		Deletes a category
 // @Description	Delete an existing category and returns a simple HTTP code
-// @Categorys			categorys
+// @Tags			categories
 // @Produce		json
 // @Param			id	path	int	true	"category ID"
 // @Success		204

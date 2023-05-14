@@ -17,6 +17,13 @@ var (
 		RecipeID:    1,
 		Description: "instruction",
 	}
+	ingredientLink []m.RecipeIngredient = []m.RecipeIngredient{{
+		RecipeID:     1,
+		IngredientID: 1,
+		Quantity:     1,
+		UnitID:       1,
+	},
+	}
 )
 
 type RecipeRepositoryMock struct{}
@@ -41,15 +48,6 @@ func (RecipeRepositoryMock) FindSingle(recipeID uint) (m.Recipe, error) {
 		return recipe, nil
 	default:
 		return recipe, errors.New("error")
-	}
-}
-
-func (RecipeRepositoryMock) FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error) {
-	switch recipeID {
-	case 1:
-		return []m.RecipeIngredient{}, nil
-	default:
-		return nil, errors.New("error")
 	}
 }
 
@@ -122,6 +120,42 @@ func (RecipeRepositoryMock) DeleteInstruction(instruction m.Instruction) error {
 	}
 }
 
+func (RecipeRepositoryMock) FindIngredientLink(recipeID uint) ([]m.RecipeIngredient, error) {
+	switch recipeID {
+	case 1:
+		return []m.RecipeIngredient{}, nil
+	default:
+		return nil, errors.New("error")
+	}
+}
+
+func (RecipeRepositoryMock) CreateIngredientLink(link []m.RecipeIngredient) ([]m.RecipeIngredient, error) {
+	switch link[0].RecipeID {
+	case 1:
+		return []m.RecipeIngredient{}, nil
+	default:
+		return []m.RecipeIngredient{}, errors.New("error")
+	}
+}
+
+func (RecipeRepositoryMock) UpdateIngredientLink(link []m.RecipeIngredient) ([]m.RecipeIngredient, error) {
+	switch link[0].RecipeID {
+	case 1:
+		return []m.RecipeIngredient{}, nil
+	default:
+		return []m.RecipeIngredient{}, errors.New("error")
+	}
+}
+
+func (RecipeRepositoryMock) DeleteIngredientLink(link []m.RecipeIngredient) error {
+	switch link[0].RecipeID {
+	case 1:
+		return nil
+	default:
+		return errors.New("error")
+	}
+}
+
 func TestRecipeFindAll_OK(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
@@ -171,7 +205,7 @@ func TestRecipeFindSingle_Err(t *testing.T) {
 func TestRecipeFindIngredients_OK(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
-	result, err := s.FindRecipeIngredients(1)
+	result, err := s.FindIngredientLink(1)
 
 	assert.NoError(t, err)
 	assert.IsType(t, []m.RecipeIngredient{}, result)
@@ -180,7 +214,7 @@ func TestRecipeFindIngredients_OK(t *testing.T) {
 func TestRecipeFindIngredients_Err(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
-	result, err := s.FindRecipeIngredients(uint(2))
+	result, err := s.FindIngredientLink(uint(2))
 
 	assert.Error(t, err)
 	assert.IsType(t, []m.RecipeIngredient{}, result)
@@ -298,7 +332,7 @@ func TestFindInstruction_Err(t *testing.T) {
 func TestCreateInstruction_OK(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
-	result, err := s.CreateInstruction(instruction)
+	result, err := s.CreateInstruction(instruction, 1)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.Instruction{}, result)
@@ -311,7 +345,7 @@ func TestCreateInstruction_Err(t *testing.T) {
 	createInstruction := instruction
 	createInstruction.RecipeID = 0
 
-	result, err := s.CreateInstruction(createInstruction)
+	result, err := s.CreateInstruction(createInstruction, 1)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
@@ -370,6 +404,81 @@ func TestDeleteInstruction_DeleteErr(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{})
 
 	err := s.DeleteInstruction(uint(3))
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}
+
+func TestCreateIngredientLink_OK(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.CreateIngredientLink(ingredientLink, 1)
+
+	assert.NoError(t, err)
+	assert.IsType(t, []m.RecipeIngredient{}, result)
+}
+
+func TestCreateIngredientLink_Err(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	createInstruction := instruction
+	createInstruction.RecipeID = 0
+
+	result, err := s.CreateIngredientLink(ingredientLink, 2)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+	assert.IsType(t, []m.RecipeIngredient{}, result)
+}
+
+func TestUpdateIngredientLink_OK(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	result, err := s.UpdateIngredientLink(ingredientLink, 1)
+
+	assert.NoError(t, err)
+	assert.IsType(t, []m.RecipeIngredient{}, result)
+}
+
+func TestUpdateIngredientLink_FindErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	_, err := s.UpdateIngredientLink(ingredientLink, 2)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}
+
+func TestUpdateIngredientLink_UpdateErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	_, err := s.UpdateIngredientLink(ingredientLink, 2)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}
+
+func TestDeleteIngredientLink_OK(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	err := s.DeleteIngredientLink(ingredientLink, 1)
+
+	assert.NoError(t, err)
+}
+
+func TestDeleteIngredientLink_FindErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	err := s.DeleteIngredientLink(ingredientLink, 2)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}
+
+func TestDeleteIngredientLink_DeleteErr(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{})
+
+	err := s.DeleteIngredientLink(ingredientLink, 2)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

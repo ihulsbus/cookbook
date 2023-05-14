@@ -51,15 +51,6 @@ func (s *RecipeServiceMock) FindSingle(recipeID uint) (m.Recipe, error) {
 	}
 }
 
-func (s *RecipeServiceMock) FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error) {
-	switch recipeID {
-	case 1:
-		return []m.RecipeIngredient{}, nil
-	default:
-		return nil, errors.New("error")
-	}
-}
-
 func (s *RecipeServiceMock) Create(recipe m.Recipe) (m.Recipe, error) {
 	switch recipe.RecipeName {
 	case "recipe":
@@ -98,7 +89,7 @@ func (s *RecipeServiceMock) FindInstruction(recipeID uint) (m.Instruction, error
 	}
 }
 
-func (s *RecipeServiceMock) CreateInstruction(instruction m.Instruction) (m.Instruction, error) {
+func (s *RecipeServiceMock) CreateInstruction(instruction m.Instruction, recipeID uint) (m.Instruction, error) {
 	switch instruction.RecipeID {
 	case 1:
 		return instruction, nil
@@ -117,6 +108,42 @@ func (s *RecipeServiceMock) UpdateInstruction(instruction m.Instruction, recipeI
 }
 
 func (s *RecipeServiceMock) DeleteInstruction(recipeID uint) error {
+	switch recipeID {
+	case 1:
+		return nil
+	default:
+		return errors.New("error")
+	}
+}
+
+func (s *RecipeServiceMock) FindIngredientLink(recipeID uint) ([]m.RecipeIngredient, error) {
+	switch recipeID {
+	case 1:
+		return []m.RecipeIngredient{}, nil
+	default:
+		return nil, errors.New("error")
+	}
+}
+
+func (s *RecipeServiceMock) CreateIngredientLink(link []m.RecipeIngredient, recipeID uint) ([]m.RecipeIngredient, error) {
+	switch recipeID {
+	case 1:
+		return []m.RecipeIngredient{}, nil
+	default:
+		return nil, errors.New("error")
+	}
+}
+
+func (s *RecipeServiceMock) UpdateIngredientLink(link []m.RecipeIngredient, recipeID uint) ([]m.RecipeIngredient, error) {
+	switch recipeID {
+	case 1:
+		return []m.RecipeIngredient{}, nil
+	default:
+		return nil, errors.New("error")
+	}
+}
+
+func (s *RecipeServiceMock) DeleteIngredientLink(link []m.RecipeIngredient, recipeID uint) error {
 	switch recipeID {
 	case 1:
 		return nil
@@ -207,7 +234,7 @@ func TestRecipeGetIngredients_OK(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
-	h.GetIngredients(w, req, "1")
+	h.GetIngredientLink(w, req, "1")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -224,7 +251,7 @@ func TestRecipeGetIngredients_AtoiErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
-	h.GetIngredients(w, req, "")
+	h.GetIngredientLink(w, req, "")
 
 	resp := w.Result()
 
@@ -237,7 +264,7 @@ func TestRecipeGetIngredients_FindErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
 	w := httptest.NewRecorder()
 
-	h.GetIngredients(w, req, "0")
+	h.GetIngredientLink(w, req, "0")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -711,7 +738,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1/instruction", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.CreateInstruction(w, req)
+	h.CreateInstruction(w, req, "1")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -726,7 +753,7 @@ func TestCreateInstruction_UnmarshalErr(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
-	h.CreateInstruction(w, req)
+	h.CreateInstruction(w, req, "2")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -746,7 +773,7 @@ func TestCreateInstruction_CreateErr(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.CreateInstruction(w, req)
+	h.CreateInstruction(w, req, "2")
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)

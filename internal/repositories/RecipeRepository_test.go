@@ -75,30 +75,6 @@ func TestRecipeFindSingle_Err(t *testing.T) {
 	assert.IsType(t, result, m.Recipe{})
 }
 
-func TestRecipeFindIngredients_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
-
-	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredients" WHERE recipe_id = 1]`).
-		WillReturnRows(sqlmock.NewRows([]string{"recipe_id"}).AddRow(1))
-	result, err := r.FindRecipeIngredients(1)
-
-	assert.NoError(t, err)
-	assert.IsType(t, []m.RecipeIngredient{}, result)
-}
-
-func TestRecipeFindIngredients_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
-
-	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredients" WHERE recipe_id = 1]`).
-		WillReturnError(errors.New("error"))
-	result, err := r.FindRecipeIngredients(1)
-
-	assert.Error(t, err)
-	assert.IsType(t, []m.RecipeIngredient{}, result)
-}
-
 func TestRecipeCreate_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewRecipeRepository(db)
@@ -401,4 +377,73 @@ func TestDeleteInstruction_Err(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
+}
+
+func TestRecipeFindIngredients_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredients" WHERE recipe_id = 1]`).
+		WillReturnRows(sqlmock.NewRows([]string{"recipe_id"}).AddRow(1))
+	result, err := r.FindIngredientLink(1)
+
+	assert.NoError(t, err)
+	assert.IsType(t, []m.RecipeIngredient{}, result)
+}
+
+func TestRecipeFindIngredients_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredients" WHERE recipe_id = 1]`).
+		WillReturnError(errors.New("error"))
+	result, err := r.FindIngredientLink(1)
+
+	assert.Error(t, err)
+	assert.IsType(t, []m.RecipeIngredient{}, result)
+}
+
+func TestCreateIngredientLink_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(`[INSERT INTO "instructions" ("created_at","updated_at","deleted_at","recipe_id","description") VALUES ($1,$2,$3,$4,$6) RETURNING "id"]`).
+		WithArgs(
+			AnyTime{},
+			AnyTime{},
+			nil,
+			1,
+			"instruction",
+		).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectCommit()
+
+	result, err := r.CreateInstruction(instruction)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Instruction{}, result)
+}
+
+func TestCreateIngredientLink_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(`[INSERT INTO "instructions" ("created_at","updated_at","deleted_at","recipe_id","step_number","description") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"]`).
+		WithArgs(
+			AnyTime{},
+			AnyTime{},
+			nil,
+			1,
+			1,
+			"instruction",
+		).
+		WillReturnError(errors.New("error"))
+	mock.ExpectRollback()
+
+	result, err := r.CreateInstruction(instruction)
+
+	assert.Error(t, err)
+	assert.IsType(t, m.Instruction{}, result)
 }

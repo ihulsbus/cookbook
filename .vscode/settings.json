@@ -12,5 +12,6 @@
       "password": "mysecretpassword"
     }
   ],
-  "editor.fontFamily": "Menlo, Monaco, 'Courier New', monospace, MesloLGS NF"
+  "editor.fontFamily": "Menlo",
+  "terminal.integrated.fontFamily": "'MesloLGS NF'"
 }

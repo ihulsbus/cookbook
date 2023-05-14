@@ -26,11 +26,6 @@ func (h *RecipeHandlersMock) Get(w http.ResponseWriter, r *http.Request, recipeI
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
-func (h *RecipeHandlersMock) GetIngredients(w http.ResponseWriter, r *http.Request, recipeID string) {
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
-	_, _ = w.Write([]byte("{}"))
-}
 func (h *RecipeHandlersMock) Create(user *m.User, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
@@ -55,7 +50,7 @@ func (h *RecipeHandlersMock) GetInstruction(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
-func (h *RecipeHandlersMock) CreateInstruction(w http.ResponseWriter, r *http.Request) {
+func (h *RecipeHandlersMock) CreateInstruction(w http.ResponseWriter, r *http.Request, recipeID string) {
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
@@ -68,6 +63,26 @@ func (h *RecipeHandlersMock) UpdateInstruction(w http.ResponseWriter, r *http.Re
 func (h *RecipeHandlersMock) DeleteInstruction(w http.ResponseWriter, r *http.Request, recipeID string) {
 	w.WriteHeader(http.StatusNoContent)
 	_, _ = w.Write([]byte(""))
+}
+func (h *RecipeHandlersMock) GetIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte("{}"))
+}
+func (h *RecipeHandlersMock) CreateIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte("{}"))
+}
+func (h *RecipeHandlersMock) UpdateIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte("{}"))
+}
+func (h *RecipeHandlersMock) DeleteIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = w.Write([]byte("{}"))
 }
 
 func (MiddlewareMock) UserFromContext(ctx context.Context) (*m.User, error) {
@@ -93,18 +108,6 @@ func Test_RecipeGet(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 
 	e.Get(c)
-
-	assert.Equal(t, w.Code, http.StatusOK)
-	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
-	assert.Equal(t, w.Body.String(), "{}")
-}
-
-func Test_RecipeGetIngredients(t *testing.T) {
-	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-
-	e.GetIngredients(c)
 
 	assert.Equal(t, w.Code, http.StatusOK)
 	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
@@ -199,6 +202,52 @@ func Test_DeleteInstruction(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 
 	e.DeleteInstruction(c)
+
+	assert.Equal(t, http.StatusNoContent, w.Code)
+}
+
+func Test_RecipeGetIngredientLink(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.GetIngredientLink(c)
+
+	assert.Equal(t, w.Code, http.StatusOK)
+	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, w.Body.String(), "{}")
+}
+
+func Test_CreatIngredientLink(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.CreateInstruction(c)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, w.Body.String(), "{}")
+}
+
+func Test_UpdateIngredientLink(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.UpdateIngredientLink(c)
+
+	assert.Equal(t, 201, w.Code)
+	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
+	assert.Equal(t, w.Body.String(), "{}")
+}
+
+func Test_DeleteIngredientLink(t *testing.T) {
+	e := NewRecipeEndpoints(&RecipeHandlersMock{}, &MiddlewareMock{})
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	e.DeleteIngredientLink(c)
 
 	assert.Equal(t, http.StatusNoContent, w.Code)
 }

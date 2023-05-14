@@ -11,7 +11,6 @@ import (
 type RecipeHandlers interface {
 	GetAll(w http.ResponseWriter, r *http.Request)
 	Get(w http.ResponseWriter, r *http.Request, recipeID string)
-	GetIngredients(w http.ResponseWriter, r *http.Request, recipeID string)
 	Create(user *m.User, w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request, recipeID string)
 	Delete(w http.ResponseWriter, r *http.Request, recipeID string)
@@ -19,9 +18,14 @@ type RecipeHandlers interface {
 	ImageUpload(w http.ResponseWriter, r *http.Request, recipeID string)
 
 	GetInstruction(w http.ResponseWriter, r *http.Request, recipeID string)
-	CreateInstruction(w http.ResponseWriter, r *http.Request)
+	CreateInstruction(w http.ResponseWriter, r *http.Request, recipeID string)
 	UpdateInstruction(w http.ResponseWriter, r *http.Request, recipeID string)
 	DeleteInstruction(w http.ResponseWriter, r *http.Request, recipeID string)
+
+	GetIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string)
+	CreateIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string)
+	UpdateIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string)
+	DeleteIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string)
 }
 
 type Middleware interface {
@@ -66,20 +70,6 @@ func (e RecipeEndpoints) GetAll(ctx *gin.Context) {
 func (e RecipeEndpoints) Get(ctx *gin.Context) {
 	// This is dirty, but I do not want gin awareness beyond the endpoints level
 	e.handlers.Get(ctx.Writer, ctx.Request, ctx.Param("id"))
-}
-
-// @Summary		Get a recipe's ingredients
-// @Description	Returns a JSON object with the ingredients and details belonging to a recipe
-// @tags			recipes
-// @produce		json
-// @Param			id	path		int	true	"Recipe ID"
-// @Success		200	{object}	models.RecipeIngredient
-// @Failure		401	{string}	string	"unauthorized"
-// @Failure		404	{string}	string	"not found"
-// @Failure		500	{string}	string	"Any error"
-// @Router			/recipe/{id}/ingredients [get]
-func (e RecipeEndpoints) GetIngredients(ctx *gin.Context) {
-	e.handlers.GetIngredients(ctx.Writer, ctx.Request, ctx.Param("id"))
 }
 
 // @Summary		Create a recipe
@@ -176,7 +166,7 @@ func (e RecipeEndpoints) GetInstruction(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/recipe/{id}/instruction [post]
 func (e RecipeEndpoints) CreateInstruction(ctx *gin.Context) {
-	e.handlers.CreateInstruction(ctx.Writer, ctx.Request)
+	e.handlers.CreateInstruction(ctx.Writer, ctx.Request, ctx.Param("id"))
 }
 
 // @Summary		Update a recipe's instruction text
@@ -208,4 +198,65 @@ func (e RecipeEndpoints) UpdateInstruction(ctx *gin.Context) {
 // @Router			/recipe/{id}/instruction [delete]
 func (e RecipeEndpoints) DeleteInstruction(ctx *gin.Context) {
 	e.handlers.DeleteInstruction(ctx.Writer, ctx.Request, ctx.Param("id"))
+}
+
+// @Summary		Get a recipe's ingredients
+// @Description	Returns a JSON object with the ingredients and details belonging to a recipe
+// @tags			recipes
+// @produce		json
+// @Param			id	path		int	true	"Recipe ID"
+// @Success		200	{array}		models.RecipeIngredient
+// @Failure		401	{string}	string	"unauthorized"
+// @Failure		404	{string}	string	"not found"
+// @Failure		500	{string}	string	"Any error"
+// @Router			/recipe/{id}/ingredients [get]
+func (e RecipeEndpoints) GetIngredientLink(ctx *gin.Context) {
+	e.handlers.GetIngredientLink(ctx.Writer, ctx.Request, ctx.Param("id"))
+}
+
+// @Summary		Create a recipe's ingredient links
+// @Description	Creates the ingredient links for a recipe and returns the JSON object of the created ingredient links
+// @tags			recipes
+// @Accept		json
+// @Produce		json
+// @Param			id	path		int	true	"Recipe ID"
+// @Param			requestbody	body		models.RecipeIngredient	true	"Create an ingredient link"
+// @Success		200	{array}		models.Instruction
+// @Failure		401	{string}	string	"unauthorized"
+// @Failure		404	{string}	string	"not found"
+// @Failure		500	{string}	string	"Any error"
+// @Router			/recipe/{id}/ingredients [post]
+func (e RecipeEndpoints) CreateIngredientLink(ctx *gin.Context) {
+	e.handlers.CreateIngredientLink(ctx.Writer, ctx.Request, ctx.Param("id"))
+}
+
+// @Summary		Update a recipe's ingredient links
+// @Description	Updates the ingredient links for a recipe and returns the JSON object of the updated ingredient links
+// @tags			recipes
+// @Accept		json
+// @Produce		json
+// @Param			id	path		int	true	"Recipe ID"
+// @Param			requestbody	body		models.RecipeIngredient	true	"Update an ingredient"
+// @Success		200	{array}		models.Instruction
+// @Failure		401	{string}	string	"unauthorized"
+// @Failure		404	{string}	string	"not found"
+// @Failure		500	{string}	string	"Any error"
+// @Router			/recipe/{id}/ingredients [put]
+func (e RecipeEndpoints) UpdateIngredientLink(ctx *gin.Context) {
+	e.handlers.UpdateIngredientLink(ctx.Writer, ctx.Request, ctx.Param("id"))
+}
+
+// @Summary		delete a recipe's ingredient links
+// @Description	Updates the ingredient link for a recipe and returns the JSON object of the updated ingredient links
+// @tags			recipes
+// @Accept		json
+// @Produce		json
+// @Param			id	path		int	true	"Recipe ID"
+// @Success		204
+// @Failure		401	{string}	string	"unauthorized"
+// @Failure		404	{string}	string	"not found"
+// @Failure		500	{string}	string	"Any error"
+// @Router			/recipe/{id}/ingredients [delete]
+func (e RecipeEndpoints) DeleteIngredientLink(ctx *gin.Context) {
+	e.handlers.DeleteIngredientLink(ctx.Writer, ctx.Request, ctx.Param("id"))
 }

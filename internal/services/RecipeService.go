@@ -9,7 +9,6 @@ import (
 type RecipeRepository interface {
 	FindAll() ([]m.Recipe, error)
 	FindSingle(recipeID uint) (m.Recipe, error)
-	FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
 	Update(recipe m.Recipe) (m.Recipe, error)
 	Delete(recipe m.Recipe) error
@@ -18,6 +17,11 @@ type RecipeRepository interface {
 	CreateInstruction(instruction m.Instruction) (m.Instruction, error)
 	UpdateInstruction(instruction m.Instruction) (m.Instruction, error)
 	DeleteInstruction(instruction m.Instruction) error
+
+	FindIngredientLink(recipeID uint) ([]m.RecipeIngredient, error)
+	CreateIngredientLink(link []m.RecipeIngredient) ([]m.RecipeIngredient, error)
+	UpdateIngredientLink(link []m.RecipeIngredient) ([]m.RecipeIngredient, error)
+	DeleteIngredientLink(link []m.RecipeIngredient) error
 }
 type RecipeService struct {
 	repo RecipeRepository
@@ -52,17 +56,6 @@ func (s RecipeService) FindSingle(recipeID uint) (m.Recipe, error) {
 	}
 
 	return recipe, nil
-}
-
-func (s RecipeService) FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error) {
-	var ingredients []m.RecipeIngredient
-
-	ingredients, err := s.repo.FindRecipeIngredients(recipeID)
-	if err != nil {
-		return nil, err
-	}
-
-	return ingredients, nil
 }
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing
@@ -132,7 +125,7 @@ func (s RecipeService) FindInstruction(recipeID uint) (m.Instruction, error) {
 	return instruction, nil
 }
 
-func (s RecipeService) CreateInstruction(instruction m.Instruction) (m.Instruction, error) {
+func (s RecipeService) CreateInstruction(instruction m.Instruction, recipeID uint) (m.Instruction, error) {
 	// TODO create logic
 	instruction, err := s.repo.CreateInstruction(instruction)
 	if err != nil {
@@ -169,6 +162,66 @@ func (s RecipeService) DeleteInstruction(recipeID uint) error {
 	}
 
 	err = s.repo.DeleteInstruction(instruction)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s RecipeService) FindIngredientLink(recipeID uint) ([]m.RecipeIngredient, error) {
+	var ingredients []m.RecipeIngredient
+
+	ingredients, err := s.repo.FindIngredientLink(recipeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return ingredients, nil
+}
+
+func (s RecipeService) CreateIngredientLink(link []m.RecipeIngredient, recipeID uint) ([]m.RecipeIngredient, error) {
+
+	for i := range link {
+		if link[i].RecipeID != int(recipeID) {
+			link[i].RecipeID = int(recipeID)
+		}
+	}
+
+	links, err := s.repo.CreateIngredientLink(link)
+	if err != nil {
+		return nil, err
+	}
+
+	return links, nil
+}
+
+func (s RecipeService) UpdateIngredientLink(link []m.RecipeIngredient, recipeID uint) ([]m.RecipeIngredient, error) {
+
+	for i := range link {
+		if link[i].RecipeID != int(recipeID) {
+			link[i].RecipeID = int(recipeID)
+		}
+	}
+
+	links, err := s.repo.UpdateIngredientLink(link)
+	if err != nil {
+		return nil, err
+	}
+
+	return links, nil
+
+}
+
+func (s RecipeService) DeleteIngredientLink(link []m.RecipeIngredient, recipeID uint) error {
+
+	for i := range link {
+		if link[i].RecipeID != int(recipeID) {
+			link[i].RecipeID = int(recipeID)
+		}
+	}
+
+	err := s.repo.DeleteIngredientLink(link)
 	if err != nil {
 		return err
 	}

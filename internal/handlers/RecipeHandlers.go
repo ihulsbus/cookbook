@@ -12,15 +12,19 @@ import (
 type RecipeService interface {
 	FindAll() ([]m.Recipe, error)
 	FindSingle(recipeID uint) (m.Recipe, error)
-	FindRecipeIngredients(recipeID uint) ([]m.RecipeIngredient, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
 	Update(recipe m.Recipe, recipeID uint) (m.Recipe, error)
 	Delete(recipeID uint) error
 
 	FindInstruction(recipeID uint) (m.Instruction, error)
-	CreateInstruction(instruction m.Instruction) (m.Instruction, error)
+	CreateInstruction(instruction m.Instruction, recipeID uint) (m.Instruction, error)
 	UpdateInstruction(instruction m.Instruction, recipeID uint) (m.Instruction, error)
 	DeleteInstruction(recipeID uint) error
+
+	FindIngredientLink(recipeID uint) ([]m.RecipeIngredient, error)
+	CreateIngredientLink(link []m.RecipeIngredient, recipeID uint) ([]m.RecipeIngredient, error)
+	UpdateIngredientLink(link []m.RecipeIngredient, recipeID uint) ([]m.RecipeIngredient, error)
+	DeleteIngredientLink(link []m.RecipeIngredient, recipeID uint) error
 }
 
 type ImageService interface {
@@ -65,25 +69,6 @@ func (h RecipeHandlers) Get(w http.ResponseWriter, r *http.Request, recipeID str
 	}
 
 	data, err = h.recipeService.FindSingle(uint(rID))
-	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	h.utils.respondWithJSON(w, http.StatusOK, data)
-}
-
-func (h RecipeHandlers) GetIngredients(w http.ResponseWriter, r *http.Request, recipeID string) {
-	var data []m.RecipeIngredient
-
-	rID, err := strconv.Atoi(recipeID)
-	if err != nil {
-		h.utils.response500(w)
-		return
-	}
-
-	h.logger.Warnf("%s", "111")
-	data, err = h.recipeService.FindRecipeIngredients(uint(rID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
@@ -220,9 +205,15 @@ func (h RecipeHandlers) GetInstruction(w http.ResponseWriter, r *http.Request, r
 	h.utils.respondWithJSON(w, http.StatusOK, data)
 }
 
-func (h RecipeHandlers) CreateInstruction(w http.ResponseWriter, r *http.Request) {
+func (h RecipeHandlers) CreateInstruction(w http.ResponseWriter, r *http.Request, recipeID string) {
 	var instruction m.Instruction
 	var data m.Instruction
+
+	rID, err := strconv.Atoi(recipeID)
+	if err != nil {
+		h.utils.response500(w)
+		return
+	}
 
 	body, err := h.utils.getBody(r.Body)
 	if err != nil {
@@ -235,7 +226,7 @@ func (h RecipeHandlers) CreateInstruction(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	data, err = h.recipeService.CreateInstruction(instruction)
+	data, err = h.recipeService.CreateInstruction(instruction, uint(rID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
@@ -282,6 +273,111 @@ func (h RecipeHandlers) DeleteInstruction(w http.ResponseWriter, r *http.Request
 	}
 
 	err = h.recipeService.DeleteInstruction(uint(rID))
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	h.utils.response204(w)
+}
+
+func (h RecipeHandlers) GetIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
+	var data []m.RecipeIngredient
+
+	rID, err := strconv.Atoi(recipeID)
+	if err != nil {
+		h.utils.response500(w)
+		return
+	}
+
+	data, err = h.recipeService.FindIngredientLink(uint(rID))
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	h.utils.respondWithJSON(w, http.StatusOK, data)
+}
+
+func (h RecipeHandlers) CreateIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
+	var link []m.RecipeIngredient
+
+	rID, err := strconv.Atoi(recipeID)
+	if err != nil {
+		h.utils.response500(w)
+		return
+	}
+
+	body, err := h.utils.getBody(r.Body)
+	if err != nil {
+		h.utils.response400WithDetails(w, err.Error())
+		return
+	}
+
+	if err = json.Unmarshal(body, &link); err != nil {
+		h.utils.response400WithDetails(w, err.Error())
+		return
+	}
+
+	link, err = h.recipeService.CreateIngredientLink(link, uint(rID))
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	h.utils.respondWithJSON(w, http.StatusCreated, link)
+}
+
+func (h RecipeHandlers) UpdateIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
+	var link []m.RecipeIngredient
+
+	rID, err := strconv.Atoi(recipeID)
+	if err != nil {
+		h.utils.response500(w)
+		return
+	}
+
+	body, err := h.utils.getBody(r.Body)
+	if err != nil {
+		h.utils.response400WithDetails(w, err.Error())
+		return
+	}
+
+	if err = json.Unmarshal(body, &link); err != nil {
+		h.utils.response400WithDetails(w, err.Error())
+		return
+	}
+
+	link, err = h.recipeService.UpdateIngredientLink(link, uint(rID))
+	if err != nil {
+		h.utils.response500WithDetails(w, err.Error())
+		return
+	}
+
+	h.utils.respondWithJSON(w, http.StatusOK, link)
+}
+
+func (h RecipeHandlers) DeleteIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
+	var link []m.RecipeIngredient
+
+	rID, err := strconv.Atoi(recipeID)
+	if err != nil {
+		h.utils.response500(w)
+		return
+	}
+
+	body, err := h.utils.getBody(r.Body)
+	if err != nil {
+		h.utils.response400WithDetails(w, err.Error())
+		return
+	}
+
+	if err = json.Unmarshal(body, &link); err != nil {
+		h.utils.response400WithDetails(w, err.Error())
+		return
+	}
+
+	err = h.recipeService.DeleteIngredientLink(link, uint(rID))
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
