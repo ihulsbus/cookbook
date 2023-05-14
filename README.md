@@ -19,6 +19,23 @@ The backend server has the following dependencies:
 
 The following ENV variables are required:
 
+| env key               | type   | example                       |
+|-----------------------|--------|-------------------------------|
+| cbb_debug             | bool   | true                          |
+| cbb_oidc_url          | string | https://example.com/          |
+| cbb_oidc_clientid     | string | example                       |
+| cbb_database_host     | string | cookbook-database.example.com |
+| cbb_database_port     | int    | 5432                          |
+| cbb_database_database | string | cookbook                      |
+| cbb_database_username | string |                               |
+| cbb_database_password | string |                               |
+| cbb_database_sslmode  | string | require                       |
+| cbb_database_timezone | string | Europe/Amsterdam              |
+| cbb_s3_endpoint       | string | https://s3.provider.com       |
+| cbb_s3_key            | string |                               |
+| cbb_s3_secret         | string |                               |
+| cbb_s3_bucket         | string | cookbook                      |
+
 # Development
 The code can be run locally by providing environment variables locally. There is no requirement for working S3 or OIDC credentials. A local database can be created with Docker. 
 ```console
