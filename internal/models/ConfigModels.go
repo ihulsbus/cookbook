@@ -8,6 +8,7 @@ import (
 type Config struct {
 	Global          GlobalConfig
 	Cors            CorsConfig
+	Auth0           Auth0Config
 	Oidc            OidcConfig
 	Database        DatabaseConfig
 	S3              S3Config
@@ -29,6 +30,12 @@ type DatabaseConfig struct {
 	Port     int
 	SSLMode  string
 	Timezone string
+}
+
+type Auth0Config struct {
+	Domain   string
+	ClientID string
+	Audience string
 }
 
 type OidcConfig struct {

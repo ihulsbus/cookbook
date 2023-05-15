@@ -3,14 +3,14 @@ package middleware
 import (
 	"context"
 
-	"github.com/coreos/go-oidc/v3/oidc"
 	m "github.com/ihulsbus/cookbook/internal/models"
 	log "github.com/sirupsen/logrus"
 )
 
 type Middleware struct {
-	logger LoggingInterface
-	OidcMW OidcMW
+	logger   LoggingInterface
+	AuthMW   AuthMW
+	ClaimsMW CustomClaims
 }
 
 type LoggingInterface interface {
@@ -19,25 +19,15 @@ type LoggingInterface interface {
 }
 
 // Init a new middleware instance
-func NewMiddleware(oidcConfig *m.OidcConfig, logger LoggingInterface) *Middleware {
+func NewMiddleware(auth0 *m.Auth0Config, logger LoggingInterface) *Middleware {
 	ctx := context.Background()
-	provider, _ := oidc.NewProvider(ctx, oidcConfig.URL)
-	verifier := provider.Verifier(&oidc.Config{
-		ClientID:             oidcConfig.ClientID,
-		SupportedSigningAlgs: oidcConfig.SigningAlgs,
-		SkipClientIDCheck:    oidcConfig.SkipClientIDCheck,
-		SkipExpiryCheck:      oidcConfig.SkipExpiryCheck,
-		SkipIssuerCheck:      oidcConfig.SkipIssuerCheck,
-	})
 
 	return &Middleware{
 		logger: logger,
-		OidcMW: OidcMW{
-			context:    ctx,
-			provider:   provider,
-			verifier:   verifier,
-			oidcConfig: oidcConfig,
-			logger:     logger,
+		AuthMW: AuthMW{
+			auth0:   auth0,
+			context: ctx,
+			logger:  logger,
 		},
 	}
 }

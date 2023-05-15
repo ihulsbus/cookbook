@@ -47,56 +47,130 @@ func main() {
 
 	// API versioning setup
 	v1 := router.Group("/api/v1")
-	v1.Use(c.Middleware.OidcMW.Middleware())
+	v1.Use(c.Middleware.AuthMW.EnsureValidToken())
 	{
 		recipe := v1.Group("/recipe")
-		recipe.Use(c.Middleware.OidcMW.VerifyAuthorization("recipe"))
 		{
-			recipe.GET("", c.RecipeEndpoints.GetAll)
-			recipe.GET(":id", c.RecipeEndpoints.Get)
-			recipe.GET(":id/ingredients", c.RecipeEndpoints.GetIngredientLink)
-			recipe.GET(":id/instruction", c.RecipeEndpoints.GetInstruction)
-			recipe.POST("", c.RecipeEndpoints.Create)
-			recipe.POST(":id/instruction", c.RecipeEndpoints.CreateInstruction)
-			recipe.POST(":id/cover", c.RecipeEndpoints.ImageUpload)
-			recipe.POST(":id/ingredients", c.RecipeEndpoints.CreateIngredientLink)
-			recipe.PUT(":id", c.RecipeEndpoints.Update)
-			recipe.PUT(":id/instruction", c.RecipeEndpoints.UpdateInstruction)
-			recipe.PUT(":id/ingredients", c.RecipeEndpoints.UpdateIngredientLink)
-			recipe.DELETE(":id", c.RecipeEndpoints.Delete)
-			recipe.DELETE(":id/instruction", c.RecipeEndpoints.DeleteInstruction)
-			recipe.DELETE(":id/ingredients", c.RecipeEndpoints.DeleteIngredientLink)
+			readRecipe := recipe.Group("")
+			readRecipe.Use(c.Middleware.AuthMW.EnsureValidScope("read:recipes"))
+			{
+				readRecipe.GET("", c.RecipeEndpoints.GetAll)
+				readRecipe.GET(":id", c.RecipeEndpoints.Get)
+				readRecipe.GET(":id/ingredients", c.RecipeEndpoints.GetIngredientLink)
+				readRecipe.GET(":id/instruction", c.RecipeEndpoints.GetInstruction)
+			}
+
+			createRecipe := recipe.Group("")
+			createRecipe.Use(c.Middleware.AuthMW.EnsureValidScope("create:recipes"))
+			{
+				createRecipe.POST("", c.RecipeEndpoints.Create)
+				createRecipe.POST(":id/instruction", c.RecipeEndpoints.CreateInstruction)
+				createRecipe.POST(":id/ingredients", c.RecipeEndpoints.CreateIngredientLink)
+				createRecipe.POST(":id/cover", c.RecipeEndpoints.ImageUpload)
+			}
+
+			updateRecipe := recipe.Group("")
+			updateRecipe.Use(c.Middleware.AuthMW.EnsureValidScope("update:recipes"))
+			{
+
+				updateRecipe.PUT(":id", c.RecipeEndpoints.Update)
+				updateRecipe.PUT(":id/instruction", c.RecipeEndpoints.UpdateInstruction)
+				updateRecipe.PUT(":id/ingredients", c.RecipeEndpoints.UpdateIngredientLink)
+			}
+
+			adminRecipe := recipe.Group("")
+			adminRecipe.Use(c.Middleware.AuthMW.EnsureValidScope("delete:recipes"))
+			{
+				adminRecipe.DELETE(":id", c.RecipeEndpoints.Delete)
+				adminRecipe.DELETE(":id/instruction", c.RecipeEndpoints.DeleteInstruction)
+				adminRecipe.DELETE(":id/ingredients", c.RecipeEndpoints.DeleteIngredientLink)
+			}
 		}
 
 		ingredient := v1.Group("/ingredient")
-		ingredient.Use(c.Middleware.OidcMW.VerifyAuthorization("ingredient"))
 		{
-			ingredient.GET("", c.IngredientEndpoints.GetAll)
-			ingredient.GET(":id", c.IngredientEndpoints.GetSingle)
-			ingredient.POST("", c.IngredientEndpoints.Create)
-			ingredient.PUT(":id", c.IngredientEndpoints.Update)
-			ingredient.DELETE(":id", c.IngredientEndpoints.Delete)
-			ingredient.GET("unit", c.IngredientEndpoints.GetUnits)
+			readIngredient := ingredient.Group("")
+			readIngredient.Use(c.Middleware.AuthMW.EnsureValidScope("read:ingredients"))
+			{
+				readIngredient.GET("", c.IngredientEndpoints.GetAll)
+				readIngredient.GET(":id", c.IngredientEndpoints.GetSingle)
+				readIngredient.GET("unit", c.IngredientEndpoints.GetUnits)
+			}
+
+			createIngredient := ingredient.Group("")
+			readIngredient.Use(c.Middleware.AuthMW.EnsureValidScope("create:ingredients"))
+			{
+				createIngredient.POST("", c.IngredientEndpoints.Create)
+			}
+
+			updateIngredient := ingredient.Group("")
+			readIngredient.Use(c.Middleware.AuthMW.EnsureValidScope("update:ingredients"))
+			{
+				updateIngredient.PUT(":id", c.IngredientEndpoints.Update)
+			}
+
+			adminIngredient := ingredient.Group("")
+			readIngredient.Use(c.Middleware.AuthMW.EnsureValidScope("delete:ingredients"))
+			{
+				adminIngredient.DELETE(":id", c.IngredientEndpoints.Delete)
+			}
+
 		}
 
 		tag := v1.Group("/tag")
-		tag.Use(c.Middleware.OidcMW.VerifyAuthorization("tag"))
 		{
-			tag.GET("", c.TagEndpoints.GetAll)
-			tag.GET(":id", c.TagEndpoints.GetSingle)
-			tag.POST("", c.TagEndpoints.Create)
-			tag.PUT(":id", c.TagEndpoints.Update)
-			tag.DELETE(":id", c.TagEndpoints.Delete)
+			readTag := tag.Group("")
+			readTag.Use(c.Middleware.AuthMW.EnsureValidScope("read:tags"))
+			{
+				readTag.GET("", c.TagEndpoints.GetAll)
+				readTag.GET(":id", c.TagEndpoints.GetSingle)
+			}
+
+			createTag := tag.Group("")
+			createTag.Use(c.Middleware.AuthMW.EnsureValidScope("create:tags"))
+			{
+				createTag.POST("", c.TagEndpoints.Create)
+			}
+
+			updateTag := tag.Group("")
+			updateTag.Use(c.Middleware.AuthMW.EnsureValidScope("update:tags"))
+			{
+				updateTag.PUT(":id", c.TagEndpoints.Update)
+			}
+
+			deleteTag := tag.Group("")
+			deleteTag.Use(c.Middleware.AuthMW.EnsureValidScope("delete:tags"))
+			{
+				deleteTag.DELETE(":id", c.TagEndpoints.Delete)
+			}
 		}
 
 		category := v1.Group("/category")
-		category.Use(c.Middleware.OidcMW.VerifyAuthorization("category"))
 		{
-			category.GET("", c.CategoryEndpoints.GetAll)
-			category.GET(":id", c.CategoryEndpoints.GetSingle)
-			category.POST("", c.CategoryEndpoints.Create)
-			category.PUT(":id", c.CategoryEndpoints.Update)
-			category.DELETE(":id", c.CategoryEndpoints.Delete)
+			readCategory := category.Group("")
+			readCategory.Use(c.Middleware.AuthMW.EnsureValidScope("read:categories"))
+			{
+				readCategory.GET("", c.CategoryEndpoints.GetAll)
+				readCategory.GET(":id", c.CategoryEndpoints.GetSingle)
+			}
+
+			createCategory := category.Group("")
+			createCategory.Use(c.Middleware.AuthMW.EnsureValidScope("create:categories"))
+			{
+				createCategory.POST("", c.CategoryEndpoints.Create)
+			}
+
+			updateCategory := category.Group("")
+			updateCategory.Use(c.Middleware.AuthMW.EnsureValidScope("update:categories"))
+			{
+				updateCategory.PUT(":id", c.CategoryEndpoints.Update)
+			}
+
+			deleteCategory := category.Group("")
+			deleteCategory.Use(c.Middleware.AuthMW.EnsureValidScope("delete:categories"))
+			{
+				deleteCategory.DELETE(":id", c.CategoryEndpoints.Delete)
+			}
 		}
 
 	}

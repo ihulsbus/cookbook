@@ -20,8 +20,9 @@ var (
 	// Generic
 	envBinds []string = []string{
 		"debug",
-		"oidc_url",
-		"oidc_clientid",
+		"auth0_domain",
+		"auth0_clientid",
+		"auth0_audience",
 		"database_host",
 		"database_port",
 		"database_name",
@@ -82,8 +83,9 @@ func initViper() {
 	Configuration.Global.Debug = viper.GetBool("debug")
 
 	// oidc
-	Configuration.Oidc.URL = viper.GetString("oidc_url")
-	Configuration.Oidc.ClientID = viper.GetString("oidc_clientid")
+	Configuration.Auth0.Domain = viper.GetString("auth0_domain")
+	Configuration.Auth0.ClientID = viper.GetString("auth0_clientid")
+	Configuration.Auth0.Audience = viper.GetString("auth0_audience")
 	Configuration.Oidc.SigningAlgs = append(Configuration.Oidc.SigningAlgs, "RS256")
 	Configuration.Oidc.SkipClientIDCheck = true // static for now. figure out if configurability is needed in our case
 	Configuration.Oidc.SkipExpiryCheck = true
@@ -168,7 +170,7 @@ func init() {
 
 	Logger.Info("> init application")
 	// Init middleware
-	Middleware = mi.NewMiddleware(&Configuration.Oidc, Logger)
+	Middleware = mi.NewMiddleware(&Configuration.Auth0, Logger)
 
 	// Init repositories
 	RecipeRepository = r.NewRecipeRepository(Configuration.DatabaseClient)
@@ -191,7 +193,7 @@ func init() {
 	CategoryHandlers = h.NewCategoryHandlers(CategoryService, Logger)
 
 	// Init endpoints
-	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers, &Middleware.OidcMW)
+	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers, &Middleware.AuthMW)
 	IngredientEndpoints = e.NewIngredientEndpoints(IngredientHandlers)
 	TagEndpoints = e.NewTagEndpoints(TagHandlers)
 	CategoryEndpoints = e.NewCategoryEndpoints(CategoryHandlers)

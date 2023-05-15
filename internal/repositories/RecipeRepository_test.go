@@ -35,7 +35,7 @@ func TestRecipeFindAll_OK(t *testing.T) {
 	result, err := r.FindAll()
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
+	assert.Len(t, result, 0)
 }
 
 func TestRecipeFindAll_Err(t *testing.T) {
@@ -91,7 +91,7 @@ func TestRecipeCreate_Ok(t *testing.T) {
 			1,
 			1,
 			"",
-			1,
+			"",
 		).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 	mock.ExpectCommit()
@@ -118,7 +118,7 @@ func TestRecipeCreate_Err(t *testing.T) {
 			1,
 			1,
 			"",
-			1,
+			"",
 		).
 		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()

@@ -1,7 +1,6 @@
 package endpoints
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -56,7 +55,7 @@ func (h *RecipeHandlersMock) CreateInstruction(w http.ResponseWriter, r *http.Re
 	_, _ = w.Write([]byte("{}"))
 }
 func (h *RecipeHandlersMock) UpdateInstruction(w http.ResponseWriter, r *http.Request, recipeID string) {
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
@@ -70,7 +69,7 @@ func (h *RecipeHandlersMock) GetIngredientLink(w http.ResponseWriter, r *http.Re
 	_, _ = w.Write([]byte("{}"))
 }
 func (h *RecipeHandlersMock) CreateIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
@@ -80,12 +79,12 @@ func (h *RecipeHandlersMock) UpdateIngredientLink(w http.ResponseWriter, r *http
 	_, _ = w.Write([]byte("{}"))
 }
 func (h *RecipeHandlersMock) DeleteIngredientLink(w http.ResponseWriter, r *http.Request, recipeID string) {
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = w.Write([]byte("{}"))
 }
 
-func (MiddlewareMock) UserFromContext(ctx context.Context) (*m.User, error) {
+func (MiddlewareMock) UserFromContext(ctx *gin.Context) (*m.User, error) {
 	return &m.User{}, nil
 }
 
@@ -191,7 +190,7 @@ func Test_UpdateInstruction(t *testing.T) {
 
 	e.UpdateInstruction(c)
 
-	assert.Equal(t, 201, w.Code)
+	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
 	assert.Equal(t, w.Body.String(), "{}")
 }
@@ -237,7 +236,7 @@ func Test_UpdateIngredientLink(t *testing.T) {
 
 	e.UpdateIngredientLink(c)
 
-	assert.Equal(t, 201, w.Code)
+	assert.Equal(t, 200, w.Code)
 	assert.Equal(t, w.Result().Header.Get("Content-Type"), "application/json")
 	assert.Equal(t, w.Body.String(), "{}")
 }

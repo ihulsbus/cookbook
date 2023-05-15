@@ -1,7 +1,6 @@
 package endpoints
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +28,7 @@ type RecipeHandlers interface {
 }
 
 type Middleware interface {
-	UserFromContext(ctx context.Context) (*m.User, error)
+	UserFromContext(ctx *gin.Context) (*m.User, error)
 }
 
 type RecipeEndpoints struct {
@@ -68,7 +67,6 @@ func (e RecipeEndpoints) GetAll(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/recipe/{id} [get]
 func (e RecipeEndpoints) Get(ctx *gin.Context) {
-	// This is dirty, but I do not want gin awareness beyond the endpoints level
 	e.handlers.Get(ctx.Writer, ctx.Request, ctx.Param("id"))
 }
 

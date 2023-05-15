@@ -3,112 +3,117 @@ package middleware
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log"
 	"net/http"
+	"net/url"
 	"strings"
+	"time"
 
-	"github.com/coreos/go-oidc/v3/oidc"
+	jwtmiddleware "github.com/auth0/go-jwt-middleware/v2"
+	"github.com/auth0/go-jwt-middleware/v2/jwks"
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/gin-gonic/gin"
+	adapter "github.com/gwatts/gin-adapter"
 	m "github.com/ihulsbus/cookbook/internal/models"
-	"golang.org/x/exp/slices"
 )
 
-var (
-	userCtxKey = "user"
-	claims     m.Claims
-)
-
-type OidcMW struct {
-	oidcConfig *m.OidcConfig
-	context    context.Context
-	provider   *oidc.Provider
-	verifier   *oidc.IDTokenVerifier
-	logger     LoggingInterface
+type AuthMW struct {
+	auth0   *m.Auth0Config
+	context context.Context
+	logger  LoggingInterface
 }
 
-func (o *OidcMW) Middleware() gin.HandlerFunc {
+type CustomClaims struct {
+	Permissions []string `json:"permissions"`
+}
+
+// Validate does nothing, but we need it to
+// satisfy validator.CustomClaims interface.
+func (c CustomClaims) Validate(ctx context.Context) error {
+	return nil
+}
+
+// HasScope checks whether our claims have a specific scope.
+func (c CustomClaims) HasPermission(expectedPermission string) bool {
+	for i := range c.Permissions {
+		if c.Permissions[i] == expectedPermission {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (a *AuthMW) EnsureValidScope(expectedScope string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		token := ctx.Request.Header.Get("Authorization")
-		if token == "" {
-			_ = ctx.AbortWithError(http.StatusUnauthorized, errors.New("unauthorized"))
-			return
-		}
-		bearer := strings.Split(token, " ")
-		if len(bearer) != 2 || bearer[0] != "Bearer" {
-			_ = ctx.AbortWithError(http.StatusForbidden, errors.New("no valid token found"))
-			return
-		}
 
-		user, err := o.authorizeUser(bearer[1])
-		if err != nil {
-			_ = ctx.AbortWithError(http.StatusUnauthorized, errors.New("bad request"))
-			return
-		}
+		token := ctx.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
+		claims := token.CustomClaims.(*CustomClaims)
 
-		if user != nil {
-			o.logger.Debugf("Authenticated user as %s", user.UserID)
-			// Set user properly in Gin Context
-			ctx.Set(userCtxKey, user)
-			// Pass down the request to the next middleware (or final handler)
+		if claims.HasPermission(expectedScope) {
 			ctx.Next()
-		}
-	}
-}
-
-func (o *OidcMW) authorizeUser(bearer string) (*m.User, error) {
-	idToken, err := o.verifier.Verify(o.context, bearer)
-
-	if err != nil {
-		err = fmt.Errorf("unable to verify token: %v", bearer)
-		return nil, err
-	}
-
-	if err = idToken.Claims(&claims); err != nil {
-		return nil, fmt.Errorf("failed to get claims: %v", err)
-	}
-
-	if !claims.Email_verified {
-		return nil, fmt.Errorf("email not verified: %v", claims.Email)
-	}
-
-	return &m.User{UserID: claims.FederatedClaims.UserID, Groups: claims.Groups}, nil
-}
-
-// UserFromContext retrieves information about the authenticated user from the context of the request.
-func (o *OidcMW) UserFromContext(ctx context.Context) (*m.User, error) {
-	v := ctx.Value(userCtxKey)
-
-	if v == nil {
-		return nil, errors.New("no authenticated user found in context")
-	}
-	return v.(*m.User), nil
-}
-
-func (a *OidcMW) VerifyAuthorization(service string) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-
-		user, err := a.UserFromContext(ctx)
-		if err != nil {
-			a.logger.Debugf("eror getting user from context: %s", err)
-			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
 
-		action := ctx.Request.Method
-
-		allowedRoles := m.AuthorizationModel[service][action]
-		a.logger.Debugf("Service: %v; User: %v; action: %v; groups: %v; allowed: %v;", service, user.UserID, action, user.Groups, allowedRoles)
-		for i := range user.Groups {
-			index := slices.IndexFunc(allowedRoles, func(r string) bool { return r == user.Groups[i] })
-
-			if index != -1 {
-				a.logger.Debugf("user %s has role %s. Passed", user.UserID, allowedRoles[index])
-				ctx.Next()
-				return
-			}
-		}
-
-		a.logger.Debugf("user %s failed authorization check. Deny.", user.UserID)
-		ctx.AbortWithStatus(http.StatusUnauthorized)
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, "Insufficient scope.")
 	}
+}
+
+func (a *AuthMW) UserFromContext(ctx *gin.Context) (*m.User, error) {
+	var user m.User
+
+	claims := ctx.Request.Context().Value(jwtmiddleware.ContextKey{}).(*validator.ValidatedClaims)
+	subject := claims.RegisteredClaims.Subject
+
+	if subject == "" {
+		return nil, errors.New("user not found in request")
+	}
+
+	splitSubject := strings.Split(claims.RegisteredClaims.Subject, "|")
+
+	user.Provider = splitSubject[0]
+	user.UserID = splitSubject[1]
+
+	return &m.User{}, nil
+}
+
+// EnsureValidToken is a middleware that will check the validity of our JWT.
+func (a *AuthMW) EnsureValidToken() gin.HandlerFunc {
+	issuerURL, err := url.Parse("https://" + a.auth0.Domain + "/")
+	if err != nil {
+		log.Fatalf("Failed to parse the issuer url: %v", err)
+	}
+
+	provider := jwks.NewCachingProvider(issuerURL, 5*time.Minute)
+
+	jwtValidator, err := validator.New(
+		provider.KeyFunc,
+		validator.RS256,
+		issuerURL.String(),
+		[]string{a.auth0.Audience},
+		validator.WithCustomClaims(
+			func() validator.CustomClaims {
+				return &CustomClaims{}
+			},
+		),
+		validator.WithAllowedClockSkew(time.Minute),
+	)
+	if err != nil {
+		log.Fatalf("Failed to set up the jwt validator")
+	}
+
+	errorHandler := func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Printf("Encountered error while validating JWT: %v", err)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message":"Failed to validate JWT."}`))
+	}
+
+	middleware := jwtmiddleware.New(
+		jwtValidator.ValidateToken,
+		jwtmiddleware.WithErrorHandler(errorHandler),
+	)
+
+	return adapter.Wrap(middleware.CheckJWT)
 }
