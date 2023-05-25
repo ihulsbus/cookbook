@@ -82,14 +82,10 @@ func initViper() {
 	// global
 	Configuration.Global.Debug = viper.GetBool("debug")
 
-	// oidc
+	// auth
 	Configuration.Auth0.Domain = viper.GetString("auth0_domain")
 	Configuration.Auth0.ClientID = viper.GetString("auth0_clientid")
 	Configuration.Auth0.Audience = viper.GetString("auth0_audience")
-	Configuration.Oidc.SigningAlgs = append(Configuration.Oidc.SigningAlgs, "RS256")
-	Configuration.Oidc.SkipClientIDCheck = true // static for now. figure out if configurability is needed in our case
-	Configuration.Oidc.SkipExpiryCheck = true
-	Configuration.Oidc.SkipIssuerCheck = true
 
 	// database
 	Configuration.Database.Host = viper.GetString("database_host")

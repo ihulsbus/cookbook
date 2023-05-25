@@ -9,7 +9,6 @@ type Config struct {
 	Global          GlobalConfig
 	Cors            CorsConfig
 	Auth0           Auth0Config
-	Oidc            OidcConfig
 	Database        DatabaseConfig
 	S3              S3Config
 	DatabaseClient  *gorm.DB
@@ -36,15 +35,6 @@ type Auth0Config struct {
 	Domain   string
 	ClientID string
 	Audience string
-}
-
-type OidcConfig struct {
-	URL               string
-	ClientID          string
-	SigningAlgs       []string
-	SkipClientIDCheck bool
-	SkipExpiryCheck   bool
-	SkipIssuerCheck   bool
 }
 
 type CorsConfig struct {
