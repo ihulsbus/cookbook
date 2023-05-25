@@ -74,7 +74,7 @@ func (a *AuthMW) UserFromContext(ctx *gin.Context) (*m.User, error) {
 	user.Provider = splitSubject[0]
 	user.UserID = splitSubject[1]
 
-	return &m.User{}, nil
+	return &user, nil
 }
 
 // EnsureValidToken is a middleware that will check the validity of our JWT.
