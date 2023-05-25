@@ -28,7 +28,12 @@ func (s CategoryService) FindAll() ([]m.Category, error) {
 
 	categorys, err := s.repo.FindAll()
 	if err != nil {
-		return nil, err
+		switch err.Error() {
+		case "not found":
+			return nil, err
+		default:
+			return nil, errors.New("internal server error")
+		}
 	}
 
 	return categorys, nil
@@ -38,7 +43,12 @@ func (s CategoryService) FindSingle(categoryID uint) (m.Category, error) {
 
 	category, err := s.repo.FindSingle(categoryID)
 	if err != nil {
-		return m.Category{}, err
+		switch err.Error() {
+		case "not found":
+			return m.Category{}, err
+		default:
+			return m.Category{}, errors.New("internal server error")
+		}
 	}
 
 	return category, nil

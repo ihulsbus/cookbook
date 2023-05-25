@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"errors"
+
 	m "github.com/ihulsbus/cookbook/internal/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -21,20 +23,29 @@ func NewCategoryRepository(db *gorm.DB) *CategoryRepository {
 }
 
 func (r *CategoryRepository) FindAll() ([]m.Category, error) {
-	var categorys []m.Category
+	var categories []m.Category
 
-	if err := r.db.Preload(clause.Associations).Find(&categorys).Error; err != nil {
+	if err := r.db.Preload(clause.Associations).Find(&categories).Error; err != nil {
 		return nil, err
 	}
 
-	return categorys, nil
+	if len(categories) <= 0 {
+		return nil, errors.New("not found")
+	}
+
+	return categories, nil
 }
 
 func (r *CategoryRepository) FindSingle(categoryID uint) (m.Category, error) {
 	var category m.Category
 
-	if err := r.db.Preload(clause.Associations).Where(whereCategoryID, categoryID).Find(&category).Error; err != nil {
-		return m.Category{}, err
+	result := r.db.Preload(clause.Associations).Where(whereCategoryID, categoryID).First(&category)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return m.Category{}, errors.New("not found")
+		} else {
+			return m.Category{}, result.Error
+		}
 	}
 
 	return category, nil

@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"errors"
+
 	m "github.com/ihulsbus/cookbook/internal/models"
 
 	"gorm.io/gorm"
@@ -28,6 +30,9 @@ func (r RecipeRepository) FindAll() ([]m.Recipe, error) {
 	if err := r.db.Preload(clause.Associations).Find(&recipes).Error; err != nil {
 		return nil, err
 	}
+	if len(recipes) <= 0 {
+		return nil, errors.New("not found")
+	}
 
 	return recipes, nil
 }
@@ -37,8 +42,13 @@ func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
 	var recipe m.Recipe
 	recipe.ID = recipeID
 
-	if err := r.db.Preload(clause.Associations).Find(&recipe).Error; err != nil {
-		return recipe, err
+	result := r.db.Preload(clause.Associations).Where(whereID, recipeID).First(&recipe)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return m.Recipe{}, errors.New("not found")
+		} else {
+			return m.Recipe{}, result.Error
+		}
 	}
 
 	return recipe, nil
@@ -121,9 +131,15 @@ func (r RecipeRepository) FindInstruction(recipeID uint) (m.Instruction, error) 
 	var instruction m.Instruction
 	instruction.RecipeID = recipeID
 
-	if err := r.db.Find(&instruction).Where(whereRecipeID, recipeID).Error; err != nil {
-		return instruction, err
+	result := r.db.Where(whereRecipeID, recipeID).First(&instruction)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return m.Instruction{}, errors.New("not found")
+		} else {
+			return m.Instruction{}, result.Error
+		}
 	}
+
 	return instruction, nil
 }
 
@@ -181,6 +197,10 @@ func (r RecipeRepository) FindIngredientLink(recipeID uint) ([]m.RecipeIngredien
 		return nil, err
 	}
 
+	if len(recipeIngredients) <= 0 {
+		return nil, errors.New("not found")
+	}
+
 	return recipeIngredients, nil
 }
 
@@ -203,12 +223,17 @@ func (r RecipeRepository) CreateIngredientLink(link []m.RecipeIngredient) ([]m.R
 
 func (r RecipeRepository) UpdateIngredientLink(link []m.RecipeIngredient) ([]m.RecipeIngredient, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
-		var err error
 
 		for i := range link {
 
-			if err = tx.Where(whereRecipeID, &link[i].RecipeID).Updates(&link[i]).Error; err != nil {
-				return err
+			result := tx.Where(whereRecipeID, &link[i].RecipeID).Updates(&link[i])
+			if result.Error != nil {
+				return result.Error
+			}
+			if result.RowsAffected == 0 {
+				if err := tx.Create(&link[i]).Error; err != nil {
+					return err
+				}
 			}
 
 		}

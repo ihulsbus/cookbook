@@ -35,8 +35,14 @@ func (h *TagHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.tagService.FindAll()
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)
@@ -58,8 +64,14 @@ func (h *TagHandlers) Get(w http.ResponseWriter, r *http.Request, tagID string) 
 
 	data, err = h.tagService.FindSingle(uint(tID))
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)

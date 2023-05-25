@@ -32,6 +32,10 @@ func (h HanderUtils) response204(w http.ResponseWriter) {
 	h.respondWithJSON(w, http.StatusNoContent, "Object deleted")
 }
 
+func (h HanderUtils) response404(w http.ResponseWriter) {
+	h.respondWithError(w, http.StatusNotFound, "not found")
+}
+
 func (h HanderUtils) response500(w http.ResponseWriter) {
 	h.respondWithError(w, http.StatusInternalServerError, "Internal server error")
 }

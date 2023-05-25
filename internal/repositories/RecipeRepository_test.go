@@ -49,6 +49,20 @@ func TestRecipeFindAll_Err(t *testing.T) {
 	assert.Len(t, result, 0)
 }
 
+func TestRecipeFindAll_NotFoundErr(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewRecipeRepository(db)
+
+	mock.ExpectQuery(`[SELECT * FROM "recipe_category" WHERE "recipe_category"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(0))
+	mock.ExpectQuery(`[SELECT * FROM "recipe_ingredient" WHERE "recipe_ingredient"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(0))
+	mock.ExpectQuery(`[SELECT * FROM "recipe_tag" WHERE "recipe_tag"."recipe_id" = 1]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(0))
+	mock.ExpectQuery(`[SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(0))
+	result, err := r.FindAll()
+
+	assert.Error(t, err)
+	assert.Len(t, result, 0)
+}
+
 func TestRecipeFindSingle_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewRecipeRepository(db)

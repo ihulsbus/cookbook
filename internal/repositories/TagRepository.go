@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"errors"
+
 	m "github.com/ihulsbus/cookbook/internal/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -27,14 +29,23 @@ func (r *TagRepository) FindAll() ([]m.Tag, error) {
 		return nil, err
 	}
 
+	if len(tags) <= 0 {
+		return nil, errors.New("not found")
+	}
+
 	return tags, nil
 }
 
 func (r *TagRepository) FindSingle(tagID uint) (m.Tag, error) {
 	var tag m.Tag
 
-	if err := r.db.Preload(clause.Associations).Where(whereTagID, tagID).Find(&tag).Error; err != nil {
-		return m.Tag{}, err
+	result := r.db.Preload(clause.Associations).Where(whereTagID, tagID).First(&tag)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return m.Tag{}, errors.New("not found")
+		} else {
+			return m.Tag{}, result.Error
+		}
 	}
 
 	return tag, nil

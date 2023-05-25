@@ -28,7 +28,12 @@ func (s TagService) FindAll() ([]m.Tag, error) {
 
 	tags, err := s.repo.FindAll()
 	if err != nil {
-		return nil, err
+		switch err.Error() {
+		case "not found":
+			return nil, err
+		default:
+			return nil, errors.New("internal server error")
+		}
 	}
 
 	return tags, nil
@@ -38,7 +43,12 @@ func (s TagService) FindSingle(tagID uint) (m.Tag, error) {
 
 	tag, err := s.repo.FindSingle(tagID)
 	if err != nil {
-		return m.Tag{}, err
+		switch err.Error() {
+		case "not found":
+			return m.Tag{}, err
+		default:
+			return m.Tag{}, errors.New("internal server error")
+		}
 	}
 
 	return tag, nil

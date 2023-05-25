@@ -52,8 +52,14 @@ func (h RecipeHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.recipeService.FindAll()
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)
@@ -70,8 +76,14 @@ func (h RecipeHandlers) Get(w http.ResponseWriter, r *http.Request, recipeID str
 
 	data, err = h.recipeService.FindSingle(uint(rID))
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)
@@ -198,8 +210,14 @@ func (h RecipeHandlers) GetInstruction(w http.ResponseWriter, r *http.Request, r
 
 	data, err = h.recipeService.FindInstruction(uint(rID))
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)
@@ -292,8 +310,14 @@ func (h RecipeHandlers) GetIngredientLink(w http.ResponseWriter, r *http.Request
 
 	data, err = h.recipeService.FindIngredientLink(uint(rID))
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)

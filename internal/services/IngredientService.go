@@ -30,7 +30,12 @@ func (s IngredientService) FindAll() ([]m.Ingredient, error) {
 
 	ingredients, err := s.repo.FindAll()
 	if err != nil {
-		return nil, err
+		switch err.Error() {
+		case "not found":
+			return nil, err
+		default:
+			return nil, errors.New("internal server error")
+		}
 	}
 
 	return ingredients, nil
@@ -41,7 +46,12 @@ func (s IngredientService) FindUnits() ([]m.Unit, error) {
 
 	units, err := s.repo.FindUnits()
 	if err != nil {
-		return nil, err
+		switch err.Error() {
+		case "not found":
+			return nil, err
+		default:
+			return nil, errors.New("internal server error")
+		}
 	}
 
 	return units, nil
@@ -52,11 +62,12 @@ func (s IngredientService) FindSingle(ingredientID uint) (m.Ingredient, error) {
 
 	ingredient, err := s.repo.FindSingle(ingredientID)
 	if err != nil {
-		return ingredient, err
-	}
-
-	if ingredient.ID == 0 {
-		return m.Ingredient{}, errors.New("ingredient not found")
+		switch err.Error() {
+		case "not found":
+			return m.Ingredient{}, err
+		default:
+			return m.Ingredient{}, errors.New("internal server error")
+		}
 	}
 
 	return ingredient, nil

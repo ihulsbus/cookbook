@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"errors"
+
 	m "github.com/ihulsbus/cookbook/internal/models"
 	"gorm.io/gorm"
 )
@@ -26,6 +28,10 @@ func (r IngredientRepository) FindAll() ([]m.Ingredient, error) {
 		return nil, err
 	}
 
+	if len(ingredients) <= 0 {
+		return nil, errors.New("not found")
+	}
+
 	return ingredients, nil
 }
 
@@ -36,14 +42,24 @@ func (r IngredientRepository) FindUnits() ([]m.Unit, error) {
 		return nil, err
 	}
 
+	if len(units) <= 0 {
+		return nil, errors.New("not found")
+
+	}
+
 	return units, nil
 }
 
 func (r IngredientRepository) FindSingle(ingredientID uint) (m.Ingredient, error) {
 	var ingredient m.Ingredient
 
-	if err := r.db.Where(whereID, ingredientID).Find(&ingredient).Error; err != nil {
-		return ingredient, err
+	result := r.db.Where(whereID, ingredientID).First(&ingredient)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return m.Ingredient{}, errors.New("not found")
+		} else {
+			return m.Ingredient{}, result.Error
+		}
 	}
 
 	return ingredient, nil

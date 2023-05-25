@@ -40,7 +40,12 @@ func (s RecipeService) FindAll() ([]m.Recipe, error) {
 
 	recipes, err := s.repo.FindAll()
 	if err != nil {
-		return nil, err
+		switch err.Error() {
+		case "not found":
+			return nil, err
+		default:
+			return nil, errors.New("internal server error")
+		}
 	}
 
 	return recipes, nil
@@ -52,7 +57,12 @@ func (s RecipeService) FindSingle(recipeID uint) (m.Recipe, error) {
 
 	recipe, err := s.repo.FindSingle(uint(recipeID))
 	if err != nil {
-		return recipe, err
+		switch err.Error() {
+		case "not found":
+			return m.Recipe{}, err
+		default:
+			return m.Recipe{}, errors.New("internal server error")
+		}
 	}
 
 	return recipe, nil
@@ -119,7 +129,12 @@ func (s RecipeService) FindInstruction(recipeID uint) (m.Instruction, error) {
 	// TODO create logic
 	instruction, err := s.repo.FindInstruction(uint(recipeID))
 	if err != nil {
-		return m.Instruction{}, err
+		switch err.Error() {
+		case "not found":
+			return m.Instruction{}, err
+		default:
+			return m.Instruction{}, errors.New("internal server error")
+		}
 	}
 
 	return instruction, nil
@@ -174,7 +189,12 @@ func (s RecipeService) FindIngredientLink(recipeID uint) ([]m.RecipeIngredient, 
 
 	ingredients, err := s.repo.FindIngredientLink(recipeID)
 	if err != nil {
-		return nil, err
+		switch err.Error() {
+		case "not found":
+			return nil, err
+		default:
+			return nil, errors.New("internal server error")
+		}
 	}
 
 	return ingredients, nil

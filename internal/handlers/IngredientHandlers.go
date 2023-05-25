@@ -37,8 +37,14 @@ func (h IngredientHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.ingredientService.FindAll()
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)
@@ -50,8 +56,14 @@ func (h IngredientHandlers) GetUnits(w http.ResponseWriter, r *http.Request) {
 
 	data, err := h.ingredientService.FindUnits()
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)
@@ -69,8 +81,14 @@ func (h IngredientHandlers) GetSingle(w http.ResponseWriter, r *http.Request, in
 
 	data, err = h.ingredientService.FindSingle(uint(iID))
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
+		switch err.Error() {
+		case "not found":
+			h.utils.response404(w)
+			return
+		default:
+			h.utils.response500WithDetails(w, err.Error())
+			return
+		}
 	}
 
 	h.utils.respondWithJSON(w, http.StatusOK, data)
