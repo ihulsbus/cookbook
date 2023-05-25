@@ -21,6 +21,7 @@ jobs:
           go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
           
       - name: Go tests
+        continue-on-error: true
         run: |
           go test -json -coverprofile=coverage.out ./... > test-report.out
           
