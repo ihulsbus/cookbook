@@ -104,6 +104,14 @@ func (s RecipeService) Update(recipe m.Recipe, recipeID uint) (m.Recipe, error) 
 		recipe.ServingCount = originalRecipe.ServingCount
 	}
 
+	if recipe.AuthorID != originalRecipe.AuthorID {
+		recipe.AuthorID = originalRecipe.AuthorID
+	}
+
+	if recipe.ImageName != originalRecipe.ImageName {
+		recipe.ImageName = originalRecipe.ImageName
+	}
+
 	updatedRecipe, err = s.repo.Update(recipe)
 	if err != nil {
 		return updatedRecipe, err
