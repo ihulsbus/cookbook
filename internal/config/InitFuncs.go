@@ -33,6 +33,10 @@ var (
 		{ID: 13, FullName: "Milligram", ShortName: "mg"},
 		{ID: 14, FullName: "Gram", ShortName: "g"},
 		{ID: 15, FullName: "Kilogram", ShortName: "kg"},
+		// Generic units
+		{ID: 16, FullName: "Pinch", ShortName: "pn"},
+		{ID: 17, FullName: "Cloves", ShortName: "cloves"},
+		{ID: 18, FullName: "Pieces", ShortName: "pcs"},
 	}
 )
 
