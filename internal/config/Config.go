@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	InitNOK = "> Init NOK"
-	InitOK  = "> Init OK"
+	INIT_NOK = "> Init NOK"
+	INIT_OK  = "> Init OK"
 )
 
 var (
@@ -75,7 +75,7 @@ func initViper() {
 		err := viper.BindEnv(envBinds[i])
 		if err != nil {
 			Logger.Errorf("error binding to env var '%s': %s", envBinds[i], err.Error())
-			Logger.Fatal(InitNOK)
+			Logger.Fatal(INIT_NOK)
 		}
 	}
 
@@ -157,7 +157,7 @@ func init() {
 
 	if err := initUnits(); err != nil {
 		Logger.Error(err)
-		Logger.Fatal(InitNOK)
+		Logger.Fatal(INIT_NOK)
 	}
 
 	Logger.Info("> init S3")
@@ -194,5 +194,5 @@ func init() {
 	TagEndpoints = e.NewTagEndpoints(TagHandlers)
 	CategoryEndpoints = e.NewCategoryEndpoints(CategoryHandlers)
 
-	Logger.Info(InitOK)
+	Logger.Info(INIT_OK)
 }
