@@ -33,6 +33,29 @@ var (
 		{ID: 13, FullName: "Milligram", ShortName: "mg"},
 		{ID: 14, FullName: "Gram", ShortName: "g"},
 		{ID: 15, FullName: "Kilogram", ShortName: "kg"},
+		// Generic units
+		{ID: 16, FullName: "Pinch", ShortName: "pn"},
+		{ID: 17, FullName: "Cloves", ShortName: "cloves"},
+		{ID: 18, FullName: "Pieces", ShortName: "pcs"},
+	}
+	categories = []m.Category{
+		{CategoryName: "Meat"},
+		{CategoryName: "Fish"},
+		{CategoryName: "Vegetarian"},
+		{CategoryName: "Vegan"},
+		{CategoryName: "Soup"},
+		{CategoryName: "Stew"},
+		{CategoryName: "Curry"},
+		{CategoryName: "Pasta"},
+		{CategoryName: "Rice & Risotto"},
+		{CategoryName: "Salad"},
+		{CategoryName: "Bread"},
+		{CategoryName: "Fruit"},
+		{CategoryName: "Dessert"},
+		{CategoryName: "Baked treats"},
+		{CategoryName: "Sauce"},
+		{CategoryName: "Bouillon"},
+		{CategoryName: "Dough"},
 	}
 )
 
@@ -61,13 +84,13 @@ func initDatabase(host string, user string, password string, dbname string, port
 
 	if err != nil {
 		Logger.Errorf("Unable to connect to the database. Exiting..\n%v\n", err)
-		Logger.Fatal(InitNOK)
+		Logger.Fatal(INIT_NOK)
 	}
 
 	err = db.SetupJoinTable(&m.Recipe{}, "Ingredient", &m.RecipeIngredient{})
 	if err != nil {
 		Logger.Errorf("Error while creating RecipeIngredient join tables: %s", err.Error())
-		Logger.Fatal(InitNOK)
+		Logger.Fatal(INIT_NOK)
 	}
 
 	err = db.AutoMigrate(
@@ -82,7 +105,7 @@ func initDatabase(host string, user string, password string, dbname string, port
 
 	if err != nil {
 		Logger.Errorf("Error while automigrating database: %s", err.Error())
-		Logger.Fatal(InitNOK)
+		Logger.Fatal(INIT_NOK)
 	}
 
 	return db
@@ -98,6 +121,22 @@ func initUnits() error {
 
 		return nil
 
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func initCategories() error {
+	if err := Configuration.DatabaseClient.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(categories).Error; err != nil {
+			return err
+		}
+
+		return nil
 	}); err != nil {
 		return err
 	}
