@@ -160,6 +160,11 @@ func init() {
 		Logger.Fatal(INIT_NOK)
 	}
 
+	if err := initCategories(); err != nil {
+		Logger.Error(err)
+		Logger.Fatal(INIT_NOK)
+	}
+
 	Logger.Info("> init S3")
 	// Init S3 session
 	Configuration.S3ClientSession = connectS3(Configuration.S3.Endpoint, Configuration.S3.AWSAccessSecret, Configuration.S3.AWSAccessKey, "us-east-1")
