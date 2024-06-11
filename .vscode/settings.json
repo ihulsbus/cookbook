@@ -1,17 +1,4 @@
 {
-  "sqltools.connections": [
-    {
-      "previewLimit": 50,
-      "server": "localhost",
-      "port": 5432,
-      "driver": "PostgreSQL",
-      "name": "Localhost Cookbook",
-      "group": "Dev",
-      "database": "cookbook",
-      "username": "cookbook",
-      "password": "mysecretpassword"
-    }
-  ],
   "editor.fontFamily": "Menlo",
   "terminal.integrated.fontFamily": "'MesloLGS NF'"
 }

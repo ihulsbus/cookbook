@@ -23,10 +23,18 @@ type DatabaseConfig struct {
 	Timezone string
 }
 
+// type OauthConfig struct {
+// 	Service string
+// 	Url     string
+// 	Realm   string
+// }
+
 type OauthConfig struct {
-	Domain   string
-	ClientID string
-	Audience string
+	Service              string
+	Url                  string
+	Realm                string
+	FullCertsPath        *string
+	DisableSecurityCheck bool
 }
 
 type CorsConfig struct {

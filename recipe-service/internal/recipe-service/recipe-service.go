@@ -4,22 +4,16 @@ import (
 	"context"
 	"net/http"
 	c "recipe-service/internal/config"
+	m "recipe-service/internal/middleware"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	ginglog "github.com/szuecs/gin-glog"
 	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 var (
 	log = c.Logger
-
-	config = ginkeycloak.BuilderConfig{
-		Service: "",
-		Url:     "",
-		Realm:   "",
-	}
 )
 
 func RecipeService(ctx context.Context) {
@@ -27,7 +21,7 @@ func RecipeService(ctx context.Context) {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Logging
-	router.Use(ginglog.Logger(3 * time.Second))
+	router.Use(m.Logger(log))
 
 	// Panic recovery
 	router.Use(gin.Recovery())
@@ -37,30 +31,30 @@ func RecipeService(ctx context.Context) {
 
 	v1 := router.Group("/api/v1")
 	{
-		recipe := v1.Group("/recipe")
+		recipe := v1.Group("/recipes")
 		{
 			readRecipe := recipe.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(config).RestrictButForRole("administrator").Build())
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 				readRecipe.GET("", c.RecipeEndpoints.GetAll)
 				readRecipe.GET(":id", c.RecipeEndpoints.Get)
 			}
 
 			createRecipe := recipe.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(config).RestrictButForRole("administrator").Build())
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 				createRecipe.POST("", c.RecipeEndpoints.Create)
 			}
 
 			updateRecipe := recipe.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(config).RestrictButForRole("administrator").Build())
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 
 				updateRecipe.PUT(":id", c.RecipeEndpoints.Update)
 			}
 
 			adminRecipe := recipe.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(config).RestrictButForRole("administrator").Build())
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 				adminRecipe.DELETE(":id", c.RecipeEndpoints.Delete)
 			}
