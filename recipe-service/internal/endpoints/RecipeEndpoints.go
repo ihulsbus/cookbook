@@ -3,32 +3,25 @@ package endpoints
 import (
 	"net/http"
 
-	m "recipe-service/internal/models"
-
 	"github.com/gin-gonic/gin"
+	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 type RecipeHandlers interface {
 	GetAll(w http.ResponseWriter, r *http.Request)
 	Get(w http.ResponseWriter, r *http.Request, recipeID string)
-	Create(user *m.User, w http.ResponseWriter, r *http.Request)
+	Create(user *ginkeycloak.KeyCloakToken, w http.ResponseWriter, r *http.Request)
 	Update(w http.ResponseWriter, r *http.Request, recipeID string)
 	Delete(w http.ResponseWriter, r *http.Request, recipeID string)
 }
 
-type Middleware interface {
-	UserFromContext(ctx *gin.Context) (*m.User, error)
-}
-
 type RecipeEndpoints struct {
-	handlers   RecipeHandlers
-	middleware Middleware
+	handlers RecipeHandlers
 }
 
-func NewRecipeEndpoints(handlers RecipeHandlers, middleware Middleware) *RecipeEndpoints {
+func NewRecipeEndpoints(handlers RecipeHandlers) *RecipeEndpoints {
 	return &RecipeEndpoints{
-		handlers:   handlers,
-		middleware: middleware,
+		handlers: handlers,
 	}
 }
 
@@ -71,13 +64,10 @@ func (e RecipeEndpoints) Get(ctx *gin.Context) {
 // @Failure		500	{string}	string	"Any error"
 // @Router			/recipe [post]
 func (e RecipeEndpoints) Create(ctx *gin.Context) {
-	user, err := e.middleware.UserFromContext(ctx)
-	if err != nil {
-		ctx.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
+	ginToken, _ := ctx.Get("token")
+	token := ginToken.(ginkeycloak.KeyCloakToken)
 
-	e.handlers.Create(user, ctx.Writer, ctx.Request)
+	e.handlers.Create(&token, ctx.Writer, ctx.Request)
 }
 
 // @Summary		Update a recipe

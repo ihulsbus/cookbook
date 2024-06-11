@@ -35,14 +35,38 @@ func RecipeService(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
-	privateGroup := router.Group("/api")
-	privateGroup.Use(ginkeycloak.NewAccessBuilder(config).
-		RestrictButForRole("administrator").
-		Build())
+	v1 := router.Group("/api/v1")
+	{
+		recipe := v1.Group("/recipe")
+		{
+			readRecipe := recipe.Group("")
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(config).RestrictButForRole("administrator").Build())
+			{
+				readRecipe.GET("", c.RecipeEndpoints.GetAll)
+				readRecipe.GET(":id", c.RecipeEndpoints.Get)
+			}
 
-	privateGroup.GET("/privategroup", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Hello from private for groups"})
-	})
+			createRecipe := recipe.Group("")
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(config).RestrictButForRole("administrator").Build())
+			{
+				createRecipe.POST("", c.RecipeEndpoints.Create)
+			}
+
+			updateRecipe := recipe.Group("")
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(config).RestrictButForRole("administrator").Build())
+			{
+
+				updateRecipe.PUT(":id", c.RecipeEndpoints.Update)
+			}
+
+			adminRecipe := recipe.Group("")
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(config).RestrictButForRole("administrator").Build())
+			{
+				adminRecipe.DELETE(":id", c.RecipeEndpoints.Delete)
+			}
+		}
+
+	}
 
 	// Server startup
 	srv := &http.Server{

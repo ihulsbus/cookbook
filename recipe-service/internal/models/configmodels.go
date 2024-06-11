@@ -5,7 +5,6 @@ type Config struct {
 	Cors     CorsConfig
 	Oauth    OauthConfig
 	Database DatabaseConfig
-	S3       S3Config
 }
 
 // GlobalConfig holds global configuration items
@@ -35,12 +34,4 @@ type CorsConfig struct {
 	AllowCredentials bool
 	AllowedHeaders   []string
 	AllowedMethods   []string
-}
-
-type S3Config struct {
-	Region       string
-	AccessKey    string
-	AccessSecret string
-	BucketName   string
-	Endpoint     string
 }

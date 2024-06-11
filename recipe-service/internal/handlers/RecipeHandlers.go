@@ -6,6 +6,8 @@ import (
 	"strconv"
 
 	m "recipe-service/internal/models"
+
+	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 type RecipeService interface {
@@ -72,7 +74,7 @@ func (h RecipeHandlers) Get(w http.ResponseWriter, r *http.Request, recipeID str
 	h.utils.respondWithJSON(w, http.StatusOK, data)
 }
 
-func (h RecipeHandlers) Create(user *m.User, w http.ResponseWriter, r *http.Request) {
+func (h RecipeHandlers) Create(token *ginkeycloak.KeyCloakToken, w http.ResponseWriter, r *http.Request) {
 	var recipe m.Recipe
 	var data m.Recipe
 
@@ -87,7 +89,7 @@ func (h RecipeHandlers) Create(user *m.User, w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	recipe.AuthorID = user.UserID
+	recipe.AuthorID = token.Sub
 
 	data, err = h.recipeService.Create(recipe)
 	if err != nil {

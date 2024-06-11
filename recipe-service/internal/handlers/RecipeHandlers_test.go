@@ -12,6 +12,7 @@ import (
 	m "recipe-service/internal/models"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 type RecipeServiceMock struct {
@@ -141,7 +142,7 @@ func TestRecipeCreate_OK(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.Create(&m.User{}, w, req)
+	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -156,7 +157,7 @@ func TestRecipeCreate_UnmarshalErr(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
-	h.Create(&m.User{}, w, req)
+	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -174,7 +175,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
-	h.Create(&m.User{}, w, req)
+	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)

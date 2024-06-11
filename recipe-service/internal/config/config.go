@@ -2,14 +2,15 @@ package config
 
 import (
 	"fmt"
-	h "recipe-service/internal/helpers"
+	e "recipe-service/internal/endpoints"
+	h "recipe-service/internal/handlers"
+	"recipe-service/internal/helpers"
 	m "recipe-service/internal/models"
+	r "recipe-service/internal/repositories"
+	s "recipe-service/internal/services"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -32,6 +33,18 @@ var (
 	DatabaseClient *gorm.DB
 	S3Client       *s3.S3
 	Cors           cors.Config
+
+	// Repositories
+	RecipeRepository *r.RecipeRepository
+
+	// Services
+	RecipeService *s.RecipeService
+
+	// Handlers
+	RecipeHandlers *h.RecipeHandlers
+
+	// Endpoints
+	RecipeEndpoints *e.RecipeEndpoints
 )
 
 func initLogging() {
@@ -44,7 +57,7 @@ func initLogging() {
 		FullTimestamp: true,
 	})
 
-	logLevels := h.SetupLogLevels()
+	logLevels := helpers.SetupLogLevels()
 
 	if i, found := logLevels[strings.ToUpper(Configuration.Global.LogLevel)]; found {
 		Logger.SetLevel(i)
@@ -111,25 +124,6 @@ func initDatabase() {
 	Logger.Info(INIT_OK)
 }
 
-func initS3() {
-	sess, err := session.NewSession(
-		&aws.Config{
-			Credentials:      credentials.NewStaticCredentials(Configuration.S3.AccessKey, Configuration.S3.AccessSecret, ""),
-			Endpoint:         aws.String(Configuration.S3.Endpoint),
-			Region:           aws.String(Configuration.S3.Region),
-			S3ForcePathStyle: aws.Bool(false),
-		})
-	if err != nil {
-		panic(err)
-	}
-
-	S3Client = s3.New(sess)
-}
-
-func initOauth() {
-
-}
-
 func initCors() {
 	Cors = cors.Config{
 		AllowOrigins:     Configuration.Cors.AllowedOrigins,
@@ -141,10 +135,24 @@ func initCors() {
 	}
 }
 
+func initApplication() {
+	// Init repositories
+	RecipeRepository = r.NewRecipeRepository(DatabaseClient)
+
+	// Init services
+	RecipeService = s.NewRecipeService(RecipeRepository)
+
+	// Init handlers
+	RecipeHandlers = h.NewRecipeHandlers(RecipeService, Logger)
+
+	// Init endpoints
+	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers)
+}
+
 func init() {
 	initViper()
 	initLogging()
-	// initDatabase()
-	// initS3()
+	initDatabase()
 	initCors()
+	initApplication()
 }
