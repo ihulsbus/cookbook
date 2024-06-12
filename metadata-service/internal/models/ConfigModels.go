@@ -24,9 +24,11 @@ type DatabaseConfig struct {
 }
 
 type OauthConfig struct {
-	Domain   string
-	ClientID string
-	Audience string
+	Service              string
+	Url                  string
+	Realm                string
+	FullCertsPath        *string
+	DisableSecurityCheck bool
 }
 
 type CorsConfig struct {
