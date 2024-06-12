@@ -3,23 +3,17 @@ package ingredientservice
 import (
 	"context"
 	c "ingredient-service/internal/config"
+	m "ingredient-service/internal/middleware"
 	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	ginglog "github.com/szuecs/gin-glog"
 	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 var (
 	log = c.Logger
-
-	config = ginkeycloak.BuilderConfig{
-		Service: "",
-		Url:     "",
-		Realm:   "",
-	}
 )
 
 func IngredientService(ctx context.Context) {
@@ -27,7 +21,7 @@ func IngredientService(ctx context.Context) {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Logging
-	router.Use(ginglog.Logger(3 * time.Second))
+	router.Use(m.Logger(log))
 
 	// Panic recovery
 	router.Use(gin.Recovery())
@@ -35,14 +29,38 @@ func IngredientService(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
-	privateGroup := router.Group("/api")
-	privateGroup.Use(ginkeycloak.NewAccessBuilder(config).
-		RestrictButForRole("administrator").
-		Build())
+	v1 := router.Group("/api/v1")
+	{
+		ingredient := v1.Group("/ingredient")
+		{
+			readIngredient := ingredient.Group("")
+			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				readIngredient.GET("", c.IngredientEndpoints.GetAll)
+				readIngredient.GET(":id", c.IngredientEndpoints.GetSingle)
+				readIngredient.GET("unit", c.IngredientEndpoints.GetUnits)
+			}
 
-	privateGroup.GET("/privategroup", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Hello from private for groups"})
-	})
+			createIngredient := ingredient.Group("")
+			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				createIngredient.POST("", c.IngredientEndpoints.Create)
+			}
+
+			updateIngredient := ingredient.Group("")
+			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				updateIngredient.PUT(":id", c.IngredientEndpoints.Update)
+			}
+
+			adminIngredient := ingredient.Group("")
+			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				adminIngredient.DELETE(":id", c.IngredientEndpoints.Delete)
+			}
+
+		}
+	}
 
 	// Server startup
 	srv := &http.Server{
