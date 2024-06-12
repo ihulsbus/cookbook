@@ -75,7 +75,7 @@ func RecipeService(ctx context.Context) {
 		srv.Shutdown(ctx)
 	}()
 
-	log.Info("server available on port 8080")
+	log.Info("recipe service available on port 8080")
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Error(err)
 	}
