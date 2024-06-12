@@ -3,23 +3,17 @@ package instructionservice
 import (
 	"context"
 	c "instruction-service/internal/config"
+	m "instruction-service/internal/middleware"
 	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	ginglog "github.com/szuecs/gin-glog"
 	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 var (
 	log = c.Logger
-
-	config = ginkeycloak.BuilderConfig{
-		Service: "",
-		Url:     "",
-		Realm:   "",
-	}
 )
 
 func InstructionService(ctx context.Context) {
@@ -27,7 +21,7 @@ func InstructionService(ctx context.Context) {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Logging
-	router.Use(ginglog.Logger(3 * time.Second))
+	router.Use(m.Logger(log))
 
 	// Panic recovery
 	router.Use(gin.Recovery())
@@ -35,19 +29,41 @@ func InstructionService(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
-	privateGroup := router.Group("/api")
-	privateGroup.Use(ginkeycloak.NewAccessBuilder(config).
-		RestrictButForRole("administrator").
-		Build())
+	// API versioning setup
+	v1 := router.Group("/api/v1")
+	{
+		recipe := v1.Group("/recipe")
+		{
+			readInstruction := recipe.Group("")
+			readInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				readInstruction.GET(":id/instruction", c.InstructionEndpoints.GetInstruction)
+			}
 
-	privateGroup.GET("/privategroup", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Hello from private for groups"})
-	})
+			createInstruction := recipe.Group("")
+			createInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				createInstruction.POST(":id/instruction", c.InstructionEndpoints.CreateInstruction)
+			}
+
+			updateInstruction := recipe.Group("")
+			updateInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				updateInstruction.PUT(":id/instruction", c.InstructionEndpoints.UpdateInstruction)
+			}
+
+			adminInstruction := recipe.Group("")
+			adminInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				adminInstruction.DELETE(":id/instruction", c.InstructionEndpoints.DeleteInstruction)
+			}
+		}
+	}
 
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":8080",
+		Addr:         ":8081",
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}

@@ -17,7 +17,7 @@ type InstructionRepository struct {
 	db *gorm.DB
 }
 
-func NewRecipeRepository(db *gorm.DB) *InstructionRepository {
+func NewInstructionRepository(db *gorm.DB) *InstructionRepository {
 	return &InstructionRepository{
 		db: db,
 	}

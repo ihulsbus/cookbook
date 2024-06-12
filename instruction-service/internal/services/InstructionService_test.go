@@ -61,7 +61,7 @@ func (InstructionRepositoryMock) DeleteInstruction(instruction m.Instruction) er
 // ========================================================================================================
 
 func TestFindInstruction_OK(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	result, err := s.FindInstruction(uuid.UUID{})
 
@@ -70,7 +70,7 @@ func TestFindInstruction_OK(t *testing.T) {
 }
 
 func TestFindInstruction_Err(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	result, err := s.FindInstruction(uuid.UUID{})
 
@@ -81,7 +81,7 @@ func TestFindInstruction_Err(t *testing.T) {
 }
 
 func TestCreateInstruction_OK(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	result, err := s.CreateInstruction(instruction, uuid.UUID{})
 
@@ -91,7 +91,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 }
 
 func TestCreateInstruction_Err(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	createInstruction := instruction
 	createInstruction.RecipeID = uuid.UUID{}
@@ -104,7 +104,7 @@ func TestCreateInstruction_Err(t *testing.T) {
 }
 
 func TestUpdateInstruction_OK(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	result, err := s.UpdateInstruction(instruction, uuid.UUID{})
 
@@ -115,7 +115,7 @@ func TestUpdateInstruction_OK(t *testing.T) {
 }
 
 func TestUpdateInstruction_FindErr(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	result, err := s.UpdateInstruction(instruction, uuid.UUID{})
 
@@ -125,7 +125,7 @@ func TestUpdateInstruction_FindErr(t *testing.T) {
 }
 
 func TestUpdateInstruction_UpdateErr(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	result, err := s.UpdateInstruction(instruction, uuid.UUID{})
 
@@ -135,7 +135,7 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 }
 
 func TestDeleteInstruction_OK(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	err := s.DeleteInstruction(uuid.UUID{})
 
@@ -143,7 +143,7 @@ func TestDeleteInstruction_OK(t *testing.T) {
 }
 
 func TestDeleteInstruction_FindErr(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	err := s.DeleteInstruction(uuid.UUID{})
 
@@ -152,7 +152,7 @@ func TestDeleteInstruction_FindErr(t *testing.T) {
 }
 
 func TestDeleteInstruction_DeleteErr(t *testing.T) {
-	s := NewRecipeService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	err := s.DeleteInstruction(uuid.UUID{})
 

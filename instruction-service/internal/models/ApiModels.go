@@ -8,7 +8,7 @@ import (
 )
 
 type Instruction struct {
-	ID          uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
+	ID          uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primary_key"`
 	RecipeID    uuid.UUID      `gorm:"type:uuid;not null"`
 	Sequence    int            `gorm:"not null"`
 	Description string         `gorm:"type:text;not null"`
@@ -22,6 +22,3 @@ func (instruction *Instruction) BeforeCreate(tx *gorm.DB) (err error) {
 	instruction.ID = uuid.New()
 	return
 }
-
-// YEET
-type User struct{}

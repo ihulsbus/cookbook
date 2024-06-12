@@ -18,8 +18,8 @@ type InstructionService struct {
 	repo InstructionRepository
 }
 
-// NewRecipeService creates a new RecipeService instance
-func NewRecipeService(instructionRepo InstructionRepository) *InstructionService {
+// NewInstructionService creates a new RecipeService instance
+func NewInstructionService(instructionRepo InstructionRepository) *InstructionService {
 	return &InstructionService{
 		repo: instructionRepo,
 	}

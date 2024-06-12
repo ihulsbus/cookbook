@@ -16,23 +16,23 @@ type InstructionService interface {
 }
 
 type InstructionHandlers struct {
-	recipeService InstructionService
-	logger        LoggerInterface
-	utils         HanderUtils
+	ingredientService InstructionService
+	logger            LoggerInterface
+	utils             HanderUtils
 }
 
-func NewInstructionHandlers(recipes InstructionService, logger LoggerInterface) *InstructionHandlers {
+func NewInstructionHandlers(service InstructionService, logger LoggerInterface) *InstructionHandlers {
 	return &InstructionHandlers{
-		recipeService: recipes,
-		logger:        logger,
-		utils:         *NewHanderUtils(logger),
+		ingredientService: service,
+		logger:            logger,
+		utils:             *NewHanderUtils(logger),
 	}
 }
 
 func (h InstructionHandlers) GetInstruction(w http.ResponseWriter, r *http.Request, recipeID uuid.UUID) {
 	var data m.Instruction
 
-	data, err := h.recipeService.FindInstruction(recipeID)
+	data, err := h.ingredientService.FindInstruction(recipeID)
 	if err != nil {
 		switch err.Error() {
 		case "not found":
@@ -62,7 +62,7 @@ func (h InstructionHandlers) CreateInstruction(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	data, err = h.recipeService.CreateInstruction(instruction, recipeID)
+	data, err = h.ingredientService.CreateInstruction(instruction, recipeID)
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
@@ -86,7 +86,7 @@ func (h InstructionHandlers) UpdateInstruction(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	data, err = h.recipeService.UpdateInstruction(instruction, recipeID)
+	data, err = h.ingredientService.UpdateInstruction(instruction, recipeID)
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return
@@ -96,7 +96,7 @@ func (h InstructionHandlers) UpdateInstruction(w http.ResponseWriter, r *http.Re
 }
 
 func (h InstructionHandlers) DeleteInstruction(w http.ResponseWriter, r *http.Request, recipeID uuid.UUID) {
-	err := h.recipeService.DeleteInstruction(recipeID)
+	err := h.ingredientService.DeleteInstruction(recipeID)
 	if err != nil {
 		h.utils.response500WithDetails(w, err.Error())
 		return

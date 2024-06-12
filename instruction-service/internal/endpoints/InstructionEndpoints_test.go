@@ -5,8 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	m "instruction-service/internal/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -37,14 +35,10 @@ func (h *InstructionHandlersMock) DeleteInstruction(w http.ResponseWriter, r *ht
 	_, _ = w.Write([]byte(""))
 }
 
-func (MiddlewareMock) UserFromContext(ctx *gin.Context) (*m.User, error) {
-	return &m.User{}, nil
-}
-
 // ==================================================================================================
 
 func Test_GetInstruction(t *testing.T) {
-	e := NewRecipeEndpoints(&InstructionHandlersMock{}, &MiddlewareMock{})
+	e := NewInstructionEndpoints(&InstructionHandlersMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -56,7 +50,7 @@ func Test_GetInstruction(t *testing.T) {
 }
 
 func Test_CreateInstruction(t *testing.T) {
-	e := NewRecipeEndpoints(&InstructionHandlersMock{}, &MiddlewareMock{})
+	e := NewInstructionEndpoints(&InstructionHandlersMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -68,7 +62,7 @@ func Test_CreateInstruction(t *testing.T) {
 }
 
 func Test_UpdateInstruction(t *testing.T) {
-	e := NewRecipeEndpoints(&InstructionHandlersMock{}, &MiddlewareMock{})
+	e := NewInstructionEndpoints(&InstructionHandlersMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 
@@ -80,7 +74,7 @@ func Test_UpdateInstruction(t *testing.T) {
 }
 
 func Test_DeleteInstruction(t *testing.T) {
-	e := NewRecipeEndpoints(&InstructionHandlersMock{}, &MiddlewareMock{})
+	e := NewInstructionEndpoints(&InstructionHandlersMock{})
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 

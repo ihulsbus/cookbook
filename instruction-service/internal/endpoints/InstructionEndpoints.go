@@ -3,8 +3,6 @@ package endpoints
 import (
 	"net/http"
 
-	m "instruction-service/internal/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -16,19 +14,13 @@ type InstructionHandlers interface {
 	DeleteInstruction(w http.ResponseWriter, r *http.Request, recipeID uuid.UUID)
 }
 
-type Middleware interface {
-	UserFromContext(ctx *gin.Context) (*m.User, error)
-}
-
 type InstructionEndpoints struct {
-	handlers   InstructionHandlers
-	middleware Middleware
+	handlers InstructionHandlers
 }
 
-func NewRecipeEndpoints(handlers InstructionHandlers, middleware Middleware) *InstructionEndpoints {
+func NewInstructionEndpoints(handlers InstructionHandlers) *InstructionEndpoints {
 	return &InstructionEndpoints{
-		handlers:   handlers,
-		middleware: middleware,
+		handlers: handlers,
 	}
 }
 
@@ -36,7 +28,7 @@ func NewRecipeEndpoints(handlers InstructionHandlers, middleware Middleware) *In
 // @Description	Returns the JSON object of the recipe's instructions
 // @tags			recipes
 // @Produce		json
-// @Param			id			path		int				true	"Recipe ID"
+// @Param			id			path		int				true	"Instruction ID"
 // @Success		200			{object}	models.Instruction
 // @Failure		401			{string}	string	"unauthorized"
 // @Failure		404			{string}	string	"not found"
@@ -51,7 +43,7 @@ func (e InstructionEndpoints) GetInstruction(ctx *gin.Context) {
 // @tags			recipes
 // @Accept		json
 // @Produce		json
-// @Param			id	path		int	true	"Recipe ID"
+// @Param			id	path		int	true	"Instruction ID"
 // @Param			requestbody	body		models.Instruction	true	"Create an instruction"
 // @Success		200	{object}	models.Instruction
 // @Failure		401	{string}	string	"unauthorized"
@@ -67,7 +59,7 @@ func (e InstructionEndpoints) CreateInstruction(ctx *gin.Context) {
 // @tags			recipes
 // @Accept		json
 // @Produce		json
-// @Param			id	path		int	true	"Recipe ID"
+// @Param			id	path		int	true	"Instruction ID"
 // @Param			requestbody	body		models.Instruction	true	"Update an instruction"
 // @Success		200	{object}	models.Instruction
 // @Failure		401	{string}	string	"unauthorized"
@@ -83,7 +75,7 @@ func (e InstructionEndpoints) UpdateInstruction(ctx *gin.Context) {
 // @tags			recipes
 // @Accept		json
 // @Produce		json
-// @Param			id	path		int	true	"Recipe ID"
+// @Param			id	path		int	true	"Instruction ID"
 // @Success		204
 // @Failure		401	{string}	string	"unauthorized"
 // @Failure		404	{string}	string	"not found"

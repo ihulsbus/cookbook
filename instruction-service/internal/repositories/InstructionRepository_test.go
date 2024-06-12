@@ -77,7 +77,7 @@ func (a AnyTime) Match(v driver.Value) bool {
 
 func TestFindInstruction_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewInstructionRepository(db)
 
 	mock.ExpectQuery(`[SELECT * FROM "instructions" WHERE "instructions"."recipe_id" = 1]`).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
@@ -91,7 +91,7 @@ func TestFindInstruction_OK(t *testing.T) {
 
 func TestFindInstruction_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewInstructionRepository(db)
 
 	mock.ExpectQuery(`[SELECT * FROM "instructions" WHERE "instructions"."recipe_id" = 1]`).
 		WillReturnError(errors.New("error"))
@@ -103,7 +103,7 @@ func TestFindInstruction_Err(t *testing.T) {
 
 func TestCreateInstruction_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewInstructionRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`[INSERT INTO "instructions" ("created_at","updated_at","deleted_at","recipe_id","description") VALUES ($1,$2,$3,$4,$6) RETURNING "id"]`).
@@ -125,7 +125,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 
 func TestCreateInstruction_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewInstructionRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(`[INSERT INTO "instructions" ("created_at","updated_at","deleted_at","recipe_id","step_number","description") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"]`).
@@ -148,7 +148,7 @@ func TestCreateInstruction_Err(t *testing.T) {
 
 func TestUpdateInstruction_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewInstructionRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`[UPDATE "instructions" SET "updated_at"=$1,"recipe_id"=$2,"description"=$3 WHERE recipe_id = $4 AND "instructions"."deleted_at" IS NULL]`).
@@ -169,7 +169,7 @@ func TestUpdateInstruction_Ok(t *testing.T) {
 
 func TestUpdateInstruction_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewInstructionRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`[UPDATE "instructions" SET "updated_at"=$1,"recipe_id"=$2,"description"=$3 WHERE recipe_id = $4 AND "instructions"."deleted_at" IS NULL]`).
@@ -191,7 +191,7 @@ func TestUpdateInstruction_Err(t *testing.T) {
 
 func TestDeleteInstruction_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewInstructionRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`[UPDATE "instructions" SET "deleted_at"=$1 WHERE "instructions"."recipe_id" = $2 AND "instructions"."deleted_at" IS NULL]`).
@@ -209,7 +209,7 @@ func TestDeleteInstruction_Ok(t *testing.T) {
 
 func TestDeleteInstruction_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewInstructionRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(`[UPDATE "instructions" SET "deleted_at"=$1 WHERE "instructions"."recipe_id" = $2 AND "instructions"."deleted_at" IS NULL]`).
