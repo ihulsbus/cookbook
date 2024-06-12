@@ -23,12 +23,6 @@ type DatabaseConfig struct {
 	Timezone string
 }
 
-// type OauthConfig struct {
-// 	Service string
-// 	Url     string
-// 	Realm   string
-// }
-
 type OauthConfig struct {
 	Service              string
 	Url                  string

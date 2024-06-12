@@ -7,7 +7,6 @@ import (
 	r "recipe-service/internal/repositories"
 	s "recipe-service/internal/services"
 
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
 	log "github.com/sirupsen/logrus"
@@ -20,7 +19,6 @@ var (
 
 	Logger         *log.Logger = log.New()
 	DatabaseClient *gorm.DB
-	S3Client       *s3.S3
 	Cors           cors.Config
 
 	// Repositories
