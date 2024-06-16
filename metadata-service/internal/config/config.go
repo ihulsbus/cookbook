@@ -26,6 +26,7 @@ var (
 	CuisineTypeRepository     *r.CuisineTypeRepository
 	DifficultyLevelRepository *r.DifficultyLevelRepository
 	PreparationTimeRepository *r.PreparationTimeRepository
+	SearchRepository          *r.SearcRepository
 
 	// Services
 	CategoryService        *s.CategoryService
@@ -33,6 +34,7 @@ var (
 	CuisineTypeService     *s.CuisineTypeService
 	DifficultyLevelService *s.DifficultyLevelService
 	PreparationTimeService *s.PreparationTimeService
+	SearchService          *s.SearchService
 
 	// Handlers
 	CategoryHandlers        *h.CategoryHandlers
@@ -40,6 +42,7 @@ var (
 	CuisineTypeHandlers     *h.CuisineTypeHandlers
 	DifficultyLevelHandlers *h.DifficultyLevelHandlers
 	PreparationTimeHandlers *h.PreparationTimeHandlers
+	SearchHandlers          *h.SearchHandlers
 )
 
 func init() {
@@ -64,6 +67,7 @@ func init() {
 	CuisineTypeRepository = r.NewCuisineTypeRepository(DatabaseClient)
 	DifficultyLevelRepository = r.NewDifficultyLevelRepository(DatabaseClient)
 	PreparationTimeRepository = r.NewPreparationTimeRepository(DatabaseClient)
+	SearchRepository = r.NewSearchRepository(DatabaseClient)
 
 	// Init services
 	CategoryService = s.NewCategoryService(CategoryRepository)
@@ -71,6 +75,7 @@ func init() {
 	CuisineTypeService = s.NewCuisineTypeService(CuisineTypeRepository)
 	DifficultyLevelService = s.NewDifficultyLevelService(DifficultyLevelRepository)
 	PreparationTimeService = s.NewPreparationTimeService(PreparationTimeRepository)
+	SearchService = s.NewSearchService(SearchRepository)
 
 	// Init handlers
 	CategoryHandlers = h.NewCategoryHandlers(CategoryService, Logger)
@@ -78,4 +83,5 @@ func init() {
 	CuisineTypeHandlers = h.NewCuisineTypeHandlers(CuisineTypeService, Logger)
 	DifficultyLevelHandlers = h.NewDifficultyLevelHandlers(DifficultyLevelService, Logger)
 	PreparationTimeHandlers = h.NewPreparationTimeHandlers(PreparationTimeService, Logger)
+	SearchHandlers = h.NewSearchHandlers(SearchService, Logger)
 }

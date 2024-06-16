@@ -30,7 +30,7 @@ func MetadataService(ctx context.Context) {
 	router.Use(cors.New(c.Cors))
 
 	// API versioning setup
-	v1 := router.Group("/api/v1")
+	v1 := router.Group("/api/v2/metadata")
 	{
 
 		// Tag routes
@@ -175,6 +175,15 @@ func MetadataService(ctx context.Context) {
 			deletePreparationTime.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 				deletePreparationTime.DELETE(":id", c.PreparationTimeHandlers.Delete)
+			}
+		}
+
+		// Search routes
+		search := v1.Group("/search")
+		{
+			createSearch := search.Group("")
+			{
+				createSearch.POST("", c.SearchHandlers.SearchMetadata)
 			}
 		}
 	}
