@@ -97,26 +97,26 @@ func MetadataService(ctx context.Context) {
 			readCuisineType := cuisineType.Group("")
 			readCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readCuisineType.GET("", c.CategoryHandlers.GetAll)
-				readCuisineType.GET(":id", c.CategoryHandlers.Get)
+				readCuisineType.GET("", c.CuisineTypeHandlers.GetAll)
+				readCuisineType.GET(":id", c.CuisineTypeHandlers.Get)
 			}
 
 			createCuisineType := cuisineType.Group("")
 			createCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createCuisineType.POST("", c.CategoryHandlers.Create)
+				createCuisineType.POST("", c.CuisineTypeHandlers.Create)
 			}
 
 			updateCuisineType := cuisineType.Group("")
 			updateCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				updateCuisineType.PUT(":id", c.CategoryHandlers.Update)
+				updateCuisineType.PUT(":id", c.CuisineTypeHandlers.Update)
 			}
 
 			deleteCuisineType := cuisineType.Group("")
 			deleteCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				deleteCuisineType.DELETE(":id", c.CategoryHandlers.Delete)
+				deleteCuisineType.DELETE(":id", c.CuisineTypeHandlers.Delete)
 			}
 		}
 
@@ -126,26 +126,55 @@ func MetadataService(ctx context.Context) {
 			readDifficultyLevel := DifficultyLevel.Group("")
 			readDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readDifficultyLevel.GET("", c.CategoryHandlers.GetAll)
-				readDifficultyLevel.GET(":id", c.CategoryHandlers.Get)
+				readDifficultyLevel.GET("", c.DifficultyLevelHandlers.GetAll)
+				readDifficultyLevel.GET(":id", c.DifficultyLevelHandlers.Get)
 			}
 
-			createDifficultyLevel := cuisineType.Group("")
+			createDifficultyLevel := DifficultyLevel.Group("")
 			createDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createDifficultyLevel.POST("", c.CategoryHandlers.Create)
+				createDifficultyLevel.POST("", c.DifficultyLevelHandlers.Create)
 			}
 
-			updateDifficultyLevel := cuisineType.Group("")
+			updateDifficultyLevel := DifficultyLevel.Group("")
 			updateDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				updateDifficultyLevel.PUT(":id", c.CategoryHandlers.Update)
+				updateDifficultyLevel.PUT(":id", c.DifficultyLevelHandlers.Update)
 			}
 
-			deleteDifficultyLevel := cuisineType.Group("")
+			deleteDifficultyLevel := DifficultyLevel.Group("")
 			deleteDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				deleteDifficultyLevel.DELETE(":id", c.CategoryHandlers.Delete)
+				deleteDifficultyLevel.DELETE(":id", c.DifficultyLevelHandlers.Delete)
+			}
+		}
+
+		// PreparationTime routes
+		PreparationTime := v1.Group("/preparationtime")
+		{
+			readPreparationTime := PreparationTime.Group("")
+			readPreparationTime.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				readPreparationTime.GET("", c.PreparationTimeHandlers.GetAll)
+				readPreparationTime.GET(":id", c.PreparationTimeHandlers.Get)
+			}
+
+			createPreparationTime := PreparationTime.Group("")
+			createPreparationTime.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				createPreparationTime.POST("", c.PreparationTimeHandlers.Create)
+			}
+
+			updatePreparationTime := PreparationTime.Group("")
+			updatePreparationTime.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				updatePreparationTime.PUT(":id", c.PreparationTimeHandlers.Update)
+			}
+
+			deletePreparationTime := PreparationTime.Group("")
+			deletePreparationTime.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				deletePreparationTime.DELETE(":id", c.PreparationTimeHandlers.Delete)
 			}
 		}
 	}

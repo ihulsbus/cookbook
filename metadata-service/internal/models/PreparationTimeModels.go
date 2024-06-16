@@ -10,10 +10,15 @@ import (
 // Database model
 type PreparationTime struct {
 	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	TimeRange string         `gorm:"type:varchar(50);unique;not null"`
+	Duration  int            `gorm:"not null"`
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+func (preparationTime *PreparationTime) BeforeCreate(tx *gorm.DB) (err error) {
+	preparationTime.ID = uuid.New()
+	return
 }
 
 // Association model
@@ -26,6 +31,40 @@ type RecipePreparationTime struct {
 
 // DTO model
 type PreparationTimeDTO struct {
-	ID   uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
-	Name string    `json:"name" binding:"required,min=1,max=100"`
+	ID       uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
+	Duration int       `json:"name" binding:"required,min=1,max=100"`
+}
+
+func (p PreparationTime) ConvertToDTO() PreparationTimeDTO {
+	return PreparationTimeDTO{
+		ID:       p.ID,
+		Duration: p.Duration,
+	}
+}
+
+func (p PreparationTime) ConvertAllToDTO(cuisineTypes []PreparationTime) []PreparationTimeDTO {
+	var data []PreparationTimeDTO
+
+	for _, cuisineType := range cuisineTypes {
+		data = append(data, cuisineType.ConvertToDTO())
+	}
+
+	return data
+}
+
+func (p PreparationTimeDTO) ConvertFromDTO() PreparationTime {
+	return PreparationTime{
+		ID:       p.ID,
+		Duration: p.Duration,
+	}
+}
+
+func (p PreparationTimeDTO) ConvertAllFromDTO(cuisineTypes []PreparationTimeDTO) []PreparationTime {
+	var data []PreparationTime
+
+	for _, cuisineType := range cuisineTypes {
+		data = append(data, cuisineType.ConvertFromDTO())
+	}
+
+	return data
 }
