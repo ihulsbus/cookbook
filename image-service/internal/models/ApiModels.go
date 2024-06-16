@@ -8,7 +8,7 @@ import (
 )
 
 type Image struct {
-	ID         uuid.UUID      `gorm:"type:uuid;default:uuid_generate_v4();primary_key"`
+	ID         uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primary_key"`
 	EntityType string         `gorm:"type:varchar(50);not null"` // e.g., "recipe" or "ingredient"
 	EntityID   uuid.UUID      `gorm:"type:uuid;not null"`
 	URL        string         `gorm:"type:text;not null"`
