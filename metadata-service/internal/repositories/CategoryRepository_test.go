@@ -5,12 +5,14 @@ import (
 	"errors"
 	"log"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 
 	m "metadata-service/internal/models"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -19,7 +21,8 @@ import (
 
 var (
 	category m.Category = m.Category{
-		CategoryName: "category",
+		ID:   uuid.New(),
+		Name: "category",
 	}
 )
 
@@ -79,20 +82,28 @@ func TestCategoryFindAll_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewCategoryRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "categorys" WHERE "categorys"."deleted_at" IS NULL]`).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories" WHERE "categories"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(category.ID, category.Name))
 
 	result, err := r.FindAll()
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
+
+	if result[0].Name != category.Name {
+		t.Errorf("expected category name %v, but got %v", category.Name, result[0].Name)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %v", err)
+	}
 }
 
 func TestCategoryFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewCategoryRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "categorys" WHERE "categorys"."deleted_at" IS NULL]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories" WHERE "categories"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 
 	result, err := r.FindAll()
@@ -106,30 +117,32 @@ func TestCategoryFindSingle_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewCategoryRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "categorys" WHERE category_id = $1 AND "categorys"."deleted_at" IS NULL]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories" WHERE "categories"."deleted_at" IS NULL AND "categories"."id" = $1 ORDER BY "categories"."id" LIMIT $2`)).
 		WithArgs(
+			category.ID,
 			1,
 		).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(category.ID, category.Name))
 
-	result, err := r.FindSingle(uint(1))
+	result, err := r.FindSingle(category)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.Category{}, result)
-	assert.Equal(t, uint(1), result.ID)
+	assert.Equal(t, category.ID, result.ID)
 }
 
 func TestCategoryFindSingle_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewCategoryRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "categorys" WHERE category_id = $1 AND "categorys"."deleted_at" IS NULL]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories" WHERE "categories"."deleted_at" IS NULL AND "categories"."id" = $1 ORDER BY "categories"."id" LIMIT $2`)).
 		WithArgs(
+			category.ID,
 			1,
 		).
 		WillReturnError(errors.New("error"))
 
-	_, err := r.FindSingle(uint(1))
+	_, err := r.FindSingle(category)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
@@ -140,20 +153,21 @@ func TestCategoryCreate_OK(t *testing.T) {
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "categorys" ("created_at","updated_at","deleted_at","category_name") VALUES ($1,$2,$3,$4) RETURNING "id"]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "categories" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
 		WithArgs(
-			AnyTime{},
-			AnyTime{},
-			nil,
-			"category",
-		).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+			category.Name,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+		).WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(category.ID, category.Name))
 	mock.ExpectCommit()
 
 	result, err := r.Create(category)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.Category{}, result)
-	assert.Equal(t, uint(1), result.ID)
+	assert.Equal(t, category.ID, result.ID)
 
 }
 
@@ -162,12 +176,13 @@ func TestCategoryCreate_Err(t *testing.T) {
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "categorys" ("created_at","updated_at","deleted_at","category_name") VALUES ($1,$2,$3,$4) RETURNING "id"]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "categories" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
 		WithArgs(
-			AnyTime{},
-			AnyTime{},
-			nil,
-			"category",
+			category.Name,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
 		).WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
@@ -184,22 +199,19 @@ func TestCategoryUpdate_OK(t *testing.T) {
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "categorys" SET "updated_at"=$1,"category_name"=$2 WHERE "id" = $3]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "categories" SET "name"=$1,"updated_at"=$2 WHERE "categories"."deleted_at" IS NULL AND "id" = $3`)).
 		WithArgs(
-			AnyTime{},
-			"category",
-			1,
+			category.Name,
+			sqlmock.AnyArg(),
+			category.ID,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	updateCategory := category
-	updateCategory.ID = 1
-
-	result, err := r.Update(updateCategory)
+	result, err := r.Update(category)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.Category{}, result)
-	assert.Equal(t, uint(1), result.ID)
+	assert.Equal(t, category.ID, result.ID)
 
 }
 
@@ -208,18 +220,15 @@ func TestCategoryUpdate_Err(t *testing.T) {
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "categorys" SET "updated_at"=$1,"category_name"=$2 WHERE "id" = $3]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "categories" SET "name"=$1,"updated_at"=$2 WHERE "categories"."deleted_at" IS NULL AND "id" = $3`)).
 		WithArgs(
-			AnyTime{},
-			"category",
-			1,
+			category.Name,
+			sqlmock.AnyArg(),
+			category.ID,
 		).WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
-	updateCategory := category
-	updateCategory.ID = 1
-
-	result, err := r.Update(updateCategory)
+	result, err := r.Update(category)
 
 	assert.Error(t, err)
 	assert.IsType(t, m.Category{}, result)
@@ -232,17 +241,14 @@ func TestCategoryDelete_OK(t *testing.T) {
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "categorys" SET "deleted_at"=$1 WHERE category_id = $2 AND "categorys"."deleted_at" IS NULL]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "categories" SET "deleted_at"=$1 WHERE "categories"."id" = $2 AND "categories"."deleted_at" IS NULL`)).
 		WithArgs(
-			AnyTime{},
-			1,
+			sqlmock.AnyArg(),
+			category.ID,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	deleteCategory := category
-	deleteCategory.ID = 1
-
-	err := r.Delete(deleteCategory)
+	err := r.Delete(category)
 
 	assert.NoError(t, err)
 }
@@ -252,17 +258,14 @@ func TestCategoryDelete_Err(t *testing.T) {
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "categorys" SET "updated_at"=$1,"category_name"=$2 WHERE "id" = $3]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "categories" SET "deleted_at"=$1 WHERE "categories"."id" = $2 AND "categories"."deleted_at" IS NULL`)).
 		WithArgs(
-			AnyTime{},
-			1,
+			sqlmock.AnyArg(),
+			category.ID,
 		).WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
-	deleteCategory := category
-	deleteCategory.ID = 1
-
-	err := r.Delete(deleteCategory)
+	err := r.Delete(category)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

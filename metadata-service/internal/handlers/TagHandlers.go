@@ -1,156 +1,136 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
-	"strconv"
 
 	m "metadata-service/internal/models"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type TagService interface {
-	FindAll() ([]m.Tag, error)
-	FindSingle(tagID uint) (m.Tag, error)
-	Create(tag m.Tag) (m.Tag, error)
-	Update(tag m.Tag, tagID uint) (m.Tag, error)
-	Delete(tagID uint) error
+	FindAll() ([]m.TagDTO, error)
+	FindSingle(tagDTO m.TagDTO) (m.TagDTO, error)
+	Create(tagDTO m.TagDTO) (m.TagDTO, error)
+	Update(tagDTO m.TagDTO) (m.TagDTO, error)
+	Delete(tagDTO m.TagDTO) error
 }
 
 type TagHandlers struct {
 	tagService TagService
-	logger     LoggerInterface
-	utils      HanderUtils
+	logger     m.LoggerInterface
 }
 
-func NewTagHandlers(tags TagService, logger LoggerInterface) *TagHandlers {
+func NewTagHandlers(tags TagService, logger m.LoggerInterface) *TagHandlers {
 	return &TagHandlers{
 		tagService: tags,
 		logger:     logger,
-		utils:      *NewHanderUtils(logger),
 	}
 }
 
-func (h *TagHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
-	var data []m.Tag
-
-	data, err := h.tagService.FindAll()
+func (h *TagHandlers) GetAll(ctx *gin.Context) {
+	tagDTO, err := h.tagService.FindAll()
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			h.utils.response404(w)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no tags found"})
 			return
 		default:
-			h.utils.response500WithDetails(w, err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, tagDTO)
 }
 
-func (h *TagHandlers) Get(w http.ResponseWriter, r *http.Request, tagID string) {
-	var data m.Tag
+func (h *TagHandlers) Get(ctx *gin.Context) {
+	var tagDTO m.TagDTO
+	var err error
 
-	tID, err := strconv.Atoi(tagID)
+	tagDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500(w)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid tag ID"})
 		return
 	}
 
-	if tID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
-		return
-	}
-
-	data, err = h.tagService.FindSingle(uint(tID))
+	tagDTO, err = h.tagService.FindSingle(tagDTO)
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			h.utils.response404(w)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "tag not found"})
 			return
 		default:
-			h.utils.response500WithDetails(w, err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, tagDTO)
 }
 
-func (h *TagHandlers) Create(w http.ResponseWriter, r *http.Request) {
-	var data, tag m.Tag
+func (h *TagHandlers) Create(ctx *gin.Context) {
+	var tagDTO m.TagDTO
+	var err error
 
-	body, err := h.utils.getBody(r.Body)
+	if err = ctx.ShouldBindJSON(&tagDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unexpected JSON input"})
+		return
+	}
+
+	tagDTO, err = h.tagService.Create(tagDTO)
 	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err = json.Unmarshal(body, &tag); err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-		return
-	}
-
-	data, err = h.tagService.Create(tag)
-	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	h.utils.respondWithJSON(w, http.StatusCreated, data)
+	ctx.JSON(http.StatusCreated, tagDTO)
 }
 
-func (h *TagHandlers) Update(w http.ResponseWriter, r *http.Request, tagID string) {
-	var tag, data m.Tag
+func (h *TagHandlers) Update(ctx *gin.Context) {
+	var tagDTO m.TagDTO
+	var err error
 
-	tID, err := strconv.Atoi(tagID)
+	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500(w)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid tag ID"})
 		return
 	}
 
-	if tID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
+	if err = ctx.ShouldBindJSON(&tagDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	body, err := h.utils.getBody(r.Body)
+	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
+	// perhaps separate create/update DTO's are needed
+	tagDTO.ID = id
+
+	tagDTO, err = h.tagService.Update(tagDTO)
 	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err = json.Unmarshal(body, &tag); err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	data, err = h.tagService.Update(tag, uint(tID))
-	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, tagDTO)
 }
 
-func (h *TagHandlers) Delete(w http.ResponseWriter, r *http.Request, tagID string) {
-	tID, err := strconv.Atoi(tagID)
+func (h *TagHandlers) Delete(ctx *gin.Context) {
+	var tagDTO m.TagDTO
+	var err error
+
+	tagDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500(w)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid tag ID"})
 		return
 	}
 
-	if tID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
-		return
-	}
-
-	err = h.tagService.Delete(uint(tID))
+	err = h.tagService.Delete(tagDTO)
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	h.utils.response204(w)
+	ctx.Status(http.StatusNoContent)
 }

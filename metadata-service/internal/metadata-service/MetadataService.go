@@ -14,12 +14,6 @@ import (
 
 var (
 	log = c.Logger
-
-	config = ginkeycloak.BuilderConfig{
-		Service: "",
-		Url:     "",
-		Realm:   "",
-	}
 )
 
 func MetadataService(ctx context.Context) {
@@ -43,26 +37,26 @@ func MetadataService(ctx context.Context) {
 			readTag := tag.Group("")
 			readTag.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readTag.GET("", c.TagEndpoints.GetAll)
-				readTag.GET(":id", c.TagEndpoints.GetSingle)
+				readTag.GET("", c.TagHandlers.GetAll)
+				readTag.GET(":id", c.TagHandlers.Get)
 			}
 
 			createTag := tag.Group("")
 			createTag.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createTag.POST("", c.TagEndpoints.Create)
+				createTag.POST("", c.TagHandlers.Create)
 			}
 
 			updateTag := tag.Group("")
 			updateTag.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				updateTag.PUT(":id", c.TagEndpoints.Update)
+				updateTag.PUT(":id", c.TagHandlers.Update)
 			}
 
 			deleteTag := tag.Group("")
 			deleteTag.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				deleteTag.DELETE(":id", c.TagEndpoints.Delete)
+				deleteTag.DELETE(":id", c.TagHandlers.Delete)
 			}
 		}
 
@@ -71,26 +65,26 @@ func MetadataService(ctx context.Context) {
 			readCategory := category.Group("")
 			readCategory.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readCategory.GET("", c.CategoryEndpoints.GetAll)
-				readCategory.GET(":id", c.CategoryEndpoints.GetSingle)
+				readCategory.GET("", c.CategoryHandlers.GetAll)
+				readCategory.GET(":id", c.CategoryHandlers.Get)
 			}
 
 			createCategory := category.Group("")
 			createCategory.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createCategory.POST("", c.CategoryEndpoints.Create)
+				createCategory.POST("", c.CategoryHandlers.Create)
 			}
 
 			updateCategory := category.Group("")
 			updateCategory.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				updateCategory.PUT(":id", c.CategoryEndpoints.Update)
+				updateCategory.PUT(":id", c.CategoryHandlers.Update)
 			}
 
 			deleteCategory := category.Group("")
 			deleteCategory.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				deleteCategory.DELETE(":id", c.CategoryEndpoints.Delete)
+				deleteCategory.DELETE(":id", c.CategoryHandlers.Delete)
 			}
 		}
 	}

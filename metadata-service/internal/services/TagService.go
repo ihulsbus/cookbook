@@ -4,14 +4,16 @@ import (
 	"errors"
 
 	m "metadata-service/internal/models"
+
+	"github.com/google/uuid"
 )
 
 type TagRepository interface {
 	FindAll() ([]m.Tag, error)
-	FindSingle(recipeID uint) (m.Tag, error)
-	Create(recipe m.Tag) (m.Tag, error)
-	Update(recipe m.Tag) (m.Tag, error)
-	Delete(recipe m.Tag) error
+	FindSingle(tag m.Tag) (m.Tag, error)
+	Create(tag m.Tag) (m.Tag, error)
+	Update(tag m.Tag) (m.Tag, error)
+	Delete(tag m.Tag) error
 }
 type TagService struct {
 	repo TagRepository
@@ -24,7 +26,7 @@ func NewTagService(tagRepo TagRepository) *TagService {
 	}
 }
 
-func (s TagService) FindAll() ([]m.Tag, error) {
+func (s TagService) FindAll() ([]m.TagDTO, error) {
 
 	tags, err := s.repo.FindAll()
 	if err != nil {
@@ -36,74 +38,60 @@ func (s TagService) FindAll() ([]m.Tag, error) {
 		}
 	}
 
-	return tags, nil
+	result := m.Tag{}.ConvertAllToDTO(tags)
+	return result, nil
 }
 
-func (s TagService) FindSingle(tagID uint) (m.Tag, error) {
+func (s TagService) FindSingle(tagDTO m.TagDTO) (m.TagDTO, error) {
 
-	tag, err := s.repo.FindSingle(tagID)
+	tag, err := s.repo.FindSingle(tagDTO.ConvertFromDTO())
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			return m.Tag{}, err
+			return m.TagDTO{}, err
 		default:
-			return m.Tag{}, errors.New("internal server error")
+			return m.TagDTO{}, errors.New("internal server error")
 		}
 	}
 
-	return tag, nil
+	return tag.ConvertToDTO(), nil
 }
 
-func (s TagService) Create(tag m.Tag) (m.Tag, error) {
+func (s TagService) Create(tagDTO m.TagDTO) (m.TagDTO, error) {
 
-	if tag.ID != 0 {
-		return m.Tag{}, errors.New("existing id on new element is not allowed")
+	if tagDTO.ID != uuid.Nil {
+		return m.TagDTO{}, errors.New("existing id on new element is not allowed")
 	}
 
-	if tag.TagName == "" {
-		return m.Tag{}, errors.New("tagname is empty")
+	if tagDTO.Name == "" {
+		return m.TagDTO{}, errors.New("name is empty")
 	}
 
-	created, err := s.repo.Create(tag)
+	created, err := s.repo.Create(tagDTO.ConvertFromDTO())
 	if err != nil {
-		return m.Tag{}, err
+		return m.TagDTO{}, err
 	}
 
-	return created, nil
+	return created.ConvertToDTO(), nil
 }
 
-func (s TagService) Update(tag m.Tag, tagID uint) (m.Tag, error) {
+func (s TagService) Update(tagDTO m.TagDTO) (m.TagDTO, error) {
 
-	if tagID == 0 {
-		return m.Tag{}, errors.New("missing id of element to update")
+	if tagDTO.Name == "" {
+		return m.TagDTO{}, errors.New("name is empty")
 	}
 
-	if tag.ID != tagID {
-		tag.ID = tagID
-	}
-
-	if tag.TagName == "" {
-		return m.Tag{}, errors.New("tagname is empty")
-	}
-
-	updatedTag, err := s.repo.Update(tag)
+	updatedTag, err := s.repo.Update(tagDTO.ConvertFromDTO())
 	if err != nil {
-		return m.Tag{}, err
+		return m.TagDTO{}, err
 	}
 
-	return updatedTag, nil
+	return updatedTag.ConvertToDTO(), nil
 }
 
-func (s TagService) Delete(tagID uint) error {
-	var tag m.Tag
+func (s TagService) Delete(tagDTO m.TagDTO) error {
 
-	if tagID == 0 {
-		return errors.New("missing id of element to delete")
-	}
-
-	tag.ID = tagID
-
-	err := s.repo.Delete(tag)
+	err := s.repo.Delete(tagDTO.ConvertFromDTO())
 	if err != nil {
 		return err
 	}

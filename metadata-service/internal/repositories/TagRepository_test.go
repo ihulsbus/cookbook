@@ -2,17 +2,20 @@ package repositories
 
 import (
 	"errors"
+	"regexp"
 	"testing"
 
 	m "metadata-service/internal/models"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
 	tag m.Tag = m.Tag{
-		TagName: "tag",
+		ID:   uuid.New(),
+		Name: "tag",
 	}
 )
 
@@ -20,20 +23,28 @@ func TestTagFindAll_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewTagRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL]`).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(tag.ID, tag.Name))
 
 	result, err := r.FindAll()
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
+
+	if result[0].Name != tag.Name {
+		t.Errorf("expected tag name %v, but got %v", tag.Name, result[0].Name)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %v", err)
+	}
 }
 
 func TestTagFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewTagRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 
 	result, err := r.FindAll()
@@ -47,30 +58,32 @@ func TestTagFindSingle_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewTagRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "tags" WHERE tag_id = $1 AND "tags"."deleted_at" IS NULL]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL AND "tags"."id" = $1 ORDER BY "tags"."id" LIMIT $2`)).
 		WithArgs(
+			tag.ID,
 			1,
 		).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(tag.ID, tag.Name))
 
-	result, err := r.FindSingle(uint(1))
+	result, err := r.FindSingle(tag)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.Tag{}, result)
-	assert.Equal(t, uint(1), result.ID)
+	assert.Equal(t, tag.ID, result.ID)
 }
 
 func TestTagFindSingle_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewTagRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM "tags" WHERE tag_id = $1 AND "tags"."deleted_at" IS NULL]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL AND "tags"."id" = $1 ORDER BY "tags"."id" LIMIT $2`)).
 		WithArgs(
+			tag.ID,
 			1,
 		).
 		WillReturnError(errors.New("error"))
 
-	_, err := r.FindSingle(uint(1))
+	_, err := r.FindSingle(tag)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
@@ -81,21 +94,24 @@ func TestTagCreate_OK(t *testing.T) {
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "tags" ("created_at","updated_at","deleted_at","tag_name") VALUES ($1,$2,$3,$4) RETURNING "id"]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "tags" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
 		WithArgs(
-			AnyTime{},
-			AnyTime{},
-			nil,
-			"tag",
-		).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+			tag.Name,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+		).
+		WillReturnRows(
+			sqlmock.NewRows([]string{"id", "name"}).AddRow(tag.ID, tag.Name),
+		)
 	mock.ExpectCommit()
 
 	result, err := r.Create(tag)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.Tag{}, result)
-	assert.Equal(t, uint(1), result.ID)
-
+	assert.Equal(t, tag.ID, result.ID)
 }
 
 func TestTagCreate_Err(t *testing.T) {
@@ -103,12 +119,13 @@ func TestTagCreate_Err(t *testing.T) {
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "tags" ("created_at","updated_at","deleted_at","tag_name") VALUES ($1,$2,$3,$4) RETURNING "id"]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "tags" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
 		WithArgs(
-			AnyTime{},
-			AnyTime{},
-			nil,
-			"tag",
+			tag.Name,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
 		).WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
@@ -125,22 +142,19 @@ func TestTagUpdate_OK(t *testing.T) {
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "tags" SET "updated_at"=$1,"tag_name"=$2 WHERE "id" = $3]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "tags" SET "name"=$1,"updated_at"=$2 WHERE "tags"."deleted_at" IS NULL AND "id" = $3`)).
 		WithArgs(
-			AnyTime{},
-			"tag",
-			1,
+			tag.Name,
+			sqlmock.AnyArg(),
+			tag.ID,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	updateTag := tag
-	updateTag.ID = 1
-
-	result, err := r.Update(updateTag)
+	result, err := r.Update(tag)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.Tag{}, result)
-	assert.Equal(t, uint(1), result.ID)
+	assert.Equal(t, tag.ID, result.ID)
 
 }
 
@@ -149,18 +163,15 @@ func TestTagUpdate_Err(t *testing.T) {
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "tags" SET "updated_at"=$1,"tag_name"=$2 WHERE "id" = $3]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "tags" SET "name"=$1,"updated_at"=$2 WHERE "tags"."deleted_at" IS NULL AND "id" = $3`)).
 		WithArgs(
-			AnyTime{},
-			"tag",
-			1,
+			tag.Name,
+			sqlmock.AnyArg(),
+			tag.ID,
 		).WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
-	updateTag := tag
-	updateTag.ID = 1
-
-	result, err := r.Update(updateTag)
+	result, err := r.Update(tag)
 
 	assert.Error(t, err)
 	assert.IsType(t, m.Tag{}, result)
@@ -173,17 +184,14 @@ func TestTagDelete_OK(t *testing.T) {
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "tags" SET "deleted_at"=$1 WHERE tag_id = $2 AND "tags"."deleted_at" IS NULL]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "tags" SET "deleted_at"=$1 WHERE "tags"."id" = $2 AND "tags"."deleted_at" IS NULL`)).
 		WithArgs(
-			AnyTime{},
-			1,
+			sqlmock.AnyArg(),
+			tag.ID,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	deleteTag := tag
-	deleteTag.ID = 1
-
-	err := r.Delete(deleteTag)
+	err := r.Delete(tag)
 
 	assert.NoError(t, err)
 }
@@ -193,17 +201,14 @@ func TestTagDelete_Err(t *testing.T) {
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "tags" SET "updated_at"=$1,"tag_name"=$2 WHERE "id" = $3]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "tags" SET "deleted_at"=$1 WHERE "tags"."id" = $2 AND "tags"."deleted_at" IS NULL`)).
 		WithArgs(
-			AnyTime{},
-			1,
+			sqlmock.AnyArg(),
+			tag.ID,
 		).WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
-	deleteTag := tag
-	deleteTag.ID = 1
-
-	err := r.Delete(deleteTag)
+	err := r.Delete(tag)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

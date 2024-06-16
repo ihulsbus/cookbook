@@ -4,11 +4,13 @@ import (
 	"errors"
 
 	m "metadata-service/internal/models"
+
+	"github.com/google/uuid"
 )
 
 type CategoryRepository interface {
 	FindAll() ([]m.Category, error)
-	FindSingle(recipeID uint) (m.Category, error)
+	FindSingle(recipe m.Category) (m.Category, error)
 	Create(recipe m.Category) (m.Category, error)
 	Update(recipe m.Category) (m.Category, error)
 	Delete(recipe m.Category) error
@@ -24,9 +26,9 @@ func NewCategoryService(categoryRepo CategoryRepository) *CategoryService {
 	}
 }
 
-func (s CategoryService) FindAll() ([]m.Category, error) {
+func (s CategoryService) FindAll() ([]m.CategoryDTO, error) {
 
-	categorys, err := s.repo.FindAll()
+	categories, err := s.repo.FindAll()
 	if err != nil {
 		switch err.Error() {
 		case "not found":
@@ -36,74 +38,60 @@ func (s CategoryService) FindAll() ([]m.Category, error) {
 		}
 	}
 
-	return categorys, nil
+	categoryDTOs := m.Category{}.ConvertAllToDTO(categories)
+	return categoryDTOs, nil
 }
 
-func (s CategoryService) FindSingle(categoryID uint) (m.Category, error) {
+func (s CategoryService) FindSingle(categoryDTO m.CategoryDTO) (m.CategoryDTO, error) {
 
-	category, err := s.repo.FindSingle(categoryID)
+	category, err := s.repo.FindSingle(categoryDTO.ConvertFromDTO())
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			return m.Category{}, err
+			return m.CategoryDTO{}, err
 		default:
-			return m.Category{}, errors.New("internal server error")
+			return m.CategoryDTO{}, errors.New("internal server error")
 		}
 	}
 
-	return category, nil
+	return category.ConvertToDTO(), nil
 }
 
-func (s CategoryService) Create(category m.Category) (m.Category, error) {
+func (s CategoryService) Create(categoryDTO m.CategoryDTO) (m.CategoryDTO, error) {
 
-	if category.ID != 0 {
-		return m.Category{}, errors.New("existing id on new element is not allowed")
+	if categoryDTO.ID != uuid.Nil {
+		return m.CategoryDTO{}, errors.New("existing id on new element is not allowed")
 	}
 
-	if category.CategoryName == "" {
-		return m.Category{}, errors.New("categoryname is empty")
+	if categoryDTO.Name == "" {
+		return m.CategoryDTO{}, errors.New("name is empty")
 	}
 
-	created, err := s.repo.Create(category)
+	category, err := s.repo.Create(categoryDTO.ConvertFromDTO())
 	if err != nil {
-		return m.Category{}, err
+		return m.CategoryDTO{}, err
 	}
 
-	return created, nil
+	return category.ConvertToDTO(), nil
 }
 
-func (s CategoryService) Update(category m.Category, categoryID uint) (m.Category, error) {
+func (s CategoryService) Update(categoryDTO m.CategoryDTO) (m.CategoryDTO, error) {
 
-	if categoryID == 0 {
-		return m.Category{}, errors.New("missing id of element to update")
+	if categoryDTO.Name == "" {
+		return m.CategoryDTO{}, errors.New("name is empty")
 	}
 
-	if category.ID != categoryID {
-		category.ID = categoryID
-	}
-
-	if category.CategoryName == "" {
-		return m.Category{}, errors.New("categoryname is empty")
-	}
-
-	updatedCategory, err := s.repo.Update(category)
+	category, err := s.repo.Update(categoryDTO.ConvertFromDTO())
 	if err != nil {
-		return m.Category{}, err
+		return m.CategoryDTO{}, err
 	}
 
-	return updatedCategory, nil
+	return category.ConvertToDTO(), nil
 }
 
-func (s CategoryService) Delete(categoryID uint) error {
-	var category m.Category
+func (s CategoryService) Delete(categoryDTO m.CategoryDTO) error {
 
-	if categoryID == 0 {
-		return errors.New("missing id of element to delete")
-	}
-
-	category.ID = categoryID
-
-	err := s.repo.Delete(category)
+	err := s.repo.Delete(categoryDTO.ConvertFromDTO())
 	if err != nil {
 		return err
 	}

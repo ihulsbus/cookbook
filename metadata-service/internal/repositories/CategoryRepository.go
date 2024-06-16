@@ -6,7 +6,6 @@ import (
 	m "metadata-service/internal/models"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 const (
@@ -26,7 +25,7 @@ func NewCategoryRepository(db *gorm.DB) *CategoryRepository {
 func (r *CategoryRepository) FindAll() ([]m.Category, error) {
 	var categories []m.Category
 
-	if err := r.db.Preload(clause.Associations).Find(&categories).Error; err != nil {
+	if err := r.db.Find(&categories).Error; err != nil {
 		return nil, err
 	}
 
@@ -37,10 +36,9 @@ func (r *CategoryRepository) FindAll() ([]m.Category, error) {
 	return categories, nil
 }
 
-func (r *CategoryRepository) FindSingle(categoryID uint) (m.Category, error) {
-	var category m.Category
+func (r *CategoryRepository) FindSingle(category m.Category) (m.Category, error) {
 
-	result := r.db.Preload(clause.Associations).Where(whereCategoryID, categoryID).First(&category)
+	result := r.db.First(&category)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return m.Category{}, errors.New("not found")

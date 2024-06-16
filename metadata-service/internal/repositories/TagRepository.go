@@ -37,10 +37,9 @@ func (r *TagRepository) FindAll() ([]m.Tag, error) {
 	return tags, nil
 }
 
-func (r *TagRepository) FindSingle(tagID uint) (m.Tag, error) {
-	var tag m.Tag
+func (r *TagRepository) FindSingle(tag m.Tag) (m.Tag, error) {
 
-	result := r.db.Preload(clause.Associations).Where(whereTagID, tagID).First(&tag)
+	result := r.db.First(&tag)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return m.Tag{}, errors.New("not found")

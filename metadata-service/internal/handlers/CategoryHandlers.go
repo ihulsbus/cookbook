@@ -1,156 +1,137 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
-	"strconv"
 
 	m "metadata-service/internal/models"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type CategoryService interface {
-	FindAll() ([]m.Category, error)
-	FindSingle(categoryID uint) (m.Category, error)
-	Create(category m.Category) (m.Category, error)
-	Update(category m.Category, categoryID uint) (m.Category, error)
-	Delete(categoryID uint) error
+	FindAll() ([]m.CategoryDTO, error)
+	FindSingle(CategoryDTO m.CategoryDTO) (m.CategoryDTO, error)
+	Create(CategoryDTO m.CategoryDTO) (m.CategoryDTO, error)
+	Update(CategoryDTO m.CategoryDTO) (m.CategoryDTO, error)
+	Delete(CategoryDTO m.CategoryDTO) error
 }
 
 type CategoryHandlers struct {
 	categoryService CategoryService
-	logger          LoggerInterface
-	utils           HanderUtils
+	logger          m.LoggerInterface
 }
 
-func NewCategoryHandlers(categorys CategoryService, logger LoggerInterface) *CategoryHandlers {
+func NewCategoryHandlers(categorys CategoryService, logger m.LoggerInterface) *CategoryHandlers {
 	return &CategoryHandlers{
 		categoryService: categorys,
 		logger:          logger,
-		utils:           *NewHanderUtils(logger),
 	}
 }
 
-func (h *CategoryHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
-	var data []m.Category
+func (h *CategoryHandlers) GetAll(ctx *gin.Context) {
 
-	data, err := h.categoryService.FindAll()
+	categoryDTO, err := h.categoryService.FindAll()
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			h.utils.response404(w)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no categories found"})
 			return
 		default:
-			h.utils.response500WithDetails(w, err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, categoryDTO)
 }
 
-func (h *CategoryHandlers) Get(w http.ResponseWriter, r *http.Request, categoryID string) {
-	var data m.Category
+func (h *CategoryHandlers) Get(ctx *gin.Context) {
+	var categoryDTO m.CategoryDTO
+	var err error
 
-	tID, err := strconv.Atoi(categoryID)
+	categoryDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500(w)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid category ID"})
 		return
 	}
 
-	if tID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
-		return
-	}
-
-	data, err = h.categoryService.FindSingle(uint(tID))
+	categoryDTO, err = h.categoryService.FindSingle(categoryDTO)
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			h.utils.response404(w)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "category not found"})
 			return
 		default:
-			h.utils.response500WithDetails(w, err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, categoryDTO)
 }
 
-func (h *CategoryHandlers) Create(w http.ResponseWriter, r *http.Request) {
-	var data, category m.Category
+func (h *CategoryHandlers) Create(ctx *gin.Context) {
+	var categoryDTO m.CategoryDTO
+	var err error
 
-	body, err := h.utils.getBody(r.Body)
+	if err = ctx.ShouldBindJSON(&categoryDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	categoryDTO, err = h.categoryService.Create(categoryDTO)
 	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err = json.Unmarshal(body, &category); err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-		return
-	}
-
-	data, err = h.categoryService.Create(category)
-	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	h.utils.respondWithJSON(w, http.StatusCreated, data)
+	ctx.JSON(http.StatusCreated, categoryDTO)
 }
 
-func (h *CategoryHandlers) Update(w http.ResponseWriter, r *http.Request, categoryID string) {
-	var category, data m.Category
+func (h *CategoryHandlers) Update(ctx *gin.Context) {
+	var categoryDTO m.CategoryDTO
+	var err error
 
-	tID, err := strconv.Atoi(categoryID)
+	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500(w)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid category ID"})
 		return
 	}
 
-	if tID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
+	if err = ctx.ShouldBindJSON(&categoryDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	body, err := h.utils.getBody(r.Body)
+	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
+	// perhaps separate create/update DTO's are needed
+	categoryDTO.ID = id
+
+	categoryDTO, err = h.categoryService.Update(categoryDTO)
 	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err = json.Unmarshal(body, &category); err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	data, err = h.categoryService.Update(category, uint(tID))
-	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, categoryDTO)
 }
 
-func (h *CategoryHandlers) Delete(w http.ResponseWriter, r *http.Request, categoryID string) {
-	tID, err := strconv.Atoi(categoryID)
+func (h *CategoryHandlers) Delete(ctx *gin.Context) {
+	var categoryDTO m.CategoryDTO
+	var err error
+
+	categoryDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500(w)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid category ID"})
 		return
 	}
 
-	if tID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
-		return
-	}
-
-	err = h.categoryService.Delete(uint(tID))
+	err = h.categoryService.Delete(categoryDTO)
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	h.utils.response204(w)
+	ctx.Status(http.StatusNoContent)
 }

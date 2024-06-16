@@ -6,53 +6,59 @@ import (
 
 	m "metadata-service/internal/models"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
 	findAllTag m.Tag = m.Tag{
-		TagName: "tag",
+		ID:   uuid.New(),
+		Name: "tag",
 	}
 	tag m.Tag = m.Tag{
-		TagName: "tag",
+		ID:   uuid.New(),
+		Name: "tag",
 	}
 )
 
 type TagRepositoryMock struct{}
 
 func (*TagRepositoryMock) FindAll() ([]m.Tag, error) {
-	switch findAllTag.ID {
-	case 1:
+	switch findAllTag.Name {
+	case "findall":
 		var tags []m.Tag
 		tags = append(tags, findAllTag)
 		return tags, nil
+	case "not found":
+		return nil, errors.New("not found")
 	default:
 		return nil, errors.New("error")
 	}
 }
 
-func (*TagRepositoryMock) FindSingle(tagID uint) (m.Tag, error) {
-	switch tagID {
-	case 1:
+func (*TagRepositoryMock) FindSingle(tag m.Tag) (m.Tag, error) {
+	switch tag.Name {
+	case "find":
+		return tag, nil
+	case "not found":
+		return m.Tag{}, errors.New("not found")
+	default:
+		return m.Tag{}, errors.New("error")
+	}
+}
+
+func (*TagRepositoryMock) Create(tag m.Tag) (m.Tag, error) {
+	switch tag.Name {
+	case "create":
 		return tag, nil
 	default:
 		return m.Tag{}, errors.New("error")
 	}
 }
 
-func (*TagRepositoryMock) Create(createTag m.Tag) (m.Tag, error) {
-	switch createTag.TagName {
-	case "create":
-		createTag.ID = 1
-		return createTag, nil
-	default:
-		return m.Tag{}, errors.New("error")
-	}
-}
-
 func (*TagRepositoryMock) Update(tag m.Tag) (m.Tag, error) {
-	switch tag.ID {
-	case 1:
+	switch tag.Name {
+	case "update":
 		return tag, nil
 	default:
 		return m.Tag{}, errors.New("error")
@@ -60,8 +66,8 @@ func (*TagRepositoryMock) Update(tag m.Tag) (m.Tag, error) {
 }
 
 func (*TagRepositoryMock) Delete(tag m.Tag) error {
-	switch tag.ID {
-	case 1:
+	switch tag.Name {
+	case "delete":
 		return nil
 	default:
 		return errors.New("error")
@@ -72,195 +78,193 @@ func (*TagRepositoryMock) Delete(tag m.Tag) error {
 
 func TestTagFindAll_OK(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
-	findAllTag.ID = 1
+	findAllTag.Name = "findall"
 
 	result, err := s.FindAll()
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.Tag{}, result)
+	assert.IsType(t, []m.TagDTO{}, result)
 	assert.Len(t, result, 1)
 }
 
-func TestTagFindAll_err(t *testing.T) {
+func TestTagFindAll_Err(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
-	findAllTag.ID = 2
+	findAllTag.Name = "fail"
 
 	result, err := s.FindAll()
 
-	findAllTag.ID = 1
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "internal server error")
+}
+
+func TestTagFindAll_NotFound(t *testing.T) {
+	s := NewTagService(&TagRepositoryMock{})
+	findAllTag.Name = "not found"
+
+	result, err := s.FindAll()
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.EqualError(t, err, "error")
+	assert.EqualError(t, err, "not found")
 }
 
 func TestTagFindSingle_OK(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	tag.ID = 1
-
-	result, err := s.FindSingle(uint(1))
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "find",
+	}
+	result, err := s.FindSingle(tagDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Tag{}, result)
-	assert.Equal(t, "tag", result.TagName)
-	assert.Equal(t, uint(1), result.ID)
+	assert.IsType(t, m.TagDTO{}, result)
+	assert.Equal(t, "find", result.Name)
+	assert.Equal(t, tag.ID, result.ID)
 }
 
 func TestTagFindSingle_Err(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	result, err := s.FindSingle(uint(2))
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "error",
+	}
+	result, err := s.FindSingle(tagDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Tag{}, result)
-	assert.EqualError(t, err, "error")
+	assert.IsType(t, m.TagDTO{}, result)
+	assert.EqualError(t, err, "internal server error")
+}
+
+func TestTagFindSingle_NotFound(t *testing.T) {
+	s := NewTagService(&TagRepositoryMock{})
+
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "not found",
+	}
+	result, err := s.FindSingle(tagDTO)
+
+	assert.Error(t, err)
+	assert.IsType(t, m.TagDTO{}, result)
+	assert.EqualError(t, err, "not found")
 }
 
 func TestTagCreate_OK(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	createTag := tag
-	createTag.ID = 0
-	createTag.TagName = "create"
-
-	result, err := s.Create(createTag)
+	tagDTO := m.TagDTO{
+		Name: "create",
+	}
+	result, err := s.Create(tagDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Tag{}, result)
+	assert.IsType(t, m.TagDTO{}, result)
 }
 
 func TestTagCreate_IDErr(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	createTag := tag
-	createTag.ID = 1
-	createTag.TagName = "create"
-
-	result, err := s.Create(createTag)
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "create",
+	}
+	result, err := s.Create(tagDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Tag{}, result)
+	assert.IsType(t, m.TagDTO{}, result)
 	assert.EqualError(t, err, "existing id on new element is not allowed")
 }
 
 func TestTagCreate_NoNameErr(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	createTag := tag
-	createTag.ID = 0
-	createTag.TagName = ""
-
-	result, err := s.Create(createTag)
+	tagDTO := m.TagDTO{
+		Name: "",
+	}
+	result, err := s.Create(tagDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Tag{}, result)
-	assert.EqualError(t, err, "tagname is empty")
+	assert.IsType(t, m.TagDTO{}, result)
+	assert.EqualError(t, err, "name is empty")
 }
 
 func TestTagCreate_CreateErr(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	createTag := tag
-	createTag.ID = 0
-	createTag.TagName = "fails"
-
-	result, err := s.Create(createTag)
+	tagDTO := m.TagDTO{
+		Name: "error",
+	}
+	result, err := s.Create(tagDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Tag{}, result)
+	assert.IsType(t, m.TagDTO{}, result)
 	assert.EqualError(t, err, "error")
 }
 
 func TestTagUpdate_OK(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	updateTag := tag
-	updateTag.ID = 1
-	updateTag.TagName = "update"
-
-	result, err := s.Update(updateTag, uint(1))
-
-	assert.NoError(t, err)
-	assert.IsType(t, m.Tag{}, result)
-}
-
-func TestTagUpdate_IDErr(t *testing.T) {
-	s := NewTagService(&TagRepositoryMock{})
-
-	updateTag := tag
-	updateTag.ID = 0
-	updateTag.TagName = "update"
-
-	result, err := s.Update(updateTag, uint(0))
-
-	assert.Error(t, err)
-	assert.IsType(t, m.Tag{}, result)
-	assert.EqualError(t, err, "missing id of element to update")
-}
-
-func TestTagUpdate_IDNotEqual(t *testing.T) {
-	s := NewTagService(&TagRepositoryMock{})
-
-	updateTag := tag
-	updateTag.ID = 2
-	updateTag.TagName = "update"
-
-	result, err := s.Update(updateTag, uint(1))
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "update",
+	}
+	result, err := s.Update(tagDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Tag{}, result)
+	assert.IsType(t, m.TagDTO{}, result)
 }
 
 func TestTagUpdate_NoNameErr(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	updateTag := tag
-	updateTag.ID = 1
-	updateTag.TagName = ""
-
-	result, err := s.Update(updateTag, uint(1))
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "",
+	}
+	result, err := s.Update(tagDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Tag{}, result)
-	assert.EqualError(t, err, "tagname is empty")
+	assert.IsType(t, m.TagDTO{}, result)
+	assert.EqualError(t, err, "name is empty")
 }
 
 func TestTagUpdate_UpdateErr(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	updateTag := tag
-	updateTag.ID = 2
-	updateTag.TagName = "fails"
-
-	result, err := s.Update(updateTag, uint(2))
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "error",
+	}
+	result, err := s.Update(tagDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Tag{}, result)
+	assert.IsType(t, m.TagDTO{}, result)
 	assert.EqualError(t, err, "error")
 }
 
 func TestTagDelete_OK(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	err := s.Delete(uint(1))
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "delete",
+	}
+	err := s.Delete(tagDTO)
 
 	assert.NoError(t, err)
-}
-
-func TestTagDelete_IDErr(t *testing.T) {
-	s := NewTagService(&TagRepositoryMock{})
-
-	err := s.Delete(uint(0))
-
-	assert.Error(t, err)
-	assert.EqualError(t, err, "missing id of element to delete")
 }
 
 func TestTagDelete_DeleteErr(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 
-	err := s.Delete(uint(2))
+	tagDTO := m.TagDTO{
+		ID:   tag.ID,
+		Name: "error",
+	}
+	err := s.Delete(tagDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

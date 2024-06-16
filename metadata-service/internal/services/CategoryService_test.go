@@ -6,53 +6,61 @@ import (
 
 	m "metadata-service/internal/models"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
 	findAllCategory m.Category = m.Category{
-		CategoryName: "category",
+		ID:   uuid.New(),
+		Name: "category",
 	}
 	category m.Category = m.Category{
-		CategoryName: "category",
+		ID:   uuid.New(),
+		Name: "category",
 	}
 )
 
 type CategoryRepositoryMock struct{}
 
 func (*CategoryRepositoryMock) FindAll() ([]m.Category, error) {
-	switch findAllCategory.ID {
-	case 1:
-		var categorys []m.Category
-		categorys = append(categorys, findAllCategory)
-		return categorys, nil
+	switch findAllCategory.Name {
+	case "findall":
+		var categories []m.Category
+		categories = append(categories, findAllCategory)
+		return categories, nil
+	case "not found":
+		return nil, errors.New("not found")
 	default:
 		return nil, errors.New("error")
 	}
 }
 
-func (*CategoryRepositoryMock) FindSingle(categoryID uint) (m.Category, error) {
-	switch categoryID {
-	case 1:
+func (*CategoryRepositoryMock) FindSingle(category m.Category) (m.Category, error) {
+	switch category.Name {
+	case "find":
 		return category, nil
+	case "not found":
+		return m.Category{}, errors.New("not found")
 	default:
 		return m.Category{}, errors.New("error")
 	}
 }
 
-func (*CategoryRepositoryMock) Create(createCategory m.Category) (m.Category, error) {
-	switch createCategory.CategoryName {
+func (*CategoryRepositoryMock) Create(category m.Category) (m.Category, error) {
+	categoryC := category
+	switch category.Name {
 	case "create":
-		createCategory.ID = 1
-		return createCategory, nil
+		categoryC.Name = "create"
+		return categoryC, nil
 	default:
 		return m.Category{}, errors.New("error")
 	}
 }
 
 func (*CategoryRepositoryMock) Update(category m.Category) (m.Category, error) {
-	switch category.ID {
-	case 1:
+	switch category.Name {
+	case "update":
 		return category, nil
 	default:
 		return m.Category{}, errors.New("error")
@@ -60,8 +68,8 @@ func (*CategoryRepositoryMock) Update(category m.Category) (m.Category, error) {
 }
 
 func (*CategoryRepositoryMock) Delete(category m.Category) error {
-	switch category.ID {
-	case 1:
+	switch category.Name {
+	case "delete":
 		return nil
 	default:
 		return errors.New("error")
@@ -72,195 +80,192 @@ func (*CategoryRepositoryMock) Delete(category m.Category) error {
 
 func TestCategoryFindAll_OK(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
-	findAllCategory.ID = 1
+	findAllCategory.Name = "findall"
 
 	result, err := s.FindAll()
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.Category{}, result)
+	assert.IsType(t, []m.CategoryDTO{}, result)
 	assert.Len(t, result, 1)
 }
 
 func TestCategoryFindAll_err(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
-	findAllCategory.ID = 2
+	findAllCategory.Name = "fail"
 
 	result, err := s.FindAll()
 
-	findAllCategory.ID = 1
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "internal server error")
+}
+
+func TestCategoryFindAll_NotFound(t *testing.T) {
+	s := NewCategoryService(&CategoryRepositoryMock{})
+	findAllCategory.Name = "not found"
+
+	result, err := s.FindAll()
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.EqualError(t, err, "error")
+	assert.EqualError(t, err, "not found")
 }
 
 func TestCategoryFindSingle_OK(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	category.ID = 1
-
-	result, err := s.FindSingle(uint(1))
+	categoryDTO := m.CategoryDTO{
+		ID:   category.ID,
+		Name: "find",
+	}
+	result, err := s.FindSingle(categoryDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Category{}, result)
-	assert.Equal(t, "category", result.CategoryName)
-	assert.Equal(t, uint(1), result.ID)
+	assert.IsType(t, m.CategoryDTO{}, result)
+	assert.Equal(t, "find", result.Name)
+	assert.Equal(t, result.ID, category.ID)
 }
 
 func TestCategoryFindSingle_Err(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	result, err := s.FindSingle(uint(2))
+	categoryDTO := m.CategoryDTO{
+		ID:   category.ID,
+		Name: category.Name,
+	}
+	result, err := s.FindSingle(categoryDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Category{}, result)
-	assert.EqualError(t, err, "error")
+	assert.IsType(t, m.CategoryDTO{}, result)
+	assert.EqualError(t, err, "internal server error")
+}
+
+func TestCategoryFindSingle_NotFound(t *testing.T) {
+	s := NewCategoryService(&CategoryRepositoryMock{})
+
+	categoryDTO := m.CategoryDTO{
+		ID:   category.ID,
+		Name: "not found",
+	}
+	result, err := s.FindSingle(categoryDTO)
+
+	assert.Error(t, err)
+	assert.IsType(t, m.CategoryDTO{}, result)
+	assert.EqualError(t, err, "not found")
 }
 
 func TestCategoryCreate_OK(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	createCategory := category
-	createCategory.ID = 0
-	createCategory.CategoryName = "create"
-
-	result, err := s.Create(createCategory)
+	categoryDTO := m.CategoryDTO{
+		Name: "create",
+	}
+	result, err := s.Create(categoryDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Category{}, result)
+	assert.IsType(t, m.CategoryDTO{}, result)
 }
 
 func TestCategoryCreate_IDErr(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	createCategory := category
-	createCategory.ID = 1
-	createCategory.CategoryName = "create"
-
-	result, err := s.Create(createCategory)
+	categoryDTO := m.CategoryDTO{
+		ID:   category.ID,
+		Name: category.Name,
+	}
+	result, err := s.Create(categoryDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Category{}, result)
+	assert.IsType(t, m.CategoryDTO{}, result)
 	assert.EqualError(t, err, "existing id on new element is not allowed")
 }
 
 func TestCategoryCreate_NoNameErr(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	createCategory := category
-	createCategory.ID = 0
-	createCategory.CategoryName = ""
-
-	result, err := s.Create(createCategory)
+	categoryDTO := m.CategoryDTO{
+		Name: "",
+	}
+	result, err := s.Create(categoryDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Category{}, result)
-	assert.EqualError(t, err, "categoryname is empty")
+	assert.IsType(t, m.CategoryDTO{}, result)
+	assert.EqualError(t, err, "name is empty")
 }
 
 func TestCategoryCreate_CreateErr(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	createCategory := category
-	createCategory.ID = 0
-	createCategory.CategoryName = "fails"
-
-	result, err := s.Create(createCategory)
+	categoryDTO := m.CategoryDTO{
+		Name: category.Name,
+	}
+	result, err := s.Create(categoryDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Category{}, result)
+	assert.IsType(t, m.CategoryDTO{}, result)
 	assert.EqualError(t, err, "error")
 }
 
 func TestCategoryUpdate_OK(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	updateCategory := category
-	updateCategory.ID = 1
-	updateCategory.CategoryName = "update"
-
-	result, err := s.Update(updateCategory, uint(1))
-
-	assert.NoError(t, err)
-	assert.IsType(t, m.Category{}, result)
-}
-
-func TestCategoryUpdate_IDErr(t *testing.T) {
-	s := NewCategoryService(&CategoryRepositoryMock{})
-
-	updateCategory := category
-	updateCategory.ID = 0
-	updateCategory.CategoryName = "update"
-
-	result, err := s.Update(updateCategory, uint(0))
-
-	assert.Error(t, err)
-	assert.IsType(t, m.Category{}, result)
-	assert.EqualError(t, err, "missing id of element to update")
-}
-
-func TestCategoryUpdate_IDNotEqual(t *testing.T) {
-	s := NewCategoryService(&CategoryRepositoryMock{})
-
-	updateCategory := category
-	updateCategory.ID = 2
-	updateCategory.CategoryName = "update"
-
-	result, err := s.Update(updateCategory, uint(1))
+	categoryDTO := m.CategoryDTO{
+		ID:   category.ID,
+		Name: "update",
+	}
+	result, err := s.Update(categoryDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Category{}, result)
+	assert.IsType(t, m.CategoryDTO{}, result)
 }
 
 func TestCategoryUpdate_NoNameErr(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	updateCategory := category
-	updateCategory.ID = 1
-	updateCategory.CategoryName = ""
-
-	result, err := s.Update(updateCategory, uint(1))
+	categoryDTO := m.CategoryDTO{
+		ID: category.ID,
+	}
+	result, err := s.Update(categoryDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Category{}, result)
-	assert.EqualError(t, err, "categoryname is empty")
+	assert.IsType(t, m.CategoryDTO{}, result)
+	assert.EqualError(t, err, "name is empty")
 }
 
 func TestCategoryUpdate_UpdateErr(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	updateCategory := category
-	updateCategory.ID = 2
-	updateCategory.CategoryName = "fails"
-
-	result, err := s.Update(updateCategory, uint(2))
+	categoryDTO := m.CategoryDTO{
+		ID:   category.ID,
+		Name: category.Name,
+	}
+	result, err := s.Update(categoryDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Category{}, result)
+	assert.IsType(t, m.CategoryDTO{}, result)
 	assert.EqualError(t, err, "error")
 }
 
 func TestCategoryDelete_OK(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	err := s.Delete(uint(1))
+	categoryDTO := m.CategoryDTO{
+		ID:   category.ID,
+		Name: "delete",
+	}
+	err := s.Delete(categoryDTO)
 
 	assert.NoError(t, err)
-}
-
-func TestCategoryDelete_IDErr(t *testing.T) {
-	s := NewCategoryService(&CategoryRepositoryMock{})
-
-	err := s.Delete(uint(0))
-
-	assert.Error(t, err)
-	assert.EqualError(t, err, "missing id of element to delete")
 }
 
 func TestCategoryDelete_DeleteErr(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 
-	err := s.Delete(uint(2))
+	categoryDTO := m.CategoryDTO{
+		ID:   category.ID,
+		Name: category.Name,
+	}
+	err := s.Delete(categoryDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

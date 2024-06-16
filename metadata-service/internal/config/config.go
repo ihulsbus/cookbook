@@ -1,7 +1,6 @@
 package config
 
 import (
-	e "metadata-service/internal/endpoints"
 	h "metadata-service/internal/handlers"
 	m "metadata-service/internal/models"
 	r "metadata-service/internal/repositories"
@@ -32,10 +31,6 @@ var (
 	// Handlers
 	CategoryHandlers *h.CategoryHandlers
 	TagHandlers      *h.TagHandlers
-
-	// Endpoints
-	CategoryEndpoints *e.CategoryEndpoints
-	TagEndpoints      *e.TagEndpoints
 )
 
 func init() {
@@ -65,8 +60,4 @@ func init() {
 	// Init handlers
 	CategoryHandlers = h.NewCategoryHandlers(CategoryService, Logger)
 	TagHandlers = h.NewTagHandlers(TagService, Logger)
-
-	// Init endpoints
-	CategoryEndpoints = e.NewCategoryEndpoints(CategoryHandlers)
-	TagEndpoints = e.NewTagEndpoints(TagHandlers)
 }
