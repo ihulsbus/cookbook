@@ -9,10 +9,6 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-const (
-	whereTagID = "id = ?"
-)
-
 type TagRepository struct {
 	db *gorm.DB
 }

@@ -8,10 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	whereCategoryID = "id = ?"
-)
-
 type CategoryRepository struct {
 	db *gorm.DB
 }
