@@ -270,7 +270,7 @@ func TestTagCreate_UnmarshalErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, []byte(`{"error":"unexpected JSON input"}`), body)
+	assert.Equal(t, `{"error":"unexpected JSON input"}`, string(body))
 }
 
 func TestTagCreate_CreateErr(t *testing.T) {
@@ -293,7 +293,7 @@ func TestTagCreate_CreateErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.Equal(t, []byte(`{"error":"error"}`), body)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestTagUpdate_OK(t *testing.T) {
@@ -338,7 +338,7 @@ func TestTagUpdate_UnmarshalErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, body, []byte(`{"error":"EOF"}`))
+	assert.Equal(t, `{"error":"EOF"}`, string(body))
 }
 
 func TestTagUpdate_IDRequiredErr(t *testing.T) {
@@ -358,7 +358,7 @@ func TestTagUpdate_IDRequiredErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, []byte(`{"error":"invalid tag ID"}`), body)
+	assert.Equal(t, `{"error":"invalid tag ID"}`, string(body))
 }
 
 func TestTagUpdate_UpdateErr(t *testing.T) {
@@ -382,7 +382,7 @@ func TestTagUpdate_UpdateErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.Equal(t, []byte(`{"error":"error"}`), body)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestTagDelete_OK(t *testing.T) {
