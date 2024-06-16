@@ -21,19 +21,22 @@ var (
 	Cors           cors.Config
 
 	// Repositories
-	CategoryRepository    *r.CategoryRepository
-	TagRepository         *r.TagRepository
-	CuisineTypeRepository *r.CuisineTypeRepository
+	CategoryRepository        *r.CategoryRepository
+	TagRepository             *r.TagRepository
+	CuisineTypeRepository     *r.CuisineTypeRepository
+	DifficultyLevelRepository *r.DifficultyLevelRepository
 
 	// Services
-	CategoryService    *s.CategoryService
-	TagService         *s.TagService
-	CuisineTypeService *s.CuisineTypeService
+	CategoryService        *s.CategoryService
+	TagService             *s.TagService
+	CuisineTypeService     *s.CuisineTypeService
+	DifficultyLevelService *s.DifficultyLevelService
 
 	// Handlers
-	CategoryHandlers    *h.CategoryHandlers
-	TagHandlers         *h.TagHandlers
-	CuisineTypeHandlers *h.CuisineTypeHandlers
+	CategoryHandlers        *h.CategoryHandlers
+	TagHandlers             *h.TagHandlers
+	CuisineTypeHandlers     *h.CuisineTypeHandlers
+	DifficultyLevelHandlers *h.DifficultyLevelHandlers
 )
 
 func init() {
@@ -56,14 +59,17 @@ func init() {
 	CategoryRepository = r.NewCategoryRepository(DatabaseClient)
 	TagRepository = r.NewTagRepository(DatabaseClient)
 	CuisineTypeRepository = r.NewCuisineTypeRepository(DatabaseClient)
+	DifficultyLevelRepository = r.NewDifficultyLevelRepository(DatabaseClient)
 
 	// Init services
 	CategoryService = s.NewCategoryService(CategoryRepository)
 	TagService = s.NewTagService(TagRepository)
 	CuisineTypeService = s.NewCuisineTypeService(CuisineTypeRepository)
+	DifficultyLevelService = s.NewDifficultyLevelService(DifficultyLevelRepository)
 
 	// Init handlers
 	CategoryHandlers = h.NewCategoryHandlers(CategoryService, Logger)
 	TagHandlers = h.NewTagHandlers(TagService, Logger)
 	CuisineTypeHandlers = h.NewCuisineTypeHandlers(CuisineTypeService, Logger)
+	DifficultyLevelHandlers = h.NewDifficultyLevelHandlers(DifficultyLevelService, Logger)
 }

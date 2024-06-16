@@ -119,6 +119,35 @@ func MetadataService(ctx context.Context) {
 				deleteCuisineType.DELETE(":id", c.CategoryHandlers.Delete)
 			}
 		}
+
+		// DifficultyLevel routes
+		DifficultyLevel := v1.Group("/difficultylevel")
+		{
+			readDifficultyLevel := DifficultyLevel.Group("")
+			readDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				readDifficultyLevel.GET("", c.CategoryHandlers.GetAll)
+				readDifficultyLevel.GET(":id", c.CategoryHandlers.Get)
+			}
+
+			createDifficultyLevel := cuisineType.Group("")
+			createDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				createDifficultyLevel.POST("", c.CategoryHandlers.Create)
+			}
+
+			updateDifficultyLevel := cuisineType.Group("")
+			updateDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				updateDifficultyLevel.PUT(":id", c.CategoryHandlers.Update)
+			}
+
+			deleteDifficultyLevel := cuisineType.Group("")
+			deleteDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				deleteDifficultyLevel.DELETE(":id", c.CategoryHandlers.Delete)
+			}
+		}
 	}
 
 	// Server startup
