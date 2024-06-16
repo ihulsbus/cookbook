@@ -21,16 +21,19 @@ var (
 	Cors           cors.Config
 
 	// Repositories
-	CategoryRepository *r.CategoryRepository
-	TagRepository      *r.TagRepository
+	CategoryRepository    *r.CategoryRepository
+	TagRepository         *r.TagRepository
+	CuisineTypeRepository *r.CuisineTypeRepository
 
 	// Services
-	CategoryService *s.CategoryService
-	TagService      *s.TagService
+	CategoryService    *s.CategoryService
+	TagService         *s.TagService
+	CuisineTypeService *s.CuisineTypeService
 
 	// Handlers
-	CategoryHandlers *h.CategoryHandlers
-	TagHandlers      *h.TagHandlers
+	CategoryHandlers    *h.CategoryHandlers
+	TagHandlers         *h.TagHandlers
+	CuisineTypeHandlers *h.CuisineTypeHandlers
 )
 
 func init() {
@@ -52,12 +55,15 @@ func init() {
 	// Init repositories
 	CategoryRepository = r.NewCategoryRepository(DatabaseClient)
 	TagRepository = r.NewTagRepository(DatabaseClient)
+	CuisineTypeRepository = r.NewCuisineTypeRepository(DatabaseClient)
 
 	// Init services
 	CategoryService = s.NewCategoryService(CategoryRepository)
 	TagService = s.NewTagService(TagRepository)
+	CuisineTypeService = s.NewCuisineTypeService(CuisineTypeRepository)
 
 	// Init handlers
 	CategoryHandlers = h.NewCategoryHandlers(CategoryService, Logger)
 	TagHandlers = h.NewTagHandlers(TagService, Logger)
+	CuisineTypeHandlers = h.NewCuisineTypeHandlers(CuisineTypeService, Logger)
 }

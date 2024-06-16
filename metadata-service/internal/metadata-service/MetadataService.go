@@ -32,6 +32,8 @@ func MetadataService(ctx context.Context) {
 	// API versioning setup
 	v1 := router.Group("/api/v1")
 	{
+
+		// Tag routes
 		tag := v1.Group("/tag")
 		{
 			readTag := tag.Group("")
@@ -60,6 +62,7 @@ func MetadataService(ctx context.Context) {
 			}
 		}
 
+		// Category routes
 		category := v1.Group("/category")
 		{
 			readCategory := category.Group("")
@@ -87,7 +90,37 @@ func MetadataService(ctx context.Context) {
 				deleteCategory.DELETE(":id", c.CategoryHandlers.Delete)
 			}
 		}
+
+		// CuisineType routes
+		cuisineType := v1.Group("/cuisinetype")
+		{
+			readCuisineType := cuisineType.Group("")
+			readCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				readCuisineType.GET("", c.CategoryHandlers.GetAll)
+				readCuisineType.GET(":id", c.CategoryHandlers.Get)
+			}
+
+			createCuisineType := cuisineType.Group("")
+			createCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				createCuisineType.POST("", c.CategoryHandlers.Create)
+			}
+
+			updateCuisineType := cuisineType.Group("")
+			updateCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				updateCuisineType.PUT(":id", c.CategoryHandlers.Update)
+			}
+
+			deleteCuisineType := cuisineType.Group("")
+			deleteCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				deleteCuisineType.DELETE(":id", c.CategoryHandlers.Delete)
+			}
+		}
 	}
+
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
