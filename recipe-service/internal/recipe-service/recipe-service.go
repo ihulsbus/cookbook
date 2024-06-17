@@ -29,7 +29,7 @@ func RecipeService(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
-	v1 := router.Group("/api/v1")
+	v1 := router.Group("/api/v2")
 	{
 		recipe := v1.Group("/recipes")
 		{

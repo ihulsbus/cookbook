@@ -84,7 +84,7 @@ func TestPreparationTimeGetAll_OK(t *testing.T) {
 
 	preparationTime.Duration = 1
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/preparationTime", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -106,7 +106,7 @@ func TestPreparationTimeGetAll_NotFound(t *testing.T) {
 
 	preparationTime.Duration = 2
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/preparationTime", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -126,7 +126,7 @@ func TestPreparationTimeGetAll_Error(t *testing.T) {
 
 	preparationTime.Duration = 3
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/preparationTime", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -144,7 +144,7 @@ func TestPreparationTimeGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/preparationTime/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -169,7 +169,7 @@ func TestPreparationTimeGet_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/preparationTime/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -189,7 +189,7 @@ func TestPreparationTimeGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/preparationTime/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -212,7 +212,7 @@ func TestPreparationTimeGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/preparationTime/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -240,7 +240,7 @@ func TestPreparationTimeCreate_OK(t *testing.T) {
 	}
 	reqBody, _ := json.Marshal(createPreparationTime)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/preparationTime/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/preparationTime/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -259,7 +259,7 @@ func TestPreparationTimeCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/preparationTime/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/preparationTime/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -282,7 +282,7 @@ func TestPreparationTimeCreate_CreateErr(t *testing.T) {
 	}
 	reqBody, _ := json.Marshal(createPreparationTime)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/preparationTime/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/preparationTime/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -303,7 +303,7 @@ func TestPreparationTimeUpdate_OK(t *testing.T) {
 	preparationTime.Duration = 1
 	reqBody, _ := json.Marshal(preparationTime)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/preparationTime/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/preparationTime/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -324,7 +324,7 @@ func TestPreparationTimeUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/preparationTime/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/preparationTime/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -347,7 +347,7 @@ func TestPreparationTimeUpdate_IDRequiredErr(t *testing.T) {
 
 	reqBody, _ := json.Marshal(preparationTime)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/preparationTime/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/preparationTime/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -368,7 +368,7 @@ func TestPreparationTimeUpdate_UpdateErr(t *testing.T) {
 	preparationTime.Duration = 3
 	reqBody, _ := json.Marshal(preparationTime)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/preparationTime/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/preparationTime/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -391,7 +391,7 @@ func TestPreparationTimeDelete_OK(t *testing.T) {
 
 	preparationTime.Duration = 1
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/preparationTime/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -412,7 +412,7 @@ func TestPreparationTimeDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/preparationTime/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -432,7 +432,7 @@ func TestPreparationTimeDelete_DeleteErr(t *testing.T) {
 
 	preparationTime.Duration = 3
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/preparationTime/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req

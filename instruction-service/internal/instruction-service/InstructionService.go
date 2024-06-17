@@ -30,7 +30,7 @@ func InstructionService(ctx context.Context) {
 	router.Use(cors.New(c.Cors))
 
 	// API versioning setup
-	v1 := router.Group("/api/v1")
+	v1 := router.Group("/api/v2")
 	{
 		recipe := v1.Group("/recipe")
 		{

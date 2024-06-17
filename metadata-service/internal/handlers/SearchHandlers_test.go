@@ -45,7 +45,7 @@ func TestSearch_OK(t *testing.T) {
 
 	reqBody, _ := json.Marshal(searchRequestDTO)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req

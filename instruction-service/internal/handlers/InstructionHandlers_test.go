@@ -67,7 +67,7 @@ func (s *InstructionServiceMock) DeleteInstruction(recipeID uuid.UUID) error {
 func TestGetInstruction_OK(t *testing.T) {
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
 
 	h.GetInstruction(w, req, uuid.UUID{})
@@ -84,7 +84,7 @@ func TestGetInstruction_OK(t *testing.T) {
 func TestGetInstruction_FindErr(t *testing.T) {
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
 
 	h.GetInstruction(w, req, uuid.UUID{})
@@ -103,7 +103,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 
 	reqBody, _ := json.Marshal(instruction)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/ingredient/1/instruction", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient/1/instruction", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.CreateInstruction(w, req, uuid.UUID{})
@@ -118,7 +118,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 func TestCreateInstruction_UnmarshalErr(t *testing.T) {
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/ingredient/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.CreateInstruction(w, req, uuid.UUID{})
@@ -138,7 +138,7 @@ func TestCreateInstruction_CreateErr(t *testing.T) {
 
 	reqBody, _ := json.Marshal(cI)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.CreateInstruction(w, req, uuid.UUID{})
@@ -155,7 +155,7 @@ func TestUpdateInstruction_OK(t *testing.T) {
 
 	reqBody, _ := json.Marshal(instruction)
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.UpdateInstruction(w, req, uuid.UUID{})
@@ -170,7 +170,7 @@ func TestUpdateInstruction_OK(t *testing.T) {
 func TestUpdateInstruction_UnmarshalErr(t *testing.T) {
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.UpdateInstruction(w, req, uuid.UUID{})
@@ -185,7 +185,7 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 
 	reqBody, _ := json.Marshal(instruction)
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.UpdateInstruction(w, req, uuid.UUID{})
@@ -198,7 +198,7 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 func TestDeleteInstruction_OK(t *testing.T) {
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
 
 	h.DeleteInstruction(w, req, uuid.UUID{})
@@ -211,7 +211,7 @@ func TestDeleteInstruction_OK(t *testing.T) {
 func TestDeleteInstruction_UpdateErr(t *testing.T) {
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/ingredient/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
 
 	h.DeleteInstruction(w, req, uuid.UUID{})

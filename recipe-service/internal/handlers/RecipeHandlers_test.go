@@ -75,7 +75,7 @@ func TestRecipeGetAll_OK(t *testing.T) {
 	recipes = append(recipes, m.Recipe{RecipeName: "recipe1"}, m.Recipe{RecipeName: "recipe2"})
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
 	w := httptest.NewRecorder()
 
 	h.GetAll(w, req)
@@ -92,7 +92,7 @@ func TestRecipeGetAll_OK(t *testing.T) {
 func TestRecipeGet_OK(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Get(w, req, "1")
@@ -109,7 +109,7 @@ func TestRecipeGet_OK(t *testing.T) {
 func TestRecipeGet_AtoiErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Get(w, req, "")
@@ -122,7 +122,7 @@ func TestRecipeGet_AtoiErr(t *testing.T) {
 func TestRecipeGet_FindErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/recipe/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Get(w, req, "0")
@@ -139,7 +139,7 @@ func TestRecipeCreate_OK(t *testing.T) {
 
 	reqBody, _ := json.Marshal(recipe)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
@@ -154,7 +154,7 @@ func TestRecipeCreate_OK(t *testing.T) {
 func TestRecipeCreate_UnmarshalErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
@@ -172,7 +172,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 	recipe.RecipeName = "err"
 	reqBody, _ := json.Marshal(recipe)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
@@ -192,7 +192,7 @@ func TestRecipeUpdate_OK(t *testing.T) {
 	updateRecipe.RecipeName = "recipe"
 	reqBody, _ := json.Marshal(updateRecipe)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req, "1")
@@ -207,7 +207,7 @@ func TestRecipeUpdate_OK(t *testing.T) {
 func TestRecipeUpdate_UnmarshalErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/recipe/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req, "1")
@@ -227,7 +227,7 @@ func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
 	updateRecipe.RecipeName = "recipe"
 	reqBody, _ := json.Marshal(updateRecipe)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req, "1")
@@ -247,7 +247,7 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 	updateRecipe.RecipeName = "fail"
 	reqBody, _ := json.Marshal(updateRecipe)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/recipe/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 
 	h.Update(w, req, "1")
@@ -262,7 +262,7 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 func TestRecipeDelete_OK(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "1")
@@ -275,7 +275,7 @@ func TestRecipeDelete_OK(t *testing.T) {
 func TestRecipeDelete_AtoiErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "")
@@ -288,7 +288,7 @@ func TestRecipeDelete_AtoiErr(t *testing.T) {
 func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "0")
@@ -303,7 +303,7 @@ func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 func TestRecipeDelete_DeleteErr(t *testing.T) {
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/recipe/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
 
 	h.Delete(w, req, "2")

@@ -84,7 +84,7 @@ func TestTagGetAll_OK(t *testing.T) {
 
 	tag.Name = "findall"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/tag", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -106,7 +106,7 @@ func TestTagGetAll_NotFound(t *testing.T) {
 
 	tag.Name = "notfound"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/tag", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -126,7 +126,7 @@ func TestTagGetAll_Error(t *testing.T) {
 
 	tag.Name = "error"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/tag", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -144,7 +144,7 @@ func TestTagGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/tag/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -169,7 +169,7 @@ func TestTagGet_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/tag/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -189,7 +189,7 @@ func TestTagGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/tag/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -212,7 +212,7 @@ func TestTagGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/tag/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -240,7 +240,7 @@ func TestTagCreate_OK(t *testing.T) {
 	}
 	reqBody, _ := json.Marshal(createTag)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -259,7 +259,7 @@ func TestTagCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/tag/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -282,7 +282,7 @@ func TestTagCreate_CreateErr(t *testing.T) {
 	}
 	reqBody, _ := json.Marshal(createTag)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -303,7 +303,7 @@ func TestTagUpdate_OK(t *testing.T) {
 	tag.Name = "update"
 	reqBody, _ := json.Marshal(tag)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -324,7 +324,7 @@ func TestTagUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/tag/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/tag/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -347,7 +347,7 @@ func TestTagUpdate_IDRequiredErr(t *testing.T) {
 
 	reqBody, _ := json.Marshal(tag)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -368,7 +368,7 @@ func TestTagUpdate_UpdateErr(t *testing.T) {
 	tag.Name = "updatefail"
 	reqBody, _ := json.Marshal(tag)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -391,7 +391,7 @@ func TestTagDelete_OK(t *testing.T) {
 
 	tag.Name = "delete"
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -412,7 +412,7 @@ func TestTagDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -432,7 +432,7 @@ func TestTagDelete_DeleteErr(t *testing.T) {
 
 	tag.Name = "deleteError"
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/tag/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req

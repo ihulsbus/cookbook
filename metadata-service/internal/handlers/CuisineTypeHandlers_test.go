@@ -84,7 +84,7 @@ func TestCuisineTypeGetAll_OK(t *testing.T) {
 
 	cuisineType.Name = "findall"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/cuisineType", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -106,7 +106,7 @@ func TestCuisineTypeGetAll_NotFound(t *testing.T) {
 
 	cuisineType.Name = "notfound"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/cuisineType", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -126,7 +126,7 @@ func TestCuisineTypeGetAll_Error(t *testing.T) {
 
 	cuisineType.Name = "error"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/cuisineType", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -144,7 +144,7 @@ func TestCuisineTypeGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/cuisineType/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -169,7 +169,7 @@ func TestCuisineTypeGet_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/cuisineType/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -189,7 +189,7 @@ func TestCuisineTypeGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/cuisineType/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -212,7 +212,7 @@ func TestCuisineTypeGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/cuisineType/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -240,7 +240,7 @@ func TestCuisineTypeCreate_OK(t *testing.T) {
 	}
 	reqBody, _ := json.Marshal(createCuisineType)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/cuisineType/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/cuisineType/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -259,7 +259,7 @@ func TestCuisineTypeCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/cuisineType/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/cuisineType/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -282,7 +282,7 @@ func TestCuisineTypeCreate_CreateErr(t *testing.T) {
 	}
 	reqBody, _ := json.Marshal(createCuisineType)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/cuisineType/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/cuisineType/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -303,7 +303,7 @@ func TestCuisineTypeUpdate_OK(t *testing.T) {
 	cuisineType.Name = "update"
 	reqBody, _ := json.Marshal(cuisineType)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/cuisineType/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/cuisineType/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -324,7 +324,7 @@ func TestCuisineTypeUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/cuisineType/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/cuisineType/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -347,7 +347,7 @@ func TestCuisineTypeUpdate_IDRequiredErr(t *testing.T) {
 
 	reqBody, _ := json.Marshal(cuisineType)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/cuisineType/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/cuisineType/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -368,7 +368,7 @@ func TestCuisineTypeUpdate_UpdateErr(t *testing.T) {
 	cuisineType.Name = "updatefail"
 	reqBody, _ := json.Marshal(cuisineType)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/cuisineType/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/cuisineType/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -391,7 +391,7 @@ func TestCuisineTypeDelete_OK(t *testing.T) {
 
 	cuisineType.Name = "delete"
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/cuisineType/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -412,7 +412,7 @@ func TestCuisineTypeDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/cuisineType/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -432,7 +432,7 @@ func TestCuisineTypeDelete_DeleteErr(t *testing.T) {
 
 	cuisineType.Name = "deleteError"
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/cuisineType/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req

@@ -85,7 +85,7 @@ func TestCategoryGetAll_OK(t *testing.T) {
 
 	category.Name = "findall"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/category", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/category", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -108,7 +108,7 @@ func TestCategoryGetAll_NotFound(t *testing.T) {
 
 	category.Name = "notfound"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/category", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/category", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -129,7 +129,7 @@ func TestCategoryGetAll_Error(t *testing.T) {
 
 	category.Name = "error"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/category", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/category", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -148,7 +148,7 @@ func TestCategoryGet_OK(t *testing.T) {
 	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
 
 	category.Name = "find"
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/category/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/category/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -172,7 +172,7 @@ func TestCategoryGet_ID(t *testing.T) {
 	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
 
 	category.Name = "finderr"
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/category/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/category/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -191,7 +191,7 @@ func TestCategoryGet_NotFound(t *testing.T) {
 	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
 
 	category.Name = "notfound"
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/category/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/category/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -213,7 +213,7 @@ func TestCategoryGet_FindErr(t *testing.T) {
 	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
 
 	category.Name = "finderr"
-	req := httptest.NewRequest("GET", "http://example.com/api/v1/category/1", nil)
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/category/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -239,7 +239,7 @@ func TestCategoryCreate_OK(t *testing.T) {
 	}
 	reqBody, _ := json.Marshal(createCategory)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/category/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/category/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -259,7 +259,7 @@ func TestCategoryCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/category/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/category/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -282,7 +282,7 @@ func TestCategoryCreate_CreateErr(t *testing.T) {
 	}
 	reqBody, _ := json.Marshal(createCategory)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v1/category/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/category/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -303,7 +303,7 @@ func TestCategoryUpdate_OK(t *testing.T) {
 	category.Name = "update"
 	reqBody, _ := json.Marshal(category)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/category/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/category/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -324,7 +324,7 @@ func TestCategoryUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/category/1", bytes.NewReader([]byte{}))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/category/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -347,7 +347,7 @@ func TestCategoryUpdate_IDRequiredErr(t *testing.T) {
 
 	reqBody, _ := json.Marshal(category)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/category/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/category/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -368,7 +368,7 @@ func TestCategoryUpdate_UpdateErr(t *testing.T) {
 	category.Name = "updateFail"
 	reqBody, _ := json.Marshal(category)
 
-	req := httptest.NewRequest("PUT", "http://example.com/api/v1/category/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/category/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -391,7 +391,7 @@ func TestCategoryDelete_OK(t *testing.T) {
 
 	category.Name = "delete"
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/category/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/category/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -412,7 +412,7 @@ func TestCategoryDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/category/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/category/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -432,7 +432,7 @@ func TestCategoryDelete_DeleteErr(t *testing.T) {
 
 	category.Name = "deleteError"
 
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v1/category/1", nil)
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/category/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
