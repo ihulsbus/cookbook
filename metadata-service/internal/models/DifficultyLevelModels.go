@@ -10,7 +10,7 @@ import (
 // Database model
 type DifficultyLevel struct {
 	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Level     int            `gorm:"type:varchar(50);unique;not null"`
+	Level     int            `gorm:"type:integer;unique;not null"`
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -23,7 +23,7 @@ func (difficultyLevel *DifficultyLevel) BeforeCreate(tx *gorm.DB) (err error) {
 
 // Association model
 type RecipeDifficultyLevel struct {
-	RecipeID          uuid.UUID      `gorm:"type:uuid;primaryKey"`
+	RecipeID          uuid.UUID      `gorm:"type:uuid;primaryKey;unique"`
 	DifficultyLevelID uuid.UUID      `gorm:"type:uuid;primaryKey"`
 	CreatedAt         time.Time      `gorm:"autoCreateTime"`
 	DeletedAt         gorm.DeletedAt `gorm:"index"`
@@ -42,11 +42,11 @@ func (d DifficultyLevel) ConvertToDTO() DifficultyLevelDTO {
 	}
 }
 
-func (d DifficultyLevel) ConvertAllToDTO(cuisineTypes []DifficultyLevel) []DifficultyLevelDTO {
+func (d DifficultyLevel) ConvertAllToDTO(difficultyLevels []DifficultyLevel) []DifficultyLevelDTO {
 	var data []DifficultyLevelDTO
 
-	for _, cuisineType := range cuisineTypes {
-		data = append(data, cuisineType.ConvertToDTO())
+	for _, level := range difficultyLevels {
+		data = append(data, level.ConvertToDTO())
 	}
 
 	return data
@@ -59,11 +59,11 @@ func (d DifficultyLevelDTO) ConvertFromDTO() DifficultyLevel {
 	}
 }
 
-func (d DifficultyLevelDTO) ConvertAllFromDTO(cuisineTypes []DifficultyLevelDTO) []DifficultyLevel {
+func (d DifficultyLevelDTO) ConvertAllFromDTO(difficultyLevels []DifficultyLevelDTO) []DifficultyLevel {
 	var data []DifficultyLevel
 
-	for _, cuisineType := range cuisineTypes {
-		data = append(data, cuisineType.ConvertFromDTO())
+	for _, level := range difficultyLevels {
+		data = append(data, level.ConvertFromDTO())
 	}
 
 	return data

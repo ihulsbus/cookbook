@@ -23,7 +23,7 @@ func (cuisineType *CuisineType) BeforeCreate(tx *gorm.DB) (err error) {
 
 // Association model
 type RecipeCuisineType struct {
-	RecipeID      uuid.UUID      `gorm:"type:uuid;primaryKey"`
+	RecipeID      uuid.UUID      `gorm:"type:uuid;primaryKey;unique"`
 	CuisineTypeID uuid.UUID      `gorm:"type:uuid;primaryKey"`
 	CreatedAt     time.Time      `gorm:"autoCreateTime"`
 	DeletedAt     gorm.DeletedAt `gorm:"index"`

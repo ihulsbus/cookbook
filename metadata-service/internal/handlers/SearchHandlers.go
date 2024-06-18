@@ -8,7 +8,7 @@ import (
 )
 
 type SearchService interface {
-	SearchMetadata(m.MetadataSearchRequestDTO) (m.MetadataSearchResultDTO, error)
+	SearchMetadata(m.MetadataSearchRequestDTO) ([]m.MetadataSearchResultDTO, error)
 }
 
 type SearchHandlers struct {
@@ -28,7 +28,7 @@ func (h *SearchHandlers) SearchMetadata(ctx *gin.Context) {
 	var err error
 
 	if err = ctx.ShouldBindJSON(&searchRequestDTO); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unexpected JSON input"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

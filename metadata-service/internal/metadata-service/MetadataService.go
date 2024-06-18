@@ -182,6 +182,7 @@ func MetadataService(ctx context.Context) {
 		search := v1.Group("/search")
 		{
 			createSearch := search.Group("")
+			createSearch.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 				createSearch.POST("", c.SearchHandlers.SearchMetadata)
 			}

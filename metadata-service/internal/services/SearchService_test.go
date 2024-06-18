@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	m "metadata-service/internal/models"
 	"testing"
 
@@ -9,23 +10,39 @@ import (
 )
 
 var (
+	minTime int       = 1
+	maxTime int       = 2
+	id      uuid.UUID = uuid.New()
+
 	searchRequest m.MetadataSearchRequestDTO = m.MetadataSearchRequestDTO{
-		RecipeID:        uuid.New(),
-		CategoryID:      uuid.New(),
-		TagID:           uuid.New(),
-		DifficultyLevel: 1,
-		CuisineType:     "",
-		MinPrepTime:     1,
-		MaxPrepTime:     2,
+		RecipeID:          id,
+		CategoryID:        id,
+		TagID:             id,
+		DifficultyLevelID: id,
+		CuisineTypeID:     id,
+		MinPrepTime:       &minTime,
+		MaxPrepTime:       &maxTime,
 	}
 )
 
 type searchRepositoryMock struct{}
 
 func (*searchRepositoryMock) SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error) {
-	var response []m.MetadataSearchResult
-
-	return response, nil
+	switch *request.MinPrepTime {
+	case 1:
+		var response []m.MetadataSearchResult
+		response = append(response, m.MetadataSearchResult{
+			RecipeID:          id,
+			CategoryIDs:       []uuid.UUID{id},
+			TagIDs:            []uuid.UUID{id},
+			DifficultyLevelID: id,
+			CuisineTypeID:     id,
+			PreparationTimeID: id,
+		})
+		return response, nil
+	default:
+		return nil, errors.New("error")
+	}
 }
 
 // ======================================================================
@@ -36,5 +53,16 @@ func TestSearchMetadata_OK(t *testing.T) {
 	result, err := s.SearchMetadata(searchRequest)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.MetadataSearchResultDTO{}, result)
+	assert.IsType(t, []m.MetadataSearchResultDTO{}, result)
+}
+
+func TestSearchMetadata_Error(t *testing.T) {
+	s := NewSearchService(&searchRepositoryMock{})
+
+	minTime = 2
+
+	_, err := s.SearchMetadata(searchRequest)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
 }

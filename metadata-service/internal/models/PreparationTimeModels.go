@@ -10,7 +10,7 @@ import (
 // Database model
 type PreparationTime struct {
 	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	Duration  int            `gorm:"not null"`
+	Duration  int            `gorm:"type:integer;not null"`
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `gorm:"index"`
@@ -23,7 +23,7 @@ func (preparationTime *PreparationTime) BeforeCreate(tx *gorm.DB) (err error) {
 
 // Association model
 type RecipePreparationTime struct {
-	RecipeID          uuid.UUID      `gorm:"type:uuid;primaryKey"`
+	RecipeID          uuid.UUID      `gorm:"type:uuid;primaryKey;unique"`
 	PreparationTimeID uuid.UUID      `gorm:"type:uuid;primaryKey"`
 	CreatedAt         time.Time      `gorm:"autoCreateTime"`
 	DeletedAt         gorm.DeletedAt `gorm:"index"`
