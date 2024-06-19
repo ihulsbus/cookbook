@@ -6,7 +6,6 @@ import (
 	m "recipe-service/internal/models"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 const (
@@ -28,7 +27,7 @@ func NewRecipeRepository(db *gorm.DB) *RecipeRepository {
 func (r RecipeRepository) FindAll() ([]m.Recipe, error) {
 	var recipes []m.Recipe
 
-	if err := r.db.Preload(clause.Associations).Find(&recipes).Error; err != nil {
+	if err := r.db.Find(&recipes).Error; err != nil {
 		return nil, err
 	}
 	if len(recipes) <= 0 {
@@ -39,11 +38,9 @@ func (r RecipeRepository) FindAll() ([]m.Recipe, error) {
 }
 
 // Find searches for a specific recipe in the database and returns it when found.
-func (r RecipeRepository) FindSingle(recipeID uint) (m.Recipe, error) {
-	var recipe m.Recipe
-	recipe.ID = recipeID
+func (r RecipeRepository) FindSingle(recipe m.Recipe) (m.Recipe, error) {
 
-	result := r.db.Preload(clause.Associations).Where(whereID, recipeID).First(&recipe)
+	result := r.db.First(&recipe)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return m.Recipe{}, errors.New("not found")
@@ -78,8 +75,7 @@ func (r RecipeRepository) Update(recipe m.Recipe) (m.Recipe, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
 
-		// update the recipe while skipping associations as this is very very
-		if err = tx.Omit("author_id", "image_name").Updates(&recipe).Error; err != nil {
+		if err = tx.Updates(&recipe).Error; err != nil {
 			return err
 		}
 

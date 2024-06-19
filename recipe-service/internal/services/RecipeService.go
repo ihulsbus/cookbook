@@ -4,11 +4,13 @@ import (
 	"errors"
 
 	m "recipe-service/internal/models"
+
+	"github.com/google/uuid"
 )
 
 type RecipeRepository interface {
 	FindAll() ([]m.Recipe, error)
-	FindSingle(recipeID uint) (m.Recipe, error)
+	FindSingle(recipe m.Recipe) (m.Recipe, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
 	Update(recipe m.Recipe) (m.Recipe, error)
 	Delete(recipe m.Recipe) error
@@ -26,7 +28,7 @@ func NewRecipeService(recipeRepo RecipeRepository) *RecipeService {
 }
 
 // Find contains the business logic to get all recipes
-func (s RecipeService) FindAll() ([]m.Recipe, error) {
+func (s RecipeService) FindAll() ([]m.RecipeDTO, error) {
 	var recipes []m.Recipe
 
 	recipes, err := s.repo.FindAll()
@@ -39,85 +41,85 @@ func (s RecipeService) FindAll() ([]m.Recipe, error) {
 		}
 	}
 
-	return recipes, nil
+	return m.Recipe{}.ConvertAllToDTO(recipes), nil
 }
 
 // Find contains the business logic to get a specific recipe
-func (s RecipeService) FindSingle(recipeID uint) (m.Recipe, error) {
+func (s RecipeService) FindSingle(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 	var recipe m.Recipe
 
-	recipe, err := s.repo.FindSingle(uint(recipeID))
+	recipe, err := s.repo.FindSingle(recipeDTO.ConvertFromDTO())
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			return m.Recipe{}, err
+			return m.RecipeDTO{}, err
 		default:
-			return m.Recipe{}, errors.New("internal server error")
+			return m.RecipeDTO{}, errors.New("internal server error")
 		}
 	}
 
-	return recipe, nil
+	return recipe.ConvertToDTO(), nil
 }
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing
-func (s RecipeService) Create(recipe m.Recipe) (m.Recipe, error) {
+func (s RecipeService) Create(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 
-	recipe, err := s.repo.Create(recipe)
-	if err != nil {
-		return recipe, err
+	if recipeDTO.ID != uuid.Nil {
+		return m.RecipeDTO{}, errors.New("existing id on new element is not allowed")
 	}
 
-	return recipe, nil
+	if recipeDTO.Name == "" {
+		return m.RecipeDTO{}, errors.New("name is empty")
+	}
+
+	if recipeDTO.Description == "" {
+		return m.RecipeDTO{}, errors.New("description is empty")
+	}
+
+	if recipeDTO.ServingCount == 0 {
+		return m.RecipeDTO{}, errors.New("serving count 0 is not allowed")
+	}
+
+	recipe, err := s.repo.Create(recipeDTO.ConvertFromDTO())
+	if err != nil {
+		return m.RecipeDTO{}, err
+	}
+
+	return recipe.ConvertToDTO(), nil
 }
 
-func (s RecipeService) Update(recipe m.Recipe, recipeID uint) (m.Recipe, error) {
+func (s RecipeService) Update(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 	var updatedRecipe m.Recipe
 	var originalRecipe m.Recipe
 
-	originalRecipe, err := s.repo.FindSingle(recipeID)
+	originalRecipe, err := s.repo.FindSingle(recipeDTO.ConvertFromDTO())
 	if err != nil {
-		return updatedRecipe, err
+		return m.RecipeDTO{}, err
 	}
 
-	if recipe.RecipeName == "" {
-		recipe.RecipeName = originalRecipe.RecipeName
+	if recipeDTO.Name == "" {
+		recipeDTO.Name = originalRecipe.Name
 	}
 
-	if recipe.Description == "" {
-		recipe.Description = originalRecipe.Description
+	if recipeDTO.Description == "" {
+		recipeDTO.Description = originalRecipe.Description
 	}
 
-	if recipe.CookingTime == 0 {
-		recipe.CookingTime = originalRecipe.CookingTime
+	if recipeDTO.ServingCount == 0 {
+		recipeDTO.ServingCount = originalRecipe.ServingCount
 	}
 
-	if recipe.ServingCount == 0 {
-		recipe.ServingCount = originalRecipe.ServingCount
-	}
-
-	if recipe.AuthorID != originalRecipe.AuthorID {
-		recipe.AuthorID = originalRecipe.AuthorID
-	}
-
-	if recipe.ImageName != originalRecipe.ImageName {
-		recipe.ImageName = originalRecipe.ImageName
-	}
-
-	updatedRecipe, err = s.repo.Update(recipe)
+	updatedRecipe, err = s.repo.Update(recipeDTO.ConvertFromDTO())
 	if err != nil {
-		return updatedRecipe, err
+		return m.RecipeDTO{}, err
 	}
 
-	return updatedRecipe, nil
+	return updatedRecipe.ConvertToDTO(), nil
 }
 
-func (s RecipeService) Delete(recipeID uint) error {
-	var recipe m.Recipe
-
-	recipe.ID = recipeID
-
+func (s RecipeService) Delete(recipeDTO m.RecipeDTO) error {
 	// TODO create safety logic
-	if err := s.repo.Delete(recipe); err != nil {
+	if err := s.repo.Delete(recipeDTO.ConvertFromDTO()); err != nil {
 		return err
 	}
 

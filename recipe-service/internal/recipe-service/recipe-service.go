@@ -36,27 +36,27 @@ func RecipeService(ctx context.Context) {
 			readRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readRecipe.GET("", c.RecipeEndpoints.GetAll)
-				readRecipe.GET(":id", c.RecipeEndpoints.Get)
+				readRecipe.GET("", c.RecipeHandlers.GetAll)
+				readRecipe.GET(":id", c.RecipeHandlers.Get)
 			}
 
 			createRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createRecipe.POST("", c.RecipeEndpoints.Create)
+				createRecipe.POST("", c.RecipeHandlers.Create)
 			}
 
 			updateRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 
-				updateRecipe.PUT(":id", c.RecipeEndpoints.Update)
+				updateRecipe.PUT(":id", c.RecipeHandlers.Update)
 			}
 
 			adminRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				adminRecipe.DELETE(":id", c.RecipeEndpoints.Delete)
+				adminRecipe.DELETE(":id", c.RecipeHandlers.Delete)
 			}
 		}
 

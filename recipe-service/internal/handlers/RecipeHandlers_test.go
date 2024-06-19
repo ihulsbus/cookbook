@@ -11,58 +11,69 @@ import (
 
 	m "recipe-service/internal/models"
 
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 type RecipeServiceMock struct {
 }
 
 var (
-	recipes []m.Recipe
-	recipe  m.Recipe = m.Recipe{
-		RecipeName: "recipe",
+	recipes []m.RecipeDTO
+	recipe  m.RecipeDTO = m.RecipeDTO{
+		ID:           uuid.New(),
+		Name:         "recipe",
+		Description:  "description",
+		ServingCount: 1,
 	}
 )
 
 // ====== RecipeService ======
 
-func (s *RecipeServiceMock) FindAll() ([]m.Recipe, error) {
-	return recipes, nil
-}
-
-func (s *RecipeServiceMock) FindSingle(recipeID uint) (m.Recipe, error) {
-	switch recipeID {
-	case 1:
-		return m.Recipe{RecipeName: "recipe1"}, nil
-	case 2:
-		return m.Recipe{RecipeName: "recipe2"}, nil
+func (s *RecipeServiceMock) FindAll() ([]m.RecipeDTO, error) {
+	switch recipe.Name {
+	case "findall":
+		return recipes, nil
+	case "notfound":
+		return nil, errors.New("not found")
 	default:
-		return m.Recipe{}, errors.New("error")
+		return nil, errors.New("error")
 	}
 }
 
-func (s *RecipeServiceMock) Create(recipe m.Recipe) (m.Recipe, error) {
-	switch recipe.RecipeName {
-	case "recipe":
+func (s *RecipeServiceMock) FindSingle(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
+	switch recipe.Name {
+	case "find":
+		return recipe, nil
+	case "notfound":
+		return m.RecipeDTO{}, errors.New("not found")
+	default:
+		return m.RecipeDTO{}, errors.New("error")
+	}
+}
+
+func (s *RecipeServiceMock) Create(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
+	switch recipeDTO.Name {
+	case "create":
 		return recipe, nil
 	default:
-		return recipe, errors.New("error")
+		return m.RecipeDTO{}, errors.New("error")
 	}
 }
 
-func (s *RecipeServiceMock) Update(recipe m.Recipe, recipeID uint) (m.Recipe, error) {
-	switch recipe.RecipeName {
-	case "recipe":
+func (s *RecipeServiceMock) Update(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
+	switch recipeDTO.Name {
+	case "update":
 		return recipe, nil
 	default:
-		return recipe, errors.New("error")
+		return m.RecipeDTO{}, errors.New("error")
 	}
 }
 
-func (s *RecipeServiceMock) Delete(recipeID uint) error {
-	switch recipeID {
-	case 1:
+func (s *RecipeServiceMock) Delete(recipeDTO m.RecipeDTO) error {
+	switch recipe.Name {
+	case "delete":
 		return nil
 	default:
 		return errors.New("error")
@@ -72,245 +83,373 @@ func (s *RecipeServiceMock) Delete(recipeID uint) error {
 // ==================================================================================================
 
 func TestRecipeGetAll_OK(t *testing.T) {
-	recipes = append(recipes, m.Recipe{RecipeName: "recipe1"}, m.Recipe{RecipeName: "recipe2"})
+	gin.SetMode(gin.TestMode)
+	recipes = append(recipes, recipe)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	recipe.Name = "findall"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.GetAll(w, req)
+	h.GetAll(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
 	expectedBody, _ := json.Marshal(recipes)
 
-	assert.Equal(t, resp.StatusCode, http.StatusOK)
-	assert.Equal(t, body, expectedBody)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, expectedBody, body)
+}
+
+func TestRecipeGetAll_NotFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	recipes = append(recipes, recipe)
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	recipe.Name = "notfound"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no recipes found"}`, string(body))
+}
+
+func TestRecipeGetAll_Err(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	recipes = append(recipes, recipe)
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	recipe.Name = "error"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestRecipeGet_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
 
-	h.Get(w, req, "1")
+	recipe.Name = "find"
+
+	h.Get(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(m.Recipe{RecipeName: "recipe1"})
+	expectedBody, _ := json.Marshal(recipe)
 
-	assert.Equal(t, resp.StatusCode, http.StatusOK)
-	assert.Equal(t, body, expectedBody)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, expectedBody, body)
 }
 
-func TestRecipeGet_AtoiErr(t *testing.T) {
+func TestRecipeGet_IDErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Get(w, req, "")
+	recipe.Name = "find"
+
+	h.Get(c)
 
 	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid recipe ID"}`, string(body))
+}
+
+func TestRecipeGet_notFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
+
+	recipe.Name = "notfound"
+
+	h.Get(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"recipe not found"}`, string(body))
 }
 
 func TestRecipeGet_FindErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
 
-	h.Get(w, req, "0")
+	recipe.Name = "finderr"
+
+	h.Get(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, `{"code":500,"msg":"Internal Server Error. (error)"}`, string(body))
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestRecipeCreate_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	reqBody, _ := json.Marshal(recipe)
+	createRecipe := m.RecipeDTO{
+		Name: "create",
+	}
+	reqBody, _ := json.Marshal(createRecipe)
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
+	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
+	assertBody, _ := json.Marshal(recipe)
 
-	assert.Equal(t, resp.StatusCode, http.StatusCreated)
-	assert.Equal(t, body, reqBody)
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	assert.Equal(t, assertBody, body)
 }
 
 func TestRecipeCreate_UnmarshalErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
+	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
-	assert.Equal(t, body, []byte(`{"code":400,"msg":"Bad Request. (unexpected end of JSON input)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"unexpected JSON input"}`, string(body))
 }
 
 func TestRecipeCreate_CreateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	recipe.RecipeName = "err"
-	reqBody, _ := json.Marshal(recipe)
+	createRecipe := m.RecipeDTO{
+		Name: "error",
+	}
+	reqBody, _ := json.Marshal(createRecipe)
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Create(&ginkeycloak.KeyCloakToken{}, w, req)
+	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestRecipeUpdate_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	updateRecipe := recipe
-	updateRecipe.ID = 1
-	updateRecipe.RecipeName = "recipe"
-	reqBody, _ := json.Marshal(updateRecipe)
+	recipe.Name = "update"
+	reqBody, _ := json.Marshal(recipe)
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
 
-	h.Update(w, req, "1")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusOK)
-	assert.Equal(t, body, reqBody)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, reqBody, body)
 }
 
 func TestRecipeUpdate_UnmarshalErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
 
-	h.Update(w, req, "1")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (unexpected end of JSON input)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"EOF"}`, string(body))
 }
 
 func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	updateRecipe := recipe
-	updateRecipe.ID = 0
-	updateRecipe.RecipeName = "recipe"
-	reqBody, _ := json.Marshal(updateRecipe)
+	reqBody, _ := json.Marshal(recipe)
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Update(w, req, "1")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
-	assert.Equal(t, body, []byte(`{"code":400,"msg":"Bad Request. (ID is required)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid recipe ID"}`, string(body))
 }
 
 func TestRecipeUpdate_UpdateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
-	updateRecipe := recipe
-	updateRecipe.ID = 2
-	updateRecipe.RecipeName = "fail"
-	reqBody, _ := json.Marshal(updateRecipe)
+	recipe.Name = "fail"
+	reqBody, _ := json.Marshal(recipe)
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
 
-	h.Update(w, req, "1")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestRecipeDelete_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	recipe.Name = "delete"
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
 
-	h.Delete(w, req, "1")
-
-	resp := w.Result()
-
-	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
-}
-
-func TestRecipeDelete_AtoiErr(t *testing.T) {
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
-
-	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
-	w := httptest.NewRecorder()
-
-	h.Delete(w, req, "")
+	h.Delete(c)
 
 	resp := w.Result()
 
-	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestRecipeDelete_IDRequiredErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Delete(w, req, "0")
+	h.Delete(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
-	assert.Equal(t, body, []byte(`{"code":400,"msg":"Bad Request. (ID is required)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, []byte(`{"error":"invalid recipe ID"}`), body)
 }
 
 func TestRecipeDelete_DeleteErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	recipe.Name = "error"
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
 
-	h.Delete(w, req, "2")
+	h.Delete(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
+	assert.Equal(t, []byte(`{"error":"error"}`), body)
 }

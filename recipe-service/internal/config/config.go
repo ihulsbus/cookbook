@@ -1,7 +1,6 @@
 package config
 
 import (
-	e "recipe-service/internal/endpoints"
 	h "recipe-service/internal/handlers"
 	m "recipe-service/internal/models"
 	r "recipe-service/internal/repositories"
@@ -29,9 +28,6 @@ var (
 
 	// Handlers
 	RecipeHandlers *h.RecipeHandlers
-
-	// Endpoints
-	RecipeEndpoints *e.RecipeEndpoints
 )
 
 func init() {
@@ -58,7 +54,4 @@ func init() {
 
 	// Init handlers
 	RecipeHandlers = h.NewRecipeHandlers(RecipeService, Logger)
-
-	// Init endpoints
-	RecipeEndpoints = e.NewRecipeEndpoints(RecipeHandlers)
 }

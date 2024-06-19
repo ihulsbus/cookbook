@@ -6,7 +6,6 @@ import (
 	m "metadata-service/internal/models"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type TagRepository struct {
@@ -22,7 +21,7 @@ func NewTagRepository(db *gorm.DB) *TagRepository {
 func (r *TagRepository) FindAll() ([]m.Tag, error) {
 	var tags []m.Tag
 
-	if err := r.db.Preload(clause.Associations).Find(&tags).Error; err != nil {
+	if err := r.db.Find(&tags).Error; err != nil {
 		return nil, err
 	}
 
