@@ -8,11 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	whereRecipeID = "recipe_id = ?"
-	whereID       = "id = ?"
-)
-
 type RecipeRepository struct {
 	db *gorm.DB
 }
