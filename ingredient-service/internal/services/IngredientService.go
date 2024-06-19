@@ -4,12 +4,14 @@ import (
 	"errors"
 
 	m "ingredient-service/internal/models"
+
+	"github.com/google/uuid"
 )
 
 type IngredientRepository interface {
 	FindAll() ([]m.Ingredient, error)
 	FindUnits() ([]m.Unit, error)
-	FindSingle(ingredientID uint) (m.Ingredient, error)
+	FindSingle(ingredient m.Ingredient) (m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
 	Update(ingredient m.Ingredient) (m.Ingredient, error)
 	Delete(ingredient m.Ingredient) error
@@ -25,7 +27,7 @@ func NewIngredientService(ingredientRepo IngredientRepository) *IngredientServic
 	}
 }
 
-func (s IngredientService) FindAll() ([]m.Ingredient, error) {
+func (s IngredientService) FindAll() ([]m.IngredientDTO, error) {
 	var ingredients []m.Ingredient
 
 	ingredients, err := s.repo.FindAll()
@@ -38,10 +40,10 @@ func (s IngredientService) FindAll() ([]m.Ingredient, error) {
 		}
 	}
 
-	return ingredients, nil
+	return m.Ingredient{}.ConvertAllToDTO(ingredients), nil
 }
 
-func (s IngredientService) FindUnits() ([]m.Unit, error) {
+func (s IngredientService) FindUnits() ([]m.UnitDTO, error) {
 	var units []m.Unit
 
 	units, err := s.repo.FindUnits()
@@ -54,69 +56,65 @@ func (s IngredientService) FindUnits() ([]m.Unit, error) {
 		}
 	}
 
-	return units, nil
+	return m.Unit{}.ConvertAllToDTO(units), nil
 }
 
-func (s IngredientService) FindSingle(ingredientID uint) (m.Ingredient, error) {
-	var ingredient m.Ingredient
+func (s IngredientService) FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
 
-	ingredient, err := s.repo.FindSingle(ingredientID)
+	ingredient, err := s.repo.FindSingle(ingredientDTO.ConvertFromDTO())
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			return m.Ingredient{}, err
+			return m.IngredientDTO{}, err
 		default:
-			return m.Ingredient{}, errors.New("internal server error")
+			return m.IngredientDTO{}, errors.New("internal server error")
 		}
 	}
 
-	return ingredient, nil
+	return ingredient.ConvertToDTO(), nil
 }
 
-func (s IngredientService) Create(ingredient m.Ingredient) (m.Ingredient, error) {
-	var response m.Ingredient
-
-	found, err := s.FindSingle(ingredient.ID)
-	if err == nil || found.ID != 0 {
-		return m.Ingredient{}, errors.New("ingredient already exists")
-	}
-
-	response, err = s.repo.Create(ingredient)
-	if err != nil {
-		return response, err
-	}
-
-	return response, nil
-}
-
-func (s IngredientService) Update(ingredient m.Ingredient, ingredientID uint) (m.Ingredient, error) {
-	var response m.Ingredient
-
-	_, err := s.FindSingle(ingredientID)
-	if err != nil {
-		return m.Ingredient{}, errors.New("ingredient does not exist. nothing to update")
-	}
-
-	response, err = s.repo.Update(ingredient)
-	if err != nil {
-		return response, err
-	}
-
-	return response, nil
-}
-
-func (s IngredientService) Delete(ingredientID uint) error {
+func (s IngredientService) Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
 	var ingredient m.Ingredient
 
-	_, err := s.FindSingle(ingredientID)
+	found, err := s.FindSingle(ingredientDTO)
+	if err == nil || found.ID != uuid.Nil {
+		return m.IngredientDTO{}, errors.New("ingredient already exists")
+	}
+
+	ingredient, err = s.repo.Create(ingredientDTO.ConvertFromDTO())
+	if err != nil {
+		return m.IngredientDTO{}, err
+	}
+
+	return ingredient.ConvertToDTO(), nil
+}
+
+func (s IngredientService) Update(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
+	var ingredient m.Ingredient
+
+	_, err := s.FindSingle(ingredientDTO)
+	if err != nil {
+		return m.IngredientDTO{}, errors.New("ingredient does not exist. nothing to update")
+	}
+
+	ingredient, err = s.repo.Update(ingredientDTO.ConvertFromDTO())
+	if err != nil {
+		return m.IngredientDTO{}, err
+	}
+
+	return ingredient.ConvertToDTO(), nil
+}
+
+func (s IngredientService) Delete(ingredientDTO m.IngredientDTO) error {
+
+	_, err := s.FindSingle(ingredientDTO)
 	if err != nil {
 		return errors.New("ingredient does not exist. nothing to delete")
 	}
 
-	ingredient.ID = ingredientID
-
 	// TODO: check if there are recipies using the ingredient. If so, an error should be returned and the ingredient should not be deleted.
-	err = s.repo.Delete(ingredient)
+	err = s.repo.Delete(ingredientDTO.ConvertFromDTO())
 	if err != nil {
 		return err
 	}

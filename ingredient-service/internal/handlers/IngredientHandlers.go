@@ -9,12 +9,12 @@ import (
 )
 
 type IngredientService interface {
-	FindAll() ([]m.Ingredient, error)
-	FindUnits() ([]m.Unit, error)
-	FindSingle(ingredientID uint) (m.Ingredient, error)
-	Create(ingredient m.Ingredient) (m.Ingredient, error)
-	Update(ingredient m.Ingredient, ingredientID uint) (m.Ingredient, error)
-	Delete(ingredientID uint) error
+	FindAll() ([]m.IngredientDTO, error)
+	FindUnits() ([]m.UnitDTO, error)
+	FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
+	Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
+	Update(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
+	Delete(ingredientDTO m.IngredientDTO) error
 }
 
 type IngredientHandlers struct {
@@ -33,7 +33,7 @@ func NewIngredientHandlers(ingredients IngredientService, logger LoggerInterface
 
 // Get all ingredients
 func (h IngredientHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
-	var data []m.Ingredient
+	var data []m.IngredientDTO
 
 	data, err := h.ingredientService.FindAll()
 	if err != nil {
@@ -52,7 +52,7 @@ func (h IngredientHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
 
 // Get all units
 func (h IngredientHandlers) GetUnits(w http.ResponseWriter, r *http.Request) {
-	var data []m.Unit
+	var data []m.UnitDTO
 
 	data, err := h.ingredientService.FindUnits()
 	if err != nil {
@@ -71,7 +71,7 @@ func (h IngredientHandlers) GetUnits(w http.ResponseWriter, r *http.Request) {
 
 // Get a single ingredient
 func (h IngredientHandlers) GetSingle(w http.ResponseWriter, r *http.Request, ingredientID string) {
-	var data m.Ingredient
+	var data m.IngredientDTO
 
 	iID, err := strconv.Atoi(ingredientID)
 	if err != nil {
