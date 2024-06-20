@@ -5,12 +5,14 @@ import (
 	"errors"
 	"log"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 
 	m "ingredient-service/internal/models"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -18,7 +20,15 @@ import (
 )
 
 var (
-	ingredient = m.Ingredient{}
+	ingredient m.Ingredient = m.Ingredient{
+		ID:   uuid.New(),
+		Name: "ingredient",
+	}
+	unit m.Unit = m.Unit{
+		ID:        uuid.New(),
+		FullName:  "unit",
+		ShortName: "u",
+	}
 )
 
 func newMockDatabase(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
@@ -75,7 +85,12 @@ func TestIngredientFindAll_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM ingredients]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
+			AddRow(
+				ingredient.ID,
+				ingredient.Name,
+			))
 
 	result, err := r.FindAll()
 
@@ -83,15 +98,30 @@ func TestIngredientFindAll_OK(t *testing.T) {
 	assert.Len(t, result, 1)
 }
 
+func TestIngredientFindAll_NotFoundErr(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL`)).
+		WillReturnRows(&sqlmock.Rows{})
+
+	result, err := r.FindAll()
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "not found")
+	assert.Len(t, result, 0)
+}
+
 func TestIngredientFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM ingredients]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 
 	result, err := r.FindAll()
 
+	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
 	assert.Len(t, result, 0)
 }
@@ -100,7 +130,13 @@ func TestIngredientFindUnits_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM units]`).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "units" WHERE "units"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "FullName", "ShortName"}).
+			AddRow(
+				unit.ID,
+				unit.FullName,
+				unit.ShortName,
+			))
 
 	result, err := r.FindUnits()
 
@@ -108,15 +144,30 @@ func TestIngredientFindUnits_OK(t *testing.T) {
 	assert.Len(t, result, 1)
 }
 
+func TestIngredientFindUnits_NotFoundErr(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "units" WHERE "units"."deleted_at" IS NULL`)).
+		WillReturnRows(&sqlmock.Rows{})
+
+	result, err := r.FindUnits()
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "not found")
+	assert.Len(t, result, 0)
+}
+
 func TestIngredientFindUnits_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
 
-	mock.ExpectQuery(`[SELECT * FROM units]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "units" WHERE "units"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 
 	result, err := r.FindUnits()
 
+	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
 	assert.Len(t, result, 0)
 }
@@ -124,48 +175,67 @@ func TestIngredientFindUnits_Err(t *testing.T) {
 func TestIngredientFindSingle_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
-	expectedIngredient := ingredient
-	expectedIngredient.ID = 1
 
-	mock.ExpectQuery(`[SELECT * FROM "ingredients" WHERE id = 1 AND "ingredients"."deleted_at" IS NULL]`).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL AND "ingredients"."id" = $1 ORDER BY "ingredients"."id" LIMIT $2`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
+			AddRow(
+				ingredient.ID,
+				ingredient.Name,
+			))
 
-	result, err := r.FindSingle(1)
+	result, err := r.FindSingle(ingredient)
 
 	assert.NoError(t, err)
-	assert.Equal(t, result, expectedIngredient)
+	assert.Equal(t, ingredient, result)
+}
+
+func TestIngredientFindSingle_NotFoundErr(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL AND "ingredients"."id" = $1 ORDER BY "ingredients"."id" LIMIT $2`)).
+		WillReturnRows(&sqlmock.Rows{})
+
+	result, err := r.FindSingle(ingredient)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "not found")
+	assert.IsType(t, m.Ingredient{}, result)
 }
 
 func TestIngredientFindSingle_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
-	// expectedIngredient := ingredient
 
-	mock.ExpectQuery(`[SELECT * FROM "ingredients" WHERE id = 1 AND "ingredients"."deleted_at" IS NULL]`).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL AND "ingredients"."id" = $1 ORDER BY "ingredients"."id" LIMIT $2`)).
 		WillReturnError(errors.New("error"))
 
-	result, err := r.FindSingle(1)
+	result, err := r.FindSingle(ingredient)
 
+	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
-	assert.Equal(t, result, ingredient)
+	assert.Equal(t, m.Ingredient{}, result)
 }
 
 func TestIngredientCreate_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
-	expectedIngredient := ingredient
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "ingredients"("created_at","updated_at","deleted_at","ingredient_name") VALUES ($1,$2,$3,$4) RETURNING "id"]`).
-		WithArgs(AnyTime{}, AnyTime{}, nil, "").
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
+		WithArgs(
+			ingredient.Name,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			nil,
+			ingredient.ID).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).
+			AddRow(ingredient.ID))
 	mock.ExpectCommit()
-	_, err := r.Create(ingredient)
-
-	expectedIngredient.ID = 1
+	result, err := r.Create(ingredient)
 
 	assert.NoError(t, err)
-	// assert.Equal(t, result, expectedIngredient)
+	assert.IsType(t, m.Ingredient{}, result)
 }
 
 func TestIngredientCreate_Err(t *testing.T) {
@@ -173,34 +243,40 @@ func TestIngredientCreate_Err(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(`[INSERT INTO "ingredients"("created_at","updated_at","deleted_at","ingredient_name")]`).
-		WithArgs(AnyTime{}, AnyTime{}, nil, "").WillReturnError(errors.New("error"))
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
+		WithArgs(
+			ingredient.Name,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			nil,
+			ingredient.ID,
+		).WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
 	_, err := r.Create(ingredient)
 
+	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
 }
 
 func TestIngredientUpdate_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
-	expectedIngredient := ingredient
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "ingredients" SET "updated_at"=$1 WHERE ID = $2 AND "ingredients"."deleted_at" IS NULL]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "name"=$1,"updated_at"=$2 WHERE id = $3 AND "ingredients"."deleted_at" IS NULL AND "id" = $4`)).
 		WithArgs(
-			AnyTime{},
-			0,
+			ingredient.Name,
+			sqlmock.AnyArg(),
+			ingredient.ID,
+			ingredient.ID,
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
-	_, err := r.Update(ingredient)
-
-	expectedIngredient.ID = 1
+	result, err := r.Update(ingredient)
 
 	assert.NoError(t, err)
-	// assert.Equal(t, result, expectedIngredient)
+	assert.IsType(t, m.Ingredient{}, result)
 }
 
 func TestIngredientUpdate_Err(t *testing.T) {
@@ -208,35 +284,36 @@ func TestIngredientUpdate_Err(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "ingredients" SET "updated_at"=$1 WHERE ID = $2 AND "ingredients"."deleted_at" IS NULL]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "name"=$1,"updated_at"=$2 WHERE id = $3 AND "ingredients"."deleted_at" IS NULL AND "id" = $4`)).
 		WithArgs(
-			AnyTime{},
-			0,
+			ingredient.Name,
+			sqlmock.AnyArg(),
+			ingredient.ID,
+			ingredient.ID,
 		).
 		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
 	_, err := r.Update(ingredient)
 
+	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
 }
 
 func TestIngredientDelete_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
-	deleteIngredient := ingredient
-	deleteIngredient.ID = 1
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "ingredients" SET "deleted_at"=$1 WHERE "ingredients"."id" = $2 AND "ingredients"."deleted_at" IS NULL]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "deleted_at"=$1 WHERE "ingredients"."id" = $2 AND "ingredients"."deleted_at" IS NULL`)).
 		WithArgs(
-			AnyTime{},
-			1,
+			sqlmock.AnyArg(),
+			ingredient.ID,
 		).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	err := r.Delete(deleteIngredient)
+	err := r.Delete(ingredient)
 
 	assert.NoError(t, err)
 }
@@ -244,19 +321,18 @@ func TestIngredientDelete_OK(t *testing.T) {
 func TestIngredientDelete_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewIngredientRepository(db)
-	deleteIngredient := ingredient
-	deleteIngredient.ID = 1
 
 	mock.ExpectBegin()
-	mock.ExpectExec(`[UPDATE "ingredients" SET "deleted_at"=$1 WHERE "ingredients"."id" = $2 AND "ingredients"."deleted_at" IS NULL]`).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "deleted_at"=$1 WHERE "ingredients"."id" = $2 AND "ingredients"."deleted_at" IS NULL`)).
 		WithArgs(
-			AnyTime{},
-			1,
+			sqlmock.AnyArg(),
+			ingredient.ID,
 		).
 		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
-	err := r.Delete(deleteIngredient)
+	err := r.Delete(ingredient)
 
+	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
 }

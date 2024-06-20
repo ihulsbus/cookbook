@@ -20,15 +20,13 @@ type IngredientService interface {
 
 type IngredientHandlers struct {
 	ingredientService IngredientService
-	logger            LoggerInterface
-	utils             HanderUtils
+	logger            m.LoggerInterface
 }
 
-func NewIngredientHandlers(ingredients IngredientService, logger LoggerInterface) *IngredientHandlers {
+func NewIngredientHandlers(ingredients IngredientService, logger m.LoggerInterface) *IngredientHandlers {
 	return &IngredientHandlers{
 		ingredientService: ingredients,
 		logger:            logger,
-		utils:             *NewHanderUtils(logger),
 	}
 }
 
@@ -79,7 +77,7 @@ func (h IngredientHandlers) GetSingle(ctx *gin.Context) {
 
 	ingredientDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient ID"})
 		return
 	}
 
@@ -123,7 +121,7 @@ func (h IngredientHandlers) Update(ctx *gin.Context) {
 
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient ID"})
 		return
 	}
 
@@ -152,7 +150,7 @@ func (h IngredientHandlers) Delete(ctx *gin.Context) {
 
 	ingredientDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid ingredient ID"})
 		return
 	}
 

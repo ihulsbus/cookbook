@@ -104,7 +104,7 @@ func TestRecipeFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewRecipeRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipe_category" WHERE "recipe_category"."recipe_id" = 1`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 	result, err := r.FindAll()
 
@@ -117,10 +117,11 @@ func TestRecipeFindAll_NotFoundErr(t *testing.T) {
 	r := NewRecipeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL]`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(recipe.ID))
+		WillReturnRows(&sqlmock.Rows{})
 	result, err := r.FindAll()
 
 	assert.Error(t, err)
+	assert.EqualError(t, err, "not found")
 	assert.Len(t, result, 0)
 }
 

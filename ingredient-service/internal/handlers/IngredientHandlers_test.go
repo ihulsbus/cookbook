@@ -36,7 +36,7 @@ var (
 
 func (s *IngredientServiceMock) FindAll() ([]m.IngredientDTO, error) {
 	switch ingredient.Name {
-	case "find":
+	case "findall":
 		ingredients = append(ingredients, ingredient)
 		return ingredients, nil
 	case "notfound":
@@ -48,11 +48,18 @@ func (s *IngredientServiceMock) FindAll() ([]m.IngredientDTO, error) {
 
 func (s *IngredientServiceMock) FindUnits() ([]m.UnitDTO, error) {
 	units = append(units, unit)
-	return units, nil
+	switch unit.FullName {
+	case "findall":
+		return units, nil
+	case "notfound":
+		return nil, errors.New("not found")
+	default:
+		return nil, errors.New("error")
+	}
 }
 
 func (s *IngredientServiceMock) FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
-	switch ingredientDTO.Name {
+	switch ingredient.Name {
 	case "find":
 		return ingredient, nil
 	case "notfound":
@@ -63,7 +70,7 @@ func (s *IngredientServiceMock) FindSingle(ingredientDTO m.IngredientDTO) (m.Ing
 }
 
 func (s *IngredientServiceMock) Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
-	switch ingredient.Name {
+	switch ingredientDTO.Name {
 	case "create":
 		return ingredient, nil
 	default:
@@ -72,7 +79,7 @@ func (s *IngredientServiceMock) Create(ingredientDTO m.IngredientDTO) (m.Ingredi
 }
 
 func (s *IngredientServiceMock) Update(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
-	switch ingredient.Name {
+	switch ingredientDTO.Name {
 	case "update":
 		return ingredient, nil
 	default:
@@ -81,7 +88,7 @@ func (s *IngredientServiceMock) Update(ingredientDTO m.IngredientDTO) (m.Ingredi
 }
 
 func (s *IngredientServiceMock) Delete(ingredientDTO m.IngredientDTO) error {
-	switch ingredientDTO.Name {
+	switch ingredient.Name {
 	case "delete":
 		return nil
 	default:
@@ -91,6 +98,7 @@ func (s *IngredientServiceMock) Delete(ingredientDTO m.IngredientDTO) error {
 
 // ==================================================================================================
 func TestIngredientGetAll_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	ingredients = append(ingredients, ingredient)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
@@ -108,13 +116,58 @@ func TestIngredientGetAll_OK(t *testing.T) {
 
 	expectedBody, _ := json.Marshal(ingredients)
 
-	assert.Equal(t, resp.StatusCode, http.StatusOK)
-	assert.Equal(t, body, expectedBody)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, expectedBody, body)
+}
+
+func TestIngredientGetAll_NotFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	ingredients = append(ingredients, ingredient)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "notfound"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredients", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no ingredients found"}`, string(body))
+}
+
+func TestIngredientGetAll_Err(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	ingredients = append(ingredients, ingredient)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "error"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredients", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestIngredientGetUnits_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	units = append(units, unit)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	unit.FullName = "findall"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/units", nil)
 	w := httptest.NewRecorder()
@@ -132,13 +185,61 @@ func TestIngredientGetUnits_OK(t *testing.T) {
 	assert.Equal(t, expectedBody, body)
 }
 
-func TestIngredientGet_OK(t *testing.T) {
+func TestIngredientGetUnits_NotFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	units = append(units, unit)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	unit.FullName = "notfound"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/units", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.GetUnits(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no units found"}`, string(body))
+}
+
+func TestIngredientGetUnits_Err(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	units = append(units, unit)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	unit.FullName = "error"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/units", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.GetUnits(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
+}
+
+func TestIngredientGet_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "find"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: ingredient.ID.String()},
+	}
 
 	h.GetSingle(c)
 
@@ -147,12 +248,15 @@ func TestIngredientGet_OK(t *testing.T) {
 
 	expectedBody, _ := json.Marshal(ingredient)
 
-	assert.Equal(t, resp.StatusCode, http.StatusOK)
-	assert.Equal(t, body, expectedBody)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, expectedBody, body)
 }
 
-func TestIngredientGet_AtoiErr(t *testing.T) {
+func TestIngredientGet_IDErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "find"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/", nil)
 	w := httptest.NewRecorder()
@@ -164,31 +268,64 @@ func TestIngredientGet_AtoiErr(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (strconv.Atoi: parsing \"\": invalid syntax)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid ingredient ID"}`, string(body))
 }
 
-func TestIngredientGet_FindErr(t *testing.T) {
+func TestIngredientGet_NotFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "notfound"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/0", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: ingredient.ID.String()},
+	}
 
 	h.GetSingle(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no ingredient found"}`, string(body))
+}
+
+func TestIngredientGet_FindErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "error"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/0", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: ingredient.ID.String()},
+	}
+
+	h.GetSingle(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestIngredientCreate_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	reqBody, _ := json.Marshal(ingredient)
+	createIngredient := m.IngredientDTO{
+		Name: "create",
+	}
+	reqBody, _ := json.Marshal(createIngredient)
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
@@ -199,12 +336,14 @@ func TestIngredientCreate_OK(t *testing.T) {
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
+	assertBody, _ := json.Marshal(ingredient)
 
-	assert.Equal(t, resp.StatusCode, http.StatusCreated)
-	assert.Equal(t, body, reqBody)
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	assert.Equal(t, assertBody, body)
 }
 
 func TestIngredientCreate_UnmarshallErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader([]byte{}))
@@ -217,17 +356,18 @@ func TestIngredientCreate_UnmarshallErr(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (unexpected end of JSON input)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"unexpected JSON input"}`, string(body))
 }
 
 func TestIngredientCreate_CreateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	errIngredient := ingredient
-	errIngredient.Name = "err"
-
-	reqBody, _ := json.Marshal(errIngredient)
+	createRecipe := m.IngredientDTO{
+		Name: "error",
+	}
+	reqBody, _ := json.Marshal(createRecipe)
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
@@ -239,19 +379,24 @@ func TestIngredientCreate_CreateErr(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestIngredientUpdate_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
+	ingredient.Name = "update"
 	reqBody, _ := json.Marshal(ingredient)
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: ingredient.ID.String()},
+	}
 
 	h.Update(c)
 
@@ -262,41 +407,29 @@ func TestIngredientUpdate_OK(t *testing.T) {
 	assert.Equal(t, reqBody, body)
 }
 
-func TestIngredientUpdate_AtoiErr(t *testing.T) {
-	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.Update(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, []byte(`{"code":500,"msg":"Internal server error"}`), body)
-}
-
 func TestIngredientUpdate_UnmarshalErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/ingredient/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: ingredient.ID.String()},
+	}
 
 	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (unexpected end of JSON input)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"EOF"}`, string(body))
 }
 
 func TestIngredientUpdate_IDRequiredErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(ingredient)
@@ -311,11 +444,12 @@ func TestIngredientUpdate_IDRequiredErr(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
-	assert.Equal(t, body, []byte(`{"code":400,"msg":"Bad Request. (ID is required)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid ingredient ID"}`, string(body))
 }
 
 func TestIngredientUpdate_UpdateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
 	ingredient.Name = "fail"
@@ -325,49 +459,42 @@ func TestIngredientUpdate_UpdateErr(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: ingredient.ID.String()},
+	}
 
 	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestIngredientDelete_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "delete"
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: ingredient.ID.String()},
+	}
 
 	h.Delete(c)
 
 	resp := w.Result()
 
-	assert.Equal(t, resp.StatusCode, http.StatusNoContent)
-}
-
-func TestIngredientDelete_AtoiErr(t *testing.T) {
-	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.Delete(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, resp.StatusCode, http.StatusInternalServerError)
-	assert.Equal(t, []byte(`{"code":500,"msg":"Internal server error"}`), body)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
 func TestIngredientDelete_IDRequiredErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/ingredient/1", nil)
@@ -380,17 +507,23 @@ func TestIngredientDelete_IDRequiredErr(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
-	assert.Equal(t, body, []byte(`{"code":400,"msg":"Bad Request. (ID is required)"}`))
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, []byte(`{"error":"invalid ingredient ID"}`), body)
 }
 
 func TestIngredientDelete_DeleteErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "error"
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: ingredient.ID.String()},
+	}
 
 	h.Delete(c)
 
@@ -398,5 +531,5 @@ func TestIngredientDelete_DeleteErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.Equal(t, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`), body)
+	assert.Equal(t, []byte(`{"error":"error"}`), body)
 }

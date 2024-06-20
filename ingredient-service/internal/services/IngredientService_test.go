@@ -6,257 +6,343 @@ import (
 
 	m "ingredient-service/internal/models"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	findAllIngredient              = ingredient
-	ingredient        m.Ingredient = m.Ingredient{IngredientName: "ingredient"}
+	findAllIngredient m.Ingredient = m.Ingredient{
+		ID:   uuid.New(),
+		Name: "ingredient",
+	}
+	ingredient m.Ingredient = m.Ingredient{
+		ID:   uuid.New(),
+		Name: "ingredient",
+	}
 
-	findAllUnit        = unit
-	unit        m.Unit = m.Unit{ID: 1, FullName: "Fluid Ounce", ShortName: "fl oz"}
+	findAllUnit m.Unit = m.Unit{
+		ID:        uuid.New(),
+		FullName:  "unit",
+		ShortName: "u",
+	}
+	unit m.Unit = m.Unit{
+		ID:        uuid.New(),
+		FullName:  "unit",
+		ShortName: "u",
+	}
 )
 
 type IngredientRepositoryMock struct{}
 
 func (IngredientRepositoryMock) FindAll() ([]m.Ingredient, error) {
-	switch findAllIngredient.ID {
-	case 1: // OK
+	switch findAllIngredient.Name {
+	case "findall": // OK
 		var ingredients []m.Ingredient
 		ingredients = append(ingredients, ingredient)
 		return ingredients, nil
+	case "notfound":
+		return nil, errors.New("not found")
 	default: // ERR
 		return nil, errors.New("error")
 	}
 }
 
 func (IngredientRepositoryMock) FindUnits() ([]m.Unit, error) {
-	switch findAllUnit.ID {
-	case 1: // OK
+	switch findAllUnit.FullName {
+	case "findall": // OK
 		var units []m.Unit
 		units = append(units, unit)
 		return units, nil
+	case "notfound":
+		return nil, errors.New("not found")
 	default: // ERR
 		return nil, errors.New("error")
 	}
 }
 
-func (IngredientRepositoryMock) FindSingle(ingredientID uint) (m.Ingredient, error) {
-	switch ingredientID {
-	case 0:
-		ing := ingredient
-		ing.ID = 0
-		return ing, nil
-	case 2: // NOT FOUND
+func (IngredientRepositoryMock) FindSingle(ingredientInput m.Ingredient) (m.Ingredient, error) {
+	switch ingredientInput.Name {
+	case "find":
+		return ingredient, nil
+	case "update":
+		return ingredient, nil
+	case "delete":
+		return ingredient, nil
+	case "updateerror":
+		return ingredient, nil
+	case "deleteerror":
+		return ingredient, nil
+	case "":
+		return ingredient, nil
+	case "notfound":
+		return m.Ingredient{}, errors.New("not found")
+	default:
 		return m.Ingredient{}, errors.New("error")
-	case 3:
+	}
+}
+
+func (IngredientRepositoryMock) Create(ingredientInput m.Ingredient) (m.Ingredient, error) {
+	switch ingredientInput.Name {
+	case "create":
+		return ingredient, nil
+	default:
 		return m.Ingredient{}, errors.New("error")
-	default: // OK
-		ing := ingredient
-		ing.ID = ingredientID
-		return ing, nil
 	}
 }
 
-func (IngredientRepositoryMock) Create(i m.Ingredient) (m.Ingredient, error) {
-	switch i.ID {
-	case 2: // OK
-		ing := ingredient
-		ing.ID = 2
-		return ing, nil
-	default: // ERR
-		return ingredient, errors.New("error")
+func (IngredientRepositoryMock) Update(ingredientInput m.Ingredient) (m.Ingredient, error) {
+	switch ingredientInput.Name {
+	case "update":
+		return ingredient, nil
+	case "ingredient":
+		return ingredient, nil
+	default:
+		return m.Ingredient{}, errors.New("error")
 	}
 }
 
-func (IngredientRepositoryMock) Update(i m.Ingredient) (m.Ingredient, error) {
-	switch i.ID {
-	case 1: // OK
-		ing := ingredient
-		ing.ID = 1
-		return ing, nil
-	default: // ERR
-		return ingredient, errors.New("error")
-	}
-}
-
-func (IngredientRepositoryMock) Delete(i m.Ingredient) error {
-	switch i.ID {
-	case 1: // OK
+func (IngredientRepositoryMock) Delete(ingredientInput m.Ingredient) error {
+	switch ingredientInput.Name {
+	case "delete":
 		return nil
-	default: // ERR
+	default:
 		return errors.New("error")
 	}
 }
 
 func TestIngredientFindAll_OK(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
-	findAllIngredient.ID = 1
+
+	findAllIngredient.Name = "findall"
 
 	result, err := s.FindAll()
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
-	assert.Equal(t, "ingredient", result[0].IngredientName)
+	assert.Equal(t, "ingredient", result[0].Name)
 }
 
 func TestIngredientFindAll_Err(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	findAllIngredient.ID = 2
+	findAllIngredient.Name = "error"
 
 	result, err := s.FindAll()
 
-	findAllIngredient.ID = 1
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "internal server error")
+}
+
+func TestRecipeFindAll_NotFound(t *testing.T) {
+	s := NewIngredientService(&IngredientRepositoryMock{})
+
+	findAllIngredient.Name = "notfound"
+
+	result, err := s.FindAll()
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.EqualError(t, err, "error")
+	assert.EqualError(t, err, "not found")
 }
 
 func TestIngredientFindUnits_OK(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	findAllUnit.ID = 1
+	findAllUnit.FullName = "findall"
 
 	result, err := s.FindUnits()
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
-	assert.Equal(t, uint(1), result[0].ID)
-	assert.Equal(t, "Fluid Ounce", result[0].FullName)
-	assert.Equal(t, "fl oz", result[0].ShortName)
+	assert.Equal(t, unit.ID, result[0].ID)
+	assert.Equal(t, "unit", result[0].FullName)
+	assert.Equal(t, "u", result[0].ShortName)
+}
+
+func TestIngredientFindUnits_NotFound(t *testing.T) {
+	s := NewIngredientService(&IngredientRepositoryMock{})
+
+	findAllUnit.FullName = "notfound"
+
+	result, err := s.FindUnits()
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.EqualError(t, err, "not found")
 }
 
 func TestIngredientFindUnits_Err(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	findAllUnit.ID = 2
+	findAllUnit.FullName = "error"
 
 	result, err := s.FindUnits()
 
-	findAllUnit.ID = 1
-
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.EqualError(t, err, "error")
+	assert.EqualError(t, err, "internal server error")
 }
 
 func TestIngredientFindSingle_OK(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	result, err := s.FindSingle(1)
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "find",
+	}
+	result, err := s.FindSingle(ingredientDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Ingredient{}, result)
-	assert.Equal(t, "ingredient", result.IngredientName)
+	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.Equal(t, "ingredient", result.Name)
+	assert.Equal(t, ingredient.ID, result.ID)
 }
 
 func TestIngredientFindSingle_FindErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	result, err := s.FindSingle(2)
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "error",
+	}
+	result, err := s.FindSingle(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.EqualError(t, err, "error")
-	assert.IsType(t, result, m.Ingredient{})
+	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.EqualError(t, err, "internal server error")
 }
 
 func TestIngredientFindSingle_NotFoundErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	result, err := s.FindSingle(0)
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "notfound",
+	}
+	result, err := s.FindSingle(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.EqualError(t, err, "ingredient not found")
-	assert.IsType(t, m.Ingredient{}, result)
+	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.EqualError(t, err, "not found")
 }
 
 func TestIngredientCreate_OK(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	createIngredient := ingredient
-	createIngredient.ID = 2
-
-	result, err := s.Create(createIngredient)
+	ingredientDTO := m.IngredientDTO{
+		Name: "create",
+	}
+	result, err := s.Create(ingredientDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Ingredient{}, result)
-	assert.Equal(t, "ingredient", result.IngredientName)
+	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.Equal(t, "ingredient", result.Name)
+}
+
+func TestIngredientCreate_IDErr(t *testing.T) {
+	s := NewIngredientService(&IngredientRepositoryMock{})
+
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "create",
+	}
+	result, err := s.Create(ingredientDTO)
+
+	assert.Error(t, err)
+	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.EqualError(t, err, "existing id on new element is not allowed")
 }
 
 func TestIngredientCreate_ExistsErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	createIngredient := ingredient
-	createIngredient.ID = 1
-
-	result, err := s.Create(createIngredient)
+	ingredientDTO := m.IngredientDTO{
+		Name: "find",
+	}
+	result, err := s.Create(ingredientDTO)
 
 	assert.Error(t, err)
+	assert.IsType(t, m.IngredientDTO{}, result)
 	assert.EqualError(t, err, "ingredient already exists")
-	assert.IsType(t, m.Ingredient{}, result)
 }
 
 func TestIngredientCreate_Err(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	createIngredient := ingredient
-	createIngredient.ID = 3
-
-	result, err := s.Create(createIngredient)
+	ingredientDTO := m.IngredientDTO{
+		Name: "error",
+	}
+	result, err := s.Create(ingredientDTO)
 
 	assert.Error(t, err)
+	assert.IsType(t, m.IngredientDTO{}, result)
 	assert.EqualError(t, err, "error")
-	assert.IsType(t, m.Ingredient{}, result)
+}
+
+func TestIngredientCreate_NoName(t *testing.T) {
+	s := NewIngredientService(&IngredientRepositoryMock{})
+
+	ingredientDTO := m.IngredientDTO{
+		Name: "",
+	}
+	result, err := s.Create(ingredientDTO)
+
+	assert.Error(t, err)
+	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.EqualError(t, err, "name is empty")
 }
 
 func TestIngredientUpdate_Ok(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	updateIngredient := ingredient
-	updateIngredient.ID = 1
-
-	result, err := s.Update(updateIngredient, 1)
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "update",
+	}
+	result, err := s.Update(ingredientDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, result, m.Ingredient{})
-	assert.Equal(t, result.IngredientName, "ingredient")
+	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.Equal(t, result.Name, "ingredient")
 }
 
 func TestIngredientUpdate_NotFoundErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	updateIngredient := ingredient
-	updateIngredient.ID = 2
-
-	result, err := s.Update(updateIngredient, uint(2))
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "notfound",
+	}
+	result, err := s.Update(ingredientDTO)
 
 	assert.Error(t, err)
+	assert.IsType(t, m.IngredientDTO{}, result)
 	assert.EqualError(t, err, "ingredient does not exist. nothing to update")
-	assert.IsType(t, result, m.Ingredient{})
 }
 
 func TestIngredientUpdate_Err(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	updateIngredient := ingredient
-	updateIngredient.ID = 4
-
-	result, err := s.Update(updateIngredient, uint(4))
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "updateerror",
+	}
+	result, err := s.Update(ingredientDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
-	assert.IsType(t, result, m.Ingredient{})
+	assert.IsType(t, m.IngredientDTO{}, result)
 }
 
 func TestIngredientDelete_Ok(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	deleteIngredient := ingredient
-	deleteIngredient.ID = 1
-
-	err := s.Delete(uint(1))
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "delete",
+	}
+	err := s.Delete(ingredientDTO)
 
 	assert.NoError(t, err)
 }
@@ -264,10 +350,11 @@ func TestIngredientDelete_Ok(t *testing.T) {
 func TestIngredientDelete_NotFoundErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	deleteIngredient := ingredient
-	deleteIngredient.ID = 2
-
-	err := s.Delete(uint(2))
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "notfound",
+	}
+	err := s.Delete(ingredientDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "ingredient does not exist. nothing to delete")
@@ -276,10 +363,11 @@ func TestIngredientDelete_NotFoundErr(t *testing.T) {
 func TestIngredientDelete_Err(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	deleteIngredient := ingredient
-	deleteIngredient.ID = 4
-
-	err := s.Delete(uint(4))
+	ingredientDTO := m.IngredientDTO{
+		ID:   ingredient.ID,
+		Name: "deleteerror",
+	}
+	err := s.Delete(ingredientDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

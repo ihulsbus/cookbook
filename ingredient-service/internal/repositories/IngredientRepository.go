@@ -51,10 +51,9 @@ func (r IngredientRepository) FindUnits() ([]m.Unit, error) {
 	return units, nil
 }
 
-func (r IngredientRepository) FindSingle(ingredientID uint) (m.Ingredient, error) {
-	var ingredient m.Ingredient
+func (r IngredientRepository) FindSingle(ingredient m.Ingredient) (m.Ingredient, error) {
 
-	result := r.db.Where(whereID, ingredientID).First(&ingredient)
+	result := r.db.First(&ingredient)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return m.Ingredient{}, errors.New("not found")

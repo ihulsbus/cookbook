@@ -81,7 +81,6 @@ func (s *RecipeServiceMock) Delete(recipeDTO m.RecipeDTO) error {
 }
 
 // ==================================================================================================
-
 func TestRecipeGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	recipes = append(recipes, recipe)

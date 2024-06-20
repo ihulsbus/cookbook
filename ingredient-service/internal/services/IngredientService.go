@@ -77,6 +77,14 @@ func (s IngredientService) FindSingle(ingredientDTO m.IngredientDTO) (m.Ingredie
 func (s IngredientService) Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
 	var ingredient m.Ingredient
 
+	if ingredientDTO.ID != uuid.Nil {
+		return m.IngredientDTO{}, errors.New("existing id on new element is not allowed")
+	}
+
+	if ingredientDTO.Name == "" {
+		return m.IngredientDTO{}, errors.New("name is empty")
+	}
+
 	found, err := s.FindSingle(ingredientDTO)
 	if err == nil || found.ID != uuid.Nil {
 		return m.IngredientDTO{}, errors.New("ingredient already exists")

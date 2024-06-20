@@ -36,3 +36,8 @@ type CorsConfig struct {
 	AllowedHeaders   []string
 	AllowedMethods   []string
 }
+
+type LoggerInterface interface {
+	Debugf(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+}
