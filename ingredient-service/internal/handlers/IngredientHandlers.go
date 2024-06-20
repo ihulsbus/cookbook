@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
-	"strconv"
 
 	m "ingredient-service/internal/models"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type IngredientService interface {
@@ -32,145 +33,134 @@ func NewIngredientHandlers(ingredients IngredientService, logger LoggerInterface
 }
 
 // Get all ingredients
-func (h IngredientHandlers) GetAll(w http.ResponseWriter, r *http.Request) {
-	var data []m.IngredientDTO
+func (h IngredientHandlers) GetAll(ctx *gin.Context) {
+	var ingredientDTO []m.IngredientDTO
+	var err error
 
-	data, err := h.ingredientService.FindAll()
+	ingredientDTO, err = h.ingredientService.FindAll()
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			h.utils.response404(w)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no ingredients found"})
 			return
 		default:
-			h.utils.response500WithDetails(w, err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, ingredientDTO)
 }
 
 // Get all units
-func (h IngredientHandlers) GetUnits(w http.ResponseWriter, r *http.Request) {
-	var data []m.UnitDTO
+func (h IngredientHandlers) GetUnits(ctx *gin.Context) {
+	var unitDTO []m.UnitDTO
+	var err error
 
-	data, err := h.ingredientService.FindUnits()
+	unitDTO, err = h.ingredientService.FindUnits()
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			h.utils.response404(w)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no units found"})
 			return
 		default:
-			h.utils.response500WithDetails(w, err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, unitDTO)
 }
 
 // Get a single ingredient
-func (h IngredientHandlers) GetSingle(w http.ResponseWriter, r *http.Request, ingredientID string) {
-	var data m.IngredientDTO
+func (h IngredientHandlers) GetSingle(ctx *gin.Context) {
+	var ingredientDTO m.IngredientDTO
+	var err error
 
-	iID, err := strconv.Atoi(ingredientID)
+	ingredientDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
 		return
 	}
 
-	data, err = h.ingredientService.FindSingle(uint(iID))
+	ingredientDTO, err = h.ingredientService.FindSingle(ingredientDTO)
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			h.utils.response404(w)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no ingredient found"})
 			return
 		default:
-			h.utils.response500WithDetails(w, err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, ingredientDTO)
 }
 
 // Create an ingredient
-func (h IngredientHandlers) Create(w http.ResponseWriter, r *http.Request) {
-	var ingredient m.Ingredient
-	var data m.Ingredient
+func (h IngredientHandlers) Create(ctx *gin.Context) {
+	var ingredientDTO m.IngredientDTO
+	var err error
 
-	body, err := h.utils.getBody(r.Body)
-	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-	}
-
-	if err = json.Unmarshal(body, &ingredient); err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+	if err = ctx.ShouldBindJSON(&ingredientDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unexpected JSON input"})
 		return
 	}
 
-	data, err = h.ingredientService.Create(ingredient)
+	ingredientDTO, err = h.ingredientService.Create(ingredientDTO)
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	h.utils.respondWithJSON(w, http.StatusCreated, data)
+	ctx.JSON(http.StatusCreated, ingredientDTO)
 }
 
-func (h IngredientHandlers) Update(w http.ResponseWriter, r *http.Request, ingredientID string) {
-	var ingredient m.Ingredient
-	var data m.Ingredient
+func (h IngredientHandlers) Update(ctx *gin.Context) {
+	var ingredientDTO m.IngredientDTO
+	var err error
 
-	iID, err := strconv.Atoi(ingredientID)
+	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500(w)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
 		return
 	}
 
-	if iID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
+	if err = ctx.ShouldBindJSON(&ingredientDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	body, err := h.utils.getBody(r.Body)
+	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
+	// perhaps separate create/update DTO's are needed
+	ingredientDTO.ID = id
+
+	ingredientDTO, err = h.ingredientService.Update(ingredientDTO)
 	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-	}
-
-	if err = json.Unmarshal(body, &ingredient); err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	data, err = h.ingredientService.Update(ingredient, uint(iID))
-	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, ingredientDTO)
 }
 
 // Delete an ingredient
-func (h IngredientHandlers) Delete(w http.ResponseWriter, r *http.Request, ingredientID string) {
+func (h IngredientHandlers) Delete(ctx *gin.Context) {
+	var ingredientDTO m.IngredientDTO
+	var err error
 
-	iID, err := strconv.Atoi(ingredientID)
+	ingredientDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500(w)
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
 		return
 	}
 
-	if iID == 0 {
-		h.utils.response400WithDetails(w, "ID is required")
-		return
-	}
-
-	err = h.ingredientService.Delete(uint(iID))
+	err = h.ingredientService.Delete(ingredientDTO)
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	h.utils.response204(w)
+	ctx.Status(http.StatusOK)
 }

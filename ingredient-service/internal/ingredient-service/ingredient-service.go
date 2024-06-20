@@ -36,27 +36,27 @@ func IngredientService(ctx context.Context) {
 			readIngredient := ingredient.Group("")
 			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readIngredient.GET("", c.IngredientEndpoints.GetAll)
-				readIngredient.GET(":id", c.IngredientEndpoints.GetSingle)
-				readIngredient.GET("unit", c.IngredientEndpoints.GetUnits)
+				readIngredient.GET("", c.IngredientHandlers.GetAll)
+				readIngredient.GET(":id", c.IngredientHandlers.GetSingle)
+				readIngredient.GET("unit", c.IngredientHandlers.GetUnits)
 			}
 
 			createIngredient := ingredient.Group("")
 			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createIngredient.POST("", c.IngredientEndpoints.Create)
+				createIngredient.POST("", c.IngredientHandlers.Create)
 			}
 
 			updateIngredient := ingredient.Group("")
 			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				updateIngredient.PUT(":id", c.IngredientEndpoints.Update)
+				updateIngredient.PUT(":id", c.IngredientHandlers.Update)
 			}
 
 			adminIngredient := ingredient.Group("")
 			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				adminIngredient.DELETE(":id", c.IngredientEndpoints.Delete)
+				adminIngredient.DELETE(":id", c.IngredientHandlers.Delete)
 			}
 
 		}

@@ -11,6 +11,8 @@ import (
 
 	m "ingredient-service/internal/models"
 
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,47 +20,59 @@ type IngredientServiceMock struct {
 }
 
 var (
-	ingredients []m.Ingredient
-	units       []m.Unit
-	ingredient  m.Ingredient = m.Ingredient{
-		IngredientName: "ingredient",
+	ingredients []m.IngredientDTO
+	ingredient  m.IngredientDTO = m.IngredientDTO{
+		ID:   uuid.New(),
+		Name: "ingredient",
 	}
-	unit m.Unit = m.Unit{
-		ID:        1,
+
+	units []m.UnitDTO
+	unit  m.UnitDTO = m.UnitDTO{
+		ID:        uuid.New(),
 		FullName:  "Fluid Ounce",
-		ShortName: "fl oz"}
+		ShortName: "fl oz",
+	}
 )
 
-func (s *IngredientServiceMock) FindAll() ([]m.Ingredient, error) {
-	ingredients = append(ingredients, m.Ingredient{IngredientName: "ingredient1"}, m.Ingredient{IngredientName: "ingredient2"})
-	return ingredients, nil
+func (s *IngredientServiceMock) FindAll() ([]m.IngredientDTO, error) {
+	switch ingredient.Name {
+	case "find":
+		ingredients = append(ingredients, ingredient)
+		return ingredients, nil
+	case "notfound":
+		return nil, errors.New("not found")
+	default:
+		return nil, errors.New("error")
+	}
 }
 
-func (s *IngredientServiceMock) FindUnits() ([]m.Unit, error) {
-	units = append(units, unit, m.Unit{ID: 2, FullName: "Ounce", ShortName: "oz"})
+func (s *IngredientServiceMock) FindUnits() ([]m.UnitDTO, error) {
+	units = append(units, unit)
 	return units, nil
 }
 
-func (s *IngredientServiceMock) FindSingle(ingredientID uint) (m.Ingredient, error) {
-	switch ingredientID {
-	case 1:
+func (s *IngredientServiceMock) FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
+	switch ingredientDTO.Name {
+	case "find":
 		return ingredient, nil
+	case "notfound":
+		return m.IngredientDTO{}, errors.New("not found")
 	default:
-		return m.Ingredient{}, errors.New("error")
+		return m.IngredientDTO{}, errors.New("error")
 	}
 }
 
-func (s *IngredientServiceMock) Create(ingredient m.Ingredient) (m.Ingredient, error) {
-	switch ingredient.IngredientName {
-	case "ingredient":
+func (s *IngredientServiceMock) Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
+	switch ingredient.Name {
+	case "create":
 		return ingredient, nil
 	default:
 		return ingredient, errors.New("error")
 	}
 }
 
-func (s *IngredientServiceMock) Update(ingredient m.Ingredient, ingredientID uint) (m.Ingredient, error) {
-	switch ingredient.IngredientName {
+func (s *IngredientServiceMock) Update(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
+	switch ingredient.Name {
 	case "update":
 		return ingredient, nil
 	default:
@@ -66,9 +80,9 @@ func (s *IngredientServiceMock) Update(ingredient m.Ingredient, ingredientID uin
 	}
 }
 
-func (s *IngredientServiceMock) Delete(ingredientID uint) error {
-	switch ingredientID {
-	case 1:
+func (s *IngredientServiceMock) Delete(ingredientDTO m.IngredientDTO) error {
+	switch ingredientDTO.Name {
+	case "delete":
 		return nil
 	default:
 		return errors.New("error")
@@ -77,38 +91,42 @@ func (s *IngredientServiceMock) Delete(ingredientID uint) error {
 
 // ==================================================================================================
 func TestIngredientGetAll_OK(t *testing.T) {
-	var expected []m.Ingredient
-	expected = append(expected, m.Ingredient{IngredientName: "ingredient1"}, m.Ingredient{IngredientName: "ingredient2"})
+	ingredients = append(ingredients, ingredient)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	ingredient.Name = "findall"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredients", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.GetAll(w, req)
+	h.GetAll(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(expected)
+	expectedBody, _ := json.Marshal(ingredients)
 
 	assert.Equal(t, resp.StatusCode, http.StatusOK)
 	assert.Equal(t, body, expectedBody)
 }
 
 func TestIngredientGetUnits_OK(t *testing.T) {
-	var expected []m.Unit
-	expected = append(expected, unit, m.Unit{ID: 2, FullName: "Ounce", ShortName: "oz"})
+	units = append(units, unit)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/units", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.GetUnits(w, req)
+	h.GetUnits(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(expected)
+	expectedBody, _ := json.Marshal(units)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
@@ -119,8 +137,10 @@ func TestIngredientGet_OK(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.GetSingle(w, req, "1")
+	h.GetSingle(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -136,8 +156,10 @@ func TestIngredientGet_AtoiErr(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.GetSingle(w, req, "")
+	h.GetSingle(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -151,8 +173,10 @@ func TestIngredientGet_FindErr(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/0", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.GetSingle(w, req, "0")
+	h.GetSingle(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -168,8 +192,10 @@ func TestIngredientCreate_OK(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Create(w, req)
+	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -183,8 +209,10 @@ func TestIngredientCreate_UnmarshallErr(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Create(w, req)
+	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -197,14 +225,16 @@ func TestIngredientCreate_CreateErr(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
 	errIngredient := ingredient
-	errIngredient.IngredientName = "err"
+	errIngredient.Name = "err"
 
 	reqBody, _ := json.Marshal(errIngredient)
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Create(w, req)
+	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -216,15 +246,14 @@ func TestIngredientCreate_CreateErr(t *testing.T) {
 func TestIngredientUpdate_OK(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	updateIngredient := ingredient
-	updateIngredient.ID = 1
-	updateIngredient.IngredientName = "update"
-	reqBody, _ := json.Marshal(updateIngredient)
+	reqBody, _ := json.Marshal(ingredient)
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Update(w, req, "1")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -238,8 +267,10 @@ func TestIngredientUpdate_AtoiErr(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Update(w, req, "")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -253,8 +284,10 @@ func TestIngredientUpdate_UnmarshalErr(t *testing.T) {
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/ingredient/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Update(w, req, "1")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -266,15 +299,14 @@ func TestIngredientUpdate_UnmarshalErr(t *testing.T) {
 func TestIngredientUpdate_IDRequiredErr(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	updateIngredient := ingredient
-	updateIngredient.ID = 0
-	updateIngredient.IngredientName = "ingredient"
-	reqBody, _ := json.Marshal(updateIngredient)
+	reqBody, _ := json.Marshal(ingredient)
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Update(w, req, "0")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -286,15 +318,15 @@ func TestIngredientUpdate_IDRequiredErr(t *testing.T) {
 func TestIngredientUpdate_UpdateErr(t *testing.T) {
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	updateIngredient := ingredient
-	updateIngredient.ID = 2
-	updateIngredient.IngredientName = "fail"
-	reqBody, _ := json.Marshal(updateIngredient)
+	ingredient.Name = "fail"
+	reqBody, _ := json.Marshal(ingredient)
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Update(w, req, "2")
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -308,8 +340,10 @@ func TestIngredientDelete_OK(t *testing.T) {
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Delete(w, req, "1")
+	h.Delete(c)
 
 	resp := w.Result()
 
@@ -321,8 +355,10 @@ func TestIngredientDelete_AtoiErr(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Delete(w, req, "")
+	h.Delete(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -336,8 +372,10 @@ func TestIngredientDelete_IDRequiredErr(t *testing.T) {
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Delete(w, req, "0")
+	h.Delete(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -351,8 +389,10 @@ func TestIngredientDelete_DeleteErr(t *testing.T) {
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/ingredient/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.Delete(w, req, "2")
+	h.Delete(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
