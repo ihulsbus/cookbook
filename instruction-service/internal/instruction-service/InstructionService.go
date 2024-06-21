@@ -32,30 +32,30 @@ func InstructionService(ctx context.Context) {
 	// API versioning setup
 	v1 := router.Group("/api/v2")
 	{
-		recipe := v1.Group("/recipe")
+		recipe := v1.Group("/instruction")
 		{
 			readInstruction := recipe.Group("")
 			readInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readInstruction.GET(":id/instruction", c.InstructionEndpoints.GetInstruction)
+				readInstruction.GET(":id", c.InstructionHandlers.Get)
 			}
 
 			createInstruction := recipe.Group("")
 			createInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createInstruction.POST(":id/instruction", c.InstructionEndpoints.CreateInstruction)
+				createInstruction.POST(":id", c.InstructionHandlers.Create)
 			}
 
 			updateInstruction := recipe.Group("")
 			updateInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				updateInstruction.PUT(":id/instruction", c.InstructionEndpoints.UpdateInstruction)
+				updateInstruction.PUT(":id", c.InstructionHandlers.Update)
 			}
 
-			adminInstruction := recipe.Group("")
-			adminInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			deleteInstruction := recipe.Group("")
+			deleteInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				adminInstruction.DELETE(":id/instruction", c.InstructionEndpoints.DeleteInstruction)
+				deleteInstruction.DELETE(":id", c.InstructionHandlers.Delete)
 			}
 		}
 	}

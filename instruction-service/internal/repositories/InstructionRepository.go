@@ -5,12 +5,7 @@ import (
 
 	m "instruction-service/internal/models"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
-)
-
-const (
-	whereRecipeID = "recipe_id = ?"
 )
 
 type InstructionRepository struct {
@@ -23,11 +18,8 @@ func NewInstructionRepository(db *gorm.DB) *InstructionRepository {
 	}
 }
 
-func (r InstructionRepository) FindInstruction(recipeID uuid.UUID) (m.Instruction, error) {
-	var instruction m.Instruction
-	instruction.RecipeID = recipeID
-
-	result := r.db.Where(whereRecipeID, recipeID).First(&instruction)
+func (r InstructionRepository) Find(instruction m.Instruction) (m.Instruction, error) {
+	result := r.db.First(&instruction)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return m.Instruction{}, errors.New("not found")
@@ -39,7 +31,7 @@ func (r InstructionRepository) FindInstruction(recipeID uuid.UUID) (m.Instructio
 	return instruction, nil
 }
 
-func (r InstructionRepository) CreateInstruction(instruction m.Instruction) (m.Instruction, error) {
+func (r InstructionRepository) Create(instruction m.Instruction) (m.Instruction, error) {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
@@ -54,11 +46,11 @@ func (r InstructionRepository) CreateInstruction(instruction m.Instruction) (m.I
 	return instruction, nil
 }
 
-func (r InstructionRepository) UpdateInstruction(instruction m.Instruction) (m.Instruction, error) {
+func (r InstructionRepository) Update(instruction m.Instruction) (m.Instruction, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
 
-		if err = tx.Where(whereRecipeID, &instruction.RecipeID).Updates(&instruction).Error; err != nil {
+		if err = tx.Updates(&instruction).Error; err != nil {
 			return err
 		}
 
@@ -70,10 +62,10 @@ func (r InstructionRepository) UpdateInstruction(instruction m.Instruction) (m.I
 	return instruction, nil
 }
 
-func (r InstructionRepository) DeleteInstruction(instruction m.Instruction) error {
+func (r InstructionRepository) Delete(instruction m.Instruction) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
-		if err := tx.Where(whereRecipeID, &instruction.RecipeID).Delete(&instruction).Error; err != nil {
+		if err := tx.Delete(&instruction).Error; err != nil {
 			return err
 		}
 

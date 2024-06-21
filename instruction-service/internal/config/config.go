@@ -1,7 +1,6 @@
 package config
 
 import (
-	e "instruction-service/internal/endpoints"
 	h "instruction-service/internal/handlers"
 	m "instruction-service/internal/models"
 	r "instruction-service/internal/repositories"
@@ -29,9 +28,6 @@ var (
 
 	// Handlers
 	InstructionHandlers *h.InstructionHandlers
-
-	// Endpoints
-	InstructionEndpoints *e.InstructionEndpoints
 )
 
 func init() {
@@ -58,7 +54,4 @@ func init() {
 
 	// Init handlers
 	InstructionHandlers = h.NewInstructionHandlers(InstructionService, Logger)
-
-	// Init endpoints
-	InstructionEndpoints = e.NewInstructionEndpoints(InstructionHandlers)
 }

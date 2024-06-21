@@ -1,106 +1,116 @@
 package handlers
 
 import (
-	"encoding/json"
 	m "instruction-service/internal/models"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type InstructionService interface {
-	FindInstruction(recipeID uuid.UUID) (m.Instruction, error)
-	CreateInstruction(instruction m.Instruction, recipeID uuid.UUID) (m.Instruction, error)
-	UpdateInstruction(instruction m.Instruction, recipeID uuid.UUID) (m.Instruction, error)
-	DeleteInstruction(recipeID uuid.UUID) error
+	Find(instruction m.InstructionDTO) (m.InstructionDTO, error)
+	Create(instruction m.InstructionDTO) (m.InstructionDTO, error)
+	Update(instruction m.InstructionDTO) (m.InstructionDTO, error)
+	Delete(instruction m.InstructionDTO) error
 }
 
 type InstructionHandlers struct {
-	ingredientService InstructionService
-	logger            LoggerInterface
-	utils             HanderUtils
+	instructionService InstructionService
+	logger             m.LoggerInterface
 }
 
-func NewInstructionHandlers(service InstructionService, logger LoggerInterface) *InstructionHandlers {
+func NewInstructionHandlers(service InstructionService, logger m.LoggerInterface) *InstructionHandlers {
 	return &InstructionHandlers{
-		ingredientService: service,
-		logger:            logger,
-		utils:             *NewHanderUtils(logger),
+		instructionService: service,
+		logger:             logger,
 	}
 }
 
-func (h InstructionHandlers) GetInstruction(w http.ResponseWriter, r *http.Request, recipeID uuid.UUID) {
-	var data m.Instruction
+func (h InstructionHandlers) Get(ctx *gin.Context) {
+	var instructionDTO m.InstructionDTO
+	var err error
 
-	data, err := h.ingredientService.FindInstruction(recipeID)
+	instructionDTO.ID, err = uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid instruction ID"})
+		return
+	}
+
+	instructionDTO, err = h.instructionService.Find(instructionDTO)
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			h.utils.response404(w)
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no instruction found"})
 			return
 		default:
-			h.utils.response500WithDetails(w, err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	ctx.JSON(http.StatusOK, instructionDTO)
 }
 
-func (h InstructionHandlers) CreateInstruction(w http.ResponseWriter, r *http.Request, recipeID uuid.UUID) {
-	var instruction m.Instruction
-	var data m.Instruction
+func (h InstructionHandlers) Create(ctx *gin.Context) {
+	var instructionDTO m.InstructionDTO
+	var err error
 
-	body, err := h.utils.getBody(r.Body)
+	if err = ctx.ShouldBindJSON(&instructionDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unexpected JSON input"})
+		return
+	}
+
+	instructionDTO, err = h.instructionService.Create(instructionDTO)
 	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err = json.Unmarshal(body, &instruction); err != nil {
-		h.utils.response400WithDetails(w, err.Error())
-		return
-	}
-
-	data, err = h.ingredientService.CreateInstruction(instruction, recipeID)
-	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
-		return
-	}
-
-	h.utils.respondWithJSON(w, http.StatusCreated, data)
+	ctx.JSON(http.StatusCreated, instructionDTO)
 }
 
-func (h InstructionHandlers) UpdateInstruction(w http.ResponseWriter, r *http.Request, recipeID uuid.UUID) {
-	var instruction m.Instruction
-	var data m.Instruction
+func (h InstructionHandlers) Update(ctx *gin.Context) {
+	var instructionDTO m.InstructionDTO
+	var err error
 
-	body, err := h.utils.getBody(r.Body)
+	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response400WithDetails(w, err.Error())
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid instruction ID"})
 		return
 	}
 
-	if err = json.Unmarshal(body, &instruction); err != nil {
-		h.utils.response400WithDetails(w, err.Error())
+	if err = ctx.ShouldBindJSON(&instructionDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	data, err = h.ingredientService.UpdateInstruction(instruction, recipeID)
+	instructionDTO, err = h.instructionService.Update(instructionDTO)
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	h.utils.respondWithJSON(w, http.StatusOK, data)
+	instructionDTO.ID = id
+
+	ctx.JSON(http.StatusOK, instructionDTO)
 }
 
-func (h InstructionHandlers) DeleteInstruction(w http.ResponseWriter, r *http.Request, recipeID uuid.UUID) {
-	err := h.ingredientService.DeleteInstruction(recipeID)
+func (h InstructionHandlers) Delete(ctx *gin.Context) {
+	var instructionDTO m.InstructionDTO
+	var err error
+
+	instructionDTO.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		h.utils.response500WithDetails(w, err.Error())
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid instruction ID"})
 		return
 	}
 
-	h.utils.response204(w)
+	err = h.instructionService.Delete(instructionDTO)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.Status(http.StatusOK)
 }

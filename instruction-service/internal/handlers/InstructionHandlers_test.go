@@ -10,52 +10,55 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	instruction m.Instruction = m.Instruction{
-		RecipeID:    uuid.UUID{},
+	instruction m.InstructionDTO = m.InstructionDTO{
+		ID:          uuid.New(),
+		Sequence:    1,
 		Description: "instruction",
+		MediaID:     uuid.New(),
 	}
 )
 
 type InstructionServiceMock struct {
 }
 
-func (s *InstructionServiceMock) FindInstruction(recipeID uuid.UUID) (m.Instruction, error) {
-	switch recipeID {
-	case uuid.UUID{}:
-		return m.Instruction{}, nil
-	case uuid.UUID{}:
-		return m.Instruction{}, nil
+func (s *InstructionServiceMock) Find(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
+	switch instruction.Description {
+	case "find":
+		return instruction, nil
+	case "notfound":
+		return m.InstructionDTO{}, errors.New("not found")
 	default:
-		return m.Instruction{}, errors.New("error")
+		return m.InstructionDTO{}, errors.New("error")
 	}
 }
 
-func (s *InstructionServiceMock) CreateInstruction(instruction m.Instruction, recipeID uuid.UUID) (m.Instruction, error) {
-	switch instruction.RecipeID {
-	case uuid.UUID{}:
+func (s *InstructionServiceMock) Create(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
+	switch instructionDTO.Description {
+	case "create":
 		return instruction, nil
 	default:
-		return m.Instruction{}, errors.New("error")
+		return m.InstructionDTO{}, errors.New("error")
 	}
 }
 
-func (s *InstructionServiceMock) UpdateInstruction(instruction m.Instruction, recipeID uuid.UUID) (m.Instruction, error) {
-	switch recipeID {
-	case uuid.UUID{}:
+func (s *InstructionServiceMock) Update(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
+	switch instructionDTO.Description {
+	case "update":
 		return instruction, nil
 	default:
-		return m.Instruction{}, errors.New("error")
+		return m.InstructionDTO{}, errors.New("error")
 	}
 }
 
-func (s *InstructionServiceMock) DeleteInstruction(recipeID uuid.UUID) error {
-	switch recipeID {
-	case uuid.UUID{}:
+func (s *InstructionServiceMock) Delete(instructionDTO m.InstructionDTO) error {
+	switch instruction.Description {
+	case "delete":
 		return nil
 	default:
 		return errors.New("error")
@@ -65,100 +68,181 @@ func (s *InstructionServiceMock) DeleteInstruction(recipeID uuid.UUID) error {
 // ========================================================================================================
 
 func TestGetInstruction_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
-	w := httptest.NewRecorder()
+	instruction.Description = "find"
 
-	h.GetInstruction(w, req, uuid.UUID{})
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: instruction.ID.String()},
+	}
+
+	h.Get(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(m.Instruction{})
+	expectedBody, _ := json.Marshal(instruction)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
 }
 
-func TestGetInstruction_FindErr(t *testing.T) {
+func TestGetInstruction_IDErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
+	instruction.Description = "find"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
 
-	h.GetInstruction(w, req, uuid.UUID{})
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	expectedBody := `{"code":500,"msg":"Internal Server Error. (error)"}`
-
-	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.Equal(t, expectedBody, string(body))
-}
-
-func TestCreateInstruction_OK(t *testing.T) {
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
-
-	reqBody, _ := json.Marshal(instruction)
-
-	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient/1/instruction", bytes.NewReader(reqBody))
-	w := httptest.NewRecorder()
-
-	h.CreateInstruction(w, req, uuid.UUID{})
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusCreated, resp.StatusCode)
-	assert.Equal(t, body, reqBody)
-}
-
-func TestCreateInstruction_UnmarshalErr(t *testing.T) {
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
-
-	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient/1", bytes.NewReader([]byte{}))
-	w := httptest.NewRecorder()
-
-	h.CreateInstruction(w, req, uuid.UUID{})
+	h.Get(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, body, []byte(`{"code":400,"msg":"Bad Request. (unexpected end of JSON input)"}`))
+	assert.Equal(t, `{"error":"invalid instruction ID"}`, string(body))
 }
 
-func TestCreateInstruction_CreateErr(t *testing.T) {
+func TestGetInstruction_NotFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	cI := instruction
-	cI.RecipeID = uuid.UUID{}
+	instruction.Description = "notfound"
 
-	reqBody, _ := json.Marshal(cI)
-
-	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", nil)
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: instruction.ID.String()},
+	}
 
-	h.CreateInstruction(w, req, uuid.UUID{})
+	h.Get(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no instruction found"}`, string(body))
+}
+
+func TestGetInstruction_FindErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+
+	instruction.Description = "error"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: instruction.ID.String()},
+	}
+
+	h.Get(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.Equal(t, body, []byte(`{"code":500,"msg":"Internal Server Error. (error)"}`))
+	assert.Equal(t, `{"error":"error"}`, string(body))
+}
+
+func TestCreateInstruction_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+
+	createInstruction := m.InstructionDTO{
+		Sequence:    1,
+		Description: "create",
+		MediaID:     instruction.MediaID,
+	}
+	reqBody, _ := json.Marshal(createInstruction)
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/1/instruction", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Create(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+	assertBody, _ := json.Marshal(instruction)
+
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	assert.Equal(t, assertBody, body)
+}
+
+func TestCreateInstruction_UnmarshalErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/1", bytes.NewReader([]byte{}))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Create(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"unexpected JSON input"}`, string(body))
+}
+
+func TestCreateInstruction_CreateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+
+	createInstruction := m.InstructionDTO{
+		Sequence:    1,
+		Description: "error",
+		MediaID:     instruction.MediaID,
+	}
+	reqBody, _ := json.Marshal(createInstruction)
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Create(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
 func TestUpdateInstruction_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
+	instruction.Description = "update"
 	reqBody, _ := json.Marshal(instruction)
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: instruction.ID.String()},
+	}
 
-	h.UpdateInstruction(w, req, uuid.UUID{})
+	h.Update(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
@@ -167,13 +251,40 @@ func TestUpdateInstruction_OK(t *testing.T) {
 	assert.Equal(t, reqBody, body)
 }
 
-func TestUpdateInstruction_UnmarshalErr(t *testing.T) {
+func TestUpdateInstruction_IDErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", bytes.NewReader([]byte{}))
-	w := httptest.NewRecorder()
+	instruction.Description = "update"
+	reqBody, _ := json.Marshal(instruction)
 
-	h.UpdateInstruction(w, req, uuid.UUID{})
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Update(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid instruction ID"}`, string(body))
+}
+
+func TestUpdateInstruction_UnmarshalErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", bytes.NewReader([]byte{}))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: instruction.ID.String()},
+	}
+
+	h.Update(c)
 
 	resp := w.Result()
 
@@ -181,14 +292,21 @@ func TestUpdateInstruction_UnmarshalErr(t *testing.T) {
 }
 
 func TestUpdateInstruction_UpdateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
+	instruction.Description = "error"
 	reqBody, _ := json.Marshal(instruction)
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: instruction.ID.String()},
+	}
 
-	h.UpdateInstruction(w, req, uuid.UUID{})
+	h.Update(c)
 
 	resp := w.Result()
 
@@ -196,27 +314,65 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 }
 
 func TestDeleteInstruction_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
-	w := httptest.NewRecorder()
+	instruction.Description = "delete"
 
-	h.DeleteInstruction(w, req, uuid.UUID{})
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: instruction.ID.String()},
+	}
+
+	h.Delete(c)
 
 	resp := w.Result()
 
-	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestDeleteInstruction_IDErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+
+	instruction.Description = "delete"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Delete(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid instruction ID"}`, string(body))
 }
 
 func TestDeleteInstruction_UpdateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/1", nil)
-	w := httptest.NewRecorder()
+	instruction.Description = "error"
 
-	h.DeleteInstruction(w, req, uuid.UUID{})
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: instruction.ID.String()},
+	}
+
+	h.Delete(c)
 
 	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
 }
