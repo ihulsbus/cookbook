@@ -116,7 +116,7 @@ func TestRecipeFindAll_NotFoundErr(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewRecipeRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL]`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
 		WillReturnRows(&sqlmock.Rows{})
 	result, err := r.FindAll()
 
