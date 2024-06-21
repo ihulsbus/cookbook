@@ -13,10 +13,14 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ master ]
+     branches:
+      - master
+      - feature/V2-microservices
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ master ]
+     branches:
+      - master
+      - feature/V2-microservices
   schedule:
     - cron: '33 12 * * 3'
 

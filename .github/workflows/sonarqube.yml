@@ -4,6 +4,7 @@ on:
     branches:
       - master
       - develop
+      - feature/V2-microservices
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
