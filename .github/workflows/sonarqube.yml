@@ -9,6 +9,15 @@ on:
     types: [opened, synchronize, reopened]
 jobs:
   sonarcloud:
+    strategy:
+      matrix:
+        microservice: [
+          image-service,
+          ingredient-service,
+          instruction-service,
+          metadata-service,
+          recipe-service
+        ]
     name: SonarCloud
     runs-on: ubuntu-latest
     steps:
@@ -17,16 +26,19 @@ jobs:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       
       - name: Download Go deps
+        working-directory: ${{ matrix.microservice }}
         run: |
           go mod download
           go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
           
       - name: Go tests
+        working-directory: ${{ matrix.microservice }}
         continue-on-error: true
         run: |
           go test -json -coverprofile=coverage.out ./... > test-report.out
           
       - name: SonarCloud Scan
+        working-directory: ${{ matrix.microservice }}
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
