@@ -25,7 +25,7 @@ jobs:
 
     - name: Build
       working-directory: ${{ matrix.microservice }}
-      run: go build -v cmd/${{ matrix.microservice }}/main.go
+      run: go build -v ./cmd/${{ matrix.microservice }}/main.go
 
     - name: Test
       uses: robherley/go-test-action@v0.4.1
