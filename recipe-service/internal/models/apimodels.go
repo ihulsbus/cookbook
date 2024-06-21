@@ -39,9 +39,9 @@ func (c Recipe) ConvertAllToDTO(recipes []Recipe) []RecipeDTO {
 
 type RecipeDTO struct {
 	ID           uuid.UUID
-	Name         string `gorm:"not null" json:"RecipeName" example:"apple pie"`
-	Description  string `gorm:"size:65535;not null" json:"Description" example:"pie with apples"`
-	ServingCount int    `gorm:"default:0" json:"ServingCount" example:"4"`
+	Name         string `gorm:"not null" json:"name" example:"apple pie"`
+	Description  string `gorm:"size:65535;not null" json:"description" example:"pie with apples"`
+	ServingCount int    `gorm:"default:0" json:"servingcount" example:"4"`
 }
 
 func (r RecipeDTO) ConvertFromDTO() Recipe {

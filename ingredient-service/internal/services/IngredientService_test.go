@@ -66,9 +66,9 @@ func (IngredientRepositoryMock) FindSingle(ingredientInput m.Ingredient) (m.Ingr
 		return ingredient, nil
 	case "update":
 		return ingredient, nil
-	case "delete":
-		return ingredient, nil
 	case "updateerror":
+		return ingredient, nil
+	case "delete":
 		return ingredient, nil
 	case "deleteerror":
 		return ingredient, nil

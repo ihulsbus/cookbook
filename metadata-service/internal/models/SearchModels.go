@@ -18,7 +18,7 @@ type MetadataSearchRequestDTO struct {
 	CategoryID        uuid.UUID `json:"category_id,omitempty"`
 	TagID             uuid.UUID `json:"tag_id,omitempty"`
 	DifficultyLevelID uuid.UUID `json:"difficulty_level,omitempty"`
-	CuisineTypeID     uuid.UUID `json:"cuisinetype,omitempty"`
+	CuisineTypeID     uuid.UUID `json:"cuisine_type,omitempty"`
 	MinPrepTime       *int      `json:"min_prep_time,omitempty"` // in minutes
 	MaxPrepTime       *int      `json:"max_prep_time,omitempty"` // in minutes
 }
@@ -51,7 +51,7 @@ type MetadataSearchResultDTO struct {
 	TagIDs            []uuid.UUID `json:"tag_ids"`
 	DifficultyLevelID uuid.UUID   `json:"difficulty_level"`
 	PreparationTimeID uuid.UUID   `json:"preparation_time"` // in minutes
-	CuisineTypeID     uuid.UUID   `json:"cuisinetype"`
+	CuisineTypeID     uuid.UUID   `json:"cuisine_type"`
 }
 
 func (s MetadataSearchResult) ConvertToDTO() MetadataSearchResultDTO {

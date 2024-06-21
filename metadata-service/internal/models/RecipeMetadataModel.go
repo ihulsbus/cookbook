@@ -8,6 +8,6 @@ type RecipeMetadataDTO struct {
 	CategoryName    string    `json:"category_name"`
 	CuisineTypeName string    `json:"cuisine_type_name"`
 	Tags            []string  `json:"tags"`
-	DifficultyLevel string    `json:"difficulty_level"`
-	PreparationTime string    `json:"preparation_time"`
+	DifficultyLevel int       `json:"difficulty_level"`
+	PreparationTime int       `json:"preparation_time"`
 }

@@ -228,7 +228,8 @@ func TestIngredientCreate_OK(t *testing.T) {
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			nil,
-			ingredient.ID).
+			sqlmock.AnyArg(),
+		).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).
 			AddRow(ingredient.ID))
 	mock.ExpectCommit()

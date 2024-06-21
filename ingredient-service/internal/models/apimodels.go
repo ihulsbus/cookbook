@@ -16,9 +16,14 @@ type Ingredient struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
+func (ingredient *Ingredient) BeforeCreate(tx *gorm.DB) (err error) {
+	ingredient.ID = uuid.New()
+	return
+}
+
 type IngredientDTO struct {
 	ID   uuid.UUID `json:"id" example:"23582396-12a3-425b-a597-8a22052823da"`
-	Name string    `json:"ingredientName" example:"asparagus"`
+	Name string    `json:"name" example:"asparagus"`
 }
 
 func (i Ingredient) ConvertToDTO() IngredientDTO {
