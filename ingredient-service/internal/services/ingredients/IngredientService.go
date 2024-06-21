@@ -10,7 +10,6 @@ import (
 
 type IngredientRepository interface {
 	FindAll() ([]m.Ingredient, error)
-	FindUnits() ([]m.Unit, error)
 	FindSingle(ingredient m.Ingredient) (m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
 	Update(ingredient m.Ingredient) (m.Ingredient, error)
@@ -41,22 +40,6 @@ func (s IngredientService) FindAll() ([]m.IngredientDTO, error) {
 	}
 
 	return m.Ingredient{}.ConvertAllToDTO(ingredients), nil
-}
-
-func (s IngredientService) FindUnits() ([]m.UnitDTO, error) {
-	var units []m.Unit
-
-	units, err := s.repo.FindUnits()
-	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
-	}
-
-	return m.Unit{}.ConvertAllToDTO(units), nil
 }
 
 func (s IngredientService) FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {

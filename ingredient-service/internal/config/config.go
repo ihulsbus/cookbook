@@ -1,10 +1,13 @@
 package config
 
 import (
-	h "ingredient-service/internal/handlers"
+	ih "ingredient-service/internal/handlers/ingredients"
+	uh "ingredient-service/internal/handlers/units"
 	m "ingredient-service/internal/models"
-	r "ingredient-service/internal/repositories"
-	s "ingredient-service/internal/services"
+	ir "ingredient-service/internal/repositories/ingredients"
+	ur "ingredient-service/internal/repositories/units"
+	is "ingredient-service/internal/services/ingredients"
+	us "ingredient-service/internal/services/units"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -21,13 +24,15 @@ var (
 	Cors           cors.Config
 
 	// Repositories
-	IngredientRepository *r.IngredientRepository
-
+	IngredientRepository *ir.IngredientRepository
+	UnitRepository       *ur.UnitRepository
 	// Services
-	IngredientService *s.IngredientService
+	IngredientService *is.IngredientService
+	UnitService       *us.UnitService
 
 	// Handlers
-	IngredientHandlers *h.IngredientHandlers
+	IngredientHandlers *ih.IngredientHandlers
+	UnitHandlers       *uh.UnitHandlers
 )
 
 func init() {
@@ -47,11 +52,14 @@ func init() {
 	initCors()
 
 	// Init repositories
-	IngredientRepository = r.NewIngredientRepository(DatabaseClient)
+	IngredientRepository = ir.NewIngredientRepository(DatabaseClient)
+	UnitRepository = ur.NewUnitRepository(DatabaseClient)
 
 	// Init services
-	IngredientService = s.NewIngredientService(IngredientRepository)
+	IngredientService = is.NewIngredientService(IngredientRepository)
+	UnitService = us.NewUnitService(UnitRepository)
 
 	// Init handlers
-	IngredientHandlers = h.NewIngredientHandlers(IngredientService, Logger)
+	IngredientHandlers = ih.NewIngredientHandlers(IngredientService, Logger)
+	UnitHandlers = uh.NewUnitHandlers(UnitService, Logger)
 }

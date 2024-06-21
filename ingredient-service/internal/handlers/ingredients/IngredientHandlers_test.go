@@ -46,18 +46,6 @@ func (s *IngredientServiceMock) FindAll() ([]m.IngredientDTO, error) {
 	}
 }
 
-func (s *IngredientServiceMock) FindUnits() ([]m.UnitDTO, error) {
-	units = append(units, unit)
-	switch unit.FullName {
-	case "findall":
-		return units, nil
-	case "notfound":
-		return nil, errors.New("not found")
-	default:
-		return nil, errors.New("error")
-	}
-}
-
 func (s *IngredientServiceMock) FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
 	switch ingredient.Name {
 	case "find":
@@ -95,6 +83,11 @@ func (s *IngredientServiceMock) Delete(ingredientDTO m.IngredientDTO) error {
 		return errors.New("error")
 	}
 }
+
+type LoggerInterfaceMock struct{}
+
+func (l *LoggerInterfaceMock) Debugf(format string, args ...interface{}) {}
+func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 
 // ==================================================================================================
 func TestIngredientGetAll_OK(t *testing.T) {
@@ -154,71 +147,6 @@ func TestIngredientGetAll_Err(t *testing.T) {
 	c.Request = req
 
 	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
-	assert.Equal(t, `{"error":"error"}`, string(body))
-}
-
-func TestIngredientGetUnits_OK(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	units = append(units, unit)
-	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
-
-	unit.FullName = "findall"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/units", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetUnits(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	expectedBody, _ := json.Marshal(units)
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	assert.Equal(t, expectedBody, body)
-}
-
-func TestIngredientGetUnits_NotFound(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	units = append(units, unit)
-	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
-
-	unit.FullName = "notfound"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/units", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetUnits(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no units found"}`, string(body))
-}
-
-func TestIngredientGetUnits_Err(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	units = append(units, unit)
-	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
-
-	unit.FullName = "error"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/units", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetUnits(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)

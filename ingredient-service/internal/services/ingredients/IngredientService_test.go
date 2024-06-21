@@ -47,19 +47,6 @@ func (IngredientRepositoryMock) FindAll() ([]m.Ingredient, error) {
 	}
 }
 
-func (IngredientRepositoryMock) FindUnits() ([]m.Unit, error) {
-	switch findAllUnit.FullName {
-	case "findall": // OK
-		var units []m.Unit
-		units = append(units, unit)
-		return units, nil
-	case "notfound":
-		return nil, errors.New("not found")
-	default: // ERR
-		return nil, errors.New("error")
-	}
-}
-
 func (IngredientRepositoryMock) FindSingle(ingredientInput m.Ingredient) (m.Ingredient, error) {
 	switch ingredientInput.Name {
 	case "find":
@@ -144,44 +131,6 @@ func TestRecipeFindAll_NotFound(t *testing.T) {
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.EqualError(t, err, "not found")
-}
-
-func TestIngredientFindUnits_OK(t *testing.T) {
-	s := NewIngredientService(&IngredientRepositoryMock{})
-
-	findAllUnit.FullName = "findall"
-
-	result, err := s.FindUnits()
-
-	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.Equal(t, unit.ID, result[0].ID)
-	assert.Equal(t, "unit", result[0].FullName)
-	assert.Equal(t, "u", result[0].ShortName)
-}
-
-func TestIngredientFindUnits_NotFound(t *testing.T) {
-	s := NewIngredientService(&IngredientRepositoryMock{})
-
-	findAllUnit.FullName = "notfound"
-
-	result, err := s.FindUnits()
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
-}
-
-func TestIngredientFindUnits_Err(t *testing.T) {
-	s := NewIngredientService(&IngredientRepositoryMock{})
-
-	findAllUnit.FullName = "error"
-
-	result, err := s.FindUnits()
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "internal server error")
 }
 
 func TestIngredientFindSingle_OK(t *testing.T) {

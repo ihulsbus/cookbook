@@ -8,10 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	whereID = "id = ?"
-)
-
 type IngredientRepository struct {
 	db *gorm.DB
 }
@@ -34,21 +30,6 @@ func (r IngredientRepository) FindAll() ([]m.Ingredient, error) {
 	}
 
 	return ingredients, nil
-}
-
-func (r IngredientRepository) FindUnits() ([]m.Unit, error) {
-	var units []m.Unit
-
-	if err := r.db.Find(&units).Error; err != nil {
-		return nil, err
-	}
-
-	if len(units) <= 0 {
-		return nil, errors.New("not found")
-
-	}
-
-	return units, nil
 }
 
 func (r IngredientRepository) FindSingle(ingredient m.Ingredient) (m.Ingredient, error) {
@@ -85,7 +66,7 @@ func (r IngredientRepository) Update(ingredient m.Ingredient) (m.Ingredient, err
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
-		if err := tx.Where(whereID, ingredient.ID).Updates(&ingredient).Error; err != nil {
+		if err := tx.Updates(&ingredient).Error; err != nil {
 			return err
 		}
 

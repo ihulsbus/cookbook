@@ -11,7 +11,6 @@ import (
 
 type IngredientService interface {
 	FindAll() ([]m.IngredientDTO, error)
-	FindUnits() ([]m.UnitDTO, error)
 	FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
 	Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
 	Update(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
@@ -48,26 +47,6 @@ func (h IngredientHandlers) GetAll(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, ingredientDTO)
-}
-
-// Get all units
-func (h IngredientHandlers) GetUnits(ctx *gin.Context) {
-	var unitDTO []m.UnitDTO
-	var err error
-
-	unitDTO, err = h.ingredientService.FindUnits()
-	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "no units found"})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
-	ctx.JSON(http.StatusOK, unitDTO)
 }
 
 // Get a single ingredient
