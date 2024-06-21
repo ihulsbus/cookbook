@@ -5,6 +5,15 @@ on:
 
 jobs:
   test:
+    strategy:
+      matrix:
+        microservice: [
+          image-service,
+          ingredient-service,
+          instruction-service,
+          metadata-service,
+          recipe-service
+        ]
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -15,7 +24,10 @@ jobs:
         go-version: 1.19
 
     - name: Build
-      run: go build -v ./...
+      working-directory: ${{ matrix.microservice }}
+      run: go build -v cmd/${{ matrix.microservice }}/main.go
 
     - name: Test
-      uses: robherley/go-test-action@v0.1.0
+      uses: robherley/go-test-action@v0.4.1
+      with:
+        moduleDirectory: ${{ matrix.microservice }}
