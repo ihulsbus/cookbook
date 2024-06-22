@@ -8,7 +8,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
-  sonarcloud:
+  test:
     strategy:
       matrix:
         microservice: [
@@ -18,28 +18,48 @@ jobs:
           metadata-service,
           recipe-service
         ]
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+    
+    - name: Download Go deps
+      run: |
+        go mod download
+        go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+        
+    - name: Go tests
+      continue-on-error: true
+      run: |
+        go test -json -coverprofile=$GITHUB_WORKSPACE/${{ matrix.microservice }}-coverage.out ./... > $GITHUB_WORKSPACE/${{ matrix.microservice }}-test-report.out
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: coveragereports
+        path: $GITHUB_WORKSPACE/*-coverage.out
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: testreports
+        path: $GITHUB_WORKSPACE/*-test-report.out
+
+  sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ matrix.microservice }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      
-      - name: Download Go deps
-        run: |
-          go mod download
-          go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
-          
-      - name: Go tests
-        continue-on-error: true
-        run: |
-          go test -json -coverprofile=coverage.out ./... > test-report.out
-          
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+    - uses: actions/download-artifact@v4
+      with:
+        name: coveragereports
+    - uses: actions/download-artifact@v4
+      with:
+        name: testreports
+    - name: SonarCloud Scan
+      uses: SonarSource/sonarcloud-github-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
