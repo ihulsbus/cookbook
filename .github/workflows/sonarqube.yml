@@ -26,11 +26,13 @@ jobs:
         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
     
     - name: Download Go deps
+      working-directory: ${{ matrix.microservice }}
       run: |
         go mod download
         go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
         
     - name: Go tests
+      working-directory: ${{ matrix.microservice }}
       continue-on-error: true
       run: |
         go test -json -coverprofile=$GITHUB_WORKSPACE/${{ matrix.microservice }}-coverage.out ./... > $GITHUB_WORKSPACE/${{ matrix.microservice }}-test-report.out
@@ -48,6 +50,7 @@ jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    needs: test
     steps:
     - uses: actions/checkout@v4
       with:
