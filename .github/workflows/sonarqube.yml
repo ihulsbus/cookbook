@@ -35,17 +35,21 @@ jobs:
       working-directory: ${{ matrix.microservice }}
       continue-on-error: true
       run: |
-        go test -json -coverprofile=$GITHUB_WORKSPACE/${{ matrix.microservice }}-coverage.out ./... > $GITHUB_WORKSPACE/${{ matrix.microservice }}-test-report.out
+        go test -json -coverprofile=${{ github.workspace }}/${{ matrix.microservice }}-coverage.out ./... > ${{ github.workspace }}/${{ matrix.microservice }}-test-report.out
 
     - uses: actions/upload-artifact@v4
       with:
-        name: coveragereports
-        path: $GITHUB_WORKSPACE/*-coverage.out
+        name: ${{ github.run_id }}_coverage_${{ matrix.microservice }}
+        path: ${{ github.workspace }}/${{ matrix.microservice }}-coverage.out
+        if-no-files-found: ignore
+        retention-days: 1
 
     - uses: actions/upload-artifact@v4
       with:
-        name: testreports
-        path: $GITHUB_WORKSPACE/*-test-report.out
+        name: ${{ github.run_id }}_test_${{ matrix.microservice }}
+        path: ${{ github.workspace }}/${{ matrix.microservice }}-test-report.out
+        if-no-files-found: ignore
+        retention-days: 1
 
   sonarcloud:
     name: SonarCloud
@@ -55,12 +59,9 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
     - uses: actions/download-artifact@v4
-      with:
-        name: coveragereports
-    - uses: actions/download-artifact@v4
-      with:
-        name: testreports
+
     - name: SonarCloud Scan
       uses: SonarSource/sonarcloud-github-action@master
       env:
