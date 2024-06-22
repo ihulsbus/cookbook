@@ -59,7 +59,7 @@ func (s *SearchServiceMock) SearchMetadata(request m.MetadataSearchRequestDTO) (
 // ====== Tests ======
 
 func TestSearch_OK(t *testing.T) {
-	h := NewSearchHandlers(&SearchServiceMock{}, &LoggerInterfaceMock{})
+	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(searchRequestDTO)
 
@@ -80,7 +80,7 @@ func TestSearch_OK(t *testing.T) {
 }
 
 func TestSearch_UnmarshalErr(t *testing.T) {
-	h := NewSearchHandlers(&SearchServiceMock{}, &LoggerInterfaceMock{})
+	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -97,7 +97,7 @@ func TestSearch_UnmarshalErr(t *testing.T) {
 }
 
 func TestSearch_SearchErr(t *testing.T) {
-	h := NewSearchHandlers(&SearchServiceMock{}, &LoggerInterfaceMock{})
+	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
 
 	minTime = 2
 

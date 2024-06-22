@@ -10,6 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+
+	co "metadata-service/internal/common/test"
 )
 
 var (
@@ -29,7 +31,7 @@ var (
 )
 
 func TestSearch_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewSearchRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT id FROM "preparation_times" WHERE duration >= $1 AND duration <= $2`)).

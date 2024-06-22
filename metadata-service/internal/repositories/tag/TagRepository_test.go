@@ -10,6 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+
+	co "metadata-service/internal/common/test"
 )
 
 var (
@@ -20,7 +22,7 @@ var (
 )
 
 func TestTagFindAll_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
@@ -41,7 +43,7 @@ func TestTagFindAll_OK(t *testing.T) {
 }
 
 func TestTagFindAll_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
@@ -55,7 +57,7 @@ func TestTagFindAll_Err(t *testing.T) {
 }
 
 func TestTagFindSingle_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL AND "tags"."id" = $1 ORDER BY "tags"."id" LIMIT $2`)).
@@ -73,7 +75,7 @@ func TestTagFindSingle_OK(t *testing.T) {
 }
 
 func TestTagFindSingle_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL AND "tags"."id" = $1 ORDER BY "tags"."id" LIMIT $2`)).
@@ -90,7 +92,7 @@ func TestTagFindSingle_Err(t *testing.T) {
 }
 
 func TestTagCreate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
@@ -115,7 +117,7 @@ func TestTagCreate_OK(t *testing.T) {
 }
 
 func TestTagCreate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
@@ -138,7 +140,7 @@ func TestTagCreate_Err(t *testing.T) {
 }
 
 func TestTagUpdate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
@@ -159,7 +161,7 @@ func TestTagUpdate_OK(t *testing.T) {
 }
 
 func TestTagUpdate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
@@ -180,7 +182,7 @@ func TestTagUpdate_Err(t *testing.T) {
 }
 
 func TestTagDelete_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()
@@ -197,7 +199,7 @@ func TestTagDelete_OK(t *testing.T) {
 }
 
 func TestTagDelete_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
 	mock.ExpectBegin()

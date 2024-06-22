@@ -10,6 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+
+	co "metadata-service/internal/common/test"
 )
 
 var (
@@ -20,7 +22,7 @@ var (
 )
 
 func TestDifficultyLevelFindAll_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
@@ -41,7 +43,7 @@ func TestDifficultyLevelFindAll_OK(t *testing.T) {
 }
 
 func TestDifficultyLevelFindAll_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
@@ -55,7 +57,7 @@ func TestDifficultyLevelFindAll_Err(t *testing.T) {
 }
 
 func TestDifficultyLevelFindSingle_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL AND "difficulty_levels"."id" = $1 ORDER BY "difficulty_levels"."id" LIMIT $2`)).
@@ -73,7 +75,7 @@ func TestDifficultyLevelFindSingle_OK(t *testing.T) {
 }
 
 func TestDifficultyLevelFindSingle_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL AND "difficulty_levels"."id" = $1 ORDER BY "difficulty_levels"."id" LIMIT $2`)).
@@ -90,7 +92,7 @@ func TestDifficultyLevelFindSingle_Err(t *testing.T) {
 }
 
 func TestDifficultyLevelCreate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectBegin()
@@ -115,7 +117,7 @@ func TestDifficultyLevelCreate_OK(t *testing.T) {
 }
 
 func TestDifficultyLevelCreate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectBegin()
@@ -138,7 +140,7 @@ func TestDifficultyLevelCreate_Err(t *testing.T) {
 }
 
 func TestDifficultyLevelUpdate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectBegin()
@@ -159,7 +161,7 @@ func TestDifficultyLevelUpdate_OK(t *testing.T) {
 }
 
 func TestDifficultyLevelUpdate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectBegin()
@@ -180,7 +182,7 @@ func TestDifficultyLevelUpdate_Err(t *testing.T) {
 }
 
 func TestDifficultyLevelDelete_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectBegin()
@@ -197,7 +199,7 @@ func TestDifficultyLevelDelete_OK(t *testing.T) {
 }
 
 func TestDifficultyLevelDelete_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
 	mock.ExpectBegin()

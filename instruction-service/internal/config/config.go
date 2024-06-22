@@ -1,10 +1,16 @@
 package config
 
 import (
-	h "instruction-service/internal/handlers"
 	m "instruction-service/internal/models"
-	r "instruction-service/internal/repositories"
-	s "instruction-service/internal/services"
+
+	ih "instruction-service/internal/handlers/instructions"
+	sh "instruction-service/internal/handlers/search"
+
+	ir "instruction-service/internal/repositories/instructions"
+	sr "instruction-service/internal/repositories/search"
+
+	is "instruction-service/internal/services/instructions"
+	ss "instruction-service/internal/services/search"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -21,13 +27,16 @@ var (
 	Cors           cors.Config
 
 	// Repositories
-	InstructionRepository *r.InstructionRepository
+	InstructionRepository *ir.InstructionRepository
+	SearchRepository      *sr.SearchRepository
 
 	// Services
-	InstructionService *s.InstructionService
+	InstructionService *is.InstructionService
+	SearchService      *ss.SearchService
 
 	// Handlers
-	InstructionHandlers *h.InstructionHandlers
+	InstructionHandlers *ih.InstructionHandlers
+	SearchHandlers      *sh.SearchHandlers
 )
 
 func init() {
@@ -47,11 +56,14 @@ func init() {
 	initCors()
 
 	// Init repositories
-	InstructionRepository = r.NewInstructionRepository(DatabaseClient)
+	InstructionRepository = ir.NewInstructionRepository(DatabaseClient)
+	SearchRepository = sr.NewSearchRepository(DatabaseClient)
 
 	// Init services
-	InstructionService = s.NewInstructionService(InstructionRepository)
+	InstructionService = is.NewInstructionService(InstructionRepository)
+	SearchService = ss.NewSearchService(SearchRepository)
 
 	// Init handlers
-	InstructionHandlers = h.NewInstructionHandlers(InstructionService, Logger)
+	InstructionHandlers = ih.NewInstructionHandlers(InstructionService, Logger)
+	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
 }

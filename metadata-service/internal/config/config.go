@@ -1,10 +1,28 @@
 package config
 
 import (
-	h "metadata-service/internal/handlers"
+	ch "metadata-service/internal/handlers/category"
+	cuh "metadata-service/internal/handlers/cuisinetype"
+	dh "metadata-service/internal/handlers/difficultylevel"
+	ph "metadata-service/internal/handlers/preparationtime"
+	sh "metadata-service/internal/handlers/search"
+	th "metadata-service/internal/handlers/tag"
+
 	m "metadata-service/internal/models"
-	r "metadata-service/internal/repositories"
-	s "metadata-service/internal/services"
+
+	cr "metadata-service/internal/repositories/category"
+	cur "metadata-service/internal/repositories/cuisinetype"
+	dr "metadata-service/internal/repositories/difficultylevel"
+	pr "metadata-service/internal/repositories/preparationtime"
+	sr "metadata-service/internal/repositories/search"
+	tr "metadata-service/internal/repositories/tag"
+
+	cs "metadata-service/internal/services/category"
+	cus "metadata-service/internal/services/cuisinetype"
+	ds "metadata-service/internal/services/difficultylevel"
+	ps "metadata-service/internal/services/preparationtime"
+	ss "metadata-service/internal/services/search"
+	ts "metadata-service/internal/services/tag"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -21,28 +39,28 @@ var (
 	Cors           cors.Config
 
 	// Repositories
-	CategoryRepository        *r.CategoryRepository
-	TagRepository             *r.TagRepository
-	CuisineTypeRepository     *r.CuisineTypeRepository
-	DifficultyLevelRepository *r.DifficultyLevelRepository
-	PreparationTimeRepository *r.PreparationTimeRepository
-	SearchRepository          *r.SearcRepository
+	CategoryRepository        *cr.CategoryRepository
+	CuisineTypeRepository     *cur.CuisineTypeRepository
+	DifficultyLevelRepository *dr.DifficultyLevelRepository
+	PreparationTimeRepository *pr.PreparationTimeRepository
+	SearchRepository          *sr.SearcRepository
+	TagRepository             *tr.TagRepository
 
 	// Services
-	CategoryService        *s.CategoryService
-	TagService             *s.TagService
-	CuisineTypeService     *s.CuisineTypeService
-	DifficultyLevelService *s.DifficultyLevelService
-	PreparationTimeService *s.PreparationTimeService
-	SearchService          *s.SearchService
+	CategoryService        *cs.CategoryService
+	CuisineTypeService     *cus.CuisineTypeService
+	DifficultyLevelService *ds.DifficultyLevelService
+	PreparationTimeService *ps.PreparationTimeService
+	SearchService          *ss.SearchService
+	TagService             *ts.TagService
 
 	// Handlers
-	CategoryHandlers        *h.CategoryHandlers
-	TagHandlers             *h.TagHandlers
-	CuisineTypeHandlers     *h.CuisineTypeHandlers
-	DifficultyLevelHandlers *h.DifficultyLevelHandlers
-	PreparationTimeHandlers *h.PreparationTimeHandlers
-	SearchHandlers          *h.SearchHandlers
+	CategoryHandlers        *ch.CategoryHandlers
+	CuisineTypeHandlers     *cuh.CuisineTypeHandlers
+	DifficultyLevelHandlers *dh.DifficultyLevelHandlers
+	PreparationTimeHandlers *ph.PreparationTimeHandlers
+	SearchHandlers          *sh.SearchHandlers
+	TagHandlers             *th.TagHandlers
 )
 
 func init() {
@@ -62,26 +80,26 @@ func init() {
 	initCors()
 
 	// Init repositories
-	CategoryRepository = r.NewCategoryRepository(DatabaseClient)
-	TagRepository = r.NewTagRepository(DatabaseClient)
-	CuisineTypeRepository = r.NewCuisineTypeRepository(DatabaseClient)
-	DifficultyLevelRepository = r.NewDifficultyLevelRepository(DatabaseClient)
-	PreparationTimeRepository = r.NewPreparationTimeRepository(DatabaseClient)
-	SearchRepository = r.NewSearchRepository(DatabaseClient)
+	CategoryRepository = cr.NewCategoryRepository(DatabaseClient)
+	CuisineTypeRepository = cur.NewCuisineTypeRepository(DatabaseClient)
+	DifficultyLevelRepository = dr.NewDifficultyLevelRepository(DatabaseClient)
+	PreparationTimeRepository = pr.NewPreparationTimeRepository(DatabaseClient)
+	SearchRepository = sr.NewSearchRepository(DatabaseClient)
+	TagRepository = tr.NewTagRepository(DatabaseClient)
 
 	// Init services
-	CategoryService = s.NewCategoryService(CategoryRepository)
-	TagService = s.NewTagService(TagRepository)
-	CuisineTypeService = s.NewCuisineTypeService(CuisineTypeRepository)
-	DifficultyLevelService = s.NewDifficultyLevelService(DifficultyLevelRepository)
-	PreparationTimeService = s.NewPreparationTimeService(PreparationTimeRepository)
-	SearchService = s.NewSearchService(SearchRepository)
+	CategoryService = cs.NewCategoryService(CategoryRepository)
+	CuisineTypeService = cus.NewCuisineTypeService(CuisineTypeRepository)
+	DifficultyLevelService = ds.NewDifficultyLevelService(DifficultyLevelRepository)
+	PreparationTimeService = ps.NewPreparationTimeService(PreparationTimeRepository)
+	SearchService = ss.NewSearchService(SearchRepository)
+	TagService = ts.NewTagService(TagRepository)
 
 	// Init handlers
-	CategoryHandlers = h.NewCategoryHandlers(CategoryService, Logger)
-	TagHandlers = h.NewTagHandlers(TagService, Logger)
-	CuisineTypeHandlers = h.NewCuisineTypeHandlers(CuisineTypeService, Logger)
-	DifficultyLevelHandlers = h.NewDifficultyLevelHandlers(DifficultyLevelService, Logger)
-	PreparationTimeHandlers = h.NewPreparationTimeHandlers(PreparationTimeService, Logger)
-	SearchHandlers = h.NewSearchHandlers(SearchService, Logger)
+	CategoryHandlers = ch.NewCategoryHandlers(CategoryService, Logger)
+	CuisineTypeHandlers = cuh.NewCuisineTypeHandlers(CuisineTypeService, Logger)
+	DifficultyLevelHandlers = dh.NewDifficultyLevelHandlers(DifficultyLevelService, Logger)
+	PreparationTimeHandlers = ph.NewPreparationTimeHandlers(PreparationTimeService, Logger)
+	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
+	TagHandlers = th.NewTagHandlers(TagService, Logger)
 }

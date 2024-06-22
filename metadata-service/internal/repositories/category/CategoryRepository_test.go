@@ -1,22 +1,17 @@
 package repositories
 
 import (
-	"database/sql/driver"
 	"errors"
-	"log"
-	"os"
 	"regexp"
 	"testing"
-	"time"
 
 	m "metadata-service/internal/models"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+
+	co "metadata-service/internal/common/test"
 )
 
 var (
@@ -26,60 +21,10 @@ var (
 	}
 )
 
-func newMockDatabase(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
-
-	var mockDB *gorm.DB
-
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold:             time.Second, // Slow SQL threshold
-			LogLevel:                  logger.Info, // Log level
-			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-			Colorful:                  false,       // Disable color
-		},
-	)
-
-	sqlMockDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sql mock init failed: %v", err.Error())
-	}
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 sqlMockDB,
-		PreferSimpleProtocol: true,
-	})
-
-	mockDB, err = gorm.Open(dialector, &gorm.Config{
-		NowFunc: timeFunc,
-		Logger:  newLogger,
-	})
-	if err != nil {
-		t.Fatalf("gorm mock init failed: %v", err.Error())
-	}
-
-	return mockDB, mock
-}
-
-func timeFunc() time.Time {
-	time, _ := time.Parse("2006-01-02 15:04", "2023-02-04 18:00")
-	return time
-}
-
-type AnyTime struct{}
-
-// Match satisfies sqlmock.Argument interface
-func (a AnyTime) Match(v driver.Value) bool {
-	_, ok := v.(time.Time)
-	return ok
-}
-
 // ========================================================================================================
 
 func TestCategoryFindAll_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories" WHERE "categories"."deleted_at" IS NULL`)).
@@ -100,7 +45,7 @@ func TestCategoryFindAll_OK(t *testing.T) {
 }
 
 func TestCategoryFindAll_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories" WHERE "categories"."deleted_at" IS NULL`)).
@@ -114,7 +59,7 @@ func TestCategoryFindAll_Err(t *testing.T) {
 }
 
 func TestCategoryFindSingle_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories" WHERE "categories"."deleted_at" IS NULL AND "categories"."id" = $1 ORDER BY "categories"."id" LIMIT $2`)).
@@ -132,7 +77,7 @@ func TestCategoryFindSingle_OK(t *testing.T) {
 }
 
 func TestCategoryFindSingle_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories" WHERE "categories"."deleted_at" IS NULL AND "categories"."id" = $1 ORDER BY "categories"."id" LIMIT $2`)).
@@ -149,7 +94,7 @@ func TestCategoryFindSingle_Err(t *testing.T) {
 }
 
 func TestCategoryCreate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
@@ -172,7 +117,7 @@ func TestCategoryCreate_OK(t *testing.T) {
 }
 
 func TestCategoryCreate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
@@ -195,7 +140,7 @@ func TestCategoryCreate_Err(t *testing.T) {
 }
 
 func TestCategoryUpdate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
@@ -216,7 +161,7 @@ func TestCategoryUpdate_OK(t *testing.T) {
 }
 
 func TestCategoryUpdate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
@@ -237,7 +182,7 @@ func TestCategoryUpdate_Err(t *testing.T) {
 }
 
 func TestCategoryDelete_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()
@@ -254,7 +199,7 @@ func TestCategoryDelete_OK(t *testing.T) {
 }
 
 func TestCategoryDelete_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)
 
 	mock.ExpectBegin()

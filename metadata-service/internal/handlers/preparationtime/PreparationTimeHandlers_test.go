@@ -80,7 +80,7 @@ func (s *PreparationTimeServiceMock) Delete(preparationTimeDTO m.PreparationTime
 
 func TestPreparationTimeGetAll_OK(t *testing.T) {
 	preparationTimes = append(preparationTimes, preparationTime)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	preparationTime.Duration = 1
 
@@ -102,7 +102,7 @@ func TestPreparationTimeGetAll_OK(t *testing.T) {
 
 func TestPreparationTimeGetAll_NotFound(t *testing.T) {
 	preparationTimes = append(preparationTimes, preparationTime)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	preparationTime.Duration = 2
 
@@ -122,7 +122,7 @@ func TestPreparationTimeGetAll_NotFound(t *testing.T) {
 
 func TestPreparationTimeGetAll_Error(t *testing.T) {
 	preparationTimes = append(preparationTimes, preparationTime)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	preparationTime.Duration = 3
 
@@ -142,7 +142,7 @@ func TestPreparationTimeGetAll_Error(t *testing.T) {
 
 func TestPreparationTimeGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
@@ -167,7 +167,7 @@ func TestPreparationTimeGet_OK(t *testing.T) {
 
 func TestPreparationTimeGet_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
@@ -187,7 +187,7 @@ func TestPreparationTimeGet_IDErr(t *testing.T) {
 
 func TestPreparationTimeGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
@@ -210,7 +210,7 @@ func TestPreparationTimeGet_NotFound(t *testing.T) {
 
 func TestPreparationTimeGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
@@ -233,7 +233,7 @@ func TestPreparationTimeGet_FindErr(t *testing.T) {
 
 func TestPreparationTimeCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createPreparationTime := m.PreparationTimeDTO{
 		Duration: 1,
@@ -257,7 +257,7 @@ func TestPreparationTimeCreate_OK(t *testing.T) {
 
 func TestPreparationTimeCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/preparationTime/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -275,7 +275,7 @@ func TestPreparationTimeCreate_UnmarshalErr(t *testing.T) {
 
 func TestPreparationTimeCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createPreparationTime := m.PreparationTimeDTO{
 		Duration: 3,
@@ -298,7 +298,7 @@ func TestPreparationTimeCreate_CreateErr(t *testing.T) {
 
 func TestPreparationTimeUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	preparationTime.Duration = 1
 	reqBody, _ := json.Marshal(preparationTime)
@@ -322,7 +322,7 @@ func TestPreparationTimeUpdate_OK(t *testing.T) {
 
 func TestPreparationTimeUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/preparationTime/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -343,7 +343,7 @@ func TestPreparationTimeUpdate_UnmarshalErr(t *testing.T) {
 
 func TestPreparationTimeUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(preparationTime)
 
@@ -363,7 +363,7 @@ func TestPreparationTimeUpdate_IDRequiredErr(t *testing.T) {
 
 func TestPreparationTimeUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	preparationTime.Duration = 3
 	reqBody, _ := json.Marshal(preparationTime)
@@ -387,7 +387,7 @@ func TestPreparationTimeUpdate_UpdateErr(t *testing.T) {
 
 func TestPreparationTimeDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	preparationTime.Duration = 1
 
@@ -410,7 +410,7 @@ func TestPreparationTimeDelete_OK(t *testing.T) {
 
 func TestPreparationTimeDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/preparationTime/1", nil)
 	w := httptest.NewRecorder()
@@ -428,7 +428,7 @@ func TestPreparationTimeDelete_IDRequiredErr(t *testing.T) {
 
 func TestPreparationTimeDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	preparationTime.Duration = 3
 

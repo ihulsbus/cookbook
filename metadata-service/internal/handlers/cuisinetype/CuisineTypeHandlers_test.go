@@ -80,7 +80,7 @@ func (s *CuisineTypeServiceMock) Delete(cuisineTypeDTO m.CuisineTypeDTO) error {
 
 func TestCuisineTypeGetAll_OK(t *testing.T) {
 	cuisineTypes = append(cuisineTypes, cuisineType)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	cuisineType.Name = "findall"
 
@@ -102,7 +102,7 @@ func TestCuisineTypeGetAll_OK(t *testing.T) {
 
 func TestCuisineTypeGetAll_NotFound(t *testing.T) {
 	cuisineTypes = append(cuisineTypes, cuisineType)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	cuisineType.Name = "notfound"
 
@@ -122,7 +122,7 @@ func TestCuisineTypeGetAll_NotFound(t *testing.T) {
 
 func TestCuisineTypeGetAll_Error(t *testing.T) {
 	cuisineTypes = append(cuisineTypes, cuisineType)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	cuisineType.Name = "error"
 
@@ -142,7 +142,7 @@ func TestCuisineTypeGetAll_Error(t *testing.T) {
 
 func TestCuisineTypeGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
@@ -167,7 +167,7 @@ func TestCuisineTypeGet_OK(t *testing.T) {
 
 func TestCuisineTypeGet_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
@@ -187,7 +187,7 @@ func TestCuisineTypeGet_IDErr(t *testing.T) {
 
 func TestCuisineTypeGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
@@ -210,7 +210,7 @@ func TestCuisineTypeGet_NotFound(t *testing.T) {
 
 func TestCuisineTypeGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
@@ -233,7 +233,7 @@ func TestCuisineTypeGet_FindErr(t *testing.T) {
 
 func TestCuisineTypeCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createCuisineType := m.CuisineTypeDTO{
 		Name: "create",
@@ -257,7 +257,7 @@ func TestCuisineTypeCreate_OK(t *testing.T) {
 
 func TestCuisineTypeCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/cuisineType/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -275,7 +275,7 @@ func TestCuisineTypeCreate_UnmarshalErr(t *testing.T) {
 
 func TestCuisineTypeCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createCuisineType := m.CuisineTypeDTO{
 		Name: "createerr",
@@ -298,7 +298,7 @@ func TestCuisineTypeCreate_CreateErr(t *testing.T) {
 
 func TestCuisineTypeUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	cuisineType.Name = "update"
 	reqBody, _ := json.Marshal(cuisineType)
@@ -322,7 +322,7 @@ func TestCuisineTypeUpdate_OK(t *testing.T) {
 
 func TestCuisineTypeUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/cuisineType/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -343,7 +343,7 @@ func TestCuisineTypeUpdate_UnmarshalErr(t *testing.T) {
 
 func TestCuisineTypeUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(cuisineType)
 
@@ -363,7 +363,7 @@ func TestCuisineTypeUpdate_IDRequiredErr(t *testing.T) {
 
 func TestCuisineTypeUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	cuisineType.Name = "updatefail"
 	reqBody, _ := json.Marshal(cuisineType)
@@ -387,7 +387,7 @@ func TestCuisineTypeUpdate_UpdateErr(t *testing.T) {
 
 func TestCuisineTypeDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	cuisineType.Name = "delete"
 
@@ -410,7 +410,7 @@ func TestCuisineTypeDelete_OK(t *testing.T) {
 
 func TestCuisineTypeDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/cuisineType/1", nil)
 	w := httptest.NewRecorder()
@@ -428,7 +428,7 @@ func TestCuisineTypeDelete_IDRequiredErr(t *testing.T) {
 
 func TestCuisineTypeDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &m.LoggerInterfaceMock{})
 
 	cuisineType.Name = "deleteError"
 

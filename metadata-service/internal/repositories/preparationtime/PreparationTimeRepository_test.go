@@ -10,6 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+
+	co "metadata-service/internal/common/test"
 )
 
 var (
@@ -20,7 +22,7 @@ var (
 )
 
 func TestPreparationTimeFindAll_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "preparation_times" WHERE "preparation_times"."deleted_at" IS NULL`)).
@@ -41,7 +43,7 @@ func TestPreparationTimeFindAll_OK(t *testing.T) {
 }
 
 func TestPreparationTimeFindAll_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "preparation_times" WHERE "preparation_times"."deleted_at" IS NULL`)).
@@ -55,7 +57,7 @@ func TestPreparationTimeFindAll_Err(t *testing.T) {
 }
 
 func TestPreparationTimeFindSingle_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "preparation_times" WHERE "preparation_times"."deleted_at" IS NULL AND "preparation_times"."id" = $1 ORDER BY "preparation_times"."id" LIMIT $2`)).
@@ -73,7 +75,7 @@ func TestPreparationTimeFindSingle_OK(t *testing.T) {
 }
 
 func TestPreparationTimeFindSingle_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "preparation_times" WHERE "preparation_times"."deleted_at" IS NULL AND "preparation_times"."id" = $1 ORDER BY "preparation_times"."id" LIMIT $2`)).
@@ -90,7 +92,7 @@ func TestPreparationTimeFindSingle_Err(t *testing.T) {
 }
 
 func TestPreparationTimeCreate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectBegin()
@@ -115,7 +117,7 @@ func TestPreparationTimeCreate_OK(t *testing.T) {
 }
 
 func TestPreparationTimeCreate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectBegin()
@@ -138,7 +140,7 @@ func TestPreparationTimeCreate_Err(t *testing.T) {
 }
 
 func TestPreparationTimeUpdate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectBegin()
@@ -159,7 +161,7 @@ func TestPreparationTimeUpdate_OK(t *testing.T) {
 }
 
 func TestPreparationTimeUpdate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectBegin()
@@ -180,7 +182,7 @@ func TestPreparationTimeUpdate_Err(t *testing.T) {
 }
 
 func TestPreparationTimeDelete_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectBegin()
@@ -197,7 +199,7 @@ func TestPreparationTimeDelete_OK(t *testing.T) {
 }
 
 func TestPreparationTimeDelete_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
 	mock.ExpectBegin()

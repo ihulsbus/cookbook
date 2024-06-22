@@ -81,7 +81,7 @@ func (s *CategoryServiceMock) Delete(categoryDTO m.CategoryDTO) error {
 func TestCategoryGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	categories = append(categories, category)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "findall"
 
@@ -104,7 +104,7 @@ func TestCategoryGetAll_OK(t *testing.T) {
 func TestCategoryGetAll_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	categories = append(categories, category)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "notfound"
 
@@ -125,7 +125,7 @@ func TestCategoryGetAll_NotFound(t *testing.T) {
 func TestCategoryGetAll_Error(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	categories = append(categories, category)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "error"
 
@@ -145,7 +145,7 @@ func TestCategoryGetAll_Error(t *testing.T) {
 
 func TestCategoryGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "find"
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/category/1", nil)
@@ -169,7 +169,7 @@ func TestCategoryGet_OK(t *testing.T) {
 
 func TestCategoryGet_ID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "finderr"
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/category/1", nil)
@@ -188,7 +188,7 @@ func TestCategoryGet_ID(t *testing.T) {
 
 func TestCategoryGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "notfound"
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/category/1", nil)
@@ -210,7 +210,7 @@ func TestCategoryGet_NotFound(t *testing.T) {
 
 func TestCategoryGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "finderr"
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/category/1", nil)
@@ -232,7 +232,7 @@ func TestCategoryGet_FindErr(t *testing.T) {
 
 func TestCategoryCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createCategory := m.CategoryDTO{
 		Name: "create",
@@ -257,7 +257,7 @@ func TestCategoryCreate_OK(t *testing.T) {
 
 func TestCategoryCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/category/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -275,7 +275,7 @@ func TestCategoryCreate_UnmarshalErr(t *testing.T) {
 
 func TestCategoryCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createCategory := m.CategoryDTO{
 		Name: "createError",
@@ -298,7 +298,7 @@ func TestCategoryCreate_CreateErr(t *testing.T) {
 
 func TestCategoryUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "update"
 	reqBody, _ := json.Marshal(category)
@@ -322,7 +322,7 @@ func TestCategoryUpdate_OK(t *testing.T) {
 
 func TestCategoryUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/category/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -343,7 +343,7 @@ func TestCategoryUpdate_UnmarshalErr(t *testing.T) {
 
 func TestCategoryUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(category)
 
@@ -363,7 +363,7 @@ func TestCategoryUpdate_IDRequiredErr(t *testing.T) {
 
 func TestCategoryUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "updateFail"
 	reqBody, _ := json.Marshal(category)
@@ -387,7 +387,7 @@ func TestCategoryUpdate_UpdateErr(t *testing.T) {
 
 func TestCategoryDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "delete"
 
@@ -410,7 +410,7 @@ func TestCategoryDelete_OK(t *testing.T) {
 
 func TestCategoryDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/category/1", nil)
 	w := httptest.NewRecorder()
@@ -428,7 +428,7 @@ func TestCategoryDelete_IDRequiredErr(t *testing.T) {
 
 func TestCategoryDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &LoggerInterfaceMock{})
+	h := NewCategoryHandlers(&CategoryServiceMock{}, &m.LoggerInterfaceMock{})
 
 	category.Name = "deleteError"
 

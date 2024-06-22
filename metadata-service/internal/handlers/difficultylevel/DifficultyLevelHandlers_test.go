@@ -80,7 +80,7 @@ func (s *DifficultyLevelServiceMock) Delete(difficultyLevelDTO m.DifficultyLevel
 
 func TestDifficultyLevelGetAll_OK(t *testing.T) {
 	difficultyLevels = append(difficultyLevels, difficultyLevel)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	difficultyLevel.Level = 1
 
@@ -102,7 +102,7 @@ func TestDifficultyLevelGetAll_OK(t *testing.T) {
 
 func TestDifficultyLevelGetAll_NotFound(t *testing.T) {
 	difficultyLevels = append(difficultyLevels, difficultyLevel)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	difficultyLevel.Level = 2
 
@@ -122,7 +122,7 @@ func TestDifficultyLevelGetAll_NotFound(t *testing.T) {
 
 func TestDifficultyLevelGetAll_Error(t *testing.T) {
 	difficultyLevels = append(difficultyLevels, difficultyLevel)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	difficultyLevel.Level = 3
 
@@ -142,7 +142,7 @@ func TestDifficultyLevelGetAll_Error(t *testing.T) {
 
 func TestDifficultyLevelGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel/1", nil)
 	w := httptest.NewRecorder()
@@ -167,7 +167,7 @@ func TestDifficultyLevelGet_OK(t *testing.T) {
 
 func TestDifficultyLevelGet_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel/1", nil)
 	w := httptest.NewRecorder()
@@ -187,7 +187,7 @@ func TestDifficultyLevelGet_IDErr(t *testing.T) {
 
 func TestDifficultyLevelGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel/1", nil)
 	w := httptest.NewRecorder()
@@ -210,7 +210,7 @@ func TestDifficultyLevelGet_NotFound(t *testing.T) {
 
 func TestDifficultyLevelGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel/1", nil)
 	w := httptest.NewRecorder()
@@ -233,7 +233,7 @@ func TestDifficultyLevelGet_FindErr(t *testing.T) {
 
 func TestDifficultyLevelCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createDifficultyLevel := m.DifficultyLevelDTO{
 		Level: 1,
@@ -257,7 +257,7 @@ func TestDifficultyLevelCreate_OK(t *testing.T) {
 
 func TestDifficultyLevelCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -275,7 +275,7 @@ func TestDifficultyLevelCreate_UnmarshalErr(t *testing.T) {
 
 func TestDifficultyLevelCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createDifficultyLevel := m.DifficultyLevelDTO{
 		Level: 3,
@@ -298,7 +298,7 @@ func TestDifficultyLevelCreate_CreateErr(t *testing.T) {
 
 func TestDifficultyLevelUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	difficultyLevel.Level = 1
 	reqBody, _ := json.Marshal(difficultyLevel)
@@ -322,7 +322,7 @@ func TestDifficultyLevelUpdate_OK(t *testing.T) {
 
 func TestDifficultyLevelUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -343,7 +343,7 @@ func TestDifficultyLevelUpdate_UnmarshalErr(t *testing.T) {
 
 func TestDifficultyLevelUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(difficultyLevel)
 
@@ -363,7 +363,7 @@ func TestDifficultyLevelUpdate_IDRequiredErr(t *testing.T) {
 
 func TestDifficultyLevelUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	difficultyLevel.Level = 3
 	reqBody, _ := json.Marshal(difficultyLevel)
@@ -387,7 +387,7 @@ func TestDifficultyLevelUpdate_UpdateErr(t *testing.T) {
 
 func TestDifficultyLevelDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	difficultyLevel.Level = 1
 
@@ -410,7 +410,7 @@ func TestDifficultyLevelDelete_OK(t *testing.T) {
 
 func TestDifficultyLevelDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/difficultyLevel/1", nil)
 	w := httptest.NewRecorder()
@@ -428,7 +428,7 @@ func TestDifficultyLevelDelete_IDRequiredErr(t *testing.T) {
 
 func TestDifficultyLevelDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &LoggerInterfaceMock{})
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &m.LoggerInterfaceMock{})
 
 	difficultyLevel.Level = 3
 

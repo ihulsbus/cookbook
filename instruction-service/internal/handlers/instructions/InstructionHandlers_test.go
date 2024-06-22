@@ -69,7 +69,7 @@ func (s *InstructionServiceMock) Delete(instructionDTO m.InstructionDTO) error {
 
 func TestGetInstruction_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "find"
 
@@ -94,7 +94,7 @@ func TestGetInstruction_OK(t *testing.T) {
 
 func TestGetInstruction_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "find"
 
@@ -114,7 +114,7 @@ func TestGetInstruction_IDErr(t *testing.T) {
 
 func TestGetInstruction_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "notfound"
 
@@ -137,7 +137,7 @@ func TestGetInstruction_NotFound(t *testing.T) {
 
 func TestGetInstruction_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "error"
 
@@ -160,7 +160,7 @@ func TestGetInstruction_FindErr(t *testing.T) {
 
 func TestCreateInstruction_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createInstruction := m.InstructionDTO{
 		Sequence:    1,
@@ -186,7 +186,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 
 func TestCreateInstruction_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -204,7 +204,7 @@ func TestCreateInstruction_UnmarshalErr(t *testing.T) {
 
 func TestCreateInstruction_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createInstruction := m.InstructionDTO{
 		Sequence:    1,
@@ -229,7 +229,7 @@ func TestCreateInstruction_CreateErr(t *testing.T) {
 
 func TestUpdateInstruction_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "update"
 	reqBody, _ := json.Marshal(instruction)
@@ -253,7 +253,7 @@ func TestUpdateInstruction_OK(t *testing.T) {
 
 func TestUpdateInstruction_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "update"
 	reqBody, _ := json.Marshal(instruction)
@@ -274,7 +274,7 @@ func TestUpdateInstruction_IDErr(t *testing.T) {
 
 func TestUpdateInstruction_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -293,7 +293,7 @@ func TestUpdateInstruction_UnmarshalErr(t *testing.T) {
 
 func TestUpdateInstruction_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "error"
 	reqBody, _ := json.Marshal(instruction)
@@ -315,7 +315,7 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 
 func TestDeleteInstruction_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "delete"
 
@@ -336,7 +336,7 @@ func TestDeleteInstruction_OK(t *testing.T) {
 
 func TestDeleteInstruction_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "delete"
 
@@ -356,7 +356,7 @@ func TestDeleteInstruction_IDErr(t *testing.T) {
 
 func TestDeleteInstruction_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewInstructionHandlers(&InstructionServiceMock{}, &LoggerInterfaceMock{})
+	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "error"
 

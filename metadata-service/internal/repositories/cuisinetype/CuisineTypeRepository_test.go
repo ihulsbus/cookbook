@@ -10,6 +10,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+
+	co "metadata-service/internal/common/test"
 )
 
 var (
@@ -20,7 +22,7 @@ var (
 )
 
 func TestCuisineTypeFindAll_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL`)).
@@ -41,7 +43,7 @@ func TestCuisineTypeFindAll_OK(t *testing.T) {
 }
 
 func TestCuisineTypeFindAll_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL`)).
@@ -55,7 +57,7 @@ func TestCuisineTypeFindAll_Err(t *testing.T) {
 }
 
 func TestCuisineTypeFindSingle_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL AND "cuisine_types"."id" = $1 ORDER BY "cuisine_types"."id" LIMIT $2`)).
@@ -73,7 +75,7 @@ func TestCuisineTypeFindSingle_OK(t *testing.T) {
 }
 
 func TestCuisineTypeFindSingle_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL AND "cuisine_types"."id" = $1 ORDER BY "cuisine_types"."id" LIMIT $2`)).
@@ -90,7 +92,7 @@ func TestCuisineTypeFindSingle_Err(t *testing.T) {
 }
 
 func TestCuisineTypeCreate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectBegin()
@@ -115,7 +117,7 @@ func TestCuisineTypeCreate_OK(t *testing.T) {
 }
 
 func TestCuisineTypeCreate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectBegin()
@@ -138,7 +140,7 @@ func TestCuisineTypeCreate_Err(t *testing.T) {
 }
 
 func TestCuisineTypeUpdate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectBegin()
@@ -159,7 +161,7 @@ func TestCuisineTypeUpdate_OK(t *testing.T) {
 }
 
 func TestCuisineTypeUpdate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectBegin()
@@ -180,7 +182,7 @@ func TestCuisineTypeUpdate_Err(t *testing.T) {
 }
 
 func TestCuisineTypeDelete_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectBegin()
@@ -197,7 +199,7 @@ func TestCuisineTypeDelete_OK(t *testing.T) {
 }
 
 func TestCuisineTypeDelete_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
+	db, mock := co.NewMockDatabase(t)
 	r := NewCuisineTypeRepository(db)
 
 	mock.ExpectBegin()

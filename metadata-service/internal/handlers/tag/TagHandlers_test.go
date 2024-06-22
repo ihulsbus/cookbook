@@ -80,7 +80,7 @@ func (s *TagServiceMock) Delete(tagDTO m.TagDTO) error {
 
 func TestTagGetAll_OK(t *testing.T) {
 	tags = append(tags, tag)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	tag.Name = "findall"
 
@@ -102,7 +102,7 @@ func TestTagGetAll_OK(t *testing.T) {
 
 func TestTagGetAll_NotFound(t *testing.T) {
 	tags = append(tags, tag)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	tag.Name = "notfound"
 
@@ -122,7 +122,7 @@ func TestTagGetAll_NotFound(t *testing.T) {
 
 func TestTagGetAll_Error(t *testing.T) {
 	tags = append(tags, tag)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	tag.Name = "error"
 
@@ -142,7 +142,7 @@ func TestTagGetAll_Error(t *testing.T) {
 
 func TestTagGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
@@ -167,7 +167,7 @@ func TestTagGet_OK(t *testing.T) {
 
 func TestTagGet_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
@@ -187,7 +187,7 @@ func TestTagGet_IDErr(t *testing.T) {
 
 func TestTagGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
@@ -210,7 +210,7 @@ func TestTagGet_NotFound(t *testing.T) {
 
 func TestTagGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
@@ -233,7 +233,7 @@ func TestTagGet_FindErr(t *testing.T) {
 
 func TestTagCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createTag := m.TagDTO{
 		Name: "create",
@@ -257,7 +257,7 @@ func TestTagCreate_OK(t *testing.T) {
 
 func TestTagCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -275,7 +275,7 @@ func TestTagCreate_UnmarshalErr(t *testing.T) {
 
 func TestTagCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	createTag := m.TagDTO{
 		Name: "createerr",
@@ -298,7 +298,7 @@ func TestTagCreate_CreateErr(t *testing.T) {
 
 func TestTagUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	tag.Name = "update"
 	reqBody, _ := json.Marshal(tag)
@@ -322,7 +322,7 @@ func TestTagUpdate_OK(t *testing.T) {
 
 func TestTagUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/tag/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -343,7 +343,7 @@ func TestTagUpdate_UnmarshalErr(t *testing.T) {
 
 func TestTagUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(tag)
 
@@ -363,7 +363,7 @@ func TestTagUpdate_IDRequiredErr(t *testing.T) {
 
 func TestTagUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	tag.Name = "updatefail"
 	reqBody, _ := json.Marshal(tag)
@@ -387,7 +387,7 @@ func TestTagUpdate_UpdateErr(t *testing.T) {
 
 func TestTagDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	tag.Name = "delete"
 
@@ -410,7 +410,7 @@ func TestTagDelete_OK(t *testing.T) {
 
 func TestTagDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/tag/1", nil)
 	w := httptest.NewRecorder()
@@ -428,7 +428,7 @@ func TestTagDelete_IDRequiredErr(t *testing.T) {
 
 func TestTagDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewTagHandlers(&TagServiceMock{}, &LoggerInterfaceMock{})
+	h := NewTagHandlers(&TagServiceMock{}, &m.LoggerInterfaceMock{})
 
 	tag.Name = "deleteError"
 

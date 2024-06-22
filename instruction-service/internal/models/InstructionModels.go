@@ -56,3 +56,11 @@ func (i InstructionDTO) ConvertFromDTO() Instruction {
 		MediaID:     i.MediaID,
 	}
 }
+
+// Association model
+type RecipeInstruction struct {
+	RecipeID      uuid.UUID      `gorm:"type:uuid;primaryKey"`
+	InstructionID uuid.UUID      `gorm:"type:uuid;primaryKey"`
+	CreatedAt     time.Time      `gorm:"autoCreateTime"`
+	DeletedAt     gorm.DeletedAt `gorm:"index"`
+}
