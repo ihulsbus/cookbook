@@ -76,16 +76,18 @@ jobs:
         merge-multiple: true
 
     - name: list files
-      run: ls -R
+      run: ls -al
 
     - name: list testreports
-      run: ls -R ${{ github.workspace }}/test-reports
+      run: ls -al ${{ github.workspace }}/test-reports
     
     - name: list coveragereports
-      run: ls -R ${{ github.workspace }}/coverage-reports
+      run: ls -al ${{ github.workspace }}/coverage-reports
 
     - name: SonarCloud Scan
       uses: SonarSource/sonarcloud-github-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        projectBaseDir: ${{ github.workspace }}
