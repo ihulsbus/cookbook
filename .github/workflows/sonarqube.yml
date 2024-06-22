@@ -39,14 +39,14 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{ github.run_id }}_coverage_${{ matrix.microservice }}
+        name: ${{ matrix.microservice }}_coverage
         path: ${{ github.workspace }}/${{ matrix.microservice }}-coverage.out
         if-no-files-found: ignore
         retention-days: 1
 
     - uses: actions/upload-artifact@v4
       with:
-        name: ${{ github.run_id }}_test_${{ matrix.microservice }}
+        name: ${{ matrix.microservice }}_test
         path: ${{ github.workspace }}/${{ matrix.microservice }}-test-report.out
         if-no-files-found: ignore
         retention-days: 1
@@ -56,11 +56,31 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     steps:
-    - uses: actions/checkout@v4
+    - name: checkout code
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
-    - uses: actions/download-artifact@v4
+    - name: download test reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*_test'
+        path: ${{ github.workspace }}/test-reports
+
+    - name: download coverage reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: '*_coverage'
+        path: ${{ github.workspace }}/coverage-reports
+
+    - name: list files
+      run: ls -R
+
+    - name: list testreports
+      run: ls -R ${{ github.workspace }}/test-reports
+    
+    - name: list coveragereports
+      run: ls -R ${{ github.workspace }}/coverage-reports
 
     - name: SonarCloud Scan
       uses: SonarSource/sonarcloud-github-action@master
