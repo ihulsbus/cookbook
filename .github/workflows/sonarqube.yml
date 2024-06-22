@@ -66,12 +66,14 @@ jobs:
       with:
         pattern: '*_test'
         path: ${{ github.workspace }}/test-reports
+        merge-multiple: true
 
     - name: download coverage reports
       uses: actions/download-artifact@v4
       with:
         pattern: '*_coverage'
         path: ${{ github.workspace }}/coverage-reports
+        merge-multiple: true
 
     - name: list files
       run: ls -R
