@@ -1,7 +1,8 @@
-package services
+package repositories
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	m "image-service/internal/models"
 	"image/color"
@@ -11,45 +12,67 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	imageDTO m.ImageDTO
+	filename string
+
+	img m.Image = m.Image{
+		ID: uuid.New(),
+	}
 )
 
-type S3RepositoryMock struct{}
 type LoggerInterfaceMock struct{}
 
-func (S3RepositoryMock) UploadImage(img m.Image) error {
-	switch imageDTO.EntityType {
-	case "create":
-		return nil
+type S3InterfaceMock struct{}
+
+func (LoggerInterfaceMock) Error(args ...interface{}) {}
+
+func (S3InterfaceMock) PutObject(input *s3.PutObjectInput) (*s3.PutObjectOutput, error) {
+	name := fmt.Sprintf("img/%s.jpg", filename)
+	switch *input.Key {
+	case name:
+		return nil, nil
 	default:
-		return errors.New("error")
+		return nil, errors.New("error")
 	}
 }
 
-func (LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
+func (S3InterfaceMock) DeleteObject(input *s3.DeleteObjectInput) (*s3.DeleteObjectOutput, error) {
+	name := fmt.Sprintf("img/%s.jpg", filename)
+	switch *input.Key {
+	case name:
+		return nil, nil
+	default:
+		return nil, errors.New("error")
+	}
 
-func TestUploadImage_OK(t *testing.T) {
-	imageDTO.File = createFile(t)
-	s := NewImageService(&S3RepositoryMock{}, &LoggerInterfaceMock{})
-
-	result, err := s.Create(imageDTO)
-
-	assert.NoError(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
 }
 
-func TestUploadImage_Err(t *testing.T) {
-	imageDTO.File = createFile(t)
-	s := NewImageService(&S3RepositoryMock{}, &LoggerInterfaceMock{})
+// ========================================================================================================
 
-	result, err := s.Create(imageDTO)
+func TestImageUpload_OK(t *testing.T) {
+
+	r := NewS3Repository(&S3InterfaceMock{}, &LoggerInterfaceMock{}, "bucket")
+	filename = "filename"
+	img.File = createFile(t)
+
+	err := r.UploadImage(img)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+}
+
+func TestImageUpload_PutErr(t *testing.T) {
+	r := NewS3Repository(&S3InterfaceMock{}, &LoggerInterfaceMock{}, "bucket")
+	filename = "filename"
+	img.File = createFile(t)
+
+	err := r.UploadImage(img)
+
+	assert.Error(t, err)
 }
 
 // ====== Helpers ======

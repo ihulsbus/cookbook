@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"database/sql/driver"
 	"errors"
 	"log"
 	"os"
@@ -68,14 +67,6 @@ func newMockDatabase(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 func timeFunc() time.Time {
 	time, _ := time.Parse("2006-01-02 15:04", "2023-02-04 18:00")
 	return time
-}
-
-type AnyTime struct{}
-
-// Match satisfies sqlmock.Argument interface
-func (a AnyTime) Match(v driver.Value) bool {
-	_, ok := v.(time.Time)
-	return ok
 }
 
 func TestRecipeFindAll_OK(t *testing.T) {

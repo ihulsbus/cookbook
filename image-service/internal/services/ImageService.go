@@ -1,13 +1,16 @@
 package services
 
 import (
-	"mime/multipart"
+	m "image-service/internal/models"
 
 	"github.com/google/uuid"
 )
 
 type S3Repository interface {
-	UploadImage(file multipart.File, filename string, recipeID int) bool
+	UploadImage(img m.Image) error
+}
+
+type ImageRepository interface {
 }
 
 type LoggerInterface interface {
@@ -26,18 +29,20 @@ func NewImageService(repo S3Repository, logger LoggerInterface) *ImageService {
 	}
 }
 
-func (s ImageService) UploadImage(file multipart.File, recipeID int) bool {
+func (s ImageService) Create(imageDTO m.ImageDTO) (m.ImageDTO, error) {
+	var image m.Image = imageDTO.ConvertFromDTO()
+	var err error
 
-	// generate the file name we use in storage
-	filename, err := uuid.NewRandom()
+	// generate the image ID we will use to identify the file in storage
+	image.ID, err = uuid.NewRandom()
 	if err != nil {
 		s.logger.Errorf("error generating uuid %s", err.Error())
-		return false
+		return m.ImageDTO{}, err
 	}
 
-	if b := s.repo.UploadImage(file, filename.String(), recipeID); b {
-		return true
+	if err := s.repo.UploadImage(image); err != nil {
+		return m.ImageDTO{}, err
 	}
 
-	return false
+	return image.ConvertToDTO(), nil
 }
