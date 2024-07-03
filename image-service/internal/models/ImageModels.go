@@ -31,6 +31,16 @@ func (i Image) ConvertToDTO() ImageDTO {
 	}
 }
 
+func (i Image) ConvertAllToDTO(images []Image) []ImageDTO {
+	var data []ImageDTO
+
+	for _, image := range images {
+		data = append(data, image.ConvertToDTO())
+	}
+
+	return data
+}
+
 type ImageDTO struct {
 	ID         uuid.UUID `json:"id"`
 	EntityType string    `json:"entity_type"`
