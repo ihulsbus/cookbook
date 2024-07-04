@@ -57,7 +57,7 @@ func (S3InterfaceMock) DeleteObject(input *s3.DeleteObjectInput) (*s3.DeleteObje
 func TestImageUpload_OK(t *testing.T) {
 
 	r := NewS3Repository(&S3InterfaceMock{}, &LoggerInterfaceMock{}, "bucket")
-	filename = "filename"
+	filename = img.ID.String()
 	img.File = createFile(t)
 
 	err := r.UploadImage(img)
@@ -73,6 +73,17 @@ func TestImageUpload_PutErr(t *testing.T) {
 	err := r.UploadImage(img)
 
 	assert.Error(t, err)
+}
+
+func TestImageDelete_OK(t *testing.T) {
+
+	r := NewS3Repository(&S3InterfaceMock{}, &LoggerInterfaceMock{}, "bucket")
+	filename = img.ID.String()
+	img.File = createFile(t)
+
+	err := r.DeleteImage(img)
+
+	assert.NoError(t, err)
 }
 
 // ====== Helpers ======

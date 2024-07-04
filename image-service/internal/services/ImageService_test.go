@@ -2,13 +2,8 @@ package services
 
 import (
 	"errors"
-	"image"
 	m "image-service/internal/models"
-	"image/color"
-	"image/png"
-	"io"
-	"mime/multipart"
-	"net/http/httptest"
+	tc "image-service/internal/test_common"
 	"testing"
 
 	"github.com/google/uuid"
@@ -22,7 +17,7 @@ var (
 		EntityID:   uuid.New(),
 		Size:       0,
 		Type:       "image/jpeg",
-		File:       createFile(),
+		File:       tc.CreateFile(),
 	}
 )
 
@@ -193,7 +188,7 @@ func TestFindImage_Err(t *testing.T) {
 }
 
 func TestCreateImage_OK(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageDTO{
@@ -210,7 +205,7 @@ func TestCreateImage_OK(t *testing.T) {
 }
 
 func TestCreateImage_S3Err(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageDTO{
@@ -227,7 +222,7 @@ func TestCreateImage_S3Err(t *testing.T) {
 }
 
 func TestCreateImage_Err(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageDTO{
@@ -244,7 +239,7 @@ func TestCreateImage_Err(t *testing.T) {
 }
 
 func TestUpdateImage_OK(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageDTO{
@@ -261,7 +256,7 @@ func TestUpdateImage_OK(t *testing.T) {
 }
 
 func TestUpdateImage_FindErr(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageDTO{
@@ -278,7 +273,7 @@ func TestUpdateImage_FindErr(t *testing.T) {
 }
 
 func TestUpdateImage_S3Err(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageDTO{
@@ -295,7 +290,7 @@ func TestUpdateImage_S3Err(t *testing.T) {
 }
 
 func TestUpdateImage_Err(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageDTO{
@@ -312,7 +307,7 @@ func TestUpdateImage_Err(t *testing.T) {
 }
 
 func TestDeleteImage_OK(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDTO.EntityType = "delete"
@@ -322,7 +317,7 @@ func TestDeleteImage_OK(t *testing.T) {
 }
 
 func TestDeleteImage_FindErr(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDTO.EntityType = "findError"
@@ -333,7 +328,7 @@ func TestDeleteImage_FindErr(t *testing.T) {
 }
 
 func TestDeleteImage_DeleteS3Err(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDTO.EntityType = "deleteS3Err"
@@ -344,7 +339,7 @@ func TestDeleteImage_DeleteS3Err(t *testing.T) {
 }
 
 func TestDeleteImage_DeleteErr(t *testing.T) {
-	imageDTO.File = createFile()
+	imageDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDTO.EntityType = "deleteErr"
@@ -352,77 +347,4 @@ func TestDeleteImage_DeleteErr(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
-}
-
-// ====== Helpers ======
-func createImage() *image.RGBA {
-	width := 200
-	height := 100
-
-	upLeft := image.Point{0, 0}
-	lowRight := image.Point{width, height}
-
-	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
-
-	// Colors are defined by Red, Green, Blue, Alpha uint8 values.
-	cyan := color.RGBA{100, 200, 200, 0xff}
-
-	// Set color for each pixel.
-	for x := 0; x < width; x++ {
-		for y := 0; y < height; y++ {
-			switch {
-			case x < width/2 && y < height/2: // upper left quadrant
-				img.Set(x, y, cyan)
-			case x >= width/2 && y >= height/2: // lower right quadrant
-				img.Set(x, y, color.White)
-			default:
-				// Use zero value.
-			}
-		}
-	}
-
-	return img
-}
-
-func createFile() multipart.File {
-	var part io.Writer
-	var err error
-	// Set up a pipe to avoid buffering
-	pr, pw := io.Pipe()
-	// This writer is going to transform
-	// what we pass to it to multipart form data
-	// and write it to our io.Pipe
-	writer := multipart.NewWriter(pw)
-
-	go func() {
-		defer writer.Close()
-		// We create the form data field 'fileupload'
-		// which returns another writer to write the actual file
-		part, err = writer.CreateFormFile("file", "someimg.png")
-		if err != nil {
-			return
-		}
-
-		// https://yourbasic.org/golang/create-image/
-		img := createImage()
-
-		// Encode() takes an io.Writer.
-		// We pass the multipart field
-		// 'fileupload' that we defined
-		// earlier which, in turn, writes
-		// to our io.Pipe
-		err = png.Encode(part, img)
-		if err != nil {
-			return
-		}
-	}()
-	if err != nil {
-		return nil
-	}
-
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1/upload", pr)
-	file, _, _ := req.FormFile("file")
-
-	return file
-
 }

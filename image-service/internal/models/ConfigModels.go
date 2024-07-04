@@ -44,3 +44,8 @@ type S3Config struct {
 	BucketName      string
 	Endpoint        string
 }
+
+type LoggerInterface interface {
+	Debugf(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+}
