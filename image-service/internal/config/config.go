@@ -18,7 +18,7 @@ import (
 var (
 	Configuration m.Config
 
-	Logger         *log.Logger
+	Logger         *log.Logger = log.New()
 	DatabaseClient *gorm.DB
 	S3Client       *s3.S3
 	Cors           cors.Config
