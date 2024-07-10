@@ -3,15 +3,21 @@ name: Image service
 on:
   push:
     branches:
-      - master
-      - develop
-      - feature/V2-microservices
+    - master
+    - develop
+    - feature/V2-microservices
+    paths:
+    - 'image-service/**'
+    - '.github/workflows/image-service.yaml'
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+    - 'image-service/**'
+    - '.github/workflows/image-service.yaml'
 
 env:
   MODULE: image-service
-  GO_VERSION: '1.20'
+  GO_VERSION: '1.21'
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>
