@@ -3,12 +3,12 @@ package instructionservice
 import (
 	"context"
 	c "image-service/internal/config"
+	m "image-service/internal/middleware"
 	"net/http"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	ginglog "github.com/szuecs/gin-glog"
 	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
@@ -27,7 +27,7 @@ func ImageService(ctx context.Context) {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Logging
-	router.Use(ginglog.Logger(3 * time.Second))
+	router.Use(m.Logger(log))
 
 	// Panic recovery
 	router.Use(gin.Recovery())
@@ -35,14 +35,38 @@ func ImageService(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
-	privateGroup := router.Group("/api")
-	privateGroup.Use(ginkeycloak.NewAccessBuilder(config).
-		RestrictButForRole("administrator").
-		Build())
+	v2 := router.Group("/api/v2")
+	{
+		image := v2.Group("/images")
+		{
+			readRecipe := image.Group("")
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				readRecipe.GET("", c.ImageHandlers.FindAll)
+				readRecipe.GET(":id", c.ImageHandlers.Find)
+			}
 
-	privateGroup.GET("/privategroup", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Hello from private for groups"})
-	})
+			createRecipe := image.Group("")
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				createRecipe.POST("", c.ImageHandlers.Create)
+			}
+
+			updateRecipe := image.Group("")
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+
+				updateRecipe.PUT(":id", c.ImageHandlers.Update)
+			}
+
+			adminRecipe := image.Group("")
+			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			{
+				adminRecipe.DELETE(":id", c.ImageHandlers.Delete)
+			}
+		}
+
+	}
 
 	// Server startup
 	srv := &http.Server{
