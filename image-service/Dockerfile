@@ -19,11 +19,18 @@ RUN go mod verify
 # Build the binary.
 RUN CGO_ENABLED=0 go build cmd/image-service/main.go
 
+##################################
+# STEP 2 generate CACerts bundle #
+##################################
+FROM alpine:latest as certs
+RUN apk --update add ca-certificates
+
 ############################
-# STEP 2 build a small image
+# STEP 3 build a small image
 ############################
 FROM scratch
 
+COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /build/main /go/bin/main
 
 ENTRYPOINT [ "/go/bin/main" ]
