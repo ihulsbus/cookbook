@@ -31,7 +31,7 @@ func RecipeService(ctx context.Context) {
 
 	v2 := router.Group("/api/v2")
 	{
-		recipe := v2.Group("/recipes")
+		recipe := v2.Group("/recipe")
 		{
 			readRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())

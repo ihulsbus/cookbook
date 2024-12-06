@@ -1,0 +1,149 @@
+# Default values for image-service.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+pdb:
+  minAvailable: 1
+
+image:
+  repository: ghcr.io/ihulsbus/cookbook/recipe-service
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+
+podAnnotations: {}
+
+podLabels: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ports:
+- name: http
+  servicePort: 80
+  containerPort: 8080
+  protocol: TCP
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: api-staging.gourmedy.com
+      paths:
+        - path: /api/v2/recipe
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+    ephemeral-storage: 20Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+    ephemeral-storage: 20Mi
+
+autoscaling:
+  enabled: false
+
+# Additional volumes on the output Deployment definition.
+volumes:
+- name: tmpfs
+  emptyDir:
+    sizeLimit: 25Mi
+- name: config-volume
+  configMap:
+    name: recipe-service
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts:
+- name: config-volume
+  mountPath: /config
+- name: tmpfs
+  mountPath: /tmp
+
+environment:
+- name: DATABASE_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: recipe-service-recipe-database
+      key: password
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+keyvault:
+  name: Gourmedy
+  secrets:
+  - recipe-database
+
+config:
+  mountPath: /config
+  templates:
+    config.yaml: |
+      global:
+        logLevel: TRACE
+
+      cors:
+        allowCredentials: false
+        allowedOrigins:
+        - http://localhost:4200
+        allowedHeaders:
+        - Authorization
+        - "Content-Type"
+        allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - HEAD
+
+      oauth:
+        service: gourmedyfr
+        url: https://auth-admin.gourmedy.com
+        realm: gourmedy
+
+      database:
+        host: private-pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com
+        username: recipe
+        password: ""
+        port: 25060
+        database: recipe
+        sslMode: require
+        timezone: Europe/Amsterdam
