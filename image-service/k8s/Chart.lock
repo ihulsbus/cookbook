@@ -1,0 +1,6 @@
+dependencies:
+- name: shared-library
+  repository: file://../../../../toolops/shared-library
+  version: 0.1.13
+digest: sha256:5469057561b75edf3f09bcbb36195529b8b16e81ab74727bc46e49d49dd3d464
+generated: "2024-10-07T22:31:09.84456695+02:00"

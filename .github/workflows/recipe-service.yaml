@@ -7,16 +7,16 @@ on:
     - develop
     - feature/V2-microservices
     paths:
-    - 'search-service/**'
-    - '.github/workflows/search-service.yaml'
+    - 'recipe-service/**'
+    - '.github/workflows/recipe-service.yaml'
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-    - 'search-service/**'
-    - '.github/workflows/search-service.yaml'
+    - 'recipe-service/**'
+    - '.github/workflows/recipe-service.yaml'
 
 env:
-  MODULE: search-service
+  MODULE: recipe-service
   GO_VERSION: '1.21'
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io

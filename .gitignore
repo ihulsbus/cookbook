@@ -6,6 +6,8 @@
 **/config.yml
 **/images
 **/*.env
+**/manifest.yaml
+**/manifest.yml
 
 ###########
 # VS Code #
