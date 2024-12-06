@@ -1,0 +1,24 @@
+name: Search service
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.20'
+
+    - name: Build
+      working-directory: search-service
+      run: go build -v ./cmd/search-service/main.go
+
+    - name: Test
+      uses: robherley/go-test-action@v0.4.1
+      with:
+        moduleDirectory: search-service
