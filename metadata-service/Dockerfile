@@ -17,14 +17,13 @@ RUN go mod verify
 
 
 # Build the binary.
-RUN CGO_ENABLED=0 go build cmd/image-service/main.go
+RUN CGO_ENABLED=0 go build cmd/metadata-service/main.go
 
 ############################
 # STEP 2 build a small image
 ############################
 FROM scratch
 
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /build/main /go/bin/main
 
 ENTRYPOINT [ "/go/bin/main" ]

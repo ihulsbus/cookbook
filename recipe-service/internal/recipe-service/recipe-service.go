@@ -29,9 +29,9 @@ func RecipeService(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
-	v1 := router.Group("/api/v2")
+	v2 := router.Group("/api/v2")
 	{
-		recipe := v1.Group("/recipes")
+		recipe := v2.Group("/recipes")
 		{
 			readRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())

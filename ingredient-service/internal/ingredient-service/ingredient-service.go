@@ -29,9 +29,9 @@ func IngredientService(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
-	v1 := router.Group("/api/v2")
+	v2 := router.Group("/api/v2")
 	{
-		ingredient := v1.Group("/ingredient")
+		ingredient := v2.Group("/ingredient")
 		{
 			readIngredient := ingredient.Group("")
 			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
@@ -59,7 +59,7 @@ func IngredientService(ctx context.Context) {
 			}
 		}
 
-		unit := v1.Group("/unit")
+		unit := v2.Group("/unit")
 		{
 			readUnit := unit.Group("")
 			readUnit.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())

@@ -6,6 +6,7 @@ type Config struct {
 	Oauth    OauthConfig
 	Database DatabaseConfig
 	S3       S3Config
+	RabbitMQ RabbitMQConfig
 }
 
 // GlobalConfig holds global configuration items
@@ -45,6 +46,12 @@ type S3Config struct {
 	AWSAccessSecret string
 	BucketName      string
 	Endpoint        string
+}
+
+type RabbitMQConfig struct {
+	Username string
+	Password string
+	Host     string
 }
 
 type LoggerInterface interface {

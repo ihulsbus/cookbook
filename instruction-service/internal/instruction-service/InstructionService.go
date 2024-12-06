@@ -30,9 +30,9 @@ func InstructionService(ctx context.Context) {
 	router.Use(cors.New(c.Cors))
 
 	// API versioning setup
-	v1 := router.Group("/api/v2")
+	v2 := router.Group("/api/v2")
 	{
-		recipe := v1.Group("/instruction")
+		recipe := v2.Group("/instruction")
 		{
 			readInstruction := recipe.Group("")
 			readInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())

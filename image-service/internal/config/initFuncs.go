@@ -14,6 +14,8 @@ import (
 	"github.com/gin-contrib/cors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	_ "github.com/spf13/viper/remote"
+	"github.com/wagslane/go-rabbitmq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -62,6 +64,15 @@ func initConfig() {
 	}
 
 	Logger.Info("config file loaded")
+
+	viper.AddRemoteProvider("consul", "consul-server.consul.svc.cluster.local:8500", "TEST")
+	viper.SetConfigType("json")
+	err := viper.ReadRemoteConfig()
+	if err != nil {
+		log.Fatalf("error reading consul config: %v", err)
+	}
+
+	fmt.Println(viper.Get("test"))
 }
 
 func initDatabase() {
@@ -119,5 +130,19 @@ func initCors() {
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: Configuration.Cors.AllowCredentials,
 		MaxAge:           12 * time.Hour,
+	}
+}
+
+func initRabbitMQ(username, password, host string) {
+	var err error
+	var connString string = fmt.Sprintf("amqp://%s:%s@%s", username, password, host)
+
+	RabbitMQClient, err = rabbitmq.NewConn(
+		connString,
+		rabbitmq.WithConnectionOptionsLogger(Logger),
+	)
+
+	if err != nil {
+		panic(err)
 	}
 }

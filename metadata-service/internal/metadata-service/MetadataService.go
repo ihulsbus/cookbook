@@ -34,7 +34,7 @@ func MetadataService(ctx context.Context) {
 	{
 
 		// Tag routes
-		tag := v1.Group("/tag")
+		tag := v2.Group("/tag")
 		{
 			readTag := tag.Group("")
 			readTag.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
@@ -63,7 +63,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// Category routes
-		category := v1.Group("/category")
+		category := v2.Group("/category")
 		{
 			readCategory := category.Group("")
 			readCategory.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
@@ -92,7 +92,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// CuisineType routes
-		cuisineType := v1.Group("/cuisinetype")
+		cuisineType := v2.Group("/cuisinetype")
 		{
 			readCuisineType := cuisineType.Group("")
 			readCuisineType.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
@@ -121,7 +121,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// DifficultyLevel routes
-		DifficultyLevel := v1.Group("/difficultylevel")
+		DifficultyLevel := v2.Group("/difficultylevel")
 		{
 			readDifficultyLevel := DifficultyLevel.Group("")
 			readDifficultyLevel.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
@@ -150,7 +150,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// PreparationTime routes
-		PreparationTime := v1.Group("/preparationtime")
+		PreparationTime := v2.Group("/preparationtime")
 		{
 			readPreparationTime := PreparationTime.Group("")
 			readPreparationTime.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
@@ -179,7 +179,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// Search routes
-		search := v1.Group("/search")
+		search := v2.Group("/search")
 		{
 			createSearch := search.Group("")
 			createSearch.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
