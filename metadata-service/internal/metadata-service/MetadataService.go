@@ -30,7 +30,7 @@ func MetadataService(ctx context.Context) {
 	router.Use(cors.New(c.Cors))
 
 	// API versioning setup
-	v1 := router.Group("/api/v2/metadata")
+	v2 := router.Group("/api/v2/metadata")
 	{
 
 		// Tag routes
