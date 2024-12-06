@@ -95,6 +95,23 @@ volumeMounts:
 - name: tmpfs
   mountPath: /tmp
 
+environment:
+- name: S3_ACCESSKEY
+  valueFrom:
+    secretKeyRef:
+      name: image-service-gourmedy-s3
+      key: username
+- name: S3_ACCESSSECRET
+  valueFrom:
+    secretKeyRef:
+      name: image-service-gourmedy-s3
+      key: password
+- name: DATABASE_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: image-service-image-database
+      key: password
+
 nodeSelector: {}
 
 tolerations: []
@@ -144,7 +161,7 @@ config:
 
       s3:
         region: us-east-1
-        accessKey: DO00L3RKKFZJVTCBGMYJ
-        accessSecret: ${S3_PASSWORD}
+        accessKey: ""
+        accessSecret: ""
         bucketName: cbhbe
         endpoint: https://ams3.digitaloceanspaces.com
