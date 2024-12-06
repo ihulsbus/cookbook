@@ -14,6 +14,7 @@ on:
     paths:
     - 'image-service/**'
     - '.github/workflows/image-service.yaml'
+  workflow_dispatch:
 
 env:
   MODULE: image-service
@@ -64,10 +65,10 @@ jobs:
       # This is used to complete the identity challenge
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
-    needs: test
+
     steps:
     - uses: actions/checkout@v4
-  
+
     # Install the cosign tool except on PR
     # https://github.com/sigstore/cosign-installer
     - name: Install cosign

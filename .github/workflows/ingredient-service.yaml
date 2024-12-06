@@ -1,4 +1,4 @@
-name: Image service
+name: Ingredient service
 
 on:
   push:
@@ -14,6 +14,7 @@ on:
     paths:
     - 'ingredient-service/**'
     - '.github/workflows/ingredient-service.yaml'
+  workflow_dispatch:
 
 env:
   MODULE: ingredient-service
@@ -67,7 +68,7 @@ jobs:
     needs: test
     steps:
     - uses: actions/checkout@v4
-  
+
     # Install the cosign tool except on PR
     # https://github.com/sigstore/cosign-installer
     - name: Install cosign
