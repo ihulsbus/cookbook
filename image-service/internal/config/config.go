@@ -1,10 +1,10 @@
 package config
 
 import (
-	h "image-service/internal/handlers"
+	httpHandler "image-service/internal/handlers/http"
+	rabbitMQHandler "image-service/internal/handlers/rabbitmq"
 	m "image-service/internal/models"
-	ir "image-service/internal/repositories/image"
-	mq "image-service/internal/repositories/rabbitmq"
+	ir "image-service/internal/repositories/database"
 	sr "image-service/internal/repositories/s3"
 	s "image-service/internal/services"
 
@@ -19,6 +19,7 @@ import (
 
 var (
 	Configuration m.Config
+	err           error
 
 	Logger         *log.Logger = log.New()
 	DatabaseClient *gorm.DB
@@ -27,15 +28,15 @@ var (
 	RabbitMQClient *rabbitmq.Conn
 
 	// Repositories
-	ImageRepository    *ir.ImageRepository
-	S3Repository       *sr.S3Repository
-	RabbitMQRepository *mq.RabbitMQRepository
+	ImageRepository *ir.ImageRepository
+	S3Repository    *sr.S3Repository
 
 	// Services
 	ImageService *s.ImageService
 
 	// Handlers
-	ImageHandlers *h.ImageHandlers
+	ImageHandler    *httpHandler.ImageHandlers
+	RabbitMQHandler *rabbitMQHandler.RabbitMQConsumer
 )
 
 func init() {
@@ -68,11 +69,15 @@ func init() {
 	// Init repositories
 	ImageRepository = ir.NewImageRepository(DatabaseClient)
 	S3Repository = sr.NewS3Repository(S3Client, Logger, Configuration.S3.BucketName)
-	RabbitMQRepository = mq.NewRabbitMQRepository(RabbitMQClient)
 
 	// Init services
 	ImageService = s.NewImageService(ImageRepository, S3Repository, Logger)
 
 	// Init handlers
-	ImageHandlers = h.NewImageHandlers(ImageService, Logger)
+	ImageHandler = httpHandler.NewImageHandlers(ImageService, Logger)
+	RabbitMQHandler, err = rabbitMQHandler.NewRabbitMQConsumer(ImageService)
+	if err != nil {
+		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
+		Logger.Fatal("Encountered fatal error. Exiting.")
+	}
 }

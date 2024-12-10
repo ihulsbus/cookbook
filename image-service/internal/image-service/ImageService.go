@@ -14,15 +14,14 @@ import (
 
 var (
 	log = c.Logger
-
-	config = ginkeycloak.BuilderConfig{
-		Service: "",
-		Url:     "",
-		Realm:   "",
-	}
 )
 
 func ImageService(ctx context.Context) {
+	c.RabbitMQHandler.StartConsuming(c.RabbitMQClient, "images", "cookbook")
+	httpServer(ctx)
+}
+
+func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
@@ -42,27 +41,27 @@ func ImageService(ctx context.Context) {
 			readRecipe := image.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readRecipe.GET("", c.ImageHandlers.FindAll)
-				readRecipe.GET(":id", c.ImageHandlers.Find)
+				readRecipe.GET("", c.ImageHandler.FindAll)
+				readRecipe.GET(":id", c.ImageHandler.Find)
 			}
 
 			createRecipe := image.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createRecipe.POST("", c.ImageHandlers.Create)
+				createRecipe.POST("", c.ImageHandler.Create)
 			}
 
 			updateRecipe := image.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 
-				updateRecipe.PUT(":id", c.ImageHandlers.Update)
+				updateRecipe.PUT(":id", c.ImageHandler.Update)
 			}
 
 			adminRecipe := image.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				adminRecipe.DELETE(":id", c.ImageHandlers.Delete)
+				adminRecipe.DELETE(":id", c.ImageHandler.Delete)
 			}
 		}
 
