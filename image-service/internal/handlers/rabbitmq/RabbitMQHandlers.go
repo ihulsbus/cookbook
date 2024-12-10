@@ -28,6 +28,7 @@ func (c *RabbitMQConsumer) StartConsuming(connection *rabbitmq.Conn, queueName, 
 		queueName,
 		rabbitmq.WithConsumerOptionsRoutingKey("image.created"),
 		rabbitmq.WithConsumerOptionsExchangeName(exchangeName),
+		rabbitmq.WithConsumerOptionsQueueDurable,
 		rabbitmq.WithConsumerOptionsQueueQuorum,
 		rabbitmq.WithConsumerOptionsExchangeDeclare,
 	)
