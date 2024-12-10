@@ -67,14 +67,14 @@ func initConfig() {
 
 	Logger.Info("config file loaded")
 
-	viper.AddRemoteProvider("consul", "consul-server.consul.svc.cluster.local:8500", "TEST")
-	viper.SetConfigType("json")
-	err := viper.ReadRemoteConfig()
-	if err != nil {
-		log.Fatalf("error reading consul config: %v", err)
-	}
+	// viper.AddRemoteProvider("consul", "consul-server.consul.svc.cluster.local:8500", "TEST")
+	// viper.SetConfigType("json")
+	// err := viper.ReadRemoteConfig()
+	// if err != nil {
+	// 	log.Fatalf("error reading consul config: %v", err)
+	// }
 
-	fmt.Println(viper.Get("test"))
+	// fmt.Println(viper.Get("test"))
 }
 
 func initDatabase() {

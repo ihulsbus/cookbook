@@ -18,8 +18,8 @@ type RabbitMQConsumer struct {
 	logger  m.LoggerInterface
 }
 
-func NewRabbitMQConsumer(imageService imageService) (*RabbitMQConsumer, error) {
-	return &RabbitMQConsumer{service: imageService}, nil
+func NewRabbitMQConsumer(imageService imageService, logger m.LoggerInterface) (*RabbitMQConsumer, error) {
+	return &RabbitMQConsumer{service: imageService, logger: logger}, nil
 }
 
 func (c *RabbitMQConsumer) StartConsuming(connection *rabbitmq.Conn, queueName, exchangeName string) error {
@@ -28,6 +28,7 @@ func (c *RabbitMQConsumer) StartConsuming(connection *rabbitmq.Conn, queueName, 
 		queueName,
 		rabbitmq.WithConsumerOptionsRoutingKey("image.created"),
 		rabbitmq.WithConsumerOptionsExchangeName(exchangeName),
+		rabbitmq.WithConsumerOptionsQueueQuorum,
 		rabbitmq.WithConsumerOptionsExchangeDeclare,
 	)
 	if err != nil {

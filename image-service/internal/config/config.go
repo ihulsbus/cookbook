@@ -75,7 +75,7 @@ func init() {
 
 	// Init handlers
 	ImageHandler = httpHandler.NewImageHandlers(ImageService, Logger)
-	RabbitMQHandler, err = rabbitMQHandler.NewRabbitMQConsumer(ImageService)
+	RabbitMQHandler, err = rabbitMQHandler.NewRabbitMQConsumer(ImageService, Logger)
 	if err != nil {
 		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
 		Logger.Fatal("Encountered fatal error. Exiting.")

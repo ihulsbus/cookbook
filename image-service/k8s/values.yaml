@@ -10,7 +10,7 @@ image:
   repository: ghcr.io/ihulsbus/cookbook/image-service
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "test1"
+  tag: ""
 
 imagePullSecrets: []
 nameOverride: ""
@@ -111,6 +111,11 @@ environment:
     secretKeyRef:
       name: image-service-image-database
       key: password
+- name: RABBITMQ_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: image-service-rabbitmq-admin
+      key: password
 
 nodeSelector: {}
 
@@ -123,6 +128,7 @@ keyvault:
   secrets:
   - gourmedy-s3
   - image-database
+  - rabbitmq-admin
 
 config:
   mountPath: /config
@@ -153,7 +159,7 @@ config:
       database:
         host: private-pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com
         username: image
-        password: ${DB_PASSWORD}
+        password: ""
         port: 25060
         database: image
         sslMode: require
@@ -165,3 +171,8 @@ config:
         accessSecret: ""
         bucketName: cbhbe
         endpoint: https://ams3.digitaloceanspaces.com
+
+      rabbitmq:
+        host: rabbitmq.gourmedy-production.svc.cluster.local:5672
+        username: admin
+        password: ""
