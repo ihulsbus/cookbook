@@ -31,7 +31,7 @@ func NewS3Repository(s3Client S3Interface, logger LoggerInterface, bucketName st
 	}
 }
 
-func (r S3Repository) UploadImage(image m.Image) error {
+func (r S3Repository) UploadImage(image m.ImageFile) error {
 
 	objectPath := fmt.Sprintf("img/%s.jpg", image.ID.String())
 
@@ -45,7 +45,7 @@ func (r S3Repository) UploadImage(image m.Image) error {
 	return err
 }
 
-func (r S3Repository) DeleteImage(image m.Image) error {
+func (r S3Repository) DeleteImage(image m.ImageData) error {
 
 	objectPath := fmt.Sprintf("img/%s.jpg", image.ID.String())
 

@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	image m.Image = m.Image{
+	image m.ImageData = m.ImageData{
 		ID:         uuid.New(),
 		EntityType: "recipe",
 		EntityID:   uuid.New(),
@@ -72,7 +72,7 @@ func timeFunc() time.Time {
 
 func TestImageFindAll_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "entity_type", "entity_id", "size", "type"}).
@@ -92,7 +92,7 @@ func TestImageFindAll_OK(t *testing.T) {
 
 func TestImageFindAll_NotFoundErr(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL`)).
 		WillReturnRows(&sqlmock.Rows{})
@@ -106,7 +106,7 @@ func TestImageFindAll_NotFoundErr(t *testing.T) {
 
 func TestImageFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
@@ -120,7 +120,7 @@ func TestImageFindAll_Err(t *testing.T) {
 
 func TestImageFind_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL AND "images"."id" = $1 ORDER BY "images"."id" LIMIT $2`)).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "entity_type", "entity_id", "size", "type"}).
@@ -140,7 +140,7 @@ func TestImageFind_OK(t *testing.T) {
 
 func TestImageFind_NotFoundErr(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL AND "images"."id" = $1 ORDER BY "images"."id" LIMIT $2`)).
 		WillReturnRows(&sqlmock.Rows{})
@@ -149,12 +149,12 @@ func TestImageFind_NotFoundErr(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
-	assert.IsType(t, m.Image{}, result)
+	assert.IsType(t, m.ImageData{}, result)
 }
 
 func TestImageFind_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL AND "images"."id" = $1 ORDER BY "images"."id" LIMIT $2`)).
 		WillReturnError(errors.New("error"))
@@ -163,12 +163,12 @@ func TestImageFind_Err(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
-	assert.Equal(t, m.Image{}, result)
+	assert.Equal(t, m.ImageData{}, result)
 }
 
 func TestImageCreate_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "images" ("entity_type","entity_id","size","type","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id"`)).
@@ -188,12 +188,12 @@ func TestImageCreate_OK(t *testing.T) {
 	result, err := r.Create(image)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Image{}, result)
+	assert.IsType(t, m.ImageData{}, result)
 }
 
 func TestImageCreate_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "images" ("entity_type","entity_id","size","type","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id"`)).
@@ -218,7 +218,7 @@ func TestImageCreate_Err(t *testing.T) {
 
 func TestImageUpdate_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "images" SET "entity_type"=$1,"entity_id"=$2,"size"=$3,"type"=$4,"updated_at"=$5 WHERE "images"."deleted_at" IS NULL AND "id" = $6`)).
@@ -235,12 +235,12 @@ func TestImageUpdate_OK(t *testing.T) {
 	result, err := r.Update(image)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Image{}, result)
+	assert.IsType(t, m.ImageData{}, result)
 }
 
 func TestImageUpdate_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "images" SET "entity_type"=$1,"entity_id"=$2,"size"=$3,"type"=$4,"updated_at"=$5 WHERE "images"."deleted_at" IS NULL AND "id" = $6`)).
@@ -263,7 +263,7 @@ func TestImageUpdate_Err(t *testing.T) {
 
 func TestImageDelete_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "images" SET "deleted_at"=$1 WHERE "images"."id" = $2 AND "images"."deleted_at" IS NULL`)).
@@ -281,7 +281,7 @@ func TestImageDelete_OK(t *testing.T) {
 
 func TestImageDelete_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewImageRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "images" SET "deleted_at"=$1 WHERE "images"."id" = $2 AND "images"."deleted_at" IS NULL`)).

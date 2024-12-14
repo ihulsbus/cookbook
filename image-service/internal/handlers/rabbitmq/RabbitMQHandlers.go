@@ -8,9 +8,9 @@ import (
 )
 
 type imageService interface {
-	Create(imageDTO m.ImageDTO) (m.ImageDTO, error)
-	Update(imageDTO m.ImageDTO) (m.ImageDTO, error)
-	Delete(imageDTO m.ImageDTO) error
+	FindAll() ([]m.ImageDataDTO, error)
+	Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error)
+	Delete(imageDTO m.ImageDataDTO) error
 }
 
 type RabbitMQConsumer struct {
@@ -52,15 +52,15 @@ func (c *RabbitMQConsumer) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq
 	routingKey := d.RoutingKey
 	c.logger.Infof("Received message with routing key: %s", routingKey)
 
-	var event m.ImageDTO
+	var event m.ImageDataDTO
 	if err = json.Unmarshal(d.Body, &event); err != nil {
 		c.logger.Errorf("Failed to unmarshal message: %v", err)
 		return rabbitmq.NackRequeue
 	}
 
 	switch routingKey {
-	case "image.created":
-		_, err = c.service.Create(event)
+	case "image.find":
+		_, err = c.service.Find(m.ImageDataDTO{})
 	default:
 		c.logger.Warnf("Discarding message. Unknown routing key received: %s", routingKey)
 		return rabbitmq.NackDiscard

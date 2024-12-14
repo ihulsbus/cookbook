@@ -8,16 +8,16 @@ import (
 )
 
 type S3Repository interface {
-	UploadImage(img m.Image) error
-	DeleteImage(image m.Image) error
+	UploadImage(img m.ImageFile) error
+	DeleteImage(image m.ImageData) error
 }
 
-type ImageRepository interface {
-	FindAll() ([]m.Image, error)
-	Find(image m.Image) (m.Image, error)
-	Create(image m.Image) (m.Image, error)
-	Update(image m.Image) (m.Image, error)
-	Delete(image m.Image) error
+type DatabaseRepository interface {
+	FindAll() ([]m.ImageData, error)
+	Find(image m.ImageData) (m.ImageData, error)
+	Create(image m.ImageData) (m.ImageData, error)
+	Update(image m.ImageData) (m.ImageData, error)
+	Delete(image m.ImageData) error
 }
 
 type LoggerInterface interface {
@@ -25,23 +25,23 @@ type LoggerInterface interface {
 }
 
 type ImageService struct {
-	imageRepo ImageRepository
-	s3Repo    S3Repository
-	logger    LoggerInterface
+	databaseRepo DatabaseRepository
+	s3Repo       S3Repository
+	logger       LoggerInterface
 }
 
-func NewImageService(imageRepo ImageRepository, s3Repo S3Repository, logger LoggerInterface) *ImageService {
+func NewImageService(databaseRepo DatabaseRepository, s3Repo S3Repository, logger LoggerInterface) *ImageService {
 	return &ImageService{
-		imageRepo: imageRepo,
-		s3Repo:    s3Repo,
-		logger:    logger,
+		databaseRepo: databaseRepo,
+		s3Repo:       s3Repo,
+		logger:       logger,
 	}
 }
 
-func (s ImageService) FindAll() ([]m.ImageDTO, error) {
-	var images []m.Image
+func (s ImageService) FindAll() ([]m.ImageDataDTO, error) {
+	var images []m.ImageData
 
-	images, err := s.imageRepo.FindAll()
+	images, err := s.databaseRepo.FindAll()
 	if err != nil {
 		switch err.Error() {
 		case "not found":
@@ -51,68 +51,85 @@ func (s ImageService) FindAll() ([]m.ImageDTO, error) {
 		}
 	}
 
-	return m.Image{}.ConvertAllToDTO(images), nil
+	return m.ImageData{}.ConvertAllToDTO(images), nil
 }
 
-func (s ImageService) Find(imageDTO m.ImageDTO) (m.ImageDTO, error) {
-	var image m.Image
+func (s ImageService) Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error) {
+	var image m.ImageData
 
-	image, err := s.imageRepo.Find(imageDTO.ConvertFromDTO())
+	image, err := s.databaseRepo.Find(imageDTO.ConvertFromDTO())
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			return m.ImageDTO{}, err
+			return m.ImageDataDTO{}, err
 		default:
-			return m.ImageDTO{}, errors.New("internal server error")
+			return m.ImageDataDTO{}, errors.New("internal server error")
 		}
 	}
 
 	return image.ConvertToDTO(), nil
 }
 
-func (s ImageService) Create(imageDTO m.ImageDTO) (m.ImageDTO, error) {
-	var image m.Image = imageDTO.ConvertFromDTO()
+func (s ImageService) Create(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error) {
+	var imageFile m.ImageFile = imageFileDTO.ConvertFromDTO()
 	var err error
 
 	// generate the image ID we will use to identify the file in storage
-	image.ID = uuid.New()
+	imageFile.ID = uuid.New()
 
-	if err := s.s3Repo.UploadImage(image); err != nil {
-		return m.ImageDTO{}, err
+	if err := s.s3Repo.UploadImage(imageFile); err != nil {
+		return m.ImageDataDTO{}, err
 	}
 
-	image, err = s.imageRepo.Create(image)
+	// Create the model for the database
+	var imageData m.ImageData = m.ImageData{
+		ID:         imageFile.ID,
+		EntityID:   imageFile.EntityID,
+		EntityType: imageFile.EntityType,
+		Size:       imageFile.Size,
+		Type:       imageFile.Type,
+	}
+
+	imageData, err = s.databaseRepo.Create(imageData)
 	if err != nil {
-		return m.ImageDTO{}, err
+		return m.ImageDataDTO{}, err
 	}
 
-	return image.ConvertToDTO(), nil
+	return imageData.ConvertToDTO(), nil
 }
 
-func (s ImageService) Update(imageDTO m.ImageDTO) (m.ImageDTO, error) {
-	var image m.Image = imageDTO.ConvertFromDTO()
+func (s ImageService) Update(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error) {
+	var imageFile m.ImageFile = imageFileDTO.ConvertFromDTO()
 	var err error
 
-	if _, err = s.imageRepo.Find(image); err != nil {
-		return m.ImageDTO{}, errors.New("unable to find existing image. cannot update something that does not exist")
+	var imageData m.ImageData = m.ImageData{
+		ID:         imageFile.ID,
+		EntityID:   imageFile.EntityID,
+		EntityType: imageFile.EntityType,
+		Size:       imageFile.Size,
+		Type:       imageFile.Type,
 	}
 
-	if err = s.s3Repo.UploadImage(image); err != nil {
-		return m.ImageDTO{}, err
+	if _, err = s.databaseRepo.Find(imageData); err != nil {
+		return m.ImageDataDTO{}, errors.New("unable to find existing image. cannot update something that does not exist")
 	}
 
-	image, err = s.imageRepo.Update(image)
+	if err = s.s3Repo.UploadImage(imageFile); err != nil {
+		return m.ImageDataDTO{}, err
+	}
+
+	imageData, err = s.databaseRepo.Update(imageData)
 	if err != nil {
-		return m.ImageDTO{}, err
+		return m.ImageDataDTO{}, err
 	}
 
-	return image.ConvertToDTO(), nil
+	return imageData.ConvertToDTO(), nil
 }
 
-func (s ImageService) Delete(imageDTO m.ImageDTO) error {
+func (s ImageService) Delete(imageDTO m.ImageDataDTO) error {
 	var err error
 
-	_, err = s.imageRepo.Find(imageDTO.ConvertFromDTO())
+	_, err = s.databaseRepo.Find(imageDTO.ConvertFromDTO())
 	if err != nil {
 		return errors.New("unable to find existing image. cannot delete something that does not exist")
 	}
@@ -121,7 +138,7 @@ func (s ImageService) Delete(imageDTO m.ImageDTO) error {
 		return err
 	}
 
-	err = s.imageRepo.Delete(imageDTO.ConvertFromDTO())
+	err = s.databaseRepo.Delete(imageDTO.ConvertFromDTO())
 	if err != nil {
 		return err
 	}

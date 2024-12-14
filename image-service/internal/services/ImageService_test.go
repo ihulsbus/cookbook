@@ -11,12 +11,19 @@ import (
 )
 
 var (
-	imageDTO m.ImageDTO = m.ImageDTO{
+	imageDataDTO m.ImageDataDTO = m.ImageDataDTO{
 		ID:         uuid.New(),
-		EntityType: "",
 		EntityID:   uuid.New(),
+		EntityType: "",
 		Size:       0,
 		Type:       "image/jpeg",
+	}
+	imageFileDTO m.ImageFileDTO = m.ImageFileDTO{
+		ID:         imageDataDTO.ID,
+		EntityID:   imageDataDTO.EntityID,
+		EntityType: imageDataDTO.EntityType,
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
 		File:       tc.CreateFile(),
 	}
 )
@@ -25,7 +32,7 @@ type s3RepositoryMock struct{}
 type imageRepositoryMock struct{}
 type LoggerInterfaceMock struct{}
 
-func (s3RepositoryMock) UploadImage(imageInput m.Image) error {
+func (s3RepositoryMock) UploadImage(imageInput m.ImageFile) error {
 	switch imageInput.EntityType {
 	case "create":
 		return nil
@@ -40,7 +47,7 @@ func (s3RepositoryMock) UploadImage(imageInput m.Image) error {
 	}
 }
 
-func (s3RepositoryMock) DeleteImage(imageInput m.Image) error {
+func (s3RepositoryMock) DeleteImage(imageInput m.ImageData) error {
 	switch imageInput.EntityType {
 	case "delete":
 		return nil
@@ -51,61 +58,61 @@ func (s3RepositoryMock) DeleteImage(imageInput m.Image) error {
 	}
 }
 
-func (i imageRepositoryMock) FindAll() ([]m.Image, error) {
-	switch imageDTO.EntityType {
+func (i imageRepositoryMock) FindAll() ([]m.ImageData, error) {
+	switch imageDataDTO.EntityType {
 	case "findall":
-		return []m.Image{imageDTO.ConvertFromDTO()}, nil
+		return []m.ImageData{imageDataDTO.ConvertFromDTO()}, nil
 	case "notfound":
-		return []m.Image{}, errors.New("not found")
+		return []m.ImageData{}, errors.New("not found")
 	default:
 		return nil, errors.New("error")
 	}
 }
 
-func (i imageRepositoryMock) Find(imageInput m.Image) (m.Image, error) {
+func (i imageRepositoryMock) Find(imageInput m.ImageData) (m.ImageData, error) {
 	switch imageInput.EntityType {
 	case "find":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	case "create":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	case "update":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	case "updateErr":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	case "updateS3Err":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	case "delete":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	case "deleteErr":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	case "deleteS3Err":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	case "notfound":
-		return m.Image{}, errors.New("not found")
+		return m.ImageData{}, errors.New("not found")
 	default:
-		return m.Image{}, errors.New("error")
+		return m.ImageData{}, errors.New("error")
 	}
 }
 
-func (i imageRepositoryMock) Create(imageInput m.Image) (m.Image, error) {
+func (i imageRepositoryMock) Create(imageInput m.ImageData) (m.ImageData, error) {
 	switch imageInput.EntityType {
 	case "create":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	default:
-		return m.Image{}, errors.New("error")
+		return m.ImageData{}, errors.New("error")
 	}
 }
 
-func (i imageRepositoryMock) Update(imageInput m.Image) (m.Image, error) {
+func (i imageRepositoryMock) Update(imageInput m.ImageData) (m.ImageData, error) {
 	switch imageInput.EntityType {
 	case "update":
-		return imageDTO.ConvertFromDTO(), nil
+		return imageDataDTO.ConvertFromDTO(), nil
 	default:
-		return m.Image{}, errors.New("error")
+		return m.ImageData{}, errors.New("error")
 	}
 }
 
-func (i imageRepositoryMock) Delete(imageInput m.Image) error {
+func (i imageRepositoryMock) Delete(imageInput m.ImageData) error {
 	switch imageInput.EntityType {
 	case "delete":
 		return nil
@@ -121,11 +128,11 @@ func (LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 func TestFindAllImage_OK(t *testing.T) {
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "findall"
+	imageDataDTO.EntityType = "findall"
 	result, err := s.FindAll()
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.ImageDTO{}, result)
+	assert.IsType(t, []m.ImageDataDTO{}, result)
 	assert.Len(t, result, 1)
 	assert.Equal(t, "findall", result[0].EntityType)
 }
@@ -133,22 +140,22 @@ func TestFindAllImage_OK(t *testing.T) {
 func TestFindAllImage_NotFoundErr(t *testing.T) {
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "notfound"
+	imageDataDTO.EntityType = "notfound"
 	result, err := s.FindAll()
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
-	assert.IsType(t, []m.ImageDTO{}, result)
+	assert.IsType(t, []m.ImageDataDTO{}, result)
 }
 
 func TestFindAllImage_Err(t *testing.T) {
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "error"
+	imageDataDTO.EntityType = "error"
 	result, err := s.FindAll()
 
 	assert.Error(t, err)
-	assert.IsType(t, []m.ImageDTO{}, result)
+	assert.IsType(t, []m.ImageDataDTO{}, result)
 	assert.EqualError(t, err, "internal server error")
 
 }
@@ -156,194 +163,194 @@ func TestFindAllImage_Err(t *testing.T) {
 func TestFindImage_OK(t *testing.T) {
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "find"
-	result, err := s.Find(imageDTO)
+	imageDataDTO.EntityType = "find"
+	result, err := s.Find(imageDataDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 	assert.Equal(t, "find", result.EntityType)
 }
 
 func TestFindImage_NotFoundErr(t *testing.T) {
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "notfound"
-	result, err := s.Find(imageDTO)
+	imageDataDTO.EntityType = "notfound"
+	result, err := s.Find(imageDataDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
 func TestFindImage_Err(t *testing.T) {
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "error"
-	result, err := s.Find(imageDTO)
+	imageDataDTO.EntityType = "error"
+	result, err := s.Find(imageDataDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 	assert.EqualError(t, err, "internal server error")
 
 }
 
 func TestCreateImage_OK(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	imageFileDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	createImage := m.ImageDTO{
-		EntityID:   imageDTO.EntityID,
+	createImage := m.ImageFileDTO{
+		EntityID:   imageDataDTO.EntityID,
 		EntityType: "create",
-		Size:       imageDTO.Size,
-		Type:       imageDTO.Type,
-		File:       imageDTO.File,
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
+		File:       imageFileDTO.File,
 	}
 	result, err := s.Create(createImage)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
 func TestCreateImage_S3Err(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	imageFileDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	createImage := m.ImageDTO{
-		EntityID:   imageDTO.EntityID,
+	createImage := m.ImageFileDTO{
+		EntityID:   imageDataDTO.EntityID,
 		EntityType: "error",
-		Size:       imageDTO.Size,
-		Type:       imageDTO.Type,
-		File:       imageDTO.File,
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
+		File:       imageFileDTO.File,
 	}
 	result, err := s.Create(createImage)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
 func TestCreateImage_Err(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	imageFileDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	createImage := m.ImageDTO{
-		EntityID:   imageDTO.EntityID,
+	createImage := m.ImageFileDTO{
+		EntityID:   imageDataDTO.EntityID,
 		EntityType: "createErr",
-		Size:       imageDTO.Size,
-		Type:       imageDTO.Type,
-		File:       imageDTO.File,
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
+		File:       imageFileDTO.File,
 	}
 	result, err := s.Create(createImage)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
 func TestUpdateImage_OK(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	imageFileDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	createImage := m.ImageDTO{
-		EntityID:   imageDTO.EntityID,
+	createImage := m.ImageFileDTO{
+		EntityID:   imageDataDTO.EntityID,
 		EntityType: "update",
-		Size:       imageDTO.Size,
-		Type:       imageDTO.Type,
-		File:       imageDTO.File,
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
+		File:       imageFileDTO.File,
 	}
 	result, err := s.Update(createImage)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
 func TestUpdateImage_FindErr(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	imageFileDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	createImage := m.ImageDTO{
-		EntityID:   imageDTO.EntityID,
+	createImage := m.ImageFileDTO{
+		EntityID:   imageDataDTO.EntityID,
 		EntityType: "findErr",
-		Size:       imageDTO.Size,
-		Type:       imageDTO.Type,
-		File:       imageDTO.File,
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
+		File:       imageFileDTO.File,
 	}
 	result, err := s.Update(createImage)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
 func TestUpdateImage_S3Err(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	imageFileDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	createImage := m.ImageDTO{
-		EntityID:   imageDTO.EntityID,
+	createImage := m.ImageFileDTO{
+		EntityID:   imageDataDTO.EntityID,
 		EntityType: "updateS3Err",
-		Size:       imageDTO.Size,
-		Type:       imageDTO.Type,
-		File:       imageDTO.File,
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
+		File:       imageFileDTO.File,
 	}
 	result, err := s.Update(createImage)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
 func TestUpdateImage_Err(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	imageFileDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	createImage := m.ImageDTO{
-		EntityID:   imageDTO.EntityID,
+	createImage := m.ImageFileDTO{
+		EntityID:   imageDataDTO.EntityID,
 		EntityType: "updateErr",
-		Size:       imageDTO.Size,
-		Type:       imageDTO.Type,
-		File:       imageDTO.File,
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
+		File:       imageFileDTO.File,
 	}
 	result, err := s.Update(createImage)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.ImageDTO{}, result)
+	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
 func TestDeleteImage_OK(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	// imageDataDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "delete"
-	err := s.Delete(imageDTO)
+	imageDataDTO.EntityType = "delete"
+	err := s.Delete(imageDataDTO)
 
 	assert.NoError(t, err)
 }
 
 func TestDeleteImage_FindErr(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	// imageDataDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "findError"
-	err := s.Delete(imageDTO)
+	imageDataDTO.EntityType = "findError"
+	err := s.Delete(imageDataDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "unable to find existing image. cannot delete something that does not exist")
 }
 
 func TestDeleteImage_DeleteS3Err(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	// imageDataDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "deleteS3Err"
-	err := s.Delete(imageDTO)
+	imageDataDTO.EntityType = "deleteS3Err"
+	err := s.Delete(imageDataDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
 }
 
 func TestDeleteImage_DeleteErr(t *testing.T) {
-	imageDTO.File = tc.CreateFile()
+	// imageDataDTO.File = tc.CreateFile()
 	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDTO.EntityType = "deleteErr"
-	err := s.Delete(imageDTO)
+	imageDataDTO.EntityType = "deleteErr"
+	err := s.Delete(imageDataDTO)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

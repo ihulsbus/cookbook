@@ -100,7 +100,7 @@ func initDatabase() {
 
 	Logger.Info("performing database migrations")
 	if err := DatabaseClient.AutoMigrate(
-		&m.Image{},
+		&m.ImageData{},
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}

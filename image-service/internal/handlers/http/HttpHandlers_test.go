@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"image"
 	m "image-service/internal/models"
 	tc "image-service/internal/test_common"
@@ -22,13 +23,20 @@ import (
 )
 
 var (
-	imgs   []m.ImageDTO
-	imgDTO m.ImageDTO = m.ImageDTO{
+	imgs       []m.ImageDataDTO
+	imgDataDTO m.ImageDataDTO = m.ImageDataDTO{
 		ID:         uuid.New(),
-		EntityType: "recipe",
 		EntityID:   uuid.New(),
+		EntityType: "recipe",
 		Size:       0,
 		Type:       "img/jpeg",
+	}
+	imgFileDTO m.ImageFileDTO = m.ImageFileDTO{
+		ID:         imgDataDTO.ID,
+		EntityID:   imgDataDTO.EntityID,
+		EntityType: imgDataDTO.EntityType,
+		Size:       imgDataDTO.Size,
+		Type:       imgDataDTO.Type,
 		File:       tc.CreateFile(),
 	}
 )
@@ -42,8 +50,8 @@ func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
 
-func (s *imgServiceMock) FindAll() ([]m.ImageDTO, error) {
-	switch imgDTO.EntityType {
+func (s *imgServiceMock) FindAll() ([]m.ImageDataDTO, error) {
+	switch imgDataDTO.EntityType {
 	case "findall":
 		return imgs, nil
 	case "notfound":
@@ -53,37 +61,37 @@ func (s *imgServiceMock) FindAll() ([]m.ImageDTO, error) {
 	}
 }
 
-func (s *imgServiceMock) Find(imDTO m.ImageDTO) (m.ImageDTO, error) {
-	switch imgDTO.EntityType {
+func (s *imgServiceMock) Find(imDTO m.ImageDataDTO) (m.ImageDataDTO, error) {
+	switch imgDataDTO.EntityType {
 	case "find":
-		return imgDTO, nil
+		return imgDataDTO, nil
 	case "notfound":
-		return m.ImageDTO{}, errors.New("not found")
+		return m.ImageDataDTO{}, errors.New("not found")
 	default:
-		return m.ImageDTO{}, errors.New("error")
+		return m.ImageDataDTO{}, errors.New("error")
 	}
 }
 
-func (s *imgServiceMock) Create(imDTO m.ImageDTO) (m.ImageDTO, error) {
-	switch imgDTO.EntityType {
+func (s *imgServiceMock) Create(imDTO m.ImageFileDTO) (m.ImageDataDTO, error) {
+	switch imgDataDTO.EntityType {
 	case "create":
-		return imgDTO, nil
+		return imgDataDTO, nil
 	default:
-		return m.ImageDTO{}, errors.New("error")
+		return m.ImageDataDTO{}, errors.New("error")
 	}
 }
 
-func (s *imgServiceMock) Update(imgDTO m.ImageDTO) (m.ImageDTO, error) {
-	switch imgDTO.EntityType {
+func (s *imgServiceMock) Update(imgDTO m.ImageFileDTO) (m.ImageDataDTO, error) {
+	switch imgDataDTO.EntityType {
 	case "update":
-		return imgDTO, nil
+		return imgDataDTO, nil
 	default:
-		return m.ImageDTO{}, errors.New("error")
+		return m.ImageDataDTO{}, errors.New("error")
 	}
 }
 
-func (s *imgServiceMock) Delete(imDTO m.ImageDTO) error {
-	switch imgDTO.EntityType {
+func (s *imgServiceMock) Delete(imDTO m.ImageDataDTO) error {
+	switch imgDataDTO.EntityType {
 	case "delete":
 		return nil
 	default:
@@ -95,10 +103,10 @@ func (s *imgServiceMock) Delete(imDTO m.ImageDTO) error {
 
 func TestImageGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	imgs = append(imgs, imgDTO)
+	imgs = append(imgs, imgDataDTO)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "findall"
+	imgDataDTO.EntityType = "findall"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
@@ -118,10 +126,10 @@ func TestImageGetAll_OK(t *testing.T) {
 
 func TestImageGetAll_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	imgs = append(imgs, imgDTO)
+	imgs = append(imgs, imgDataDTO)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "notfound"
+	imgDataDTO.EntityType = "notfound"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
@@ -139,10 +147,10 @@ func TestImageGetAll_NotFound(t *testing.T) {
 
 func TestImageGetAll_Err(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	imgs = append(imgs, imgDTO)
+	imgs = append(imgs, imgDataDTO)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "error"
+	imgDataDTO.EntityType = "error"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
@@ -162,14 +170,14 @@ func TestImageGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "find"
+	imgDataDTO.EntityType = "find"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDTO.ID.String()},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	h.Find(c)
@@ -177,7 +185,7 @@ func TestImageGet_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(imgDTO)
+	expectedBody, _ := json.Marshal(imgDataDTO)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
@@ -187,7 +195,7 @@ func TestImageGet_NoID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "notfound"
+	imgDataDTO.EntityType = "notfound"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
@@ -207,14 +215,14 @@ func TestImageGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "notfound"
+	imgDataDTO.EntityType = "notfound"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDTO.ID.String()},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	h.Find(c)
@@ -230,14 +238,14 @@ func TestImageGet_Err(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "error"
+	imgDataDTO.EntityType = "error"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDTO.ID.String()},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	h.Find(c)
@@ -253,7 +261,7 @@ func TestImageCreate_JpegOK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -279,14 +287,14 @@ func TestImageCreate_JpegOK(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
 	h.Create(c)
 
 	resp := w.Result()
-	expectedBody, err := json.Marshal(imgDTO)
+	expectedBody, err := json.Marshal(imgDataDTO)
 	assert.NoError(t, err)
 	body, _ := io.ReadAll(resp.Body)
 
@@ -298,7 +306,7 @@ func TestImageCreate_PngOK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -324,14 +332,14 @@ func TestImageCreate_PngOK(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
 	h.Create(c)
 
 	resp := w.Result()
-	expectedBody, err := json.Marshal(imgDTO)
+	expectedBody, err := json.Marshal(imgDataDTO)
 	assert.NoError(t, err)
 	body, _ := io.ReadAll(resp.Body)
 
@@ -367,7 +375,7 @@ func TestImageCreate_EntityIDErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 	h.Create(c)
 
 	resp := w.Result()
@@ -405,10 +413,10 @@ func TestImageCreate_EntityTypeErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 	}
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 	h.Create(c)
 
 	resp := w.Result()
@@ -446,11 +454,11 @@ func TestImageCreate_NoFileErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 	h.Create(c)
 
 	resp := w.Result()
@@ -488,11 +496,11 @@ func TestImageCreate_ImageFileTooLargeErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 	h.Create(c)
 
 	resp := w.Result()
@@ -530,11 +538,11 @@ func TestImageCreate_InvalidFormatErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 	h.Create(c)
 
 	resp := w.Result()
@@ -572,11 +580,11 @@ func TestImageCreate_DecodeErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 	h.Create(c)
 
 	resp := w.Result()
@@ -614,18 +622,18 @@ func TestImageCreate_ImageTooSmallErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, `{"error":"image dimensions are too small"}`, string(body))
+	assert.Equal(t, `{"error":"image dimensions are too small. Dimensions need to be between 300x300 and 1000x1000"}`, string(body))
 }
 
 func TestImageCreate_ImageTooBigErr(t *testing.T) {
@@ -656,18 +664,18 @@ func TestImageCreate_ImageTooBigErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
-	imgDTO.EntityType = "create"
+	imgDataDTO.EntityType = "create"
 	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, `{"error":"image dimensions are too big"}`, string(body))
+	assert.Equal(t, `{"error":"image dimensions are too big. Dimensions need to be between 300x300 and 1000x1000"}`, string(body))
 }
 
 func TestImageCreate_ImageCreateErr(t *testing.T) {
@@ -698,11 +706,11 @@ func TestImageCreate_ImageCreateErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDTO.EntityType},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
-	imgDTO.EntityType = "error"
+	imgDataDTO.EntityType = "error"
 	h.Create(c)
 
 	resp := w.Result()
@@ -716,53 +724,51 @@ func TestImageUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "update"
-	reqBody, _ := json.Marshal(imgDTO)
+	// Create a sample image
+	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
+	var buf bytes.Buffer
+	err := jpeg.Encode(&buf, img, nil)
+	assert.NoError(t, err)
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", bytes.NewReader(reqBody))
+	// Create a new multipart writer
+	reqBody := new(bytes.Buffer)
+	writer := multipart.NewWriter(reqBody)
+	header := make(textproto.MIMEHeader)
+	header.Set("Content-Disposition", `form-data; name="image"; filename="test.jpg"`)
+	header.Set("Content-Type", "image/jpeg")
+	part, err := writer.CreatePart(header)
+	writer.FormDataContentType()
+	assert.NoError(t, err)
+	part.Write(buf.Bytes())
+	writer.Close()
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
+	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDTO.ID.String()},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
+	imgDataDTO.EntityType = "update"
 	h.Update(c)
 
 	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
+	expBody, _ := json.Marshal(imgDataDTO)
+	fmt.Println(string(expBody))
+	respBody, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	assert.Equal(t, reqBody, body)
-}
-
-func TestImageUpdate_UnmarshalErr(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", bytes.NewReader([]byte{}))
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDTO.ID.String()},
-	}
-
-	h.Update(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, `{"error":"EOF"}`, string(body))
+	assert.Equal(t, expBody, respBody)
 }
 
 func TestImageUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "update"
-	reqBody, _ := json.Marshal(imgDTO)
+	imgDataDTO.EntityType = "update"
+	reqBody, _ := json.Marshal(imgDataDTO)
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
@@ -782,17 +788,34 @@ func TestImageUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "fail"
-	reqBody, _ := json.Marshal(imgDTO)
+	// Create a sample image
+	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
+	var buf bytes.Buffer
+	err := jpeg.Encode(&buf, img, nil)
+	assert.NoError(t, err)
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", bytes.NewReader(reqBody))
+	// Create a new multipart writer
+	reqBody := new(bytes.Buffer)
+	writer := multipart.NewWriter(reqBody)
+	header := make(textproto.MIMEHeader)
+	header.Set("Content-Disposition", `form-data; name="image"; filename="test.jpg"`)
+	header.Set("Content-Type", "image/jpeg")
+	part, err := writer.CreatePart(header)
+	writer.FormDataContentType()
+	assert.NoError(t, err)
+	part.Write(buf.Bytes())
+	writer.Close()
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
+	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDTO.ID.String()},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
+	imgDataDTO.EntityType = "fail"
 	h.Update(c)
 
 	resp := w.Result()
@@ -806,14 +829,14 @@ func TestImageDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "delete"
+	imgDataDTO.EntityType = "delete"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDTO.ID.String()},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	h.Delete(c)
@@ -827,7 +850,7 @@ func TestImageDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "delete"
+	imgDataDTO.EntityType = "delete"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
@@ -847,14 +870,14 @@ func TestImageDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
 
-	imgDTO.EntityType = "error"
+	imgDataDTO.EntityType = "error"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDTO.ID.String()},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	h.Delete(c)

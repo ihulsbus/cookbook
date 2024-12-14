@@ -28,7 +28,7 @@ var (
 	RabbitMQClient *rabbitmq.Conn
 
 	// Repositories
-	ImageRepository *ir.ImageRepository
+	ImageRepository *ir.DatabaseRepository
 	S3Repository    *sr.S3Repository
 
 	// Services
@@ -67,7 +67,7 @@ func init() {
 	)
 
 	// Init repositories
-	ImageRepository = ir.NewImageRepository(DatabaseClient)
+	ImageRepository = ir.NewDatabaseRepository(DatabaseClient)
 	S3Repository = sr.NewS3Repository(S3Client, Logger, Configuration.S3.BucketName)
 
 	// Init services

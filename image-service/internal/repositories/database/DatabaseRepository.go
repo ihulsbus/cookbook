@@ -7,18 +7,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type ImageRepository struct {
+type DatabaseRepository struct {
 	db *gorm.DB
 }
 
-func NewImageRepository(db *gorm.DB) *ImageRepository {
-	return &ImageRepository{
+func NewDatabaseRepository(db *gorm.DB) *DatabaseRepository {
+	return &DatabaseRepository{
 		db: db,
 	}
 }
 
-func (r ImageRepository) FindAll() ([]m.Image, error) {
-	var images []m.Image
+func (r DatabaseRepository) FindAll() ([]m.ImageData, error) {
+	var images []m.ImageData
 
 	if err := r.db.Find(&images).Error; err != nil {
 		return nil, err
@@ -31,21 +31,21 @@ func (r ImageRepository) FindAll() ([]m.Image, error) {
 	return images, nil
 }
 
-func (r ImageRepository) Find(image m.Image) (m.Image, error) {
+func (r DatabaseRepository) Find(image m.ImageData) (m.ImageData, error) {
 
 	result := r.db.First(&image)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return m.Image{}, errors.New("not found")
+			return m.ImageData{}, errors.New("not found")
 		} else {
-			return m.Image{}, result.Error
+			return m.ImageData{}, result.Error
 		}
 	}
 
 	return image, nil
 }
 
-func (r ImageRepository) Create(image m.Image) (m.Image, error) {
+func (r DatabaseRepository) Create(image m.ImageData) (m.ImageData, error) {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
@@ -55,13 +55,13 @@ func (r ImageRepository) Create(image m.Image) (m.Image, error) {
 
 		return nil
 	}); err != nil {
-		return m.Image{}, err
+		return m.ImageData{}, err
 	}
 
 	return image, nil
 }
 
-func (r ImageRepository) Update(image m.Image) (m.Image, error) {
+func (r DatabaseRepository) Update(image m.ImageData) (m.ImageData, error) {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
@@ -71,14 +71,14 @@ func (r ImageRepository) Update(image m.Image) (m.Image, error) {
 
 		return nil
 	}); err != nil {
-		return m.Image{}, err
+		return m.ImageData{}, err
 	}
 
 	return image, nil
 
 }
 
-func (r ImageRepository) Delete(image m.Image) error {
+func (r DatabaseRepository) Delete(image m.ImageData) error {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
