@@ -842,8 +842,6 @@ github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
-github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.0-20241214223629-d2e23c63f365 h1:qKgzVBEAH2w00VgSHAKs38vgvvTSciSH/aJmCAx8sVs=
-github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.0-20241214223629-d2e23c63f365/go.mod h1:6iHcbH9A4t3YVfLHLE8DzIepnshdqx8fggQkk9WvTbA=
 github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.0-20241214225035-11105fcacde5 h1:bUlbyoCMcNeMeDj2H1GIjEKbAFHWn83i0YLhOvJBcP4=
 github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.0-20241214225035-11105fcacde5/go.mod h1:6iHcbH9A4t3YVfLHLE8DzIepnshdqx8fggQkk9WvTbA=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=

@@ -7,8 +7,14 @@ import (
 	"github.com/wagslane/go-rabbitmq"
 )
 
+// PublisherInterface defines the behavior of a publisher
+type PublisherInterface interface {
+	Publish(body []byte, routingKeys []string, options ...func(*rabbitmq.PublishOptions)) error
+	Close()
+}
+
 type Publisher struct {
-	publisher *rabbitmq.Publisher
+	publisher PublisherInterface
 }
 
 func NewProducer(conn *rabbitmq.Conn, exchangeName string) (*Publisher, error) {
