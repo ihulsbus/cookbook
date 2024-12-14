@@ -24,6 +24,7 @@ RUN CGO_ENABLED=0 go build cmd/instruction-service/main.go
 ############################
 FROM scratch
 
+USER 1000
 COPY --from=builder /build/main /go/bin/main
 
 ENTRYPOINT [ "/go/bin/main" ]
