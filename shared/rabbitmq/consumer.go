@@ -9,15 +9,23 @@ type Consumer struct {
 }
 
 // Setup a new RabbitMQ consumer that handles incoming messages.
-func NewConsumer(connection *rabbitmq.Conn, queueName, routingKey, exchangeName string, handler func(d rabbitmq.Delivery) rabbitmq.Action) (*Consumer, error) {
-	consumer, err := rabbitmq.NewConsumer(
-		connection,
-		queueName,
-		rabbitmq.WithConsumerOptionsRoutingKey(routingKey),
+func NewConsumer(connection *rabbitmq.Conn, queueName string, routingKeys []string, exchangeName string, handler func(d rabbitmq.Delivery) rabbitmq.Action) (*Consumer, error) {
+	options := []func(*rabbitmq.ConsumerOptions){
 		rabbitmq.WithConsumerOptionsQueueDurable,
 		rabbitmq.WithConsumerOptionsQueueQuorum,
 		rabbitmq.WithConsumerOptionsExchangeName(exchangeName),
 		rabbitmq.WithConsumerOptionsExchangeDeclare,
+	}
+
+	// add routing keys dynamically
+	for _, key := range routingKeys {
+		options = append(options, rabbitmq.WithConsumerOptionsRoutingKey(key))
+	}
+
+	consumer, err := rabbitmq.NewConsumer(
+		connection,
+		queueName,
+		options...,
 	)
 	if err != nil {
 		return nil, err
