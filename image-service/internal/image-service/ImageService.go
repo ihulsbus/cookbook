@@ -17,7 +17,11 @@ var (
 )
 
 func ImageService(ctx context.Context) {
-	c.RabbitMQHandler.StartConsuming(c.RabbitMQClient, "images", "cookbook")
+	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "images", "cookbook")
+	if err != nil {
+		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
+		return
+	}
 	httpServer(ctx)
 }
 

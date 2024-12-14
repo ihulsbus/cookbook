@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	m "image-service/internal/models"
 
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	"github.com/wagslane/go-rabbitmq"
 )
 
@@ -13,40 +14,30 @@ type imageService interface {
 	Delete(imageDTO m.ImageDataDTO) error
 }
 
-type RabbitMQConsumer struct {
-	service imageService
-	logger  m.LoggerInterface
+type RabbitMQHandler struct {
+	service  imageService
+	logger   m.LoggerInterface
+	consumer *rmq.Consumer
 }
 
-func NewRabbitMQConsumer(imageService imageService, logger m.LoggerInterface) (*RabbitMQConsumer, error) {
-	return &RabbitMQConsumer{service: imageService, logger: logger}, nil
+func NewRabbitMQHandler(imageService imageService, logger m.LoggerInterface) (*RabbitMQHandler, error) {
+	return &RabbitMQHandler{service: imageService, logger: logger}, nil
 }
 
-func (c *RabbitMQConsumer) StartConsuming(connection *rabbitmq.Conn, queueName, exchangeName string) error {
-	consumer, err := rabbitmq.NewConsumer(
-		connection,
-		queueName,
-		rabbitmq.WithConsumerOptionsRoutingKey("image.created"),
-		rabbitmq.WithConsumerOptionsExchangeName(exchangeName),
-		rabbitmq.WithConsumerOptionsQueueDurable,
-		rabbitmq.WithConsumerOptionsQueueQuorum,
-		rabbitmq.WithConsumerOptionsExchangeDeclare,
-	)
+func (c *RabbitMQHandler) StartConsuming(connection *rabbitmq.Conn, queueName, exchangeName string) error {
+	var err error
+
+	var routingKeys []string = []string{"image.find"}
+
+	c.consumer, err = rmq.NewConsumer(connection, queueName, routingKeys, exchangeName, c.rabbitMQConsumerHandler)
 	if err != nil {
 		return err
 	}
-
-	err = consumer.Run(c.rabbitMQConsumerHandler)
-	if err != nil {
-		return err
-	}
-
-	defer consumer.Close()
 
 	return nil
 }
 
-func (c *RabbitMQConsumer) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.Action {
+func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.Action {
 	var err error
 
 	routingKey := d.RoutingKey

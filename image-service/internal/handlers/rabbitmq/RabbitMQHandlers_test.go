@@ -69,7 +69,7 @@ func TestRabbitMQConsumerHandler(t *testing.T) {
 	// Arrange
 	mockService := new(MockImageService)
 	mockLogger := new(MockLogger)
-	consumer, _ := NewRabbitMQConsumer(mockService, mockLogger)
+	consumer, _ := NewRabbitMQHandler(mockService, mockLogger)
 
 	event := models.ImageDataDTO{
 		ID:         uuid.MustParse("00000000-0000-0000-0000-000000000000"),
@@ -101,7 +101,7 @@ func TestRabbitMQConsumerHandler_UnmarshalError(t *testing.T) {
 	// Arrange
 	mockService := new(MockImageService)
 	mockLogger := new(MockLogger)
-	consumer, _ := NewRabbitMQConsumer(mockService, mockLogger)
+	consumer, _ := NewRabbitMQHandler(mockService, mockLogger)
 
 	delivery := rabbitmq.Delivery{}
 	delivery.RoutingKey = "image.created"
@@ -122,7 +122,7 @@ func TestRabbitMQConsumerHandler_UnknownRoutingKey(t *testing.T) {
 	// Arrange
 	mockService := new(MockImageService)
 	mockLogger := new(MockLogger)
-	consumer, _ := NewRabbitMQConsumer(mockService, mockLogger)
+	consumer, _ := NewRabbitMQHandler(mockService, mockLogger)
 
 	delivery := rabbitmq.Delivery{}
 	delivery.RoutingKey = "unknown.key"
@@ -143,7 +143,7 @@ func TestRabbitMQConsumerHandler_ProcessError(t *testing.T) {
 	// Arrange
 	mockService := new(MockImageService)
 	mockLogger := new(MockLogger)
-	consumer, _ := NewRabbitMQConsumer(mockService, mockLogger)
+	consumer, _ := NewRabbitMQHandler(mockService, mockLogger)
 
 	event := models.ImageDataDTO{
 		ID:         uuid.MustParse("00000000-0000-0000-0000-000000000000"),

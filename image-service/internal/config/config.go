@@ -11,9 +11,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/wagslane/go-rabbitmq"
 	"gorm.io/gorm"
 )
 
@@ -25,7 +25,7 @@ var (
 	DatabaseClient *gorm.DB
 	S3Client       *s3.S3
 	Cors           cors.Config
-	RabbitMQClient *rabbitmq.Conn
+	RabbitMQClient *rmq.RabbitMQ
 
 	// Repositories
 	ImageRepository *ir.DatabaseRepository
@@ -36,7 +36,7 @@ var (
 
 	// Handlers
 	ImageHandler    *httpHandler.ImageHandlers
-	RabbitMQHandler *rabbitMQHandler.RabbitMQConsumer
+	RabbitMQHandler *rabbitMQHandler.RabbitMQHandler
 )
 
 func init() {
@@ -60,11 +60,17 @@ func init() {
 		"us-east-1",
 	)
 	initCors()
-	initRabbitMQ(
+	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
 		Configuration.RabbitMQ.Host,
+		Logger,
 	)
+	// initRabbitMQ(
+	// 	Configuration.RabbitMQ.Username,
+	// 	Configuration.RabbitMQ.Password,
+	// 	Configuration.RabbitMQ.Host,
+	// )
 
 	// Init repositories
 	ImageRepository = ir.NewDatabaseRepository(DatabaseClient)
@@ -75,7 +81,7 @@ func init() {
 
 	// Init handlers
 	ImageHandler = httpHandler.NewImageHandlers(ImageService, Logger)
-	RabbitMQHandler, err = rabbitMQHandler.NewRabbitMQConsumer(ImageService, Logger)
+	RabbitMQHandler, err = rabbitMQHandler.NewRabbitMQHandler(ImageService, Logger)
 	if err != nil {
 		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
 		Logger.Fatal("Encountered fatal error. Exiting.")
