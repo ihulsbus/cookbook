@@ -1,6 +1,8 @@
 module recipe-service
 
-go 1.20
+go 1.23
+
+toolchain go1.23.4
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2

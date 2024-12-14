@@ -18,7 +18,7 @@ on:
 
 env:
   MODULE: recipe-service
-  GO_VERSION: '1.21'
+  GO_VERSION: '1.23'
   # Use docker.io for Docker Hub if empty
   REGISTRY: ghcr.io
   # github.repository as <account>/<repo>

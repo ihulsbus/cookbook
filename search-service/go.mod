@@ -1,6 +1,8 @@
 module search-service
 
-go 1.20
+go 1.23
+
+toolchain go1.23.4
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0
