@@ -4,5 +4,6 @@
   "sonarlint.connectedMode.project": {
     "connectionId": "ihulsbus",
     "projectKey": "ihulsbus_cookbook"
-  }
+  },
+  "sarif-viewer.connectToGithubCodeScanning": "on"
 }
