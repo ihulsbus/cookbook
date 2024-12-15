@@ -2,7 +2,7 @@ package rabbitmq
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 
 	"github.com/wagslane/go-rabbitmq"
 )
@@ -17,7 +17,7 @@ type Publisher struct {
 	publisher PublisherInterface
 }
 
-func NewProducer(conn *rabbitmq.Conn, exchangeName string) (*Publisher, error) {
+func NewPublisher(conn *rabbitmq.Conn, exchangeName string) (*Publisher, error) {
 	publisher, err := rabbitmq.NewPublisher(
 		conn,
 		rabbitmq.WithPublisherOptionsLogging,
@@ -32,28 +32,46 @@ func NewProducer(conn *rabbitmq.Conn, exchangeName string) (*Publisher, error) {
 	return &Publisher{publisher: publisher}, nil
 }
 
-func (p *Publisher) PublishMessage(routingKey string, message interface{}) error {
-	body, err := json.Marshal(message)
+func (p *Publisher) publish(event Event) error {
+	message, err := json.Marshal(event.Payload)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal payload for event %s: %w", event.Name, err)
 	}
 
-	err = p.publisher.Publish(
-		body,
-		[]string{routingKey},
+	return p.publisher.Publish(
+		message,
+		[]string{event.RoutingKey},
 		rabbitmq.WithPublishOptionsPersistentDelivery,
+		rabbitmq.WithPublishOptionsContentType("application/json"),
 	)
-	if err != nil {
-		log.Printf("Failed to publish message: %v", err)
-		return err
-	}
-
-	log.Printf("Message published to routing key: %s", routingKey)
-	return nil
 }
 
 func (p *Publisher) Close() {
 	if p.publisher != nil {
 		p.publisher.Close()
 	}
+}
+
+func (p *Publisher) PublishRecipeCreated(payload RecipePayload) error {
+	var event = RecipeCreatedEvent
+	event.Payload = payload
+	return p.publish(event)
+}
+
+func (p *Publisher) PublishRecipeUpdated(payload RecipePayload) error {
+	var event = RecipeUpdatedEvent
+	event.Payload = payload
+	return p.publish(event)
+}
+
+func (p *Publisher) PublishRecipeDeleted(payload RecipePayload) error {
+	var event = RecipeDeletedEvent
+	event.Payload = payload
+	return p.publish(event)
+}
+
+func (p *Publisher) PublishImageUpdated(payload ImagePayload) error {
+	var event = ImageUpdatedEvent
+	event.Payload = payload
+	return p.publish(event)
 }
