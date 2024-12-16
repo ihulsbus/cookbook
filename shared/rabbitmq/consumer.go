@@ -15,6 +15,7 @@ func NewConsumer(connection *rabbitmq.Conn, queueName string, routingKeys []stri
 		rabbitmq.WithConsumerOptionsQueueQuorum,
 		rabbitmq.WithConsumerOptionsExchangeName(exchangeName),
 		rabbitmq.WithConsumerOptionsExchangeDeclare,
+		rabbitmq.WithConsumerOptionsExchangeDurable,
 	}
 
 	// add routing keys dynamically

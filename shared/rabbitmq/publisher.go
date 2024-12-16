@@ -32,7 +32,7 @@ func NewPublisher(conn *rabbitmq.Conn, exchangeName string) (*Publisher, error) 
 	return &Publisher{publisher: publisher}, nil
 }
 
-func (p *Publisher) publish(event Event) error {
+func (p *Publisher) Publish(event Event) error {
 	message, err := json.Marshal(event.Payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload for event %s: %w", event.Name, err)
@@ -55,23 +55,23 @@ func (p *Publisher) Close() {
 func (p *Publisher) PublishRecipeCreated(payload RecipePayload) error {
 	var event = RecipeCreatedEvent
 	event.Payload = payload
-	return p.publish(event)
+	return p.Publish(event)
 }
 
 func (p *Publisher) PublishRecipeUpdated(payload RecipePayload) error {
 	var event = RecipeUpdatedEvent
 	event.Payload = payload
-	return p.publish(event)
+	return p.Publish(event)
 }
 
 func (p *Publisher) PublishRecipeDeleted(payload RecipePayload) error {
 	var event = RecipeDeletedEvent
 	event.Payload = payload
-	return p.publish(event)
+	return p.Publish(event)
 }
 
 func (p *Publisher) PublishImageUpdated(payload ImagePayload) error {
 	var event = ImageUpdatedEvent
 	event.Payload = payload
-	return p.publish(event)
+	return p.Publish(event)
 }

@@ -26,7 +26,7 @@ func (m *MockPublisher) Close() {
 
 func TestPublishMessage_Success(t *testing.T) {
 	mockPublisher := new(MockPublisher)
-	producer := &Publisher{publisher: mockPublisher}
+	publisher := &Publisher{publisher: mockPublisher}
 
 	testMessage := map[string]string{"key": "value"}
 	body, _ := json.Marshal(testMessage)
@@ -34,18 +34,18 @@ func TestPublishMessage_Success(t *testing.T) {
 
 	mockPublisher.On("Publish", body, []string{routingKey}, mock.Anything).Return(nil)
 
-	err := producer.PublishMessage(routingKey, testMessage)
+	err := publisher.Publish(routingKey, testMessage)
 
 	assert.NoError(t, err)
 	mockPublisher.AssertCalled(t, "Publish", body, []string{routingKey}, mock.Anything)
 }
 
 func TestPublishMessage_MarshalError(t *testing.T) {
-	producer := &Publisher{}
+	publisher := &Publisher{}
 
 	invalidMessage := make(chan int) // Channels cannot be marshaled to JSON
 
-	err := producer.PublishMessage("test-routing", invalidMessage)
+	err := producer.Publish("test-routing", invalidMessage)
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "json: unsupported type")
@@ -53,7 +53,7 @@ func TestPublishMessage_MarshalError(t *testing.T) {
 
 func TestPublishMessage_PublishError(t *testing.T) {
 	mockPublisher := new(MockPublisher)
-	producer := &Publisher{publisher: mockPublisher}
+	publisher := &Publisher{publisher: mockPublisher}
 
 	testMessage := map[string]string{"key": "value"}
 	body, _ := json.Marshal(testMessage)
@@ -61,7 +61,7 @@ func TestPublishMessage_PublishError(t *testing.T) {
 
 	mockPublisher.On("Publish", body, []string{routingKey}, mock.Anything).Return(errors.New("publish failed"))
 
-	err := producer.PublishMessage(routingKey, testMessage)
+	err := publisher.Publish(routingKey, testMessage)
 
 	assert.Error(t, err)
 	assert.Equal(t, "publish failed", err.Error())
@@ -70,11 +70,11 @@ func TestPublishMessage_PublishError(t *testing.T) {
 
 func TestClose(t *testing.T) {
 	mockPublisher := new(MockPublisher)
-	producer := &Publisher{publisher: mockPublisher}
+	publisher := &Publisher{publisher: mockPublisher}
 
 	mockPublisher.On("Close").Return()
 
-	producer.Close()
+	publisher.Close()
 
 	mockPublisher.AssertCalled(t, "Close")
 }
