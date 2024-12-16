@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	m "image-service/internal/models"
 
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
@@ -27,7 +28,7 @@ func NewRabbitMQHandler(imageService imageService, logger m.LoggerInterface) (*R
 func (c *RabbitMQHandler) StartConsuming(connection *rabbitmq.Conn, queueName, exchangeName string) error {
 	var err error
 
-	var routingKeys []string = []string{"image.find"}
+	var routingKeys []string = []string{"image.findall", "image.find", "recipe.deleted"}
 
 	c.consumer, err = rmq.NewConsumer(connection, queueName, routingKeys, exchangeName, c.rabbitMQConsumerHandler)
 	if err != nil {
@@ -49,9 +50,15 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 		return rabbitmq.NackRequeue
 	}
 
+	// TODO: Implement response feature
 	switch routingKey {
+	case "image.findall":
+		_, err = c.service.FindAll()
 	case "image.find":
 		_, err = c.service.Find(m.ImageDataDTO{})
+	case "recipe.deleted":
+		fmt.Println()
+		return rabbitmq.Ack
 	default:
 		c.logger.Warnf("Discarding message. Unknown routing key received: %s", routingKey)
 		return rabbitmq.NackDiscard

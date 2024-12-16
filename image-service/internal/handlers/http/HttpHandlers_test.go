@@ -104,7 +104,7 @@ func (s *imgServiceMock) Delete(imDTO m.ImageDataDTO) error {
 func TestImageGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	imgs = append(imgs, imgDataDTO)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "findall"
 
@@ -127,7 +127,7 @@ func TestImageGetAll_OK(t *testing.T) {
 func TestImageGetAll_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	imgs = append(imgs, imgDataDTO)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "notfound"
 
@@ -148,7 +148,7 @@ func TestImageGetAll_NotFound(t *testing.T) {
 func TestImageGetAll_Err(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	imgs = append(imgs, imgDataDTO)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "error"
 
@@ -168,7 +168,7 @@ func TestImageGetAll_Err(t *testing.T) {
 
 func TestImageGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "find"
 
@@ -193,7 +193,7 @@ func TestImageGet_OK(t *testing.T) {
 
 func TestImageGet_NoID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "notfound"
 
@@ -213,7 +213,7 @@ func TestImageGet_NoID(t *testing.T) {
 
 func TestImageGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "notfound"
 
@@ -236,7 +236,7 @@ func TestImageGet_NotFound(t *testing.T) {
 
 func TestImageGet_Err(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "error"
 
@@ -259,7 +259,7 @@ func TestImageGet_Err(t *testing.T) {
 
 func TestImageCreate_JpegOK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "create"
 
@@ -304,7 +304,7 @@ func TestImageCreate_JpegOK(t *testing.T) {
 
 func TestImageCreate_PngOK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "create"
 
@@ -349,7 +349,7 @@ func TestImageCreate_PngOK(t *testing.T) {
 
 func TestImageCreate_EntityIDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -387,7 +387,7 @@ func TestImageCreate_EntityIDErr(t *testing.T) {
 
 func TestImageCreate_EntityTypeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -428,7 +428,7 @@ func TestImageCreate_EntityTypeErr(t *testing.T) {
 
 func TestImageCreate_NoFileErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -470,7 +470,7 @@ func TestImageCreate_NoFileErr(t *testing.T) {
 
 func TestImageCreate_ImageFileTooLargeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 19000, 19000))
@@ -512,7 +512,7 @@ func TestImageCreate_ImageFileTooLargeErr(t *testing.T) {
 
 func TestImageCreate_InvalidFormatErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -554,7 +554,7 @@ func TestImageCreate_InvalidFormatErr(t *testing.T) {
 
 func TestImageCreate_DecodeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -596,7 +596,7 @@ func TestImageCreate_DecodeErr(t *testing.T) {
 
 func TestImageCreate_ImageTooSmallErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 299, 299))
@@ -638,7 +638,7 @@ func TestImageCreate_ImageTooSmallErr(t *testing.T) {
 
 func TestImageCreate_ImageTooBigErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 1001, 1001))
@@ -680,7 +680,7 @@ func TestImageCreate_ImageTooBigErr(t *testing.T) {
 
 func TestImageCreate_ImageCreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 300, 300))
@@ -722,7 +722,7 @@ func TestImageCreate_ImageCreateErr(t *testing.T) {
 
 func TestImageUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -765,7 +765,7 @@ func TestImageUpdate_OK(t *testing.T) {
 
 func TestImageUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "update"
 	reqBody, _ := json.Marshal(imgDataDTO)
@@ -786,7 +786,7 @@ func TestImageUpdate_IDRequiredErr(t *testing.T) {
 
 func TestImageUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -827,7 +827,7 @@ func TestImageUpdate_UpdateErr(t *testing.T) {
 
 func TestImageDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "delete"
 
@@ -848,7 +848,7 @@ func TestImageDelete_OK(t *testing.T) {
 
 func TestImageDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "delete"
 
@@ -868,7 +868,7 @@ func TestImageDelete_IDRequiredErr(t *testing.T) {
 
 func TestImageDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewImageHandlers(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "error"
 

@@ -1,58 +1,38 @@
 package rabbitmq
 
 import (
-	"encoding/json"
+	m "image-service/internal/models"
 
 	"github.com/google/uuid"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	"github.com/wagslane/go-rabbitmq"
 )
 
-type RabbitMQPublisher struct {
-	publisher *rabbitmq.Publisher
+type RabbitMQRepository struct {
+	publisher *rmq.Publisher
+	logger    m.LoggerInterface
 }
 
 type RecipeDeletedEvent struct {
 	RecipeID uuid.UUID `json:"recipe_id"`
 }
 
-func NewRabbitMQPublisher(conn *rabbitmq.Conn, exchangeName string) (*RabbitMQPublisher, error) {
-	publisher, err := rabbitmq.NewPublisher(
-		conn,
-		rabbitmq.WithPublisherOptionsLogging,
-		rabbitmq.WithPublisherOptionsExchangeName(exchangeName),
-		rabbitmq.WithPublisherOptionsExchangeDeclare,
-	)
+func NewRabbitMQRepository(conn *rabbitmq.Conn, exchangeName string, logger m.LoggerInterface) (*RabbitMQRepository, error) {
+	publisher, err := rmq.NewPublisher(conn, exchangeName)
 	if err != nil {
 		return nil, err
 	}
-
-	return &RabbitMQPublisher{publisher: publisher}, nil
+	return &RabbitMQRepository{publisher: publisher, logger: logger}, nil
 }
 
-// TODO: implement Context
-func (r RabbitMQPublisher) publishMessageToExchange(message interface{}, routingKeys []string) error {
-
-	data, err := json.Marshal(message)
-	if err != nil {
-		return err
+func (r RabbitMQRepository) ImageUpdatedEvent(image m.ImageData) error {
+	var payload rmq.ImagePayload = rmq.ImagePayload{
+		ID:         image.ID,
+		EntityID:   image.EntityID,
+		EntityType: image.EntityType,
+		Size:       image.Size,
+		Type:       image.Type,
 	}
 
-	err = r.publisher.Publish(data, routingKeys)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r RabbitMQPublisher) PublishRecipeDeleted(recipeID uuid.UUID) error {
-	var event RecipeDeletedEvent = RecipeDeletedEvent{RecipeID: recipeID}
-	var routingKeys []string = []string{"recipe.deleted"}
-
-	err := r.publishMessageToExchange(event, routingKeys)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.publisher.PublishImageUpdated(payload)
 }

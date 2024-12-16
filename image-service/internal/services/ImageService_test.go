@@ -29,95 +29,83 @@ var (
 )
 
 type s3RepositoryMock struct{}
-type imageRepositoryMock struct{}
+type databaseRepositoryMock struct{}
+type rabbitmqRepositoryMock struct{}
 type LoggerInterfaceMock struct{}
 
 func (s3RepositoryMock) UploadImage(imageInput m.ImageFile) error {
 	switch imageInput.EntityType {
-	case "create":
-		return nil
-	case "update":
-		return nil
-	case "createErr":
-		return nil
-	case "updateErr":
-		return nil
-	default:
+	case "uploadS3Fail":
 		return errors.New("error")
+	default:
+		return nil
 	}
 }
 
 func (s3RepositoryMock) DeleteImage(imageInput m.ImageData) error {
 	switch imageInput.EntityType {
-	case "delete":
-		return nil
-	case "deleteErr":
-		return nil
-	default:
+	case "deleteS3Fail":
 		return errors.New("error")
+	default:
+		return nil
 	}
 }
 
-func (i imageRepositoryMock) FindAll() ([]m.ImageData, error) {
+func (i databaseRepositoryMock) FindAll() ([]m.ImageData, error) {
 	switch imageDataDTO.EntityType {
-	case "findall":
-		return []m.ImageData{imageDataDTO.ConvertFromDTO()}, nil
+	case "findallFail":
+		return nil, errors.New("error")
 	case "notfound":
 		return []m.ImageData{}, errors.New("not found")
 	default:
-		return nil, errors.New("error")
+		return []m.ImageData{imageDataDTO.ConvertFromDTO()}, nil
 	}
 }
 
-func (i imageRepositoryMock) Find(imageInput m.ImageData) (m.ImageData, error) {
+func (i databaseRepositoryMock) Find(imageInput m.ImageData) (m.ImageData, error) {
 	switch imageInput.EntityType {
-	case "find":
-		return imageDataDTO.ConvertFromDTO(), nil
-	case "create":
-		return imageDataDTO.ConvertFromDTO(), nil
-	case "update":
-		return imageDataDTO.ConvertFromDTO(), nil
-	case "updateErr":
-		return imageDataDTO.ConvertFromDTO(), nil
-	case "updateS3Err":
-		return imageDataDTO.ConvertFromDTO(), nil
-	case "delete":
-		return imageDataDTO.ConvertFromDTO(), nil
-	case "deleteErr":
-		return imageDataDTO.ConvertFromDTO(), nil
-	case "deleteS3Err":
-		return imageDataDTO.ConvertFromDTO(), nil
+	case "findFail":
+		return m.ImageData{}, errors.New("error")
 	case "notfound":
 		return m.ImageData{}, errors.New("not found")
 	default:
-		return m.ImageData{}, errors.New("error")
-	}
-}
-
-func (i imageRepositoryMock) Create(imageInput m.ImageData) (m.ImageData, error) {
-	switch imageInput.EntityType {
-	case "create":
 		return imageDataDTO.ConvertFromDTO(), nil
-	default:
-		return m.ImageData{}, errors.New("error")
 	}
 }
 
-func (i imageRepositoryMock) Update(imageInput m.ImageData) (m.ImageData, error) {
+func (i databaseRepositoryMock) Create(imageInput m.ImageData) (m.ImageData, error) {
 	switch imageInput.EntityType {
-	case "update":
+	case "createFail":
+		return m.ImageData{}, errors.New("error")
+	default:
 		return imageDataDTO.ConvertFromDTO(), nil
-	default:
-		return m.ImageData{}, errors.New("error")
 	}
 }
 
-func (i imageRepositoryMock) Delete(imageInput m.ImageData) error {
+func (i databaseRepositoryMock) Update(imageInput m.ImageData) (m.ImageData, error) {
 	switch imageInput.EntityType {
-	case "delete":
-		return nil
+	case "updateFail":
+		return m.ImageData{}, errors.New("error")
 	default:
+		return imageDataDTO.ConvertFromDTO(), nil
+	}
+}
+
+func (i databaseRepositoryMock) Delete(imageInput m.ImageData) error {
+	switch imageInput.EntityType {
+	case "deleteFail":
 		return errors.New("error")
+	default:
+		return nil
+	}
+}
+
+func (r rabbitmqRepositoryMock) ImageUpdatedEvent(imageInput m.ImageData) error {
+	switch imageInput.EntityType {
+	case "rabbitmqFail":
+		return errors.New("error")
+	default:
+		return nil
 	}
 }
 
@@ -126,7 +114,7 @@ func (LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 // ========================================================================================================
 
 func TestFindAllImage_OK(t *testing.T) {
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "findall"
 	result, err := s.FindAll()
@@ -138,7 +126,7 @@ func TestFindAllImage_OK(t *testing.T) {
 }
 
 func TestFindAllImage_NotFoundErr(t *testing.T) {
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "notfound"
 	result, err := s.FindAll()
@@ -149,9 +137,9 @@ func TestFindAllImage_NotFoundErr(t *testing.T) {
 }
 
 func TestFindAllImage_Err(t *testing.T) {
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDataDTO.EntityType = "error"
+	imageDataDTO.EntityType = "findallFail"
 	result, err := s.FindAll()
 
 	assert.Error(t, err)
@@ -161,7 +149,7 @@ func TestFindAllImage_Err(t *testing.T) {
 }
 
 func TestFindImage_OK(t *testing.T) {
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "find"
 	result, err := s.Find(imageDataDTO)
@@ -172,7 +160,7 @@ func TestFindImage_OK(t *testing.T) {
 }
 
 func TestFindImage_NotFoundErr(t *testing.T) {
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "notfound"
 	result, err := s.Find(imageDataDTO)
@@ -183,9 +171,9 @@ func TestFindImage_NotFoundErr(t *testing.T) {
 }
 
 func TestFindImage_Err(t *testing.T) {
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDataDTO.EntityType = "error"
+	imageDataDTO.EntityType = "findFail"
 	result, err := s.Find(imageDataDTO)
 
 	assert.Error(t, err)
@@ -196,7 +184,7 @@ func TestFindImage_Err(t *testing.T) {
 
 func TestCreateImage_OK(t *testing.T) {
 	imageFileDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
 		EntityID:   imageDataDTO.EntityID,
@@ -213,11 +201,11 @@ func TestCreateImage_OK(t *testing.T) {
 
 func TestCreateImage_S3Err(t *testing.T) {
 	imageFileDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
 		EntityID:   imageDataDTO.EntityID,
-		EntityType: "error",
+		EntityType: "uploadS3Fail",
 		Size:       imageDataDTO.Size,
 		Type:       imageDataDTO.Type,
 		File:       imageFileDTO.File,
@@ -230,11 +218,11 @@ func TestCreateImage_S3Err(t *testing.T) {
 
 func TestCreateImage_Err(t *testing.T) {
 	imageFileDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
 		EntityID:   imageDataDTO.EntityID,
-		EntityType: "createErr",
+		EntityType: "createFail",
 		Size:       imageDataDTO.Size,
 		Type:       imageDataDTO.Type,
 		File:       imageFileDTO.File,
@@ -247,7 +235,7 @@ func TestCreateImage_Err(t *testing.T) {
 
 func TestUpdateImage_OK(t *testing.T) {
 	imageFileDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
 		EntityID:   imageDataDTO.EntityID,
@@ -264,11 +252,11 @@ func TestUpdateImage_OK(t *testing.T) {
 
 func TestUpdateImage_FindErr(t *testing.T) {
 	imageFileDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
 		EntityID:   imageDataDTO.EntityID,
-		EntityType: "findErr",
+		EntityType: "findFail",
 		Size:       imageDataDTO.Size,
 		Type:       imageDataDTO.Type,
 		File:       imageFileDTO.File,
@@ -281,11 +269,11 @@ func TestUpdateImage_FindErr(t *testing.T) {
 
 func TestUpdateImage_S3Err(t *testing.T) {
 	imageFileDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
 		EntityID:   imageDataDTO.EntityID,
-		EntityType: "updateS3Err",
+		EntityType: "uploadS3Fail",
 		Size:       imageDataDTO.Size,
 		Type:       imageDataDTO.Type,
 		File:       imageFileDTO.File,
@@ -298,11 +286,11 @@ func TestUpdateImage_S3Err(t *testing.T) {
 
 func TestUpdateImage_Err(t *testing.T) {
 	imageFileDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
 		EntityID:   imageDataDTO.EntityID,
-		EntityType: "updateErr",
+		EntityType: "updateFail",
 		Size:       imageDataDTO.Size,
 		Type:       imageDataDTO.Type,
 		File:       imageFileDTO.File,
@@ -313,9 +301,26 @@ func TestUpdateImage_Err(t *testing.T) {
 	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
+func TestUpdateImage_RabbitmqErr(t *testing.T) {
+	imageFileDTO.File = tc.CreateFile()
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+
+	createImage := m.ImageFileDTO{
+		EntityID:   imageDataDTO.EntityID,
+		EntityType: "rabbitmqFail",
+		Size:       imageDataDTO.Size,
+		Type:       imageDataDTO.Type,
+		File:       imageFileDTO.File,
+	}
+	result, err := s.Update(createImage)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.ImageDataDTO{}, result)
+}
+
 func TestDeleteImage_OK(t *testing.T) {
 	// imageDataDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "delete"
 	err := s.Delete(imageDataDTO)
@@ -325,9 +330,9 @@ func TestDeleteImage_OK(t *testing.T) {
 
 func TestDeleteImage_FindErr(t *testing.T) {
 	// imageDataDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDataDTO.EntityType = "findError"
+	imageDataDTO.EntityType = "findFail"
 	err := s.Delete(imageDataDTO)
 
 	assert.Error(t, err)
@@ -336,9 +341,9 @@ func TestDeleteImage_FindErr(t *testing.T) {
 
 func TestDeleteImage_DeleteS3Err(t *testing.T) {
 	// imageDataDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDataDTO.EntityType = "deleteS3Err"
+	imageDataDTO.EntityType = "deleteS3Fail"
 	err := s.Delete(imageDataDTO)
 
 	assert.Error(t, err)
@@ -347,9 +352,9 @@ func TestDeleteImage_DeleteS3Err(t *testing.T) {
 
 func TestDeleteImage_DeleteErr(t *testing.T) {
 	// imageDataDTO.File = tc.CreateFile()
-	s := NewImageService(&imageRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
-	imageDataDTO.EntityType = "deleteErr"
+	imageDataDTO.EntityType = "deleteFail"
 	err := s.Delete(imageDataDTO)
 
 	assert.Error(t, err)

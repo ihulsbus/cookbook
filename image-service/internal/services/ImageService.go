@@ -24,15 +24,21 @@ type LoggerInterface interface {
 	Errorf(format string, args ...interface{})
 }
 
+type RabbitMQRepository interface {
+	ImageUpdatedEvent(image m.ImageData) error
+}
+
 type ImageService struct {
 	databaseRepo DatabaseRepository
+	rabbitmqRepo RabbitMQRepository
 	s3Repo       S3Repository
 	logger       LoggerInterface
 }
 
-func NewImageService(databaseRepo DatabaseRepository, s3Repo S3Repository, logger LoggerInterface) *ImageService {
+func NewImageService(databaseRepo DatabaseRepository, rabbitmqRepo RabbitMQRepository, s3Repo S3Repository, logger LoggerInterface) *ImageService {
 	return &ImageService{
 		databaseRepo: databaseRepo,
+		rabbitmqRepo: rabbitmqRepo,
 		s3Repo:       s3Repo,
 		logger:       logger,
 	}
@@ -121,6 +127,12 @@ func (s ImageService) Update(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error
 	imageData, err = s.databaseRepo.Update(imageData)
 	if err != nil {
 		return m.ImageDataDTO{}, err
+	}
+
+	err = s.rabbitmqRepo.ImageUpdatedEvent(imageData)
+	if err != nil {
+		s.logger.Errorf("failed publishing image update event to servicebus")
+		return imageData.ConvertToDTO(), nil
 	}
 
 	return imageData.ConvertToDTO(), nil

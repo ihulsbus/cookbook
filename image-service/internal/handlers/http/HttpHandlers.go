@@ -26,19 +26,19 @@ type imageService interface {
 	Delete(imageDTO m.ImageDataDTO) error
 }
 
-type ImageHandlers struct {
+type HttpHandlers struct {
 	imageService imageService
 	logger       m.LoggerInterface
 }
 
-func NewImageHandlers(service imageService, logger m.LoggerInterface) *ImageHandlers {
-	return &ImageHandlers{
+func NewHttpHandler(service imageService, logger m.LoggerInterface) *HttpHandlers {
+	return &HttpHandlers{
 		imageService: service,
 		logger:       logger,
 	}
 }
 
-func (h ImageHandlers) FindAll(ctx *gin.Context) {
+func (h HttpHandlers) FindAll(ctx *gin.Context) {
 	imageDTO, err := h.imageService.FindAll()
 	if err != nil {
 		switch err.Error() {
@@ -54,7 +54,7 @@ func (h ImageHandlers) FindAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, imageDTO)
 }
 
-func (h ImageHandlers) Find(ctx *gin.Context) {
+func (h HttpHandlers) Find(ctx *gin.Context) {
 	var imageDTO m.ImageDataDTO
 	var err error
 
@@ -79,7 +79,7 @@ func (h ImageHandlers) Find(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, imageDTO)
 }
 
-func (h ImageHandlers) Create(ctx *gin.Context) {
+func (h HttpHandlers) Create(ctx *gin.Context) {
 	var imageFileDTO m.ImageFileDTO
 	var err error
 
@@ -119,7 +119,7 @@ func (h ImageHandlers) Create(ctx *gin.Context) {
 
 }
 
-func (h ImageHandlers) Update(ctx *gin.Context) {
+func (h HttpHandlers) Update(ctx *gin.Context) {
 	var imageFileDTO m.ImageFileDTO
 	var err error
 
@@ -156,7 +156,7 @@ func (h ImageHandlers) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, imageDataDTO)
 }
 
-func (h ImageHandlers) Delete(ctx *gin.Context) {
+func (h HttpHandlers) Delete(ctx *gin.Context) {
 	var imageDTO m.ImageDataDTO
 	var err error
 
@@ -175,7 +175,7 @@ func (h ImageHandlers) Delete(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h ImageHandlers) verifyImage(imageFileDTO m.ImageFileDTO, header *multipart.FileHeader) error {
+func (h HttpHandlers) verifyImage(imageFileDTO m.ImageFileDTO, header *multipart.FileHeader) error {
 	var err error
 
 	// Check file size

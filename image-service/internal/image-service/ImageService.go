@@ -45,27 +45,27 @@ func httpServer(ctx context.Context) {
 			readRecipe := image.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readRecipe.GET("", c.ImageHandler.FindAll)
-				readRecipe.GET(":id", c.ImageHandler.Find)
+				readRecipe.GET("", c.HttpHandler.FindAll)
+				readRecipe.GET(":id", c.HttpHandler.Find)
 			}
 
 			createRecipe := image.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createRecipe.POST("", c.ImageHandler.Create)
+				createRecipe.POST("", c.HttpHandler.Create)
 			}
 
 			updateRecipe := image.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 
-				updateRecipe.PUT(":id", c.ImageHandler.Update)
+				updateRecipe.PUT(":id", c.HttpHandler.Update)
 			}
 
 			adminRecipe := image.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				adminRecipe.DELETE(":id", c.ImageHandler.Delete)
+				adminRecipe.DELETE(":id", c.HttpHandler.Delete)
 			}
 		}
 

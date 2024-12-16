@@ -1,10 +1,11 @@
 package config
 
 import (
-	httpHandler "image-service/internal/handlers/http"
-	rabbitMQHandler "image-service/internal/handlers/rabbitmq"
+	hh "image-service/internal/handlers/http"
+	rh "image-service/internal/handlers/rabbitmq"
 	m "image-service/internal/models"
-	ir "image-service/internal/repositories/database"
+	dr "image-service/internal/repositories/database"
+	rr "image-service/internal/repositories/rabbitmq"
 	sr "image-service/internal/repositories/s3"
 	s "image-service/internal/services"
 
@@ -28,15 +29,16 @@ var (
 	RabbitMQClient *rmq.RabbitMQ
 
 	// Repositories
-	ImageRepository *ir.DatabaseRepository
-	S3Repository    *sr.S3Repository
+	DatabaseRepository *dr.DatabaseRepository
+	RabbitMQRepository *rr.RabbitMQRepository
+	S3Repository       *sr.S3Repository
 
 	// Services
 	ImageService *s.ImageService
 
 	// Handlers
-	ImageHandler    *httpHandler.ImageHandlers
-	RabbitMQHandler *rabbitMQHandler.RabbitMQHandler
+	HttpHandler     *hh.HttpHandlers
+	RabbitMQHandler *rh.RabbitMQHandler
 )
 
 func init() {
@@ -73,15 +75,21 @@ func init() {
 	// )
 
 	// Init repositories
-	ImageRepository = ir.NewDatabaseRepository(DatabaseClient)
+	DatabaseRepository = dr.NewDatabaseRepository(DatabaseClient)
+	RabbitMQRepository, err = rr.NewRabbitMQRepository(RabbitMQClient.Connection, "cookbook", Logger)
+	if err != nil {
+		Logger.Errorf("Error setting up RabbitMQ publisher: %v", err)
+		Logger.Fatal("Encountered fatal error. Exiting.")
+	}
+
 	S3Repository = sr.NewS3Repository(S3Client, Logger, Configuration.S3.BucketName)
 
 	// Init services
-	ImageService = s.NewImageService(ImageRepository, S3Repository, Logger)
+	ImageService = s.NewImageService(DatabaseRepository, RabbitMQRepository, S3Repository, Logger)
 
 	// Init handlers
-	ImageHandler = httpHandler.NewImageHandlers(ImageService, Logger)
-	RabbitMQHandler, err = rabbitMQHandler.NewRabbitMQHandler(ImageService, Logger)
+	HttpHandler = hh.NewHttpHandler(ImageService, Logger)
+	RabbitMQHandler, err = rh.NewRabbitMQHandler(ImageService, Logger)
 	if err != nil {
 		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
 		Logger.Fatal("Encountered fatal error. Exiting.")
