@@ -8,18 +8,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type RecipeRepository struct {
+type DatabaseRepository struct {
 	db *gorm.DB
 }
 
-func NewRecipeRepository(db *gorm.DB) *RecipeRepository {
-	return &RecipeRepository{
+func NewDatabaseRepository(db *gorm.DB) *DatabaseRepository {
+	return &DatabaseRepository{
 		db: db,
 	}
 }
 
 // FindAll retrieves all recipes from the database and returns them in a slice
-func (r RecipeRepository) FindAll() ([]m.Recipe, error) {
+func (r DatabaseRepository) FindAll() ([]m.Recipe, error) {
 	var recipes []m.Recipe
 
 	if err := r.db.Find(&recipes).Error; err != nil {
@@ -33,7 +33,7 @@ func (r RecipeRepository) FindAll() ([]m.Recipe, error) {
 }
 
 // Find searches for a specific recipe in the database and returns it when found.
-func (r RecipeRepository) FindSingle(recipe m.Recipe) (m.Recipe, error) {
+func (r DatabaseRepository) FindSingle(recipe m.Recipe) (m.Recipe, error) {
 
 	result := r.db.First(&recipe)
 	if result.Error != nil {
@@ -48,7 +48,7 @@ func (r RecipeRepository) FindSingle(recipe m.Recipe) (m.Recipe, error) {
 }
 
 // Create handles the creation of a recipe and stores the relevant information in the database
-func (r RecipeRepository) Create(recipe m.Recipe) (m.Recipe, error) {
+func (r DatabaseRepository) Create(recipe m.Recipe) (m.Recipe, error) {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
@@ -65,7 +65,7 @@ func (r RecipeRepository) Create(recipe m.Recipe) (m.Recipe, error) {
 	return recipe, nil
 }
 
-func (r RecipeRepository) Update(recipe m.Recipe) (m.Recipe, error) {
+func (r DatabaseRepository) Update(recipe m.Recipe) (m.Recipe, error) {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		var err error
@@ -81,7 +81,7 @@ func (r RecipeRepository) Update(recipe m.Recipe) (m.Recipe, error) {
 	return recipe, nil
 }
 
-func (r RecipeRepository) Delete(recipe m.Recipe) error {
+func (r DatabaseRepository) Delete(recipe m.Recipe) error {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 

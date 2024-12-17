@@ -57,8 +57,7 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 	case "image.find":
 		_, err = c.service.Find(m.ImageDataDTO{})
 	case "recipe.deleted":
-		fmt.Println()
-		return rabbitmq.Ack
+		fmt.Println(string(d.Body))
 	default:
 		c.logger.Warnf("Discarding message. Unknown routing key received: %s", routingKey)
 		return rabbitmq.NackDiscard

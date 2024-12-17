@@ -17,19 +17,19 @@ type RecipeService interface {
 	Delete(recipe m.RecipeDTO) error
 }
 
-type RecipeHandlers struct {
+type HttpHandlers struct {
 	recipeService RecipeService
 	logger        m.LoggerInterface
 }
 
-func NewRecipeHandlers(recipes RecipeService, logger m.LoggerInterface) *RecipeHandlers {
-	return &RecipeHandlers{
+func NewHttpHandlers(recipes RecipeService, logger m.LoggerInterface) *HttpHandlers {
+	return &HttpHandlers{
 		recipeService: recipes,
 		logger:        logger,
 	}
 }
 
-func (h RecipeHandlers) GetAll(ctx *gin.Context) {
+func (h HttpHandlers) GetAll(ctx *gin.Context) {
 
 	recipeDTO, err := h.recipeService.FindAll()
 	if err != nil {
@@ -46,7 +46,7 @@ func (h RecipeHandlers) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, recipeDTO)
 }
 
-func (h RecipeHandlers) Get(ctx *gin.Context) {
+func (h HttpHandlers) Get(ctx *gin.Context) {
 	var recipeDTO m.RecipeDTO
 	var err error
 
@@ -71,7 +71,7 @@ func (h RecipeHandlers) Get(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, recipeDTO)
 }
 
-func (h RecipeHandlers) Create(ctx *gin.Context) {
+func (h HttpHandlers) Create(ctx *gin.Context) {
 	var recipeDTO m.RecipeDTO
 	var err error
 
@@ -89,7 +89,7 @@ func (h RecipeHandlers) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, recipeDTO)
 }
 
-func (h RecipeHandlers) Update(ctx *gin.Context) {
+func (h HttpHandlers) Update(ctx *gin.Context) {
 	var recipeDTO m.RecipeDTO
 	var err error
 
@@ -117,7 +117,7 @@ func (h RecipeHandlers) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, recipeDTO)
 }
 
-func (h RecipeHandlers) Delete(ctx *gin.Context) {
+func (h HttpHandlers) Delete(ctx *gin.Context) {
 	var recipeDTO m.RecipeDTO
 	var err error
 

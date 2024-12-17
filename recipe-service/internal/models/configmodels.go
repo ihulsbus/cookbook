@@ -5,6 +5,7 @@ type Config struct {
 	Cors     CorsConfig
 	Oauth    OauthConfig
 	Database DatabaseConfig
+	RabbitMQ RabbitMQConfig
 }
 
 // GlobalConfig holds global configuration items
@@ -38,7 +39,15 @@ type CorsConfig struct {
 	AllowedMethods   []string
 }
 
+type RabbitMQConfig struct {
+	Username string
+	Password string
+	Host     string
+}
+
 type LoggerInterface interface {
 	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
 	Warnf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
 }

@@ -71,7 +71,7 @@ func timeFunc() time.Time {
 
 func TestRecipeFindAll_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "servingcount"}).
@@ -93,7 +93,7 @@ func TestRecipeFindAll_OK(t *testing.T) {
 
 func TestRecipeFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
@@ -105,7 +105,7 @@ func TestRecipeFindAll_Err(t *testing.T) {
 
 func TestRecipeFindAll_NotFoundErr(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
 		WillReturnRows(&sqlmock.Rows{})
@@ -118,7 +118,7 @@ func TestRecipeFindAll_NotFoundErr(t *testing.T) {
 
 func TestRecipeFindSingle_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL AND "recipes"."id" = $1 ORDER BY "recipes"."id" LIMIT $2`)).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(recipe.ID))
@@ -131,7 +131,7 @@ func TestRecipeFindSingle_Ok(t *testing.T) {
 
 func TestRecipeFindSingle_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipe_category" WHERE "recipe_category"."recipe_id" = 1`)).
 		WillReturnError(errors.New("error"))
@@ -143,7 +143,7 @@ func TestRecipeFindSingle_Err(t *testing.T) {
 
 func TestRecipeCreate_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "recipes" ("created_at","updated_at","deleted_at","name","description","serving_count","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
@@ -167,7 +167,7 @@ func TestRecipeCreate_Ok(t *testing.T) {
 
 func TestRecipeCreate_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "recipes" ("created_at","updated_at","deleted_at","name","description","serving_count","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
@@ -191,7 +191,7 @@ func TestRecipeCreate_Err(t *testing.T) {
 
 func TestRecipeUpdate_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET "updated_at"=$1,"name"=$2,"description"=$3,"serving_count"=$4 WHERE "recipes"."deleted_at" IS NULL AND "id" = $5`)).
@@ -214,7 +214,7 @@ func TestRecipeUpdate_Ok(t *testing.T) {
 
 func TestRecipeUpdate_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET "updated_at"=$1,"name"=$2,"description"=$3,"serving_count"=$4 WHERE "recipes"."deleted_at" IS NULL AND "id" = $5`)).
@@ -237,7 +237,7 @@ func TestRecipeUpdate_Err(t *testing.T) {
 
 func TestRecipeDelete_Ok(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET "deleted_at"=$1 WHERE "recipes"."id" = $2 AND "recipes"."deleted_at" IS NULL`)).
@@ -255,7 +255,7 @@ func TestRecipeDelete_Ok(t *testing.T) {
 
 func TestRecipeDelete_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
-	r := NewRecipeRepository(db)
+	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET "deleted_at"=$1 WHERE "recipes"."id" = $2 AND "recipes"."deleted_at" IS NULL`)).

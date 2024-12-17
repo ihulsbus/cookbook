@@ -37,7 +37,7 @@ var (
 	ImageService *s.ImageService
 
 	// Handlers
-	HttpHandler     *hh.HttpHandlers
+	HttpHandler     *hh.HttpHandler
 	RabbitMQHandler *rh.RabbitMQHandler
 )
 
@@ -68,11 +68,6 @@ func init() {
 		Configuration.RabbitMQ.Host,
 		Logger,
 	)
-	// initRabbitMQ(
-	// 	Configuration.RabbitMQ.Username,
-	// 	Configuration.RabbitMQ.Password,
-	// 	Configuration.RabbitMQ.Host,
-	// )
 
 	// Init repositories
 	DatabaseRepository = dr.NewDatabaseRepository(DatabaseClient)

@@ -26,19 +26,19 @@ type imageService interface {
 	Delete(imageDTO m.ImageDataDTO) error
 }
 
-type HttpHandlers struct {
+type HttpHandler struct {
 	imageService imageService
 	logger       m.LoggerInterface
 }
 
-func NewHttpHandler(service imageService, logger m.LoggerInterface) *HttpHandlers {
-	return &HttpHandlers{
+func NewHttpHandler(service imageService, logger m.LoggerInterface) *HttpHandler {
+	return &HttpHandler{
 		imageService: service,
 		logger:       logger,
 	}
 }
 
-func (h HttpHandlers) FindAll(ctx *gin.Context) {
+func (h HttpHandler) FindAll(ctx *gin.Context) {
 	imageDTO, err := h.imageService.FindAll()
 	if err != nil {
 		switch err.Error() {
@@ -54,7 +54,7 @@ func (h HttpHandlers) FindAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, imageDTO)
 }
 
-func (h HttpHandlers) Find(ctx *gin.Context) {
+func (h HttpHandler) Find(ctx *gin.Context) {
 	var imageDTO m.ImageDataDTO
 	var err error
 
@@ -79,7 +79,7 @@ func (h HttpHandlers) Find(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, imageDTO)
 }
 
-func (h HttpHandlers) Create(ctx *gin.Context) {
+func (h HttpHandler) Create(ctx *gin.Context) {
 	var imageFileDTO m.ImageFileDTO
 	var err error
 
@@ -119,7 +119,7 @@ func (h HttpHandlers) Create(ctx *gin.Context) {
 
 }
 
-func (h HttpHandlers) Update(ctx *gin.Context) {
+func (h HttpHandler) Update(ctx *gin.Context) {
 	var imageFileDTO m.ImageFileDTO
 	var err error
 
@@ -156,7 +156,7 @@ func (h HttpHandlers) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, imageDataDTO)
 }
 
-func (h HttpHandlers) Delete(ctx *gin.Context) {
+func (h HttpHandler) Delete(ctx *gin.Context) {
 	var imageDTO m.ImageDataDTO
 	var err error
 
@@ -175,7 +175,7 @@ func (h HttpHandlers) Delete(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h HttpHandlers) verifyImage(imageFileDTO m.ImageFileDTO, header *multipart.FileHeader) error {
+func (h HttpHandler) verifyImage(imageFileDTO m.ImageFileDTO, header *multipart.FileHeader) error {
 	var err error
 
 	// Check file size

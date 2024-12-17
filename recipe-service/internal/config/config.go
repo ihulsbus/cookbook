@@ -1,13 +1,16 @@
 package config
 
 import (
-	h "recipe-service/internal/handlers"
+	hh "recipe-service/internal/handlers/http"
+	rh "recipe-service/internal/handlers/rabbitmq"
 	m "recipe-service/internal/models"
-	r "recipe-service/internal/repositories"
+	dr "recipe-service/internal/repositories/database"
+	rr "recipe-service/internal/repositories/rabbitmq"
 	s "recipe-service/internal/services"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
@@ -15,19 +18,23 @@ import (
 
 var (
 	Configuration m.Config
+	err           error
 
 	Logger         *log.Logger = log.New()
 	DatabaseClient *gorm.DB
 	Cors           cors.Config
+	RabbitMQClient *rmq.RabbitMQ
 
 	// Repositories
-	RecipeRepository *r.RecipeRepository
+	DatabaseRepository *dr.DatabaseRepository
+	RabbitMQRepository *rr.RabbitMQRepository
 
 	// Services
 	RecipeService *s.RecipeService
 
 	// Handlers
-	RecipeHandlers *h.RecipeHandlers
+	HttpHandler     *hh.HttpHandlers
+	RabbitMQHandler *rh.RabbitMQHandler
 )
 
 func init() {
@@ -45,13 +52,29 @@ func init() {
 
 	initDatabase()
 	initCors()
+	RabbitMQClient, err = rmq.NewRabbitMQConnection(
+		Configuration.RabbitMQ.Username,
+		Configuration.RabbitMQ.Password,
+		Configuration.RabbitMQ.Host,
+		Logger,
+	)
 
 	// Init repositories
-	RecipeRepository = r.NewRecipeRepository(DatabaseClient)
+	DatabaseRepository = dr.NewDatabaseRepository(DatabaseClient)
+	RabbitMQRepository, err = rr.NewRabbitMQRepository(RabbitMQClient.Connection, "cookbook", Logger)
+	if err != nil {
+		Logger.Errorf("Error setting up RabbitMQ publisher: %v", err)
+		Logger.Fatal("Encountered fatal error. Exiting.")
+	}
 
 	// Init services
-	RecipeService = s.NewRecipeService(RecipeRepository)
+	RecipeService = s.NewRecipeService(DatabaseRepository)
 
 	// Init handlers
-	RecipeHandlers = h.NewRecipeHandlers(RecipeService, Logger)
+	HttpHandler = hh.NewHttpHandlers(RecipeService, Logger)
+	RabbitMQHandler, err = rh.NewRabbitMQHandler(RecipeService, Logger)
+	if err != nil {
+		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
+		Logger.Fatal("Encountered fatal error. Exiting.")
+	}
 }

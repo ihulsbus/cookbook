@@ -17,6 +17,15 @@ var (
 )
 
 func RecipeService(ctx context.Context) {
+	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "recipe", "cookbook")
+	if err != nil {
+		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
+		return
+	}
+	httpServer(ctx)
+}
+
+func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
@@ -36,27 +45,27 @@ func RecipeService(ctx context.Context) {
 			readRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readRecipe.GET("", c.RecipeHandlers.GetAll)
-				readRecipe.GET(":id", c.RecipeHandlers.Get)
+				readRecipe.GET("", c.HttpHandler.GetAll)
+				readRecipe.GET(":id", c.HttpHandler.Get)
 			}
 
 			createRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createRecipe.POST("", c.RecipeHandlers.Create)
+				createRecipe.POST("", c.HttpHandler.Create)
 			}
 
 			updateRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 
-				updateRecipe.PUT(":id", c.RecipeHandlers.Update)
+				updateRecipe.PUT(":id", c.HttpHandler.Update)
 			}
 
 			adminRecipe := recipe.Group("")
 			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				adminRecipe.DELETE(":id", c.RecipeHandlers.Delete)
+				adminRecipe.DELETE(":id", c.HttpHandler.Delete)
 			}
 		}
 

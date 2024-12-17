@@ -101,6 +101,11 @@ environment:
     secretKeyRef:
       name: recipe-service-recipe-database
       key: password
+- name: RABBITMQ_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: image-service-rabbitmq-admin
+      key: password
 
 nodeSelector: {}
 
@@ -112,6 +117,7 @@ keyvault:
   name: Gourmedy
   secrets:
   - recipe-database
+  - rabbitmq-admin
 
 config:
   mountPath: /config
@@ -147,3 +153,9 @@ config:
         database: recipe
         sslMode: require
         timezone: Europe/Amsterdam
+
+      rabbitmq:
+        host: rabbitmq.gourmedy-production.svc.cluster.local:5672
+        username: admin
+        password: ""
+

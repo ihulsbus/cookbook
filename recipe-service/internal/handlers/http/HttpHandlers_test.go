@@ -80,11 +80,19 @@ func (s *RecipeServiceMock) Delete(recipeDTO m.RecipeDTO) error {
 	}
 }
 
+// Logging
+type LoggerInterfaceMock struct{}
+
+func (l *LoggerInterfaceMock) Debugf(format string, args ...interface{}) {}
+func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
+func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
+func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
+
 // ==================================================================================================
 func TestRecipeGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	recipes = append(recipes, recipe)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	recipe.Name = "findall"
 
@@ -107,7 +115,7 @@ func TestRecipeGetAll_OK(t *testing.T) {
 func TestRecipeGetAll_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	recipes = append(recipes, recipe)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	recipe.Name = "notfound"
 
@@ -128,7 +136,7 @@ func TestRecipeGetAll_NotFound(t *testing.T) {
 func TestRecipeGetAll_Err(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	recipes = append(recipes, recipe)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	recipe.Name = "error"
 
@@ -148,7 +156,7 @@ func TestRecipeGetAll_Err(t *testing.T) {
 
 func TestRecipeGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
@@ -173,7 +181,7 @@ func TestRecipeGet_OK(t *testing.T) {
 
 func TestRecipeGet_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
@@ -193,7 +201,7 @@ func TestRecipeGet_IDErr(t *testing.T) {
 
 func TestRecipeGet_notFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
@@ -216,7 +224,7 @@ func TestRecipeGet_notFound(t *testing.T) {
 
 func TestRecipeGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
@@ -239,7 +247,7 @@ func TestRecipeGet_FindErr(t *testing.T) {
 
 func TestRecipeCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	createRecipe := m.RecipeDTO{
 		Name: "create",
@@ -263,7 +271,7 @@ func TestRecipeCreate_OK(t *testing.T) {
 
 func TestRecipeCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -281,7 +289,7 @@ func TestRecipeCreate_UnmarshalErr(t *testing.T) {
 
 func TestRecipeCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	createRecipe := m.RecipeDTO{
 		Name: "error",
@@ -304,7 +312,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 
 func TestRecipeUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	recipe.Name = "update"
 	reqBody, _ := json.Marshal(recipe)
@@ -328,7 +336,7 @@ func TestRecipeUpdate_OK(t *testing.T) {
 
 func TestRecipeUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -349,7 +357,7 @@ func TestRecipeUpdate_UnmarshalErr(t *testing.T) {
 
 func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(recipe)
 
@@ -369,7 +377,7 @@ func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
 
 func TestRecipeUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	recipe.Name = "fail"
 	reqBody, _ := json.Marshal(recipe)
@@ -393,7 +401,7 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 
 func TestRecipeDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	recipe.Name = "delete"
 
@@ -414,7 +422,7 @@ func TestRecipeDelete_OK(t *testing.T) {
 
 func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
@@ -432,7 +440,7 @@ func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 
 func TestRecipeDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewRecipeHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
 
 	recipe.Name = "error"
 
