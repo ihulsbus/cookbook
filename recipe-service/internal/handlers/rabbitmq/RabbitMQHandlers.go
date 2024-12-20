@@ -77,10 +77,5 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 		return rabbitmq.NackDiscard
 	}
 
-	if err != nil {
-		c.logger.Errorf("Failed to process event: %v", err)
-		return rabbitmq.NackRequeue
-	}
-
 	return rabbitmq.Ack
 }
