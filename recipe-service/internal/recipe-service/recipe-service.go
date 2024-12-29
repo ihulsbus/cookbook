@@ -22,6 +22,9 @@ func RecipeService(ctx context.Context) {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
 		return
 	}
+
+	defer c.RabbitMQHandler.StopConsuming()
+
 	httpServer(ctx)
 }
 
@@ -81,6 +84,7 @@ func httpServer(ctx context.Context) {
 
 	go func() {
 		<-ctx.Done()
+		log.Info("Stopping webserver")
 		srv.Shutdown(ctx)
 	}()
 

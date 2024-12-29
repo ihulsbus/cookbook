@@ -38,6 +38,12 @@ func (c *RabbitMQHandler) StartConsuming(connection *rabbitmq.Conn, queueName, e
 	return nil
 }
 
+func (c *RabbitMQHandler) StopConsuming() {
+	if c.consumer != nil {
+		c.consumer.Close()
+	}
+}
+
 func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.Action {
 	var err error
 
