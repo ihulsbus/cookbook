@@ -24,6 +24,8 @@ RUN CGO_ENABLED=0 go build cmd/instruction-service/main.go
 ############################
 FROM scratch
 
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
 USER 1000
 COPY --from=builder /build/main /go/bin/main
 
