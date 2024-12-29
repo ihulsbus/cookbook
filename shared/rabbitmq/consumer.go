@@ -32,7 +32,15 @@ func NewConsumer(connection *rabbitmq.Conn, queueName string, routingKeys []stri
 		return nil, err
 	}
 
-	err = consumer.Run(handler)
+	go func() error {
+		err = consumer.Run(handler)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}()
+
 	if err != nil {
 		return nil, err
 	}
