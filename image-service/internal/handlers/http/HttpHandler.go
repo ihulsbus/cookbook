@@ -7,6 +7,7 @@ import (
 	m "image-service/internal/models"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"mime/multipart"
 	"net/http"
 
@@ -80,6 +81,7 @@ func (h HttpHandler) Find(ctx *gin.Context) {
 }
 
 func (h HttpHandler) Create(ctx *gin.Context) {
+	var file multipart.File
 	var imageFileDTO m.ImageFileDTO
 	var err error
 
@@ -96,14 +98,16 @@ func (h HttpHandler) Create(ctx *gin.Context) {
 	}
 
 	var header *multipart.FileHeader
-	imageFileDTO.File, header, err = ctx.Request.FormFile("image")
+	file, header, err = ctx.Request.FormFile("image")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
 		return
 	}
-	defer imageFileDTO.File.Close()
+	defer file.Close()
 
-	err = h.verifyImage(imageFileDTO, header)
+	image := io.TeeReader(file, &imageFileDTO.File)
+
+	err = h.verifyImage(&imageFileDTO, image, header)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -120,6 +124,7 @@ func (h HttpHandler) Create(ctx *gin.Context) {
 }
 
 func (h HttpHandler) Update(ctx *gin.Context) {
+	var file multipart.File
 	var imageFileDTO m.ImageFileDTO
 	var err error
 
@@ -134,14 +139,16 @@ func (h HttpHandler) Update(ctx *gin.Context) {
 	imageFileDTO.ID = id
 
 	var header *multipart.FileHeader
-	imageFileDTO.File, header, err = ctx.Request.FormFile("image")
+	file, header, err = ctx.Request.FormFile("image")
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	defer imageFileDTO.File.Close()
+	defer file.Close()
 
-	err = h.verifyImage(imageFileDTO, header)
+	image := io.TeeReader(file, &imageFileDTO.File)
+
+	err = h.verifyImage(&imageFileDTO, image, header)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -175,7 +182,7 @@ func (h HttpHandler) Delete(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h HttpHandler) verifyImage(imageFileDTO m.ImageFileDTO, header *multipart.FileHeader) error {
+func (h HttpHandler) verifyImage(imageFileDTO *m.ImageFileDTO, file io.Reader, header *multipart.FileHeader) error {
 	var err error
 
 	// Check file size
@@ -190,14 +197,14 @@ func (h HttpHandler) verifyImage(imageFileDTO m.ImageFileDTO, header *multipart.
 	imageFileDTO.Type = header.Header.Get("Content-Type")
 	switch imageFileDTO.Type {
 	case "image/jpeg":
-		img, err = jpeg.Decode(imageFileDTO.File)
+		img, err = jpeg.Decode(file)
 	case "image/png":
-		img, err = png.Decode(imageFileDTO.File)
+		img, err = png.Decode(file)
 	default:
 		return fmt.Errorf("unsupported image format: %s", imageFileDTO.Type)
 	}
 	if err != nil {
-		return errors.New("invalid image")
+		return fmt.Errorf("invalid image: %v", err)
 	}
 
 	// Check image dimensions

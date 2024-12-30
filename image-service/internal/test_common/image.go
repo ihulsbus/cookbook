@@ -1,12 +1,11 @@
 package testcommon
 
 import (
+	"bytes"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
-	"io"
-	"mime/multipart"
-	"net/http/httptest"
 )
 
 // ====== Helpers ======
@@ -39,45 +38,17 @@ func createImage() *image.RGBA {
 	return img
 }
 
-func CreateFile() multipart.File {
-	var part io.Writer
+func CreateFile() bytes.Buffer {
+	var buff bytes.Buffer
 	var err error
-	// Set up a pipe to avoid buffering
-	pr, pw := io.Pipe()
-	// This writer is going to transform
-	// what we pass to it to multipart form data
-	// and write it to our io.Pipe
-	writer := multipart.NewWriter(pw)
 
-	go func() {
-		defer writer.Close()
-		// We create the form data field 'fileupload'
-		// which returns another writer to write the actual file
-		part, err = writer.CreateFormFile("file", "someimg.png")
-		if err != nil {
-			return
-		}
+	img := createImage()
 
-		// https://yourbasic.org/golang/create-image/
-		img := createImage()
-
-		// Encode() takes an io.Writer.
-		// We pass the multipart field
-		// 'fileupload' that we defined
-		// earlier which, in turn, writes
-		// to our io.Pipe
-		err = png.Encode(part, img)
-		if err != nil {
-			return
-		}
-	}()
+	err = png.Encode(&buff, img)
 	if err != nil {
-		return nil
+		fmt.Printf("ERROR: %v", err)
 	}
 
-	req := httptest.NewRequest("POST", "http://example.com/v1/recipe/1/upload", pr)
-	file, _, _ := req.FormFile("file")
-
-	return file
+	return buff
 
 }

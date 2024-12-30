@@ -45,30 +45,30 @@ func httpServer(ctx context.Context) {
 	{
 		image := v2.Group("/images")
 		{
-			readRecipe := image.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readImage := image.Group("")
+			readImage.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				readRecipe.GET("", c.HttpHandler.FindAll)
-				readRecipe.GET(":id", c.HttpHandler.Find)
+				readImage.GET("", c.HttpHandler.FindAll)
+				readImage.GET(":entityType/:entityID", c.HttpHandler.Find)
 			}
 
-			createRecipe := image.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			createImage := image.Group("")
+			createImage.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				createRecipe.POST("", c.HttpHandler.Create)
+				createImage.POST(":entityType/:entityID", c.HttpHandler.Create)
 			}
 
-			updateRecipe := image.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			updateImage := image.Group("")
+			updateImage.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
 
-				updateRecipe.PUT(":id", c.HttpHandler.Update)
+				updateImage.PUT(":id", c.HttpHandler.Update)
 			}
 
-			adminRecipe := image.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			adminImage := image.Group("")
+			adminImage.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
 			{
-				adminRecipe.DELETE(":id", c.HttpHandler.Delete)
+				adminImage.DELETE(":id", c.HttpHandler.Delete)
 			}
 		}
 

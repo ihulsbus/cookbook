@@ -106,17 +106,10 @@ func (s ImageService) Create(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error
 
 func (s ImageService) Update(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error) {
 	var imageFile m.ImageFile = imageFileDTO.ConvertFromDTO()
+	var image m.ImageData
 	var err error
 
-	var imageData m.ImageData = m.ImageData{
-		ID:         imageFile.ID,
-		EntityID:   imageFile.EntityID,
-		EntityType: imageFile.EntityType,
-		Size:       imageFile.Size,
-		Type:       imageFile.Type,
-	}
-
-	if _, err = s.databaseRepo.Find(imageData); err != nil {
+	if image, err = s.databaseRepo.Find(m.ImageData{ID: imageFileDTO.ID}); err != nil {
 		return m.ImageDataDTO{}, errors.New("unable to find existing image. cannot update something that does not exist")
 	}
 
@@ -124,33 +117,44 @@ func (s ImageService) Update(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error
 		return m.ImageDataDTO{}, err
 	}
 
-	imageData, err = s.databaseRepo.Update(imageData)
+	if image.Type != imageFile.Type {
+		err = s.s3Repo.DeleteImage(image)
+		if err != nil {
+			s.logger.Errorf("error deleting old image: %v", err)
+		}
+	}
+
+	image.Size = imageFile.Size
+	image.Type = imageFile.Type
+
+	image, err = s.databaseRepo.Update(image)
 	if err != nil {
 		return m.ImageDataDTO{}, err
 	}
 
-	err = s.rabbitmqRepo.ImageUpdatedEvent(imageData)
+	err = s.rabbitmqRepo.ImageUpdatedEvent(image)
 	if err != nil {
 		s.logger.Errorf("failed publishing image update event to servicebus")
-		return imageData.ConvertToDTO(), nil
+		return image.ConvertToDTO(), nil
 	}
 
-	return imageData.ConvertToDTO(), nil
+	return image.ConvertToDTO(), nil
 }
 
 func (s ImageService) Delete(imageDTO m.ImageDataDTO) error {
+	var image m.ImageData
 	var err error
 
-	_, err = s.databaseRepo.Find(imageDTO.ConvertFromDTO())
+	image, err = s.databaseRepo.Find(imageDTO.ConvertFromDTO())
 	if err != nil {
 		return errors.New("unable to find existing image. cannot delete something that does not exist")
 	}
 
-	if err = s.s3Repo.DeleteImage(imageDTO.ConvertFromDTO()); err != nil {
+	if err = s.s3Repo.DeleteImage(image); err != nil {
 		return err
 	}
 
-	err = s.databaseRepo.Delete(imageDTO.ConvertFromDTO())
+	err = s.databaseRepo.Delete(image)
 	if err != nil {
 		return err
 	}

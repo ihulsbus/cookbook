@@ -591,7 +591,7 @@ func TestImageCreate_DecodeErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, `{"error":"invalid image"}`, string(body))
+	assert.Equal(t, `{"error":"invalid image: png: invalid format: not a PNG file"}`, string(body))
 }
 
 func TestImageCreate_ImageTooSmallErr(t *testing.T) {
@@ -748,7 +748,8 @@ func TestImageUpdate_OK(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
 	imgDataDTO.EntityType = "update"
@@ -812,7 +813,8 @@ func TestImageUpdate_UpdateErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
 	imgDataDTO.EntityType = "fail"
@@ -836,7 +838,8 @@ func TestImageDelete_OK(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
 	}
 
 	h.Delete(c)
@@ -877,7 +880,7 @@ func TestImageDelete_DeleteErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 	}
 
 	h.Delete(c)

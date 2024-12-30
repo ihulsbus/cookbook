@@ -1,7 +1,7 @@
 package models
 
 import (
-	"mime/multipart"
+	"bytes"
 	"time"
 
 	"github.com/google/uuid"
@@ -70,7 +70,7 @@ type ImageFile struct {
 	EntityID   uuid.UUID `json:"entity_id"`
 	Size       int64     `json:"size"`
 	Type       string    `json:"type"`
-	File       multipart.File
+	File       bytes.Buffer
 }
 
 func (i ImageFile) ConvertToDTO() ImageFileDTO {
@@ -83,7 +83,7 @@ type ImageFileDTO struct {
 	EntityID   uuid.UUID `json:"entity_id"`
 	Size       int64     `json:"size"`
 	Type       string    `json:"type"`
-	File       multipart.File
+	File       bytes.Buffer
 }
 
 func (i ImageFileDTO) ConvertFromDTO() ImageFile {

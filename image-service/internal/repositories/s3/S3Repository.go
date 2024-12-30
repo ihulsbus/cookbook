@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"bytes"
 	"fmt"
 	m "image-service/internal/models"
 
@@ -32,13 +33,22 @@ func NewS3Repository(s3Client S3Interface, logger LoggerInterface, bucketName st
 }
 
 func (r S3Repository) UploadImage(image m.ImageFile) error {
+	var fileExtention string
 
-	objectPath := fmt.Sprintf("img/%s.jpg", image.ID.String())
+	switch image.Type {
+	case "image/jpg":
+		fileExtention = "jpg"
+	case "image/png":
+		fileExtention = "png"
+	}
+
+	objectPath := fmt.Sprintf("img/%s.%s", image.ID.String(), fileExtention)
+	fileReader := bytes.NewReader(image.File.Bytes())
 
 	_, err := r.s3Client.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(r.BucketName),
 		Key:    aws.String(objectPath),
-		Body:   image.File,
+		Body:   fileReader,
 		ACL:    aws.String("public-read"),
 	})
 
@@ -46,8 +56,16 @@ func (r S3Repository) UploadImage(image m.ImageFile) error {
 }
 
 func (r S3Repository) DeleteImage(image m.ImageData) error {
+	var fileExtention string
 
-	objectPath := fmt.Sprintf("img/%s.jpg", image.ID.String())
+	switch image.Type {
+	case "image/jpg":
+		fileExtention = "jpg"
+	case "image/png":
+		fileExtention = "png"
+	}
+
+	objectPath := fmt.Sprintf("img/%s.%s", image.ID.String(), fileExtention)
 
 	_, err := r.s3Client.DeleteObject(&s3.DeleteObjectInput{
 		Bucket: aws.String(r.BucketName),
