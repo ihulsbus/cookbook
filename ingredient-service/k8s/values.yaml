@@ -61,6 +61,10 @@ ingress:
       paths:
         - path: /api/v2/ingredient
           pathType: ImplementationSpecific
+    - host: api-staging.gourmedy.com
+      paths:
+        - path: /api/v2/unit
+          pathType: ImplementationSpecific
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
