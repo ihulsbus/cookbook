@@ -748,8 +748,7 @@ func TestImageUpdate_OK(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	imgDataDTO.EntityType = "update"
@@ -813,8 +812,7 @@ func TestImageUpdate_UpdateErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	imgDataDTO.EntityType = "fail"
@@ -838,8 +836,7 @@ func TestImageDelete_OK(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
-		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	h.Delete(c)
@@ -880,7 +877,7 @@ func TestImageDelete_DeleteErr(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	c.Params = gin.Params{
-		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
 
 	h.Delete(c)

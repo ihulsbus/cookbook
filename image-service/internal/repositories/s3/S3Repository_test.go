@@ -16,10 +16,12 @@ var (
 	filename string
 
 	imgFile m.ImageFile = m.ImageFile{
-		ID: uuid.New(),
+		ID:   uuid.New(),
+		Type: "image/jpg",
 	}
 	imgData m.ImageData = m.ImageData{
-		ID: imgFile.ID,
+		ID:   imgFile.ID,
+		Type: "image/jpg",
 	}
 )
 

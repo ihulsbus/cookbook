@@ -109,7 +109,7 @@ func (s ImageService) Update(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error
 	var image m.ImageData
 	var err error
 
-	if image, err = s.databaseRepo.Find(m.ImageData{ID: imageFileDTO.ID}); err != nil {
+	if image, err = s.databaseRepo.Find(m.ImageData{ID: imageFileDTO.ID, EntityID: imageFileDTO.EntityID, EntityType: imageFileDTO.EntityType}); err != nil {
 		return m.ImageDataDTO{}, errors.New("unable to find existing image. cannot update something that does not exist")
 	}
 
