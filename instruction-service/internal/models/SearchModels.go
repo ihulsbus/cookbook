@@ -7,7 +7,7 @@ type InstructionSearchRequest struct {
 }
 
 type InstructionSearchRequestDTO struct {
-	RecipeID uuid.UUID `json:"recipe_id,omitempty"`
+	RecipeID uuid.UUID `json:"recipe_id"`
 }
 
 type InstructionSearchResult struct {
@@ -16,6 +16,6 @@ type InstructionSearchResult struct {
 }
 
 type InstructionSearchResultDTO struct {
-	RecipeID       uuid.UUID   `json:"recipe_id,omitempty"`
-	InstructionIDs []uuid.UUID `json:"instruction_ids,omitempty"`
+	RecipeID       uuid.UUID   `json:"recipe_id"`
+	InstructionIDs []uuid.UUID `json:"instruction_ids"`
 }
