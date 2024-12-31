@@ -5,6 +5,7 @@ import (
 
 	m "ingredient-service/internal/models"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -33,8 +34,13 @@ func (r UnitRepository) FindAll() ([]m.Unit, error) {
 }
 
 func (r UnitRepository) FindSingle(unit m.Unit) (m.Unit, error) {
+	var result *gorm.DB
 
-	result := r.db.First(&unit)
+	if unit.ID == uuid.Nil {
+		result = r.db.First(&unit, "full_name = ?", unit.FullName)
+	} else {
+		result = r.db.First(&unit)
+	}
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return m.Unit{}, errors.New("not found")
