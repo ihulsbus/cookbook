@@ -63,7 +63,7 @@ func InstructionService(ctx context.Context) {
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":8081",
+		Addr:         ":8080",
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
