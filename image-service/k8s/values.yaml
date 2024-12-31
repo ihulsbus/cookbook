@@ -96,12 +96,12 @@ volumeMounts:
   mountPath: /tmp
 
 environment:
-- name: S3_ACCESSKEY
+- name: S3_AWSACCESSKEY
   valueFrom:
     secretKeyRef:
       name: image-service-gourmedy-s3
       key: username
-- name: S3_ACCESSSECRET
+- name: S3_AWSACCESSSECRET
   valueFrom:
     secretKeyRef:
       name: image-service-gourmedy-s3
@@ -167,8 +167,8 @@ config:
 
       s3:
         region: us-east-1
-        accessKey: ""
-        accessSecret: ""
+        AWSAccessKey: ""
+        AWSAccessSecret: ""
         bucketName: cbhbe
         endpoint: https://ams3.digitaloceanspaces.com
 
