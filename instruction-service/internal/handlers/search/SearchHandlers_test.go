@@ -53,9 +53,10 @@ func TestSearch_OK(t *testing.T) {
 	switchCheck = "search"
 	reqBody, _ := json.Marshal(searchRequestDTO)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/search?recipeID=7a449aa5-cbdc-44a3-ba2c-53db53c7329a", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
+	c.AddParam("recipeID", "7a449aa5-cbdc-44a3-ba2c-53db53c7329a")
 	c.Request = req
 
 	h.SearchInstruction(c)
@@ -69,26 +70,6 @@ func TestSearch_OK(t *testing.T) {
 	assert.Equal(t, expectedBody, body)
 }
 
-func TestSearch_UnmarshalErr(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
-
-	switchCheck = "search"
-
-	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader([]byte{}))
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.SearchInstruction(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, resp.StatusCode, http.StatusBadRequest)
-	assert.Equal(t, `{"error":"EOF"}`, string(body))
-}
-
 func TestSearch_SearchErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
@@ -97,9 +78,10 @@ func TestSearch_SearchErr(t *testing.T) {
 
 	reqBody, _ := json.Marshal(searchRequestDTO)
 
-	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/search?recipeID=7a449aa5-cbdc-44a3-ba2c-53db53c7329a", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
+	c.AddParam("recipeID", "7a449aa5-cbdc-44a3-ba2c-53db53c7329a")
 	c.Request = req
 
 	h.SearchInstruction(c)

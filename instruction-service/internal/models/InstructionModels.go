@@ -26,7 +26,7 @@ type InstructionDTO struct {
 	ID          uuid.UUID `json:"id" example:"23582396-12a3-425b-a597-8a22052823da"`
 	Sequence    int       `json:"sequence" example:"1"`
 	Description string    `json:"description" example:"description"`
-	MediaID     uuid.UUID `json:"media_url" example:"23582396-12a3-425b-a597-8a22052823da"`
+	MediaID     uuid.UUID `json:"mediaid" example:"23582396-12a3-425b-a597-8a22052823da"`
 }
 
 func (i Instruction) ConvertToDTO() InstructionDTO {

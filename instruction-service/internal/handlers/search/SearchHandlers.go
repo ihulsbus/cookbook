@@ -30,11 +30,6 @@ func (h *SearchHandlers) SearchInstruction(ctx *gin.Context) {
 
 	searchRequestDTO.RecipeID = uuid.MustParse(ctx.Query("recipeID"))
 
-	// if err = ctx.ShouldBindJSON(&searchRequestDTO); err != nil {
-	// 	ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
 	searchResultDTO, err := h.searchService.SearchInstruction(searchRequestDTO)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
