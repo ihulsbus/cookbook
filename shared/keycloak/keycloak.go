@@ -25,12 +25,13 @@ type JWKS struct {
 }
 
 type KeycloakModule struct {
-	Client       *gocloak.GoCloak
-	ClientID     string
-	ClientSecret string
-	Realm        string
-	JWKSURL      string
-	PublicKey    *rsa.PublicKey
+	Client           *gocloak.GoCloak
+	ClientID         string
+	ClientSecret     string
+	Realm            string
+	AllowedAudiences []string
+	JWKSURL          string
+	PublicKey        *rsa.PublicKey
 }
 
 type KeyCloakConfig struct {
@@ -47,16 +48,17 @@ type ResourceAccess struct {
 type ResourceAccessMap map[string]ResourceAccess
 
 // NewKeycloakModule initializes the Keycloak module
-func NewKeycloakModule(config KeyCloakConfig) (*KeycloakModule, error) {
+func NewKeycloakModule(config KeyCloakConfig, allowedAudiences []string) (*KeycloakModule, error) {
 	jwksURL := config.Url + "/realms/" + config.Realm + "/protocol/openid-connect/certs"
 	client := gocloak.NewClient(config.Url)
 
 	module := &KeycloakModule{
-		Client:       client,
-		ClientID:     config.ClientID,
-		ClientSecret: config.ClientSecret,
-		Realm:        config.Realm,
-		JWKSURL:      jwksURL,
+		Client:           client,
+		ClientID:         config.ClientID,
+		ClientSecret:     config.ClientSecret,
+		Realm:            config.Realm,
+		AllowedAudiences: allowedAudiences,
+		JWKSURL:          jwksURL,
 	}
 
 	// Fetch the public key during initialization
@@ -136,7 +138,7 @@ func (km *KeycloakModule) handleError(c *gin.Context, statusCode int, message st
 }
 
 // Middleware provides a Gin middleware for token validation
-func (km *KeycloakModule) Middleware(validAudiences []string, requiredRole string) gin.HandlerFunc {
+func (km *KeycloakModule) Middleware(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -165,7 +167,7 @@ func (km *KeycloakModule) Middleware(validAudiences []string, requiredRole strin
 
 		valid := false
 		for _, a := range *introspection.Aud {
-			for _, validAudience := range validAudiences {
+			for _, validAudience := range km.AllowedAudiences {
 				if a == validAudience {
 					valid = true
 					break
@@ -199,7 +201,7 @@ func (km *KeycloakModule) Middleware(validAudiences []string, requiredRole strin
 
 		if requiredRole != "" {
 			roleValid := false
-			for _, aud := range validAudiences {
+			for _, aud := range km.AllowedAudiences {
 				if accessMap, ok := resourceAccess[aud]; ok {
 					for _, role := range accessMap.Roles {
 						if role == requiredRole {
