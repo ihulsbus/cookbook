@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 var (
@@ -46,27 +45,27 @@ func httpServer(ctx context.Context) {
 		recipe := v2.Group("/recipe")
 		{
 			readRecipe := recipe.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readRecipe.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readRecipe.GET("", c.HttpHandler.GetAll)
 				readRecipe.GET(":id", c.HttpHandler.Get)
 			}
 
 			createRecipe := recipe.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readRecipe.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createRecipe.POST("", c.HttpHandler.Create)
 			}
 
 			updateRecipe := recipe.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readRecipe.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 
 				updateRecipe.PUT(":id", c.HttpHandler.Update)
 			}
 
 			adminRecipe := recipe.Group("")
-			readRecipe.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readRecipe.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				adminRecipe.DELETE(":id", c.HttpHandler.Delete)
 			}

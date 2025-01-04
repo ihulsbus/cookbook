@@ -25,7 +25,9 @@ type DatabaseConfig struct {
 }
 
 type OauthConfig struct {
-	Service              string
+	ClientID             string
+	ClientSecret         string
+	Audience             string
 	Url                  string
 	Realm                string
 	FullCertsPath        *string
