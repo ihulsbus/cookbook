@@ -101,6 +101,11 @@ environment:
     secretKeyRef:
       name: search-service-search-database
       key: password
+- name: OAUTH_CLIENTSECRET
+  valueFrom:
+    secretKeyRef:
+      name: image-service-gourmedy-oauth
+      key: password
 
 nodeSelector: {}
 
@@ -111,6 +116,7 @@ affinity: {}
 keyvault:
   name: Gourmedy
   secrets:
+  - gourmedy-oauth
   - search-database
 
 config:
@@ -135,7 +141,9 @@ config:
         - HEAD
 
       oauth:
-        service: gourmedyfr
+        clientid: gourmedy
+        clientsecret: ""
+        audience: gourmedyfr
         url: https://auth-admin.gourmedy.com
         realm: gourmedy
 

@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 var (
@@ -34,7 +33,7 @@ func IngredientService(ctx context.Context) {
 		search := v2.Group("/search")
 		{
 			readIngredient := search.Group("")
-			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readIngredient.GET("", nil)
 			}
