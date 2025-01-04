@@ -116,6 +116,11 @@ environment:
     secretKeyRef:
       name: image-service-rabbitmq-admin
       key: password
+- name: OAUTH_CLIENTSECRET
+  valueFrom:
+    secretKeyRef:
+      name: image-service-gourmedy-oauth
+      key: password
 
 nodeSelector: {}
 
@@ -126,6 +131,7 @@ affinity: {}
 keyvault:
   name: Gourmedy
   secrets:
+  - gourmedy-oauth
   - gourmedy-s3
   - image-database
   - rabbitmq-admin
@@ -152,7 +158,9 @@ config:
         - HEAD
 
       oauth:
-        service: gourmedyfr
+        clientid: gourmedy
+        clientsecret: ""
+        audience: gourmedyfr
         url: https://auth-admin.gourmedy.com
         realm: gourmedy
 
