@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 var (
@@ -34,26 +33,26 @@ func IngredientService(ctx context.Context) {
 		ingredient := v2.Group("/ingredient")
 		{
 			readIngredient := ingredient.Group("")
-			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readIngredient.GET("", c.IngredientHandlers.GetAll)
 				readIngredient.GET(":id", c.IngredientHandlers.GetSingle)
 			}
 
 			createIngredient := ingredient.Group("")
-			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createIngredient.POST("", c.IngredientHandlers.Create)
 			}
 
 			updateIngredient := ingredient.Group("")
-			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateIngredient.PUT(":id", c.IngredientHandlers.Update)
 			}
 
 			adminIngredient := ingredient.Group("")
-			readIngredient.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				adminIngredient.DELETE(":id", c.IngredientHandlers.Delete)
 			}
@@ -62,26 +61,26 @@ func IngredientService(ctx context.Context) {
 		unit := v2.Group("/unit")
 		{
 			readUnit := unit.Group("")
-			readUnit.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readUnit.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readUnit.GET("", c.UnitHandlers.GetAll)
 				readUnit.GET(":id", c.UnitHandlers.GetSingle)
 			}
 
 			createUnit := unit.Group("")
-			createUnit.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			createUnit.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createUnit.POST("", c.UnitHandlers.Create)
 			}
 
 			updateUnit := unit.Group("")
-			updateUnit.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			updateUnit.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateUnit.PUT(":id", c.UnitHandlers.Update)
 			}
 
 			deleteUnit := unit.Group("")
-			deleteUnit.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			deleteUnit.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				deleteUnit.DELETE(":id", c.UnitHandlers.Delete)
 			}

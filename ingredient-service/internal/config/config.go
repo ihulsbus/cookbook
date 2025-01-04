@@ -11,6 +11,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
+	"github.com/ihulsbus/cookbook/shared/keycloak"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
@@ -18,9 +19,11 @@ import (
 
 var (
 	Configuration m.Config
+	err           error
 
 	Logger         *log.Logger = log.New()
 	DatabaseClient *gorm.DB
+	KeycloakModule *keycloak.KeycloakModule
 	Cors           cors.Config
 
 	// Repositories
@@ -39,6 +42,10 @@ func init() {
 	initViper()
 	initConfig()
 	initLogging()
+	KeycloakModule, err = initOauth()
+	if err != nil {
+		Logger.Panicf("error initialising oauth: %v", err)
+	}
 
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
