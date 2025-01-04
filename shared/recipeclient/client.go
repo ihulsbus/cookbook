@@ -2,30 +2,31 @@ package recipeclient
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
-	"time"
-
-	hc "../httpclient"
 )
 
 // RecipeAPIClient interacts with the Recipe microservice.
 type RecipeAPIClient struct {
 	BaseURL    string
-	HTTPClient *http.Client
+	HTTPClient HttpClient
+}
+
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
 // NewRecipeAPIClient initializes and returns a RecipeAPIClient instance.
-func NewRecipeAPIClient(baseURL string, timeout time.Duration) *RecipeAPIClient {
+func NewRecipeAPIClient(baseURL string, httpClient HttpClient) *RecipeAPIClient {
 	return &RecipeAPIClient{
 		BaseURL:    baseURL,
-		HTTPClient: hc.NewHTTPClient(timeout),
+		HTTPClient: httpClient,
 	}
 }
 
 // RecipeExists checks if a recipe exists by its ID.
 func (c *RecipeAPIClient) RecipeExists(recipeID string) (bool, error) {
-	url := fmt.Sprintf("%s/recipes/%s", c.BaseURL, recipeID)
+	url := fmt.Sprintf("%s/recipe/%s", c.BaseURL, recipeID)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to create request: %w", err)
@@ -37,12 +38,14 @@ func (c *RecipeAPIClient) RecipeExists(recipeID string) (bool, error) {
 	}
 	defer resp.Body.Close()
 
+	fmt.Printf("%+v\n", resp)
+
 	if resp.StatusCode == http.StatusNotFound {
 		return false, nil
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return false, fmt.Errorf("unexpected response status: %d, body: %s", resp.StatusCode, body)
 	}
 
