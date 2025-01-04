@@ -9,11 +9,11 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 var (
-	log = c.Logger
+	log            = c.Logger
+	validAudiences []string
 )
 
 func InstructionService(ctx context.Context) {
@@ -35,31 +35,31 @@ func InstructionService(ctx context.Context) {
 		instruction := v2.Group("/instruction")
 		{
 			searchInstruction := instruction.Group("")
-			searchInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			searchInstruction.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				searchInstruction.GET("/search", c.SearchHandlers.SearchInstruction)
 			}
 
 			readInstruction := instruction.Group("")
-			readInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readInstruction.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readInstruction.GET(":id", c.InstructionHandlers.Get)
 			}
 
 			createInstruction := instruction.Group("")
-			createInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			createInstruction.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createInstruction.POST(":recipeID", c.InstructionHandlers.Create)
 			}
 
 			updateInstruction := instruction.Group("")
-			updateInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			updateInstruction.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateInstruction.PUT(":id", c.InstructionHandlers.Update)
 			}
 
 			deleteInstruction := instruction.Group("")
-			deleteInstruction.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			deleteInstruction.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				deleteInstruction.DELETE(":id", c.InstructionHandlers.Delete)
 			}

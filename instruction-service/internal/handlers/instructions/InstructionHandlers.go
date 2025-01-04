@@ -61,6 +61,19 @@ func (h InstructionHandlers) Create(ctx *gin.Context) {
 		return
 	}
 
+	instructionDTO.EntityID, err = uuid.Parse(ctx.Param("recipeID"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid recipe id provided"})
+		return
+	}
+
+	if instructionDTO.EntityID == uuid.Nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "recipe id is required"})
+		return
+	}
+
+	instructionDTO.EntityType = "recipe" // Hardcoded for now as ony recipes support instructions currently.
+
 	instructionDTO, err = h.instructionService.Create(instructionDTO)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

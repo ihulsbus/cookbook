@@ -3,6 +3,8 @@ package services
 import (
 	"errors"
 	m "instruction-service/internal/models"
+
+	"github.com/google/uuid"
 )
 
 type InstructionRepository interface {
@@ -12,14 +14,26 @@ type InstructionRepository interface {
 	Delete(instruction m.Instruction) error
 }
 
+type RecipeRepository interface {
+	RecipeExists(recipeID string) (bool, error)
+}
+
+type ImageRepository interface {
+	ImageExists(imageID string) (bool, error)
+}
+
 type InstructionService struct {
-	repo InstructionRepository
+	repo   InstructionRepository
+	recipe RecipeRepository
+	image  ImageRepository
 }
 
 // NewInstructionService creates a new RecipeService instance
-func NewInstructionService(instructionRepo InstructionRepository) *InstructionService {
+func NewInstructionService(instructionRepo InstructionRepository, recipe RecipeRepository, image ImageRepository) *InstructionService {
 	return &InstructionService{
-		repo: instructionRepo,
+		repo:   instructionRepo,
+		recipe: recipe,
+		image:  image,
 	}
 }
 
@@ -39,7 +53,27 @@ func (s InstructionService) Find(instructionDTO m.InstructionDTO) (m.Instruction
 }
 
 func (s InstructionService) Create(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
-	// TODO create logic
+
+	ok, err := s.recipe.RecipeExists(instructionDTO.EntityID.String())
+	if err != nil {
+		return m.InstructionDTO{}, err
+	}
+
+	if !ok {
+		return m.InstructionDTO{}, errors.New("provided recipe does not exist")
+	}
+
+	if instructionDTO.MediaID != uuid.Nil {
+		ok, err = s.image.ImageExists(instructionDTO.MediaID.String())
+		if err != nil {
+			return m.InstructionDTO{}, err
+		}
+
+		if !ok {
+			return m.InstructionDTO{}, errors.New("provided recipe does not exist")
+		}
+	}
+
 	instruction, err := s.repo.Create(instructionDTO.ConvertFromDTO())
 	if err != nil {
 		return m.InstructionDTO{}, err

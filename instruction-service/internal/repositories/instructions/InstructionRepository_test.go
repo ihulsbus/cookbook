@@ -123,11 +123,13 @@ func TestCreateInstruction_OK(t *testing.T) {
 	r := NewInstructionRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "instructions" ("sequence","description","media_id","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "instructions" ("sequence","description","media_id","entity_id","entity_type","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING "id"`)).
 		WithArgs(
 			instruction.Sequence,
 			instruction.Description,
 			instruction.MediaID,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),

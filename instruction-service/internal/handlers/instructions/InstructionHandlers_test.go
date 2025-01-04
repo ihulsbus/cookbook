@@ -173,6 +173,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.AddParam("recipeID", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
 
 	h.Create(c)
 
@@ -217,6 +218,7 @@ func TestCreateInstruction_CreateErr(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.AddParam("recipeID", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
 
 	h.Create(c)
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
+	"github.com/ihulsbus/cookbook/shared/keycloak"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -103,4 +104,18 @@ func initCors() {
 		AllowCredentials: Configuration.Cors.AllowCredentials,
 		MaxAge:           12 * time.Hour,
 	}
+}
+
+func initOauth() (*keycloak.KeycloakModule, error) {
+	module, err := keycloak.NewKeycloakModule(keycloak.KeyCloakConfig{
+		Url:          Configuration.Oauth.Url,
+		Realm:        Configuration.Oauth.Realm,
+		ClientID:     Configuration.Oauth.ClientID,
+		ClientSecret: Configuration.Oauth.ClientSecret,
+	}, []string{Configuration.Oauth.ClientID, Configuration.Oauth.Audience})
+	if err != nil {
+		return nil, err
+	}
+
+	return module, nil
 }

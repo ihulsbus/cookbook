@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
+	"github.com/ihulsbus/cookbook/shared/keycloak"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -25,6 +26,7 @@ var (
 	Logger         *log.Logger = log.New()
 	DatabaseClient *gorm.DB
 	S3Client       *s3.S3
+	KeycloakModule *keycloak.KeycloakModule
 	Cors           cors.Config
 	RabbitMQClient *rmq.RabbitMQ
 
@@ -62,6 +64,10 @@ func init() {
 		"us-east-1",
 	)
 	initCors()
+	KeycloakModule, err = initOauth()
+	if err != nil {
+		Logger.Panicf("error initialising oauth: %v", err)
+	}
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,

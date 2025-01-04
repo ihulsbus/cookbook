@@ -21,6 +21,9 @@ var (
 
 type InstructionRepositoryMock struct{}
 
+type RecipeClientMock struct{}
+type ImageClientMock struct{}
+
 func (InstructionRepositoryMock) Find(instructionInput m.Instruction) (m.Instruction, error) {
 	switch instructionInput.Description {
 	case "find":
@@ -69,10 +72,18 @@ func (InstructionRepositoryMock) Delete(instructionInput m.Instruction) error {
 	}
 }
 
+func (RecipeClientMock) RecipeExists(recipeID string) (bool, error) {
+	return true, nil
+}
+
+func (ImageClientMock) ImageExists(imageID string) (bool, error) {
+	return true, nil
+}
+
 // ========================================================================================================
 
 func TestFindInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,
@@ -86,7 +97,7 @@ func TestFindInstruction_OK(t *testing.T) {
 }
 
 func TestFindInstruction_NotFoundErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,
@@ -100,7 +111,7 @@ func TestFindInstruction_NotFoundErr(t *testing.T) {
 }
 
 func TestFindInstruction_Err(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,
@@ -115,7 +126,7 @@ func TestFindInstruction_Err(t *testing.T) {
 }
 
 func TestCreateInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		Sequence:    instruction.Sequence,
@@ -130,7 +141,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 }
 
 func TestCreateInstruction_Err(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		Sequence:    instruction.Sequence,
@@ -145,7 +156,7 @@ func TestCreateInstruction_Err(t *testing.T) {
 }
 
 func TestUpdateInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,
@@ -160,7 +171,7 @@ func TestUpdateInstruction_OK(t *testing.T) {
 }
 
 func TestUpdateInstruction_FindErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,
@@ -174,7 +185,7 @@ func TestUpdateInstruction_FindErr(t *testing.T) {
 }
 
 func TestUpdateInstruction_UpdateErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,
@@ -188,7 +199,7 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 }
 
 func TestDeleteInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,
@@ -200,7 +211,7 @@ func TestDeleteInstruction_OK(t *testing.T) {
 }
 
 func TestDeleteInstruction_FindErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,
@@ -213,7 +224,7 @@ func TestDeleteInstruction_FindErr(t *testing.T) {
 }
 
 func TestDeleteInstruction_DeleteErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
 
 	instructionDTO := m.InstructionDTO{
 		ID:          instruction.ID,

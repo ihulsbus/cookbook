@@ -9,7 +9,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/tbaehler/gin-keycloak/pkg/ginkeycloak"
 )
 
 var (
@@ -46,27 +45,28 @@ func httpServer(ctx context.Context) {
 		image := v2.Group("/images")
 		{
 			readImage := image.Group("")
-			readImage.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			readImage.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readImage.GET("", c.HttpHandler.FindAll)
-				readImage.GET(":entityType/:entityID", c.HttpHandler.Find)
+				readImage.GET(":id", c.HttpHandler.Find)
+				// readImage.GET(":entityType/:entityID", c.HttpHandler.Find)
 			}
 
 			createImage := image.Group("")
-			createImage.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			createImage.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createImage.POST(":entityType/:entityID", c.HttpHandler.Create)
 			}
 
 			updateImage := image.Group("")
-			updateImage.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			updateImage.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 
 				updateImage.PUT(":id", c.HttpHandler.Update)
 			}
 
 			adminImage := image.Group("")
-			adminImage.Use(ginkeycloak.NewAccessBuilder(ginkeycloak.BuilderConfig(c.Configuration.Oauth)).RestrictButForRole("administrator").Build())
+			adminImage.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				adminImage.DELETE(":id", c.HttpHandler.Delete)
 			}

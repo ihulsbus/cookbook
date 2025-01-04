@@ -10,8 +10,10 @@ import (
 type Instruction struct {
 	ID          uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primary_key"`
 	Sequence    int            `gorm:"not null"`
-	Description string         `gorm:"type:text;not null"`
+	Description string         `gorm:"type:text; not null"`
 	MediaID     uuid.UUID      `gorm:"type:uuid; not null"`
+	EntityID    uuid.UUID      `gorm:"type:uuid; not null"`
+	EntityType  string         `gorm:"type:text; not null"`
 	CreatedAt   time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
@@ -26,7 +28,9 @@ type InstructionDTO struct {
 	ID          uuid.UUID `json:"id" example:"23582396-12a3-425b-a597-8a22052823da"`
 	Sequence    int       `json:"sequence" example:"1"`
 	Description string    `json:"description" example:"description"`
-	MediaID     uuid.UUID `json:"mediaid" example:"23582396-12a3-425b-a597-8a22052823da"`
+	MediaID     uuid.UUID `json:"media_id" example:"23582396-12a3-425b-a597-8a22052823da"`
+	EntityID    uuid.UUID `json:"entity_id"`
+	EntityType  string    `json:"entity_type"`
 }
 
 func (i Instruction) ConvertToDTO() InstructionDTO {
