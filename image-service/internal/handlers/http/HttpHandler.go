@@ -80,6 +80,32 @@ func (h HttpHandler) Find(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, imageDTO)
 }
 
+func (h HttpHandler) SearchByRecipe(ctx *gin.Context) {
+	var imageDTO m.ImageDataDTO
+	var err error
+
+	imageDTO.EntityType = ctx.Query("entityType")
+	imageDTO.EntityID, err = uuid.Parse(ctx.Query("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image ID"})
+		return
+	}
+
+	imageDTO, err = h.imageService.Find(imageDTO)
+	if err != nil {
+		switch err.Error() {
+		case "not found":
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no images found"})
+			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, imageDTO)
+}
+
 func (h HttpHandler) Create(ctx *gin.Context) {
 	var file multipart.File
 	var imageFileDTO m.ImageFileDTO

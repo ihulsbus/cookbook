@@ -49,6 +49,7 @@ func httpServer(ctx context.Context) {
 			{
 				readImage.GET("", c.HttpHandler.FindAll)
 				readImage.GET(":id", c.HttpHandler.Find)
+				readImage.GET("/search", c.HttpHandler.SearchByRecipe)
 				// readImage.GET(":entityType/:entityID", c.HttpHandler.Find)
 			}
 
