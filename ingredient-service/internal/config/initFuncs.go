@@ -88,6 +88,7 @@ func initDatabase() {
 	if err := DatabaseClient.AutoMigrate(
 		&m.Ingredient{},
 		&m.Unit{},
+		&m.Amount{},
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}

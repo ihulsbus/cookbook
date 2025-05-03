@@ -30,12 +30,29 @@ func IngredientService(ctx context.Context) {
 
 	v2 := router.Group("/api/v2")
 	{
-		amount := v2.Group("amount")
+		amount := v2.Group("amounts")
 		{
 			readAmounts := amount.Group("")
 			readAmounts.Use(c.KeycloakModule.Middleware("administrator"))
 			{
-				// readAmounts.GET(":id")
+				readAmounts.GET(":id", c.AmountHandlers.Find)
+			}
+			createAmounts := amount.Group("")
+			createAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				createAmounts.POST(":id", c.AmountHandlers.Create)
+			}
+
+			updateAmounts := amount.Group("")
+			updateAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				updateAmounts.PUT(":id", c.AmountHandlers.Update)
+			}
+
+			deleteAmounts := amount.Group("")
+			deleteAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				deleteAmounts.DELETE(":id", c.AmountHandlers.Delete)
 			}
 		}
 		ingredient := v2.Group("/ingredient")

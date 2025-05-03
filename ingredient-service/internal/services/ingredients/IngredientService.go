@@ -104,7 +104,7 @@ func (s IngredientService) Delete(ingredientDTO m.IngredientDTO) error {
 		return errors.New("ingredient does not exist. nothing to delete")
 	}
 
-	// TODO: check if there are recipies using the ingredient. If so, an error should be returned and the ingredient should not be deleted.
+	// TODO: check if there are recipes using the ingredient. If so, an error should be returned and the ingredient should not be deleted.
 	err = s.repo.Delete(ingredientDTO.ConvertFromDTO())
 	if err != nil {
 		return err

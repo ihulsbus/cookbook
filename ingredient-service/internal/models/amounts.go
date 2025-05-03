@@ -2,8 +2,8 @@ package models
 
 import "github.com/google/uuid"
 
-// RecipeIngredient struct to hold recipe ingredient data
-type RecipeIngredient struct {
+// Amount struct to hold recipe ingredient data
+type Amount struct {
 	RecipeID     uuid.UUID `gorm:"primaryKey"`
 	IngredientID uuid.UUID `gorm:"primaryKey"`
 	Quantity     int       `json:"Quantity"`
@@ -11,8 +11,8 @@ type RecipeIngredient struct {
 	Unit         Unit      `gorm:"references:ID"`
 }
 
-func (r RecipeIngredient) ConvertToDTO() RecipeIngredientDTO {
-	return RecipeIngredientDTO{
+func (r Amount) ConvertToDTO() AmountDTO {
+	return AmountDTO{
 		RecipeID:     r.RecipeID,
 		IngredientID: r.IngredientID,
 		Quantity:     r.Quantity,
@@ -20,8 +20,8 @@ func (r RecipeIngredient) ConvertToDTO() RecipeIngredientDTO {
 	}
 }
 
-func (r RecipeIngredient) ConvertAllToDTO(recipeIngredients []RecipeIngredient) []RecipeIngredientDTO {
-	var data []RecipeIngredientDTO
+func (r Amount) ConvertAllToDTO(recipeIngredients []Amount) []AmountDTO {
+	var data []AmountDTO
 
 	for _, ri := range recipeIngredients {
 		data = append(data, ri.ConvertToDTO())
@@ -30,15 +30,15 @@ func (r RecipeIngredient) ConvertAllToDTO(recipeIngredients []RecipeIngredient) 
 	return data
 }
 
-type RecipeIngredientDTO struct {
+type AmountDTO struct {
 	RecipeID     uuid.UUID `json:"RecipeID" example:"23582396-12a3-425b-a597-8a22052823da"`
 	IngredientID uuid.UUID `json:"IngredientID" example:"23582396-12a3-425b-a597-8a22052823da"`
 	Quantity     int       `json:"Quantity" example:"40"`
 	Unit         UnitDTO   `json:"unit"`
 }
 
-func (r RecipeIngredientDTO) ConvertFromDTO() RecipeIngredient {
-	return RecipeIngredient{
+func (r AmountDTO) ConvertFromDTO() Amount {
+	return Amount{
 		RecipeID:     r.RecipeID,
 		IngredientID: r.IngredientID,
 		Quantity:     r.Quantity,
@@ -47,8 +47,8 @@ func (r RecipeIngredientDTO) ConvertFromDTO() RecipeIngredient {
 	}
 }
 
-func (r RecipeIngredientDTO) ConvertAllFromDTO(recipeIngredients []RecipeIngredientDTO) []RecipeIngredient {
-	var data []RecipeIngredient
+func (r AmountDTO) ConvertAllFromDTO(recipeIngredients []AmountDTO) []Amount {
+	var data []Amount
 
 	for _, ri := range recipeIngredients {
 		data = append(data, ri.ConvertFromDTO())
