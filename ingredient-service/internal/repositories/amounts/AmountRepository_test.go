@@ -163,52 +163,6 @@ func TestAmountCreate_Err(t *testing.T) {
 	assert.EqualError(t, err, "error")
 }
 
-func TestAmountUpdate_OK(t *testing.T) {
-	db, mock := newMockDatabase(t)
-	r := NewAmountRepository(db)
-
-	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "amounts" SET "quantity"=$1,"unit_id"=$2 WHERE "recipe_id" = $3 AND "ingredient_id" = $4`)).
-		WithArgs(
-			amount.Quantity,
-			amount.UnitID,
-			amount.RecipeID,
-			amount.IngredientID,
-		).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-
-	var updateRequest []m.Amount
-	updateRequest = append(updateRequest, amount)
-	result, err := r.Update(&updateRequest)
-
-	assert.NoError(t, err)
-	assert.IsType(t, &[]m.Amount{}, result)
-}
-
-func TestAmountUpdate_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
-	r := NewAmountRepository(db)
-
-	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "amounts" ("recipe_id","ingredient_id","quantity","unit_id") VALUES ($1,$2,$3,$4)`)).
-		WithArgs(
-			amount.RecipeID,
-			amount.IngredientID,
-			amount.Quantity,
-			amount.UnitID,
-		).
-		WillReturnError(errors.New("error"))
-	mock.ExpectRollback()
-
-	var updateRequest []m.Amount
-	updateRequest = append(updateRequest, amount)
-	_, err := r.Update(&updateRequest)
-
-	assert.Error(t, err)
-	assert.EqualError(t, err, "error")
-}
-
 func TestAmountDelete_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewAmountRepository(db)

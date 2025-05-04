@@ -50,23 +50,6 @@ func (r AmountRepository) Create(amounts *[]m.Amount) (*[]m.Amount, error) {
 	return amounts, nil
 }
 
-func (r AmountRepository) Update(amounts *[]m.Amount) (*[]m.Amount, error) {
-	input := *amounts
-
-	if err := r.db.Transaction(func(tx *gorm.DB) error {
-
-		if err := tx.Updates(input).Error; err != nil {
-			return err
-		}
-
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return amounts, nil
-}
-
 func (r AmountRepository) Delete(amounts *[]m.Amount) error {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
