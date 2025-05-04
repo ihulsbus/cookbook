@@ -10,7 +10,6 @@ import (
 type AmountRepository interface {
 	Find(recipeID uuid.UUID) (*[]m.Amount, error)
 	Create(amounts *[]m.Amount) (*[]m.Amount, error)
-	Update(amounts *[]m.Amount) (*[]m.Amount, error)
 	Delete(amounts *[]m.Amount) error
 }
 type AmountService struct {
