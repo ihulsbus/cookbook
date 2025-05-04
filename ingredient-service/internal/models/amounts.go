@@ -13,7 +13,6 @@ type Amount struct {
 
 func (r Amount) ConvertToDTO() AmountDTO {
 	return AmountDTO{
-		RecipeID:     r.RecipeID,
 		IngredientID: r.IngredientID,
 		Quantity:     r.Quantity,
 		Unit:         r.Unit.ConvertToDTO(),
@@ -31,7 +30,6 @@ func (r Amount) ConvertAllToDTO(recipeIngredients []Amount) []AmountDTO {
 }
 
 type AmountDTO struct {
-	RecipeID     uuid.UUID `json:"RecipeID" example:"23582396-12a3-425b-a597-8a22052823da"`
 	IngredientID uuid.UUID `json:"IngredientID" example:"23582396-12a3-425b-a597-8a22052823da"`
 	Quantity     int       `json:"Quantity" example:"40"`
 	Unit         UnitDTO   `json:"unit"`
@@ -39,7 +37,6 @@ type AmountDTO struct {
 
 func (r AmountDTO) ConvertFromDTO() Amount {
 	return Amount{
-		RecipeID:     r.RecipeID,
 		IngredientID: r.IngredientID,
 		Quantity:     r.Quantity,
 		UnitID:       r.Unit.ID,
