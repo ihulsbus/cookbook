@@ -11,6 +11,7 @@ import (
 type IngredientRepository interface {
 	FindAll() ([]m.Ingredient, error)
 	FindSingle(ingredient m.Ingredient) (m.Ingredient, error)
+	FindByName(name string) (m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
 	Update(ingredient m.Ingredient) (m.Ingredient, error)
 	Delete(ingredient m.Ingredient) error
@@ -68,8 +69,8 @@ func (s IngredientService) Create(ingredientDTO m.IngredientDTO) (m.IngredientDT
 		return m.IngredientDTO{}, errors.New("name is empty")
 	}
 
-	found, err := s.FindSingle(ingredientDTO)
-	if err == nil || found.ID != uuid.Nil {
+	found, err := s.repo.FindByName(ingredientDTO.Name)
+	if err == nil && found.ID != uuid.Nil {
 		return m.IngredientDTO{}, errors.New("ingredient already exists")
 	}
 

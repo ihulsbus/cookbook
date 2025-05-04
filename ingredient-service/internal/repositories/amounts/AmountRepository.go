@@ -22,13 +22,12 @@ func (r AmountRepository) Find(recipeID uuid.UUID) (*[]m.Amount, error) {
 	var amount []m.Amount
 
 	result := r.db.Find(&amount, "recipe_id = ?", recipeID)
-
 	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.New("not found")
-		} else {
-			return nil, result.Error
-		}
+		return nil, result.Error
+	}
+
+	if len(amount) == 0 {
+		return nil, errors.New("not found")
 	}
 
 	return &amount, nil
@@ -50,11 +49,11 @@ func (r AmountRepository) Create(amounts *[]m.Amount) (*[]m.Amount, error) {
 	return amounts, nil
 }
 
-func (r AmountRepository) Delete(amounts *[]m.Amount) error {
+func (r AmountRepository) Delete(amounts m.Amount) error {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 
-		if err := tx.Delete(amounts).Error; err != nil {
+		if err := tx.Where("recipe_id = ? AND ingredient_id = ?", amounts.RecipeID, amounts.IngredientID).Delete(&amounts).Error; err != nil {
 			return err
 		}
 

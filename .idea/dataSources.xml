@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="metadata@pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com [4]" uuid="18b645e4-c4e9-4478-ab18-10d0fd800c2a">
+    <data-source source="LOCAL" name="metadata" uuid="18b645e4-c4e9-4478-ab18-10d0fd800c2a">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
@@ -14,7 +14,7 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="search@pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com [6]" uuid="8fd4ed1a-79b1-4091-989f-83bb6c305120">
+    <data-source source="LOCAL" name="search" uuid="8fd4ed1a-79b1-4091-989f-83bb6c305120">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
@@ -27,7 +27,7 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="ingredient@pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com" uuid="0c2e23fe-a0fb-4dae-bc3a-c459f5846d9a">
+    <data-source source="LOCAL" name="ingredient" uuid="0c2e23fe-a0fb-4dae-bc3a-c459f5846d9a">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
@@ -40,7 +40,7 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="instruction@pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com [3]" uuid="a6a93109-1adc-4455-a3a3-f4fbba4db7f3">
+    <data-source source="LOCAL" name="instruction" uuid="a6a93109-1adc-4455-a3a3-f4fbba4db7f3">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
@@ -53,7 +53,7 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="recipe@pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com [5]" uuid="fab66532-c77b-4fdf-ab2b-4e447d4cac98">
+    <data-source source="LOCAL" name="recipe" uuid="fab66532-c77b-4fdf-ab2b-4e447d4cac98">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
@@ -66,7 +66,7 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="image@pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com" uuid="603def94-7de3-4309-b659-74affc543d56">
+    <data-source source="LOCAL" name="image" uuid="603def94-7de3-4309-b659-74affc543d56">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>

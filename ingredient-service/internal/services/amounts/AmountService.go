@@ -10,7 +10,7 @@ import (
 type AmountRepository interface {
 	Find(recipeID uuid.UUID) (*[]m.Amount, error)
 	Create(amounts *[]m.Amount) (*[]m.Amount, error)
-	Delete(amounts *[]m.Amount) error
+	Delete(amounts m.Amount) error
 }
 type AmountService struct {
 	repo AmountRepository
@@ -74,14 +74,18 @@ func (s AmountService) Create(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[
 func (s AmountService) Update(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[]m.AmountDTO, error) {
 	var err error
 
-	existingIngredients, err := s.repo.Find(recipeID)
+	existingAmounts, err := s.repo.Find(recipeID)
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.Delete(recipeID)
-	if err != nil {
-		return nil, fmt.Errorf("an error occured deleting existing ingredients: %s", err.Error())
+	deleteAmounts := *existingAmounts
+
+	for i := range deleteAmounts {
+		err = s.repo.Delete(deleteAmounts[i])
+		if err != nil {
+			return nil, fmt.Errorf("an error occured deleting existing amounts: %s", err.Error())
+		}
 	}
 
 	amounts := m.AmountDTO{}.ConvertAllFromDTO(*amountsDTO)
@@ -95,7 +99,7 @@ func (s AmountService) Update(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[
 	if err != nil {
 		err = fmt.Errorf("an error occured creating new ingredients: %s", err.Error())
 
-		_, createErr := s.repo.Create(existingIngredients)
+		_, createErr := s.repo.Create(existingAmounts)
 		if createErr != nil {
 			err = fmt.Errorf("%s\nadditionally, an second error occured restoring previous ingredients: %s",
 				err.Error(),
@@ -114,9 +118,13 @@ func (s AmountService) Delete(recipeID uuid.UUID) error {
 		return err
 	}
 
-	err = s.repo.Delete(amounts)
-	if err != nil {
-		return err
+	deleteAmounts := *amounts
+
+	for i := range deleteAmounts {
+		err = s.repo.Delete(deleteAmounts[i])
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

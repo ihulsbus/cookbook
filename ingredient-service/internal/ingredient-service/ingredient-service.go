@@ -33,24 +33,24 @@ func IngredientService(ctx context.Context) {
 		amount := v2.Group("amount")
 		{
 			readAmounts := amount.Group("")
-			readAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			//readAmounts.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readAmounts.GET(":id", c.AmountHandlers.Find)
 			}
 			createAmounts := amount.Group("")
-			createAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			//createAmounts.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createAmounts.POST(":id", c.AmountHandlers.Create)
 			}
 
 			updateAmounts := amount.Group("")
-			updateAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			//updateAmounts.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateAmounts.PUT(":id", c.AmountHandlers.Update)
 			}
 
 			deleteAmounts := amount.Group("")
-			deleteAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			//deleteAmounts.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				deleteAmounts.DELETE(":id", c.AmountHandlers.Delete)
 			}
@@ -58,26 +58,26 @@ func IngredientService(ctx context.Context) {
 		ingredient := v2.Group("/ingredient")
 		{
 			readIngredient := ingredient.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			//readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readIngredient.GET("", c.IngredientHandlers.GetAll)
 				readIngredient.GET(":id", c.IngredientHandlers.GetSingle)
 			}
 
 			createIngredient := ingredient.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			//readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createIngredient.POST("", c.IngredientHandlers.Create)
 			}
 
 			updateIngredient := ingredient.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			//readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateIngredient.PUT(":id", c.IngredientHandlers.Update)
 			}
 
 			adminIngredient := ingredient.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			//readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				adminIngredient.DELETE(":id", c.IngredientHandlers.Delete)
 			}
@@ -85,26 +85,26 @@ func IngredientService(ctx context.Context) {
 		unit := v2.Group("/unit")
 		{
 			readUnit := unit.Group("")
-			readUnit.Use(c.KeycloakModule.Middleware("administrator"))
+			//readUnit.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readUnit.GET("", c.UnitHandlers.GetAll)
 				readUnit.GET(":id", c.UnitHandlers.GetSingle)
 			}
 
 			createUnit := unit.Group("")
-			createUnit.Use(c.KeycloakModule.Middleware("administrator"))
+			//createUnit.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createUnit.POST("", c.UnitHandlers.Create)
 			}
 
 			updateUnit := unit.Group("")
-			updateUnit.Use(c.KeycloakModule.Middleware("administrator"))
+			//updateUnit.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateUnit.PUT(":id", c.UnitHandlers.Update)
 			}
 
 			deleteUnit := unit.Group("")
-			deleteUnit.Use(c.KeycloakModule.Middleware("administrator"))
+			//deleteUnit.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				deleteUnit.DELETE(":id", c.UnitHandlers.Delete)
 			}
