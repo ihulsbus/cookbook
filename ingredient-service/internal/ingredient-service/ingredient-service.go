@@ -30,7 +30,7 @@ func IngredientService(ctx context.Context) {
 
 	v2 := router.Group("/api/v2")
 	{
-		amount := v2.Group("amounts")
+		amount := v2.Group("amount")
 		{
 			readAmounts := amount.Group("")
 			readAmounts.Use(c.KeycloakModule.Middleware("administrator"))
