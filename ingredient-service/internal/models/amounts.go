@@ -30,9 +30,9 @@ func (r Amount) ConvertAllToDTO(recipeIngredients []Amount) []AmountDTO {
 }
 
 type AmountDTO struct {
-	IngredientID uuid.UUID `json:"IngredientID" example:"23582396-12a3-425b-a597-8a22052823da"`
-	Quantity     int       `json:"Quantity" example:"40"`
-	UnitID       uuid.UUID `json:"UnitID"`
+	IngredientID uuid.UUID `json:"ingredientID" example:"23582396-12a3-425b-a597-8a22052823da"`
+	Quantity     int       `json:"quantity" example:"40"`
+	UnitID       uuid.UUID `json:"unitID"`
 }
 
 func (r AmountDTO) ConvertFromDTO() Amount {
