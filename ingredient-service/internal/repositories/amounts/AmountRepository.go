@@ -31,6 +31,11 @@ func (r AmountRepository) Find(recipeID uuid.UUID) (*[]m.Amount, error) {
 		}
 	}
 
+	if len(amount) == 0 {
+		// no rows => treat as “not found”
+		return nil, errors.New("not found")
+	}
+
 	return &amount, nil
 }
 
