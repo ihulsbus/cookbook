@@ -37,7 +37,7 @@ func NewInstructionService(instructionRepo InstructionRepository, recipe RecipeR
 	}
 }
 
-func (s InstructionService) Find(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
+func (s InstructionService) Find(recipeID uuid.UUID) (m.InstructionDTO, error) {
 	// TODO create logic
 	instruction, err := s.repo.Find(instructionDTO.ConvertFromDTO())
 	if err != nil {
@@ -52,7 +52,7 @@ func (s InstructionService) Find(instructionDTO m.InstructionDTO) (m.Instruction
 	return instruction.ConvertToDTO(), nil
 }
 
-func (s InstructionService) Create(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
+func (s InstructionService) Create(recipeID uuid.UUID, instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
 
 	ok, err := s.recipe.RecipeExists(instructionDTO.EntityID.String())
 	if err != nil {
@@ -82,7 +82,7 @@ func (s InstructionService) Create(instructionDTO m.InstructionDTO) (m.Instructi
 	return instruction.ConvertToDTO(), nil
 }
 
-func (s InstructionService) Update(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
+func (s InstructionService) Update(recipeID uuid.UUID, instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
 	var err error
 	if _, err = s.repo.Find(instructionDTO.ConvertFromDTO()); err != nil {
 		return m.InstructionDTO{}, errors.New("unable to find existing instruction. cannot update something that does not exist")
@@ -96,7 +96,7 @@ func (s InstructionService) Update(instructionDTO m.InstructionDTO) (m.Instructi
 	return updated.ConvertToDTO(), nil
 }
 
-func (s InstructionService) Delete(instructionDTO m.InstructionDTO) error {
+func (s InstructionService) Delete(recipeID uuid.UUID) error {
 	var err error
 
 	_, err = s.repo.Find(instructionDTO.ConvertFromDTO())

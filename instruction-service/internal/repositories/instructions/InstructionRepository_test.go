@@ -83,7 +83,7 @@ func TestFindInstruction_OK(t *testing.T) {
 				instruction.MediaID,
 			))
 
-	result, err := r.Find(instruction)
+	result, err := r.Find(instruction.EntityID)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.Instruction{}, result)
