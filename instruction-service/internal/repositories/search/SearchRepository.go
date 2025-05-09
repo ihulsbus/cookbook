@@ -23,16 +23,16 @@ func (r *SearchRepository) SearchInstruction(request m.InstructionSearchRequest)
 	result.RecipeID = request.RecipeID
 
 	// Start with base query. we do this on categories as all recipes need to have a category
-	query := r.db.Table("recipe_instructions").
-		Select("recipe_instructions.instruction_id")
+	query := r.db.Table("instructions").
+		Select("instructions.instruction_id")
 
-		// Apply filters based on request
+	// Apply filters based on request
 	if request.RecipeID != uuid.Nil {
-		query = query.Where("recipe_instructions.recipe_id = ?", request.RecipeID)
+		query = query.Where("instructions.recipe_id = ?", request.RecipeID)
 	}
 
 	// Scan results into a slice of recipe IDs
-	if err := query.Pluck("recipe_instructions.instruction_id", &result.InstructionIDs).Error; err != nil {
+	if err := query.Pluck("instructions.instruction_id", &result.InstructionIDs).Error; err != nil {
 		return m.InstructionSearchResult{}, err
 	}
 

@@ -39,6 +39,8 @@ func (i Instruction) ConvertToDTO() InstructionDTO {
 		Sequence:    i.Sequence,
 		Description: i.Description,
 		MediaID:     i.MediaID,
+		EntityID:    i.EntityID,
+		EntityType:  i.EntityType,
 	}
 }
 
@@ -61,10 +63,12 @@ func (i InstructionDTO) ConvertFromDTO() Instruction {
 	}
 }
 
-// Association model
-//type RecipeInstruction struct {
-//	RecipeID      uuid.UUID      `gorm:"type:uuid;primaryKey"`
-//	InstructionID uuid.UUID      `gorm:"type:uuid;primaryKey"`
-//	CreatedAt     time.Time      `gorm:"autoCreateTime"`
-//	DeletedAt     gorm.DeletedAt `gorm:"index"`
-//}
+func (i InstructionDTO) ConvertAllFromDTO(instructions []InstructionDTO) []Instruction {
+	var data []Instruction
+
+	for _, i := range instructions {
+		data = append(data, i.ConvertFromDTO())
+	}
+
+	return data
+}

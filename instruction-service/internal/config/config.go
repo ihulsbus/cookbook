@@ -10,9 +10,8 @@ import (
 	ir "instruction-service/internal/repositories/instructions"
 	sr "instruction-service/internal/repositories/search"
 
-	hr "github.com/ihulsbus/cookbook/shared/httpclient"
-	imr "github.com/ihulsbus/cookbook/shared/imageclient"
-	rr "github.com/ihulsbus/cookbook/shared/recipeclient"
+	hc "github.com/ihulsbus/cookbook/shared/httpclient"
+	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 
 	is "instruction-service/internal/services/instructions"
 	ss "instruction-service/internal/services/search"
@@ -35,11 +34,10 @@ var (
 	Cors           cors.Config
 
 	// Repositories
-	HttpClient            *hr.HTTPClient
+	HttpClient            *hc.HTTPClient
 	InstructionRepository *ir.InstructionRepository
 	SearchRepository      *sr.SearchRepository
-	RecipeRepository      *rr.RecipeAPIClient
-	ImageRepository       *imr.ImageAPIClient
+	RecipeRepository      *rc.RecipeAPIClient
 
 	// Services
 	InstructionService *is.InstructionService
@@ -71,14 +69,13 @@ func init() {
 	}
 
 	// Init repositories
-	HttpClient = hr.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
+	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
 	InstructionRepository = ir.NewInstructionRepository(DatabaseClient)
 	SearchRepository = sr.NewSearchRepository(DatabaseClient)
-	RecipeRepository = rr.NewRecipeAPIClient("http://localhost:8081/api/v2", HttpClient)
-	ImageRepository = imr.NewImageAPIClient("http://localhost:8082/api/v2", HttpClient)
+	RecipeRepository = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
 
 	// Init services
-	InstructionService = is.NewInstructionService(InstructionRepository, RecipeRepository, ImageRepository)
+	InstructionService = is.NewInstructionService(InstructionRepository, RecipeRepository)
 	SearchService = ss.NewSearchService(SearchRepository)
 
 	// Init handlers

@@ -11,12 +11,13 @@ import (
 )
 
 var (
-	instruction m.Instruction = m.Instruction{
+	instruction = m.Instruction{
 		ID:          uuid.New(),
 		Sequence:    1,
 		Description: "instruction",
 		MediaID:     uuid.New(),
 	}
+	instructionArr = []m.Instruction{instruction}
 )
 
 type InstructionRepositoryMock struct{}
@@ -24,48 +25,43 @@ type InstructionRepositoryMock struct{}
 type RecipeClientMock struct{}
 type ImageClientMock struct{}
 
-func (InstructionRepositoryMock) Find(instructionInput m.Instruction) (m.Instruction, error) {
-	switch instructionInput.Description {
+func (InstructionRepositoryMock) Find(entityID uuid.UUID) (*[]m.Instruction, error) {
+	switch instruction.Description {
 	case "find":
-		return instruction, nil
+		return &instructionArr, nil
 	case "create":
-		return instruction, nil
+		return nil, errors.New("not found")
 	case "update":
-		return instruction, nil
-	case "updateerror":
-		return instruction, nil
+		return &instructionArr, nil
+	case "updateError":
+		return &instructionArr, nil
 	case "delete":
-		return instruction, nil
-	case "deleteerror":
-		return instruction, nil
+		return &instructionArr, nil
+	case "deleteError":
+		return &instructionArr, nil
 	case "notfound":
-		return m.Instruction{}, errors.New("not found")
+		return nil, errors.New("not found")
 	default:
-		return m.Instruction{}, errors.New("error")
+		return nil, errors.New("error")
 	}
 }
 
-func (InstructionRepositoryMock) Create(instructionInput m.Instruction) (m.Instruction, error) {
-	switch instructionInput.Description {
+func (InstructionRepositoryMock) Create(instructionInput *[]m.Instruction) (*[]m.Instruction, error) {
+	switch instruction.Description {
 	case "create":
-		return instruction, nil
-	default:
-		return instruction, errors.New("error")
-	}
-}
-
-func (InstructionRepositoryMock) Update(instructionInput m.Instruction) (m.Instruction, error) {
-	switch instructionInput.Description {
+		return instructionInput, nil
 	case "update":
-		return instruction, nil
+		return instructionInput, nil
 	default:
-		return instruction, errors.New("error")
+		return nil, errors.New("error")
 	}
 }
 
-func (InstructionRepositoryMock) Delete(instructionInput m.Instruction) error {
-	switch instructionInput.Description {
+func (InstructionRepositoryMock) Delete(_ *[]m.Instruction) error {
+	switch instruction.Description {
 	case "delete":
+		return nil
+	case "update":
 		return nil
 	default:
 		return errors.New("error")
@@ -76,161 +72,135 @@ func (RecipeClientMock) RecipeExists(recipeID string) (bool, error) {
 	return true, nil
 }
 
-func (ImageClientMock) ImageExists(imageID string) (bool, error) {
-	return true, nil
-}
-
 // ========================================================================================================
 
 func TestFindInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "find",
-	}
-	result, err := s.Find(instructionDTO)
+	instruction.Description = "find"
+	result, err := s.Find(instruction.EntityID)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.InstructionDTO{}, result)
-	assert.Equal(t, "instruction", result.Description)
+	assert.IsType(t, &[]m.InstructionDTO{}, result)
 }
 
 func TestFindInstruction_NotFoundErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "notfound",
-	}
-	result, err := s.Find(instructionDTO)
+	instruction.Description = "notfound"
+	result, err := s.Find(instruction.EntityID)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
-	assert.IsType(t, m.InstructionDTO{}, result)
+	assert.IsType(t, &[]m.InstructionDTO{}, result)
 }
 
 func TestFindInstruction_Err(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "error",
-	}
-	result, err := s.Find(instructionDTO)
+	instruction.Description = "error"
+	result, err := s.Find(instruction.EntityID)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.InstructionDTO{}, result)
+	assert.IsType(t, &[]m.InstructionDTO{}, result)
 	assert.EqualError(t, err, "internal server error")
 
 }
 
 func TestCreateInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		Sequence:    instruction.Sequence,
-		Description: "create",
-		MediaID:     instruction.MediaID,
-	}
-	result, err := s.Create(instructionDTO)
+	instruction.Description = "create"
+
+	var instructionDTOArr []m.InstructionDTO
+	instructionDTOArr = append(instructionDTOArr, instruction.ConvertToDTO())
+	result, err := s.Create(instruction.EntityID, &instructionDTOArr)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.InstructionDTO{}, result)
-	assert.Equal(t, result.Description, "instruction")
+	assert.IsType(t, &[]m.InstructionDTO{}, result)
 }
 
 func TestCreateInstruction_Err(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		Sequence:    instruction.Sequence,
-		Description: "error",
-		MediaID:     instruction.MediaID,
-	}
-	result, err := s.Create(instructionDTO)
+	instruction.Description = "error"
+
+	var instructionDTOArr []m.InstructionDTO
+	instructionDTOArr = append(instructionDTOArr, instruction.ConvertToDTO())
+	result, err := s.Create(instruction.EntityID, &instructionDTOArr)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.InstructionDTO{}, result)
+	assert.IsType(t, &[]m.InstructionDTO{}, result)
 	assert.EqualError(t, err, "error")
 }
 
 func TestUpdateInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "update",
-	}
-	result, err := s.Update(instructionDTO)
+	instruction.Description = "update"
+
+	var instructionDTOArr []m.InstructionDTO
+	instructionDTOArr = append(instructionDTOArr, instruction.ConvertToDTO())
+	result, err := s.Update(instruction.EntityID, &instructionDTOArr)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.InstructionDTO{}, result)
-	assert.Equal(t, instruction.ID, result.ID)
-	assert.Equal(t, instruction.Description, result.Description)
+	assert.IsType(t, &[]m.InstructionDTO{}, result)
 }
 
 func TestUpdateInstruction_FindErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "error",
-	}
-	result, err := s.Update(instructionDTO)
+	instruction.Description = "error"
+
+	var instructionDTOArr []m.InstructionDTO
+	instructionDTOArr = append(instructionDTOArr, instruction.ConvertToDTO())
+	result, err := s.Update(instruction.EntityID, &instructionDTOArr)
 
 	assert.Error(t, err)
-	assert.Equal(t, m.InstructionDTO{}, result)
-	assert.EqualError(t, err, "unable to find existing instruction. cannot update something that does not exist")
+	assert.IsType(t, &[]m.InstructionDTO{}, result)
+	assert.EqualError(t, err, "unable to find existing recipe. cannot update something that does not exist")
 }
 
 func TestUpdateInstruction_UpdateErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "find",
-	}
-	result, err := s.Update(instructionDTO)
+	instruction.Description = "find"
+
+	var instructionDTOArr []m.InstructionDTO
+	instructionDTOArr = append(instructionDTOArr, instruction.ConvertToDTO())
+	_, err := s.Update(instruction.EntityID, &instructionDTOArr)
 
 	assert.Error(t, err)
-	assert.Equal(t, m.InstructionDTO{}, result)
-	assert.EqualError(t, err, "error")
+	assert.EqualError(t, err, "an error occured deleting existing instructions error")
 }
 
 func TestDeleteInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "delete",
-	}
-	err := s.Delete(instructionDTO)
+	instruction.Description = "delete"
+
+	err := s.Delete(instruction.EntityID)
 
 	assert.NoError(t, err)
 }
 
 func TestDeleteInstruction_FindErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "error",
-	}
-	err := s.Delete(instructionDTO)
+	instruction.Description = "error"
+
+	err := s.Delete(instruction.EntityID)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "unable to find existing instruction. cannot delete something that does not exist")
 }
 
 func TestDeleteInstruction_DeleteErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{}, ImageClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
 
-	instructionDTO := m.InstructionDTO{
-		ID:          instruction.ID,
-		Description: "deleteerror",
-	}
-	err := s.Delete(instructionDTO)
+	instruction.Description = "deleteError"
+
+	err := s.Delete(instruction.EntityID)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
