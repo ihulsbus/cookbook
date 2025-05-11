@@ -8,17 +8,110 @@ import (
 	"gorm.io/gorm"
 )
 
-type SearcRepository struct {
+type SearchRepository struct {
 	db *gorm.DB
 }
 
-func NewSearchRepository(db *gorm.DB) *SearcRepository {
-	return &SearcRepository{
+func NewSearchRepository(db *gorm.DB) *SearchRepository {
+	return &SearchRepository{
 		db: db,
 	}
 }
 
-func (r *SearcRepository) SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error) {
+func (r *SearchRepository) GetAllRecipeMetadata() ([]m.MetadataSearchResult, error) {
+	var recipeIDs []uuid.UUID
+
+	// Step 1: fetch all recipe IDs from base table
+	if err := r.db.
+		Table("recipe_difficulty_levels").
+		Distinct().
+		Pluck("recipe_id", &recipeIDs).Error; err != nil {
+		return nil, err
+	}
+
+	if len(recipeIDs) == 0 {
+		return []m.MetadataSearchResult{}, nil
+	}
+
+	// Step 2: bulk fetch all related data
+	type row struct {
+		RecipeID uuid.UUID
+		ValueID  uuid.UUID
+	}
+
+	// Helper map builders
+	fetchMany := func(table, column string) (map[uuid.UUID][]uuid.UUID, error) {
+		var rows []row
+		result := make(map[uuid.UUID][]uuid.UUID)
+
+		err := r.db.Table(table).
+			Select("recipe_id, "+column+" as value_id").
+			Where("recipe_id IN ?", recipeIDs).
+			Scan(&rows).Error
+		if err != nil {
+			return nil, err
+		}
+
+		for _, r := range rows {
+			result[r.RecipeID] = append(result[r.RecipeID], r.ValueID)
+		}
+
+		return result, nil
+	}
+
+	fetchOne := func(table, column string) (map[uuid.UUID]uuid.UUID, error) {
+		multi, err := fetchMany(table, column)
+		if err != nil {
+			return nil, err
+		}
+		single := make(map[uuid.UUID]uuid.UUID)
+		for k, v := range multi {
+			if len(v) > 0 {
+				single[k] = v[0]
+			}
+		}
+		return single, nil
+	}
+
+	// Fetch related metadata
+	categories, err := fetchMany("recipe_categories", "category_id")
+	if err != nil {
+		return nil, err
+	}
+	tags, err := fetchMany("recipe_tags", "tag_id")
+	if err != nil {
+		return nil, err
+	}
+	difficulties, err := fetchOne("recipe_difficulty_levels", "difficulty_level_id")
+	if err != nil {
+		return nil, err
+	}
+	prepTimes, err := fetchOne("recipe_preparation_times", "preparation_time_id")
+	if err != nil {
+		return nil, err
+	}
+	cuisines, err := fetchOne("recipe_cuisine_types", "cuisine_type_id")
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 3: Assemble results
+	results := make([]m.MetadataSearchResult, 0, len(recipeIDs))
+	for _, id := range recipeIDs {
+		results = append(results, m.MetadataSearchResult{
+			RecipeID:          id,
+			CategoryIDs:       categories[id],
+			TagIDs:            tags[id],
+			DifficultyLevelID: difficulties[id],
+			PreparationTimeID: prepTimes[id],
+			CuisineTypeID:     cuisines[id],
+		})
+	}
+
+	return results, nil
+}
+
+func (r *SearchRepository) SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error) {
 	var results []m.MetadataSearchResult
 
 	// Start with base query. we do this on categories as all recipes need to have a category
@@ -30,7 +123,7 @@ func (r *SearcRepository) SearchMetadata(request m.MetadataSearchRequest) ([]m.M
 		Joins("LEFT JOIN recipe_cuisine_types ON recipe_categories.recipe_id = recipe_cuisine_types.recipe_id").
 		Group("recipe_categories.recipe_id")
 
-		// Apply filters based on request
+	// Apply filters based on request
 	if *request.CategoryID != uuid.Nil {
 		query = query.Where("recipe_categories.category_id = ?", *request.CategoryID)
 	}
