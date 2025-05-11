@@ -40,9 +40,9 @@ func (c Unit) ConvertAllToDTO(units []Unit) []UnitDTO {
 }
 
 type UnitDTO struct {
-	ID        uuid.UUID `gorm:"primaryKey;not null;unique;index" json:"ID" example:"1"`
-	FullName  string    `gorm:"not null;unique" json:"FullName" example:"Fluid ounce"`
-	ShortName string    `gorm:"not null;unique" json:"ShortName" example:"fl oz"`
+	ID        uuid.UUID `gorm:"primaryKey;not null;unique;index" json:"id" example:"1"`
+	FullName  string    `gorm:"not null;unique" json:"full_name" example:"Fluid ounce"`
+	ShortName string    `gorm:"not null;unique" json:"short_name" example:"fl oz"`
 }
 
 func (u UnitDTO) ConvertFromDTO() Unit {

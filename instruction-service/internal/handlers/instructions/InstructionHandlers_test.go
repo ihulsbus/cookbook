@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	m "instruction-service/internal/models"
 	"io"
 	"net/http"
@@ -16,47 +17,55 @@ import (
 )
 
 var (
-	instruction m.InstructionDTO = m.InstructionDTO{
+	instruction = m.InstructionDTO{
 		ID:          uuid.New(),
 		Sequence:    1,
 		Description: "instruction",
 		MediaID:     uuid.New(),
+		EntityID:    uuid.New(),
+		EntityType:  "recipe",
 	}
 )
 
 type InstructionServiceMock struct {
 }
 
-func (s *InstructionServiceMock) Find(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
+func (s *InstructionServiceMock) Find(recipeID uuid.UUID) (*[]m.InstructionDTO, error) {
 	switch instruction.Description {
 	case "find":
-		return instruction, nil
+		var instructions []m.InstructionDTO
+		instructions = append(instructions, instruction)
+		return &instructions, nil
 	case "notfound":
-		return m.InstructionDTO{}, errors.New("not found")
+		return nil, errors.New("not found")
 	default:
-		return m.InstructionDTO{}, errors.New("error")
+		return nil, errors.New("error")
 	}
 }
 
-func (s *InstructionServiceMock) Create(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
-	switch instructionDTO.Description {
+func (s *InstructionServiceMock) Create(entityID uuid.UUID, instructionDTO *[]m.InstructionDTO) (*[]m.InstructionDTO, error) {
+	switch instruction.Description {
 	case "create":
-		return instruction, nil
+		var instructions []m.InstructionDTO
+		instructions = append(instructions, instruction)
+		return &instructions, nil
 	default:
-		return m.InstructionDTO{}, errors.New("error")
+		return nil, errors.New("error")
 	}
 }
 
-func (s *InstructionServiceMock) Update(instructionDTO m.InstructionDTO) (m.InstructionDTO, error) {
-	switch instructionDTO.Description {
+func (s *InstructionServiceMock) Update(entityID uuid.UUID, instructionDTO *[]m.InstructionDTO) (*[]m.InstructionDTO, error) {
+	switch instruction.Description {
 	case "update":
-		return instruction, nil
+		var instructions []m.InstructionDTO
+		instructions = append(instructions, instruction)
+		return &instructions, nil
 	default:
-		return m.InstructionDTO{}, errors.New("error")
+		return nil, errors.New("error")
 	}
 }
 
-func (s *InstructionServiceMock) Delete(instructionDTO m.InstructionDTO) error {
+func (s *InstructionServiceMock) Delete(recipeID uuid.UUID) error {
 	switch instruction.Description {
 	case "delete":
 		return nil
@@ -73,7 +82,7 @@ func TestGetInstruction_OK(t *testing.T) {
 
 	instruction.Description = "find"
 
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", nil)
+	req := httptest.NewRequest("GET", fmt.Sprintf("http://example.com/api/v2/instruction/%s", instruction.EntityID), nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -86,7 +95,7 @@ func TestGetInstruction_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(instruction)
+	expectedBody, _ := json.Marshal([]m.InstructionDTO{instruction})
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
@@ -162,24 +171,20 @@ func TestCreateInstruction_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
-	createInstruction := m.InstructionDTO{
-		Sequence:    1,
-		Description: "create",
-		MediaID:     instruction.MediaID,
-	}
-	reqBody, _ := json.Marshal(createInstruction)
+	instruction.Description = "create"
+	reqBody, _ := json.Marshal([]m.InstructionDTO{instruction})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/1/instruction", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
-	c.AddParam("recipeID", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
+	c.AddParam("id", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
 
 	h.Create(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
-	assertBody, _ := json.Marshal(instruction)
+	assertBody, _ := json.Marshal([]m.InstructionDTO{instruction})
 
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 	assert.Equal(t, assertBody, body)
@@ -193,6 +198,7 @@ func TestCreateInstruction_UnmarshalErr(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.AddParam("id", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
 
 	h.Create(c)
 
@@ -207,18 +213,14 @@ func TestCreateInstruction_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
-	createInstruction := m.InstructionDTO{
-		Sequence:    1,
-		Description: "error",
-		MediaID:     instruction.MediaID,
-	}
-	reqBody, _ := json.Marshal(createInstruction)
+	instruction.Description = "createError"
+	reqBody, _ := json.Marshal([]m.InstructionDTO{instruction})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
-	c.AddParam("recipeID", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
+	c.AddParam("id", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
 
 	h.Create(c)
 
@@ -234,15 +236,13 @@ func TestUpdateInstruction_OK(t *testing.T) {
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
 	instruction.Description = "update"
-	reqBody, _ := json.Marshal(instruction)
+	reqBody, _ := json.Marshal([]m.InstructionDTO{instruction})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
-	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: instruction.ID.String()},
-	}
+	c.AddParam("id", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
 
 	h.Update(c)
 
@@ -253,7 +253,7 @@ func TestUpdateInstruction_OK(t *testing.T) {
 	assert.Equal(t, reqBody, body)
 }
 
-func TestUpdateInstruction_IDErr(t *testing.T) {
+func TestUpdateEntity_IDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
@@ -271,7 +271,7 @@ func TestUpdateInstruction_IDErr(t *testing.T) {
 	body, _ := io.ReadAll(resp.Body)
 
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
-	assert.Equal(t, `{"error":"invalid instruction ID"}`, string(body))
+	assert.Equal(t, `{"error":"invalid entity id provided"}`, string(body))
 }
 
 func TestUpdateInstruction_UnmarshalErr(t *testing.T) {
@@ -282,9 +282,7 @@ func TestUpdateInstruction_UnmarshalErr(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
-	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: instruction.ID.String()},
-	}
+	c.AddParam("recipeID", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
 
 	h.Update(c)
 
@@ -297,16 +295,14 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &m.LoggerInterfaceMock{})
 
-	instruction.Description = "error"
-	reqBody, _ := json.Marshal(instruction)
+	instruction.Description = "updateError"
+	reqBody, _ := json.Marshal([]m.InstructionDTO{instruction})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/instruction/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
-	c.Params = gin.Params{
-		gin.Param{Key: "id", Value: instruction.ID.String()},
-	}
+	c.AddParam("id", "6c4e174f-e760-4a4d-af6e-d1d5849b0fe1")
 
 	h.Update(c)
 

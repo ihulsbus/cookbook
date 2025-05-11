@@ -155,3 +155,6 @@ config:
         database: instruction
         sslMode: require
         timezone: Europe/Amsterdam
+
+      recipeClient:
+        baseURL: https://api-staging.gourmedy.com/api/v2

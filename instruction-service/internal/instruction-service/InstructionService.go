@@ -49,7 +49,7 @@ func InstructionService(ctx context.Context) {
 			createInstruction := instruction.Group("")
 			createInstruction.Use(c.KeycloakModule.Middleware("administrator"))
 			{
-				createInstruction.POST("/recipe/:recipeID", c.InstructionHandlers.Create)
+				createInstruction.POST(":id", c.InstructionHandlers.Create)
 			}
 
 			updateInstruction := instruction.Group("")

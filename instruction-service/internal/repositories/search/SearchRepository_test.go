@@ -25,7 +25,7 @@ func TestSearch_OK(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewSearchRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT recipe_instructions.instruction_id FROM "recipe_instructions" WHERE recipe_instructions.recipe_id = $1`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT instructions.instruction_id FROM "instructions" WHERE instructions.recipe_id = $1`)).
 		WithArgs(
 			searchRequest.RecipeID,
 		).
@@ -45,7 +45,7 @@ func TestSearch_Err(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewSearchRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT recipe_instructions.instruction_id FROM "recipe_instructions" WHERE recipe_instructions.recipe_id = $1`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT instructions.instruction_id FROM "instructions" WHERE instructions.recipe_id = $1`)).
 		WithArgs(
 			searchRequest.RecipeID,
 		).

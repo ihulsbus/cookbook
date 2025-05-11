@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	instruction m.Instruction = m.Instruction{
+	instruction = m.Instruction{
 		ID:          uuid.New(),
 		Sequence:    1,
 		Description: "instruction",
@@ -74,7 +74,7 @@ func TestFindInstruction_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewInstructionRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "instructions" WHERE "instructions"."deleted_at" IS NULL AND "instructions"."id" = $1 ORDER BY "instructions"."id" LIMIT $2`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "instructions" WHERE entity_id = $1 AND "instructions"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "sequence", "description", "media_id"}).
 			AddRow(
 				instruction.ID,
@@ -83,24 +83,27 @@ func TestFindInstruction_OK(t *testing.T) {
 				instruction.MediaID,
 			))
 
-	result, err := r.Find(instruction)
+	result, err := r.Find(instruction.EntityID)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Instruction{}, result)
-	assert.Equal(t, instruction.ID, result.ID)
-	assert.Equal(t, instruction.Sequence, result.Sequence)
-	assert.Equal(t, instruction.Description, result.Description)
-	assert.Equal(t, instruction.MediaID, result.MediaID)
+	derefResult := *result
+
+	assert.Len(t, derefResult, 1)
+	assert.IsType(t, &[]m.Instruction{}, result)
+	assert.Equal(t, instruction.ID, derefResult[0].ID)
+	assert.Equal(t, instruction.Sequence, derefResult[0].Sequence)
+	assert.Equal(t, instruction.Description, derefResult[0].Description)
+	assert.Equal(t, instruction.MediaID, derefResult[0].MediaID)
 }
 
 func TestFindInstruction_NotFoundErr(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewInstructionRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "instructions" WHERE "instructions"."deleted_at" IS NULL AND "instructions"."id" = $1 ORDER BY "instructions"."id" LIMIT $2`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "instructions" WHERE entity_id = $1 AND "instructions"."deleted_at" IS NULL`)).
 		WillReturnRows(&sqlmock.Rows{})
 
-	_, err := r.Find(instruction)
+	_, err := r.Find(instruction.EntityID)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "not found")
@@ -110,10 +113,10 @@ func TestFindInstruction_FindErr(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewInstructionRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "instructions" WHERE "instructions"."deleted_at" IS NULL AND "instructions"."id" = $1 ORDER BY "instructions"."id" LIMIT $2`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "instructions" WHERE entity_id = $1 AND "instructions"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 
-	_, err := r.Find(instruction)
+	_, err := r.Find(instruction.EntityID)
 
 	assert.Error(t, err)
 }
@@ -139,10 +142,12 @@ func TestCreateInstruction_OK(t *testing.T) {
 			AddRow(instruction.ID))
 	mock.ExpectCommit()
 
-	result, err := r.Create(instruction)
+	var createRequest []m.Instruction
+	createRequest = append(createRequest, instruction)
+	result, err := r.Create(&createRequest)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.Instruction{}, result)
+	assert.IsType(t, &[]m.Instruction{}, result)
 }
 
 func TestCreateInstruction_Err(t *testing.T) {
@@ -162,55 +167,12 @@ func TestCreateInstruction_Err(t *testing.T) {
 		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
-	result, err := r.Create(instruction)
+	var createRequest []m.Instruction
+	createRequest = append(createRequest, instruction)
+	result, err := r.Create(&createRequest)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.Instruction{}, result)
-}
-
-func TestUpdateInstruction_Ok(t *testing.T) {
-	db, mock := newMockDatabase(t)
-	r := NewInstructionRepository(db)
-
-	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "instructions" SET "sequence"=$1,"description"=$2,"media_id"=$3,"updated_at"=$4 WHERE "instructions"."deleted_at" IS NULL AND "id" = $5`)).
-		WithArgs(
-			instruction.Sequence,
-			instruction.Description,
-			instruction.MediaID,
-			sqlmock.AnyArg(),
-			instruction.ID,
-		).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-
-	result, err := r.Update(instruction)
-
-	assert.NoError(t, err)
-	assert.IsType(t, m.Instruction{}, result)
-}
-
-func TestUpdateInstruction_Err(t *testing.T) {
-	db, mock := newMockDatabase(t)
-	r := NewInstructionRepository(db)
-
-	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "instructions" SET "sequence"=$1,"description"=$2,"media_id"=$3,"updated_at"=$4 WHERE "instructions"."deleted_at" IS NULL AND "id" = $5`)).
-		WithArgs(
-			instruction.Sequence,
-			instruction.Description,
-			instruction.MediaID,
-			sqlmock.AnyArg(),
-			instruction.ID,
-		).
-		WillReturnError(errors.New("error"))
-	mock.ExpectRollback()
-
-	result, err := r.Update(instruction)
-
-	assert.Error(t, err)
-	assert.EqualError(t, err, "error")
-	assert.IsType(t, m.Instruction{}, result)
+	assert.IsType(t, &[]m.Instruction{}, result)
 }
 
 func TestDeleteInstruction_Ok(t *testing.T) {
@@ -226,7 +188,9 @@ func TestDeleteInstruction_Ok(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	err := r.Delete(instruction)
+	var deleteRequest []m.Instruction
+	deleteRequest = append(deleteRequest, instruction)
+	err := r.Delete(&deleteRequest)
 
 	assert.NoError(t, err)
 }
@@ -244,7 +208,9 @@ func TestDeleteInstruction_Err(t *testing.T) {
 		WillReturnError(errors.New("error"))
 	mock.ExpectCommit()
 
-	err := r.Delete(instruction)
+	var deleteRequest []m.Instruction
+	deleteRequest = append(deleteRequest, instruction)
+	err := r.Delete(&deleteRequest)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

@@ -4,12 +4,11 @@ import "github.com/google/uuid"
 
 // Amount struct to hold recipe ingredient data
 type Amount struct {
-	RecipeID     uuid.UUID
-	IngredientID uuid.UUID  `json:"IngredientID"`
-	Ingredient   Ingredient `gorm:"references:ID"`
-	Quantity     int        `json:"Quantity"`
-	UnitID       uuid.UUID  `json:"UnitID"`
-	Unit         Unit       `gorm:"references:ID"`
+	RecipeID     uuid.UUID `gorm:"primaryKey"`
+	IngredientID uuid.UUID `gorm:"primaryKey"`
+	Quantity     int       `json:"Quantity"`
+	UnitID       uuid.UUID `json:"UnitID"`
+	Unit         Unit      `gorm:"references:ID"`
 }
 
 func (r Amount) ConvertToDTO() AmountDTO {
@@ -31,9 +30,9 @@ func (r Amount) ConvertAllToDTO(recipeIngredients []Amount) []AmountDTO {
 }
 
 type AmountDTO struct {
-	IngredientID uuid.UUID `json:"IngredientID" example:"23582396-12a3-425b-a597-8a22052823da"`
-	Quantity     int       `json:"Quantity" example:"40"`
-	UnitID       uuid.UUID `json:"UnitID" example:"23582396-12a3-425b-a597-8a22052823da"`
+	IngredientID uuid.UUID `json:"ingredientID" example:"23582396-12a3-425b-a597-8a22052823da"`
+	Quantity     int       `json:"quantity" example:"40"`
+	UnitID       uuid.UUID `json:"unitID"`
 }
 
 func (r AmountDTO) ConvertFromDTO() Amount {

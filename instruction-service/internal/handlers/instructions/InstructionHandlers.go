@@ -9,10 +9,10 @@ import (
 )
 
 type InstructionService interface {
-	Find(instruction m.InstructionDTO) (m.InstructionDTO, error)
-	Create(instruction m.InstructionDTO) (m.InstructionDTO, error)
-	Update(instruction m.InstructionDTO) (m.InstructionDTO, error)
-	Delete(instruction m.InstructionDTO) error
+	Find(recipeID uuid.UUID) (*[]m.InstructionDTO, error)
+	Create(entityID uuid.UUID, instructionDTO *[]m.InstructionDTO) (*[]m.InstructionDTO, error)
+	Update(entityID uuid.UUID, instructionDTO *[]m.InstructionDTO) (*[]m.InstructionDTO, error)
+	Delete(recipeID uuid.UUID) error
 }
 
 type InstructionHandlers struct {
@@ -28,16 +28,15 @@ func NewInstructionHandlers(service InstructionService, logger m.LoggerInterface
 }
 
 func (h InstructionHandlers) Get(ctx *gin.Context) {
-	var instructionDTO m.InstructionDTO
-	var err error
+	var instructionDTO *[]m.InstructionDTO
 
-	instructionDTO.ID, err = uuid.Parse(ctx.Param("id"))
+	entityID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid instruction ID"})
 		return
 	}
 
-	instructionDTO, err = h.instructionService.Find(instructionDTO)
+	instructionDTO, err = h.instructionService.Find(entityID)
 	if err != nil {
 		switch err.Error() {
 		case "not found":
@@ -53,43 +52,39 @@ func (h InstructionHandlers) Get(ctx *gin.Context) {
 }
 
 func (h InstructionHandlers) Create(ctx *gin.Context) {
-	var instructionDTO m.InstructionDTO
-	var err error
+	var instructionDTO []m.InstructionDTO
+
+	entityID, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid entity id provided"})
+		return
+	}
+
+	if entityID == uuid.Nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "entity id is required"})
+		return
+	}
 
 	if err = ctx.ShouldBindJSON(&instructionDTO); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unexpected JSON input"})
 		return
 	}
 
-	instructionDTO.EntityID, err = uuid.Parse(ctx.Param("recipeID"))
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid recipe id provided"})
-		return
-	}
-
-	if instructionDTO.EntityID == uuid.Nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "recipe id is required"})
-		return
-	}
-
-	instructionDTO.EntityType = "recipe" // Hardcoded for now as ony recipes support instructions currently.
-
-	instructionDTO, err = h.instructionService.Create(instructionDTO)
+	instructionDTOResponse, err := h.instructionService.Create(entityID, &instructionDTO)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, instructionDTO)
+	ctx.JSON(http.StatusCreated, instructionDTOResponse)
 }
 
 func (h InstructionHandlers) Update(ctx *gin.Context) {
-	var instructionDTO m.InstructionDTO
-	var err error
+	var instructionDTO []m.InstructionDTO
 
-	id, err := uuid.Parse(ctx.Param("id"))
+	entityID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid instruction ID"})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid entity id provided"})
 		return
 	}
 
@@ -98,28 +93,24 @@ func (h InstructionHandlers) Update(ctx *gin.Context) {
 		return
 	}
 
-	instructionDTO, err = h.instructionService.Update(instructionDTO)
+	instructionDTOResponse, err := h.instructionService.Update(entityID, &instructionDTO)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	instructionDTO.ID = id
-
-	ctx.JSON(http.StatusOK, instructionDTO)
+	ctx.JSON(http.StatusOK, instructionDTOResponse)
 }
 
 func (h InstructionHandlers) Delete(ctx *gin.Context) {
-	var instructionDTO m.InstructionDTO
-	var err error
 
-	instructionDTO.ID, err = uuid.Parse(ctx.Param("id"))
+	entityID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid instruction ID"})
 		return
 	}
 
-	err = h.instructionService.Delete(instructionDTO)
+	err = h.instructionService.Delete(entityID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
