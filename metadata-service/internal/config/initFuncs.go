@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"gorm.io/gorm/clause"
 	"metadata-service/internal/helpers"
 	m "metadata-service/internal/models"
 	"strings"
@@ -101,6 +102,51 @@ func initDatabase() {
 	}
 
 	Logger.Info("connected!")
+}
+
+func initCategories() {
+	if err := DatabaseClient.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(m.DefaultCategories).Error; err != nil {
+			return err
+		}
+
+		return nil
+
+	}); err != nil {
+		Logger.Fatalf("Error while creating units: %v", err)
+	}
+}
+
+func initCuisineTypes() {
+	if err := DatabaseClient.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(m.DefaultCuisineTypes).Error; err != nil {
+			return err
+		}
+
+		return nil
+
+	}); err != nil {
+		Logger.Fatalf("Error while creating units: %v", err)
+	}
+}
+
+func initDifficultyLevels() {
+	if err := DatabaseClient.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(m.DefaultDifficultyLevels).Error; err != nil {
+			return err
+		}
+
+		return nil
+
+	}); err != nil {
+		Logger.Fatalf("Error while creating units: %v", err)
+	}
 }
 
 func initCors() {

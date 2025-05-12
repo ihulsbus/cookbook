@@ -46,7 +46,7 @@ var (
 	CuisineTypeRepository     *cur.CuisineTypeRepository
 	DifficultyLevelRepository *dr.DifficultyLevelRepository
 	PreparationTimeRepository *pr.PreparationTimeRepository
-	SearchRepository          *sr.SearcRepository
+	SearchRepository          *sr.SearchRepository
 	TagRepository             *tr.TagRepository
 
 	// Services
@@ -80,7 +80,11 @@ func init() {
 	})
 
 	initDatabase()
+	initCategories()
+	initCuisineTypes()
+	initDifficultyLevels()
 	initCors()
+
 	KeycloakModule, err = initOauth()
 	if err != nil {
 		Logger.Panicf("error initialising oauth: %v", err)

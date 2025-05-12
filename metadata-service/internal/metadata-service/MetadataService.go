@@ -2,6 +2,7 @@ package instructionservice
 
 import (
 	"context"
+	"errors"
 	c "metadata-service/internal/config"
 	m "metadata-service/internal/middleware"
 	"net/http"
@@ -180,6 +181,12 @@ func MetadataService(ctx context.Context) {
 		// Search routes
 		search := v2.Group("/search")
 		{
+			all := search.Group("/all")
+			all.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				all.GET("", c.SearchHandlers.GetAllMetadata)
+			}
+
 			createSearch := search.Group("")
 			createSearch.Use(c.KeycloakModule.Middleware("administrator"))
 			{
@@ -198,11 +205,14 @@ func MetadataService(ctx context.Context) {
 
 	go func() {
 		<-ctx.Done()
-		srv.Shutdown(ctx)
+		err := srv.Shutdown(ctx)
+		if err != nil {
+			return
+		}
 	}()
 
 	log.Info("metadata service available on port 8080")
-	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		log.Error(err)
 	}
 }

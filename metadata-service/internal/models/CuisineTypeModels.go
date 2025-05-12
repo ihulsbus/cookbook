@@ -7,6 +7,29 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	DefaultCuisineTypes = []CuisineType{
+		{Name: "American"},
+		{Name: "Brazilian"},
+		{Name: "Chinese"},
+		{Name: "Ethiopian"},
+		{Name: "French"},
+		{Name: "Greek"},
+		{Name: "Indian"},
+		{Name: "Italian"},
+		{Name: "Japanese"},
+		{Name: "Korean"},
+		{Name: "Mediterranean"},
+		{Name: "Mexican"},
+		{Name: "Middle Eastern"},
+		{Name: "Moroccan"},
+		{Name: "Spanish"},
+		{Name: "Thai"},
+		{Name: "Turkish"},
+		{Name: "Vietnamese"},
+	}
+)
+
 // Database model
 type CuisineType struct {
 	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`

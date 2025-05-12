@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"gorm.io/gorm/clause"
 	"ingredient-service/internal/helpers"
 	m "ingredient-service/internal/models"
 	"strings"
@@ -94,6 +95,21 @@ func initDatabase() {
 	}
 
 	Logger.Info("connected!")
+}
+
+func initUnits() {
+	if err := DatabaseClient.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(m.DefaultUnits).Error; err != nil {
+			return err
+		}
+
+		return nil
+
+	}); err != nil {
+		Logger.Fatalf("Error while creating units: %v", err)
+	}
 }
 
 func initCors() {

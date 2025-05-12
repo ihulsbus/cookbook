@@ -18,7 +18,7 @@ func NewSearchRepository(db *gorm.DB) *SearchRepository {
 	}
 }
 
-func (r *SearchRepository) GetAllRecipeMetadata() ([]m.MetadataSearchResult, error) {
+func (r *SearchRepository) GetAllRecipeMetadata() (*[]m.MetadataSearchResult, error) {
 	var recipeIDs []uuid.UUID
 
 	// Step 1: fetch all recipe IDs from base table
@@ -30,7 +30,7 @@ func (r *SearchRepository) GetAllRecipeMetadata() ([]m.MetadataSearchResult, err
 	}
 
 	if len(recipeIDs) == 0 {
-		return []m.MetadataSearchResult{}, nil
+		return &[]m.MetadataSearchResult{}, nil
 	}
 
 	// Step 2: bulk fetch all related data
@@ -108,7 +108,7 @@ func (r *SearchRepository) GetAllRecipeMetadata() ([]m.MetadataSearchResult, err
 		})
 	}
 
-	return results, nil
+	return &results, nil
 }
 
 func (r *SearchRepository) SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error) {

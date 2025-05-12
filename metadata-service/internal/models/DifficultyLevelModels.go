@@ -7,6 +7,16 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	DefaultDifficultyLevels = []DifficultyLevel{
+		{Level: 1},
+		{Level: 2},
+		{Level: 3},
+		{Level: 4},
+		{Level: 5},
+	}
+)
+
 // Database model
 type DifficultyLevel struct {
 	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`

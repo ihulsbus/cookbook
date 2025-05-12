@@ -7,6 +7,32 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	DefaultUnits = []Unit{
+		// US units
+		{FullName: "Teaspoon", ShortName: "tsp"},
+		{FullName: "Tablespoon", ShortName: "tbsp"},
+		{FullName: "Fluid Ounce", ShortName: "fl oz"},
+		{FullName: "Ounce", ShortName: "oz"},
+		{FullName: "Pound", ShortName: "lb"},
+		{FullName: "Cup", ShortName: "c"},
+		{FullName: "Pint", ShortName: "pt"},
+		{FullName: "Quart", ShortName: "qt"},
+		{FullName: "Gallon", ShortName: "gal"},
+		// Metric units
+		{FullName: "Milliliter", ShortName: "ml"},
+		{FullName: "Deciliter", ShortName: "dl"},
+		{FullName: "Liter", ShortName: "l"},
+		{FullName: "Milligram", ShortName: "mg"},
+		{FullName: "Gram", ShortName: "g"},
+		{FullName: "Kilogram", ShortName: "kg"},
+		// Generic units
+		{FullName: "Pinch", ShortName: "pn"},
+		{FullName: "Cloves", ShortName: "cloves"},
+		{FullName: "Pieces", ShortName: "pcs"},
+	}
+)
+
 type Unit struct {
 	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
 	FullName  string         `gorm:"not null;unique" json:"FullName" example:"Fluid ounce"`

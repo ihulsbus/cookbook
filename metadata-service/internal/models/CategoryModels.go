@@ -7,6 +7,28 @@ import (
 	"gorm.io/gorm"
 )
 
+var (
+	DefaultCategories = []Category{
+		{Name: "Fish"},
+		{Name: "Meat"},
+		{Name: "Vegetarian"},
+		{Name: "Vegan"},
+		{Name: "Soup"},
+		{Name: "Stew"},
+		{Name: "Curry"},
+		{Name: "Pasta"},
+		{Name: "Rice & Risotto"},
+		{Name: "Salad"},
+		{Name: "Bread"},
+		{Name: "Fruit"},
+		{Name: "Dessert"},
+		{Name: "Baked treats"},
+		{Name: "Sauce"},
+		{Name: "Bouillon"},
+		{Name: "Dough"},
+	}
+)
+
 // Database model
 type Category struct {
 	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`

@@ -8,6 +8,7 @@ import (
 )
 
 type SearchService interface {
+	GetAllRecipeMetadata() (*[]m.MetadataSearchResultDTO, error)
 	SearchMetadata(m.MetadataSearchRequestDTO) ([]m.MetadataSearchResultDTO, error)
 }
 
@@ -21,6 +22,17 @@ func NewSearchHandlers(searchs SearchService, logger m.LoggerInterface) *SearchH
 		searchService: searchs,
 		logger:        logger,
 	}
+}
+
+func (h *SearchHandlers) GetAllMetadata(ctx *gin.Context) {
+
+	MetadataDTO, err := h.searchService.GetAllRecipeMetadata()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, MetadataDTO)
 }
 
 func (h *SearchHandlers) SearchMetadata(ctx *gin.Context) {

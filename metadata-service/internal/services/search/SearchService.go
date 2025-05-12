@@ -5,6 +5,7 @@ import (
 )
 
 type SearchRepository interface {
+	GetAllRecipeMetadata() (*[]m.MetadataSearchResult, error)
 	SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error)
 }
 
@@ -17,6 +18,16 @@ func NewSearchService(repo SearchRepository) *SearchService {
 	return &SearchService{
 		repo: repo,
 	}
+}
+
+func (s SearchService) GetAllRecipeMetadata() (*[]m.MetadataSearchResultDTO, error) {
+	results, err := s.repo.GetAllRecipeMetadata()
+	if err != nil {
+		return nil, err
+	}
+
+	resultsDTO := m.MetadataSearchResult{}.ConvertAllToDTO(*results)
+	return &resultsDTO, nil
 }
 
 func (s SearchService) SearchMetadata(searchRequestDTO m.MetadataSearchRequestDTO) ([]m.MetadataSearchResultDTO, error) {

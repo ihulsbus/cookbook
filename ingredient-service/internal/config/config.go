@@ -62,6 +62,7 @@ func init() {
 	})
 
 	initDatabase()
+	initUnits()
 	initCors()
 
 	// Init repositories
