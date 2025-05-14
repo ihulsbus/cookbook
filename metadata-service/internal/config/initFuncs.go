@@ -90,13 +90,12 @@ func initDatabase() {
 		&m.Tag{},
 		&m.Category{},
 		&m.CuisineType{},
-		&m.PreparationTime{},
 		&m.DifficultyLevel{},
-		&m.RecipeTag{},
-		&m.RecipeCategory{},
-		&m.RecipeCuisineType{},
-		&m.RecipePreparationTime{},
-		&m.RecipeDifficultyLevel{},
+		&m.RecipeMetadata{},
+		//&m.RecipeTag{},
+		//&m.RecipeCategory{},
+		//&m.RecipeCuisineType{},
+		//&m.RecipeDifficultyLevel{},
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}

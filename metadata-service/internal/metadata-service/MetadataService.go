@@ -149,35 +149,6 @@ func MetadataService(ctx context.Context) {
 			}
 		}
 
-		// PreparationTime routes
-		PreparationTime := v2.Group("/preparationtime")
-		{
-			readPreparationTime := PreparationTime.Group("")
-			readPreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
-			{
-				readPreparationTime.GET("", c.PreparationTimeHandlers.GetAll)
-				readPreparationTime.GET(":id", c.PreparationTimeHandlers.Get)
-			}
-
-			createPreparationTime := PreparationTime.Group("")
-			createPreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
-			{
-				createPreparationTime.POST("", c.PreparationTimeHandlers.Create)
-			}
-
-			updatePreparationTime := PreparationTime.Group("")
-			updatePreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
-			{
-				updatePreparationTime.PUT(":id", c.PreparationTimeHandlers.Update)
-			}
-
-			deletePreparationTime := PreparationTime.Group("")
-			deletePreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
-			{
-				deletePreparationTime.DELETE(":id", c.PreparationTimeHandlers.Delete)
-			}
-		}
-
 		// Search routes
 		search := v2.Group("/search")
 		{
