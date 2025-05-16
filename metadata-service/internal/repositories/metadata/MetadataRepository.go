@@ -19,7 +19,7 @@ func NewRecipeMetadataRepository(db *gorm.DB) *RecipeMetadataRepository {
 }
 
 // FindAll loads all metadata entries, including associations
-func (r *RecipeMetadataRepository) FindAll() ([]m.RecipeMetadata, error) {
+func (r *RecipeMetadataRepository) FindAll() (*[]m.RecipeMetadata, error) {
 	var metas []m.RecipeMetadata
 	err := r.db.
 		Preload("Categories").
@@ -33,11 +33,11 @@ func (r *RecipeMetadataRepository) FindAll() ([]m.RecipeMetadata, error) {
 	if len(metas) == 0 {
 		return nil, errors.New("not found")
 	}
-	return metas, nil
+	return &metas, nil
 }
 
 // FindSingle fetches metadata for a given RecipeID (expects meta.RecipeID set)
-func (r *RecipeMetadataRepository) FindSingle(recipeID uuid.UUID) (m.RecipeMetadata, error) {
+func (r *RecipeMetadataRepository) FindSingle(recipeID uuid.UUID) (*m.RecipeMetadata, error) {
 	var meta m.RecipeMetadata
 
 	err := r.db.
@@ -48,15 +48,15 @@ func (r *RecipeMetadataRepository) FindSingle(recipeID uuid.UUID) (m.RecipeMetad
 		First(&meta, "recipe_id = ?", recipeID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return m.RecipeMetadata{}, errors.New("not found")
+			return nil, errors.New("not found")
 		}
-		return m.RecipeMetadata{}, err
+		return nil, err
 	}
-	return meta, nil
+	return &meta, nil
 }
 
 // Create inserts a new RecipeMetadata record with associations
-func (r *RecipeMetadataRepository) Create(meta m.RecipeMetadata) (m.RecipeMetadata, error) {
+func (r *RecipeMetadataRepository) Create(meta *m.RecipeMetadata) (*m.RecipeMetadata, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// Create meta; many 2 many/join-tables will be handled automatically
 		if err := tx.Create(&meta).Error; err != nil {
@@ -64,13 +64,13 @@ func (r *RecipeMetadataRepository) Create(meta m.RecipeMetadata) (m.RecipeMetada
 		}
 		return nil
 	}); err != nil {
-		return m.RecipeMetadata{}, err
+		return nil, err
 	}
 	return meta, nil
 }
 
 // Update saves changes to metadata and its associations
-func (r *RecipeMetadataRepository) Update(meta m.RecipeMetadata) (m.RecipeMetadata, error) {
+func (r *RecipeMetadataRepository) Update(meta *m.RecipeMetadata) (*m.RecipeMetadata, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// FullSaveAssociations ensures tags/categories are replaced
 		if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(&meta).Error; err != nil {
@@ -78,13 +78,13 @@ func (r *RecipeMetadataRepository) Update(meta m.RecipeMetadata) (m.RecipeMetada
 		}
 		return nil
 	}); err != nil {
-		return m.RecipeMetadata{}, err
+		return nil, err
 	}
 	return meta, nil
 }
 
 // Delete removes a metadata entry (by PK) and cascades through join tables
-func (r *RecipeMetadataRepository) Delete(meta m.RecipeMetadata) error {
+func (r *RecipeMetadataRepository) Delete(meta *m.RecipeMetadata) error {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(&meta).Error; err != nil {
 			return err

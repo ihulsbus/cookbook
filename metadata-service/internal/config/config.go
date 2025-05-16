@@ -1,13 +1,15 @@
 package config
 
 import (
+	hc "github.com/ihulsbus/cookbook/shared/httpclient"
+	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
+	"time"
+
 	ch "metadata-service/internal/handlers/category"
 	cuh "metadata-service/internal/handlers/cuisinetype"
 	dh "metadata-service/internal/handlers/difficultylevel"
 	sh "metadata-service/internal/handlers/search"
 	th "metadata-service/internal/handlers/tag"
-
-	m "metadata-service/internal/models"
 
 	cr "metadata-service/internal/repositories/category"
 	cur "metadata-service/internal/repositories/cuisinetype"
@@ -29,6 +31,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
+	m "metadata-service/internal/models"
 )
 
 var (
@@ -39,6 +42,10 @@ var (
 	DatabaseClient *gorm.DB
 	Cors           cors.Config
 	KeycloakModule *keycloak.KeycloakModule
+
+	// Clients
+	HttpClient   *hc.HTTPClient
+	RecipeClient *rc.RecipeAPIClient
 
 	// Repositories
 	CategoryRepository        *cr.CategoryRepository
@@ -88,6 +95,10 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
+	// Init clients
+	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
+	RecipeClient = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
+
 	// Init repositories
 	CategoryRepository = cr.NewCategoryRepository(DatabaseClient)
 	CuisineTypeRepository = cur.NewCuisineTypeRepository(DatabaseClient)
@@ -102,7 +113,7 @@ func init() {
 	DifficultyLevelService = ds.NewDifficultyLevelService(DifficultyLevelRepository)
 	SearchService = ss.NewSearchService(SearchRepository)
 	TagService = ts.NewTagService(TagRepository)
-	MetadataService = ms.NewMetadataService(MetadataRepository)
+	MetadataService = ms.NewMetadataService(MetadataRepository, RecipeClient)
 
 	// Init handlers
 	CategoryHandlers = ch.NewCategoryHandlers(CategoryService, Logger)

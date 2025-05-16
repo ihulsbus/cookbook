@@ -27,6 +27,10 @@ var (
 
 type searchRepositoryMock struct{}
 
+func (*searchRepositoryMock) GetAllRecipeMetadata() (*[]m.MetadataSearchResult, error) {
+	return nil, nil
+}
+
 func (*searchRepositoryMock) SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error) {
 	switch *request.MinPrepTime {
 	case 1:

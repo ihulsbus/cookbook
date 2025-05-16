@@ -2,7 +2,6 @@ package models
 
 import "github.com/google/uuid"
 
-// This is the combination model for all metadata associated to a recipe
 type RecipeMetadata struct {
 	RecipeID uuid.UUID  `gorm:"primaryKey"`
 	Category []Category `gorm:"many2many:recipe_categories;constraint:OnDelete:CASCADE;"`

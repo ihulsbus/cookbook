@@ -45,6 +45,10 @@ var (
 
 // ====== SearchService ======
 
+func (s *SearchServiceMock) GetAllRecipeMetadata() (*[]m.MetadataSearchResultDTO, error) {
+	return nil, nil
+}
+
 func (s *SearchServiceMock) SearchMetadata(request m.MetadataSearchRequestDTO) ([]m.MetadataSearchResultDTO, error) {
 	switch *request.MinPrepTime {
 	case 1:

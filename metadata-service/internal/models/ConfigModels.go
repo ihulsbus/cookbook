@@ -1,10 +1,11 @@
 package models
 
 type Config struct {
-	Global   GlobalConfig
-	Cors     CorsConfig
-	Oauth    OauthConfig
-	Database DatabaseConfig
+	Global       GlobalConfig
+	Cors         CorsConfig
+	Oauth        OauthConfig
+	Database     DatabaseConfig
+	RecipeClient ApiClient
 }
 
 // GlobalConfig holds global configuration items
@@ -36,6 +37,10 @@ type CorsConfig struct {
 	AllowCredentials bool
 	AllowedHeaders   []string
 	AllowedMethods   []string
+}
+
+type ApiClient struct {
+	BaseURL string
 }
 
 type LoggerInterface interface {
