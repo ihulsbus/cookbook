@@ -59,12 +59,19 @@ ingress:
   hosts:
     - host: api-staging.gourmedy.com
       paths:
+        - path: /api/v2/category
+          pathType: ImplementationSpecific
+        - path: /api/v2/cuisinetype
+          pathType: ImplementationSpecific
+        - path: /api/v2/difficultylevel
+          pathType: ImplementationSpecific
         - path: /api/v2/metadata
           pathType: ImplementationSpecific
+        - path: /api/v2/metadata/search
+          pathType: ImplementationSpecific
+        - path: /api/v2/tag
+          pathType: ImplementationSpecific
   tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
 
 resources:
   limits:

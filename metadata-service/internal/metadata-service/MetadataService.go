@@ -30,8 +30,35 @@ func MetadataService(ctx context.Context) {
 	router.Use(cors.New(c.Cors))
 
 	// API versioning setup
-	v2 := router.Group("/api/v2/metadata")
+	v2 := router.Group("/api/v2")
 	{
+
+		metadata := v2.Group("/metadata")
+		{
+			readMetadata := metadata.Group("")
+			readMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				readMetadata.GET("", c.MetadataHandlers.GetAll)
+				readMetadata.GET(":id", c.MetadataHandlers.Get)
+			}
+			createMetadata := metadata.Group("")
+			createMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				createMetadata.POST(":id", c.MetadataHandlers.Create)
+			}
+
+			updateMetadata := metadata.Group("")
+			updateMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				updateMetadata.PUT(":id", c.MetadataHandlers.Update)
+			}
+
+			deleteMetadata := metadata.Group("")
+			deleteMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				deleteMetadata.DELETE(":id", c.MetadataHandlers.Delete)
+			}
+		}
 
 		// Tag routes
 		tag := v2.Group("/tag")
@@ -150,7 +177,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// Search routes
-		search := v2.Group("/search")
+		search := v2.Group("/metadata/search")
 		{
 			all := search.Group("/all")
 			all.Use(c.KeycloakModule.Middleware("administrator"))

@@ -77,7 +77,7 @@ func (s *MetadataService) Create(recipeID uuid.UUID, meta *m.RecipeMetadataDTO) 
 	}
 
 	if !ok {
-		return nil, errors.New("provided recipe does not exist. Cannot create instructions for a recipe that does not exist")
+		return nil, errors.New("provided recipe does not exist. Cannot create metadata for a recipe that does not exist")
 	}
 
 	metadata.RecipeID = recipeID
@@ -99,7 +99,7 @@ func (s *MetadataService) Update(recipeID uuid.UUID, meta *m.RecipeMetadataDTO) 
 
 	_, err := s.repo.FindSingle(recipeID)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("provided recipe does not exist")
 	}
 
 	metadata.RecipeID = recipeID

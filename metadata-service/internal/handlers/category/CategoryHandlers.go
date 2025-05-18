@@ -22,9 +22,9 @@ type CategoryHandlers struct {
 	logger          m.LoggerInterface
 }
 
-func NewCategoryHandlers(categorys CategoryService, logger m.LoggerInterface) *CategoryHandlers {
+func NewCategoryHandlers(categories CategoryService, logger m.LoggerInterface) *CategoryHandlers {
 	return &CategoryHandlers{
-		categoryService: categorys,
+		categoryService: categories,
 		logger:          logger,
 	}
 }

@@ -8,6 +8,7 @@ import (
 	ch "metadata-service/internal/handlers/category"
 	cuh "metadata-service/internal/handlers/cuisinetype"
 	dh "metadata-service/internal/handlers/difficultylevel"
+	mh "metadata-service/internal/handlers/metadata"
 	sh "metadata-service/internal/handlers/search"
 	th "metadata-service/internal/handlers/tag"
 
@@ -69,6 +70,7 @@ var (
 	DifficultyLevelHandlers *dh.DifficultyLevelHandlers
 	SearchHandlers          *sh.SearchHandlers
 	TagHandlers             *th.TagHandlers
+	MetadataHandlers        *mh.MetadataHandlers
 )
 
 func init() {
@@ -121,4 +123,5 @@ func init() {
 	DifficultyLevelHandlers = dh.NewDifficultyLevelHandlers(DifficultyLevelService, Logger)
 	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
 	TagHandlers = th.NewTagHandlers(TagService, Logger)
+	MetadataHandlers = mh.NewMetadataHandlers(MetadataService, Logger)
 }
