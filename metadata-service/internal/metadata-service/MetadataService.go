@@ -31,29 +31,30 @@ func MetadataService(ctx context.Context) {
 
 	// API versioning setup
 	v2 := router.Group("/api/v2")
+	metadata := v2.Group("/metadata")
 	{
 
-		metadata := v2.Group("/metadata")
+		recipe := v2.Group("/recipe")
 		{
-			readMetadata := metadata.Group("")
+			readMetadata := recipe.Group("")
 			readMetadata.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readMetadata.GET("", c.MetadataHandlers.GetAll)
 				readMetadata.GET(":id", c.MetadataHandlers.Get)
 			}
-			createMetadata := metadata.Group("")
+			createMetadata := recipe.Group("")
 			createMetadata.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createMetadata.POST(":id", c.MetadataHandlers.Create)
 			}
 
-			updateMetadata := metadata.Group("")
+			updateMetadata := recipe.Group("")
 			updateMetadata.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateMetadata.PUT(":id", c.MetadataHandlers.Update)
 			}
 
-			deleteMetadata := metadata.Group("")
+			deleteMetadata := recipe.Group("")
 			deleteMetadata.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				deleteMetadata.DELETE(":id", c.MetadataHandlers.Delete)
@@ -61,7 +62,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// Tag routes
-		tag := v2.Group("/tag")
+		tag := metadata.Group("/tag")
 		{
 			readTag := tag.Group("")
 			readTag.Use(c.KeycloakModule.Middleware("administrator"))
@@ -90,7 +91,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// Category routes
-		category := v2.Group("/category")
+		category := metadata.Group("/category")
 		{
 			readCategory := category.Group("")
 			readCategory.Use(c.KeycloakModule.Middleware("administrator"))
@@ -119,7 +120,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// CuisineType routes
-		cuisineType := v2.Group("/cuisinetype")
+		cuisineType := metadata.Group("/cuisinetype")
 		{
 			readCuisineType := cuisineType.Group("")
 			readCuisineType.Use(c.KeycloakModule.Middleware("administrator"))
@@ -148,7 +149,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// DifficultyLevel routes
-		DifficultyLevel := v2.Group("/difficultylevel")
+		DifficultyLevel := metadata.Group("/difficultylevel")
 		{
 			readDifficultyLevel := DifficultyLevel.Group("")
 			readDifficultyLevel.Use(c.KeycloakModule.Middleware("administrator"))
@@ -177,7 +178,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// Search routes
-		search := v2.Group("/metadata/search")
+		search := metadata.Group("/metadata/search")
 		{
 			all := search.Group("/all")
 			all.Use(c.KeycloakModule.Middleware("administrator"))

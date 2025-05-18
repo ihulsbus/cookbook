@@ -59,17 +59,17 @@ ingress:
   hosts:
     - host: api-staging.gourmedy.com
       paths:
-        - path: /api/v2/category
+        - path: /api/v2/metadata/category
           pathType: ImplementationSpecific
-        - path: /api/v2/cuisinetype
+        - path: /api/v2/metadata/cuisinetype
           pathType: ImplementationSpecific
-        - path: /api/v2/difficultylevel
+        - path: /api/v2/metadata/difficultylevel
           pathType: ImplementationSpecific
-        - path: /api/v2/metadata
+        - path: /api/v2/metadata/recipe
           pathType: ImplementationSpecific
         - path: /api/v2/metadata/search
           pathType: ImplementationSpecific
-        - path: /api/v2/tag
+        - path: /api/v2/metadata/tag
           pathType: ImplementationSpecific
   tls: []
 
