@@ -34,7 +34,7 @@ func MetadataService(ctx context.Context) {
 	metadata := v2.Group("/metadata")
 	{
 
-		recipe := v2.Group("/recipe")
+		recipe := metadata.Group("/recipe")
 		{
 			readMetadata := recipe.Group("")
 			readMetadata.Use(c.KeycloakModule.Middleware("administrator"))
