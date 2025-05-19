@@ -17,11 +17,17 @@ type HttpClient interface {
 }
 
 // NewRecipeAPIClient initializes and returns a RecipeAPIClient instance.
-func NewRecipeAPIClient(baseURL string, httpClient HttpClient) *RecipeAPIClient {
+func NewRecipeAPIClient(baseURL string, httpClient HttpClient) (*RecipeAPIClient, error) {
+	if baseURL == "" {
+		return nil, fmt.Errorf("baseURL cannot be empty")
+	}
+	if httpClient == nil {
+		return nil, fmt.Errorf("httpClient cannot be nil")
+	}
 	return &RecipeAPIClient{
 		BaseURL:    baseURL,
 		HTTPClient: httpClient,
-	}
+	}, nil
 }
 
 // RecipeExists checks if a recipe exists by its ID.
