@@ -15,20 +15,27 @@ type MetadataRepository interface {
 	Delete(meta *m.RecipeMetadata) error
 }
 
+type TagRepository interface {
+	FindSingle(tag m.Tag) (m.Tag, error)
+	Create(tag m.Tag) (m.Tag, error)
+}
+
 type RecipeRepository interface {
 	RecipeExists(recipeID string) (bool, error)
 }
 
 type MetadataService struct {
-	repo   MetadataRepository
-	recipe RecipeRepository
+	repo    MetadataRepository
+	tagRepo TagRepository
+	recipe  RecipeRepository
 }
 
 // NewMetadataService creates a new MetadataService instance
-func NewMetadataService(metadataRepo MetadataRepository, recipe RecipeRepository) *MetadataService {
+func NewMetadataService(metadataRepo MetadataRepository, tagRepo TagRepository, recipe RecipeRepository) *MetadataService {
 	return &MetadataService{
-		repo:   metadataRepo,
-		recipe: recipe,
+		repo:    metadataRepo,
+		tagRepo: tagRepo,
+		recipe:  recipe,
 	}
 }
 
@@ -79,6 +86,23 @@ func (s *MetadataService) Create(recipeID uuid.UUID, meta *m.RecipeMetadataDTO) 
 	if !ok {
 		return nil, errors.New("provided recipe does not exist. Cannot create metadata for a recipe that does not exist")
 	}
+
+	var finalTags []m.Tag
+	for _, t := range metadata.Tags {
+		var tag m.Tag
+		var err error
+		if t.ID == uuid.Nil {
+			tag, err = s.tagRepo.Create(t)
+		} else {
+			tag, err = s.tagRepo.FindSingle(t)
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("tag error: %w", err)
+		}
+		finalTags = append(finalTags, tag)
+	}
+	metadata.Tags = finalTags
 
 	metadata.RecipeID = recipeID
 

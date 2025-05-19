@@ -99,7 +99,10 @@ func init() {
 
 	// Init clients
 	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
-	RecipeClient = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
+	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
+	if err != nil {
+		Logger.Panicf("error initialising recipe client: %v", err)
+	}
 
 	// Init repositories
 	CategoryRepository = cr.NewCategoryRepository(DatabaseClient)
@@ -115,7 +118,7 @@ func init() {
 	DifficultyLevelService = ds.NewDifficultyLevelService(DifficultyLevelRepository)
 	SearchService = ss.NewSearchService(SearchRepository)
 	TagService = ts.NewTagService(TagRepository)
-	MetadataService = ms.NewMetadataService(MetadataRepository, RecipeClient)
+	MetadataService = ms.NewMetadataService(MetadataRepository, TagRepository, RecipeClient)
 
 	// Init handlers
 	CategoryHandlers = ch.NewCategoryHandlers(CategoryService, Logger)

@@ -50,8 +50,8 @@ github.com/ihulsbus/cookbook/shared/httpclient v0.0.0-20250518213556-868807a53cf
 github.com/ihulsbus/cookbook/shared/httpclient v0.0.0-20250518213556-868807a53cfe/go.mod h1:ypHtyGRKeJkTEdzapNfT8nzzRr1DToTXwoHLLFK+D3E=
 github.com/ihulsbus/cookbook/shared/keycloak v0.0.0-20250516092540-a1676f6528ba h1:dxcEMMZ2bRWf2YfdsBh3Dwetf/HealAPAGilra7snek=
 github.com/ihulsbus/cookbook/shared/keycloak v0.0.0-20250516092540-a1676f6528ba/go.mod h1:o0GHKeYpICeAoZCLV/cNWN9QonI9gxrU0NC8Q6uk4p8=
-github.com/ihulsbus/cookbook/shared/recipeclient v0.0.0-20250516092540-a1676f6528ba h1:3BvNKlYcIiftPLGPW+LkMiAWcfWYmDzkpZIPri5PT6g=
-github.com/ihulsbus/cookbook/shared/recipeclient v0.0.0-20250516092540-a1676f6528ba/go.mod h1:5a2/jnc8YsMBAUo5SVVlOl1EokslvvCBa0TjogsmOnM=
+github.com/ihulsbus/cookbook/shared/recipeclient v0.0.0-20250518221206-1ad0b36a3656 h1:s3P539SajjrABlPukHUa8NoacvQ3RBtj/1elXB/fPFs=
+github.com/ihulsbus/cookbook/shared/recipeclient v0.0.0-20250518221206-1ad0b36a3656/go.mod h1:5a2/jnc8YsMBAUo5SVVlOl1EokslvvCBa0TjogsmOnM=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a h1:bbPeKD0xmW/Y25WS6cokEszi5g+S0QxI/d45PkRi7Nk=

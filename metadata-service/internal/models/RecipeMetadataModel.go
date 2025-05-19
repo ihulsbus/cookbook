@@ -3,8 +3,8 @@ package models
 import "github.com/google/uuid"
 
 type RecipeMetadata struct {
-	RecipeID uuid.UUID  `gorm:"primaryKey"`
-	Category []Category `gorm:"many2many:recipe_categories;constraint:OnDelete:CASCADE;"`
+	RecipeID   uuid.UUID  `gorm:"primaryKey"`
+	Categories []Category `gorm:"many2many:recipe_categories;constraint:OnDelete:CASCADE;"`
 
 	CuisineTypeID uuid.UUID   // belongs-to CuisineType
 	CuisineType   CuisineType `gorm:"foreignKey:CuisineTypeID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
@@ -19,7 +19,7 @@ type RecipeMetadata struct {
 func (r RecipeMetadata) ConvertToDTO() RecipeMetadataDTO {
 	return RecipeMetadataDTO{
 		RecipeID:        r.RecipeID,
-		Category:        Category{}.ConvertAllToDTO(r.Category),
+		Categories:      Category{}.ConvertAllToDTO(r.Categories),
 		CuisineType:     r.CuisineType.ConvertToDTO(),
 		DifficultyLevel: r.DifficultyLevel.ConvertToDTO(),
 		Tags:            Tag{}.ConvertAllToDTO(r.Tags),
@@ -40,7 +40,7 @@ func (r RecipeMetadata) ConvertAllToDTO(metadata []RecipeMetadata) []RecipeMetad
 
 type RecipeMetadataDTO struct {
 	RecipeID        uuid.UUID          `json:"recipe_id" example:"23582396-12a3-425b-a597-8a22052823da"`
-	Category        []CategoryDTO      `gorm:"categories"`
+	Categories      []CategoryDTO      `json:"categories"`
 	CuisineType     CuisineTypeDTO     `json:"cuisine_type"`
 	Tags            []TagDTO           `json:"tags"`
 	DifficultyLevel DifficultyLevelDTO `json:"difficulty_level"`
@@ -51,7 +51,7 @@ type RecipeMetadataDTO struct {
 func (r RecipeMetadataDTO) ConvertFromDTO() RecipeMetadata {
 	return RecipeMetadata{
 		RecipeID:        r.RecipeID,
-		Category:        CategoryDTO{}.ConvertAllFromDTO(r.Category),
+		Categories:      CategoryDTO{}.ConvertAllFromDTO(r.Categories),
 		CuisineType:     r.CuisineType.ConvertFromDTO(),
 		Tags:            TagDTO{}.ConvertAllFromDTO(r.Tags),
 		PreparationTime: r.PreparationTime,

@@ -41,8 +41,8 @@ type RecipeDifficultyLevel struct {
 
 // DTO model
 type DifficultyLevelDTO struct {
-	ID    uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
-	Level int       `json:"name" binding:"required,numeric,min=1,max=5"`
+	ID    uuid.UUID `json:"id,omitempty" binding:"uuid"`
+	Level int       `json:"level" binding:"required,numeric,min=1,max=5"`
 }
 
 func (d DifficultyLevel) ConvertToDTO() DifficultyLevelDTO {

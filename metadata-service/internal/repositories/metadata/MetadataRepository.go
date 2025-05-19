@@ -59,8 +59,20 @@ func (r *RecipeMetadataRepository) FindSingle(recipeID uuid.UUID) (*m.RecipeMeta
 func (r *RecipeMetadataRepository) Create(meta *m.RecipeMetadata) (*m.RecipeMetadata, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		// Create meta; many 2 many/join-tables will be handled automatically
-		if err := tx.Create(&meta).Error; err != nil {
+		if err := tx.Omit("Categories, Tags, CuisineType, DifficultyLevel").Create(&meta).Error; err != nil {
 			return err
+		}
+
+		if len(meta.Categories) > 0 {
+			if err := tx.Model(&meta).Association("Categories").Append(meta.Categories); err != nil {
+				return err
+			}
+		}
+
+		if len(meta.Tags) > 0 {
+			if err := tx.Model(&meta).Association("Tags").Append(meta.Tags); err != nil {
+				return err
+			}
 		}
 		return nil
 	}); err != nil {
