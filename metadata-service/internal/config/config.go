@@ -118,7 +118,7 @@ func init() {
 	DifficultyLevelService = ds.NewDifficultyLevelService(DifficultyLevelRepository)
 	SearchService = ss.NewSearchService(SearchRepository)
 	TagService = ts.NewTagService(TagRepository)
-	MetadataService = ms.NewMetadataService(MetadataRepository, TagRepository, RecipeClient)
+	MetadataService = ms.NewMetadataService(MetadataRepository, RecipeClient)
 
 	// Init handlers
 	CategoryHandlers = ch.NewCategoryHandlers(CategoryService, Logger)

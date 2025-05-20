@@ -2,7 +2,9 @@ package repositories
 
 import (
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
+	"gorm.io/gorm/clause"
 
 	"gorm.io/gorm"
 
@@ -22,10 +24,7 @@ func NewRecipeMetadataRepository(db *gorm.DB) *RecipeMetadataRepository {
 func (r *RecipeMetadataRepository) FindAll() (*[]m.RecipeMetadata, error) {
 	var metas []m.RecipeMetadata
 	err := r.db.
-		Preload("Categories").
-		Preload("CuisineType").
-		Preload("DifficultyLevel").
-		Preload("Tags").
+		Preload(clause.Associations).
 		Find(&metas).Error
 	if err != nil {
 		return nil, err
@@ -39,12 +38,8 @@ func (r *RecipeMetadataRepository) FindAll() (*[]m.RecipeMetadata, error) {
 // FindSingle fetches metadata for a given RecipeID (expects meta.RecipeID set)
 func (r *RecipeMetadataRepository) FindSingle(recipeID uuid.UUID) (*m.RecipeMetadata, error) {
 	var meta m.RecipeMetadata
-
 	err := r.db.
-		Preload("Categories").
-		Preload("CuisineType").
-		Preload("DifficultyLevel").
-		Preload("Tags").
+		Preload(clause.Associations).
 		First(&meta, "recipe_id = ?", recipeID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -52,28 +47,20 @@ func (r *RecipeMetadataRepository) FindSingle(recipeID uuid.UUID) (*m.RecipeMeta
 		}
 		return nil, err
 	}
+	fmt.Printf("%+v", meta)
 	return &meta, nil
 }
 
 // Create inserts a new RecipeMetadata record with associations
 func (r *RecipeMetadataRepository) Create(meta *m.RecipeMetadata) (*m.RecipeMetadata, error) {
+
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
+
 		// Create meta; many 2 many/join-tables will be handled automatically
-		if err := tx.Omit("Categories, Tags, CuisineType, DifficultyLevel").Create(&meta).Error; err != nil {
+		if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Create(&meta).Error; err != nil {
 			return err
 		}
 
-		if len(meta.Categories) > 0 {
-			if err := tx.Model(&meta).Association("Categories").Append(meta.Categories); err != nil {
-				return err
-			}
-		}
-
-		if len(meta.Tags) > 0 {
-			if err := tx.Model(&meta).Association("Tags").Append(meta.Tags); err != nil {
-				return err
-			}
-		}
 		return nil
 	}); err != nil {
 		return nil, err

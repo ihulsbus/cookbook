@@ -49,14 +49,19 @@ type RecipeMetadataDTO struct {
 }
 
 func (r RecipeMetadataDTO) ConvertFromDTO() RecipeMetadata {
-	return RecipeMetadata{
-		RecipeID:        r.RecipeID,
-		Categories:      CategoryDTO{}.ConvertAllFromDTO(r.Categories),
-		CuisineType:     r.CuisineType.ConvertFromDTO(),
-		Tags:            TagDTO{}.ConvertAllFromDTO(r.Tags),
-		PreparationTime: r.PreparationTime,
-		ServingCount:    r.ServingCount,
+	meta := RecipeMetadata{
+		RecipeID:          r.RecipeID,
+		Categories:        CategoryDTO{}.ConvertAllFromDTO(r.Categories),
+		Tags:              TagDTO{}.ConvertAllFromDTO(r.Tags),
+		CuisineTypeID:     r.CuisineType.ID,
+		CuisineType:       r.CuisineType.ConvertFromDTO(),
+		DifficultyLevelID: r.DifficultyLevel.ID,
+		DifficultyLevel:   r.DifficultyLevel.ConvertFromDTO(),
+		PreparationTime:   r.PreparationTime,
+		ServingCount:      r.ServingCount,
 	}
+
+	return meta
 }
 
 func (r RecipeMetadataDTO) ConvertAllFromDTO(metadataDTO []RecipeMetadataDTO) []RecipeMetadata {

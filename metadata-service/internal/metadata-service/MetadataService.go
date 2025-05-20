@@ -37,25 +37,25 @@ func MetadataService(ctx context.Context) {
 		recipe := metadata.Group("/recipe")
 		{
 			readMetadata := recipe.Group("")
-			//readMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			readMetadata.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				readMetadata.GET("", c.MetadataHandlers.GetAll)
 				readMetadata.GET(":id", c.MetadataHandlers.Get)
 			}
 			createMetadata := recipe.Group("")
-			//createMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			createMetadata.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createMetadata.POST(":id", c.MetadataHandlers.Create)
 			}
 
 			updateMetadata := recipe.Group("")
-			//updateMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			updateMetadata.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateMetadata.PUT(":id", c.MetadataHandlers.Update)
 			}
 
 			deleteMetadata := recipe.Group("")
-			//deleteMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteMetadata.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				deleteMetadata.DELETE(":id", c.MetadataHandlers.Delete)
 			}

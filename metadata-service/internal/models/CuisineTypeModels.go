@@ -39,25 +39,6 @@ type CuisineType struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-func (cuisineType *CuisineType) BeforeCreate(tx *gorm.DB) (err error) {
-	cuisineType.ID = uuid.New()
-	return
-}
-
-// Association model
-type RecipeCuisineType struct {
-	RecipeID      uuid.UUID      `gorm:"type:uuid;primaryKey;unique"`
-	CuisineTypeID uuid.UUID      `gorm:"type:uuid;primaryKey"`
-	CreatedAt     time.Time      `gorm:"autoCreateTime"`
-	DeletedAt     gorm.DeletedAt `gorm:"index"`
-}
-
-// DTO model
-type CuisineTypeDTO struct {
-	ID   uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
-	Name string    `json:"name" binding:"required,min=1,max=255"`
-}
-
 func (c CuisineType) ConvertToDTO() CuisineTypeDTO {
 	return CuisineTypeDTO{
 		ID:   c.ID,
@@ -73,6 +54,17 @@ func (c CuisineType) ConvertAllToDTO(cuisineTypes []CuisineType) []CuisineTypeDT
 	}
 
 	return data
+}
+
+//func (cuisineType *CuisineType) BeforeCreate(tx *gorm.DB) (err error) {
+//	cuisineType.ID = uuid.New()
+//	return
+//}
+
+// DTO model
+type CuisineTypeDTO struct {
+	ID   uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
+	Name string    `json:"name" binding:"required,min=1,max=255"`
 }
 
 func (c CuisineTypeDTO) ConvertFromDTO() CuisineType {

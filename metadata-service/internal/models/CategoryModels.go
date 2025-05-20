@@ -38,25 +38,6 @@ type Category struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-func (category *Category) BeforeCreate(tx *gorm.DB) (err error) {
-	category.ID = uuid.New()
-	return
-}
-
-// Association model
-type RecipeCategory struct {
-	RecipeID   uuid.UUID      `gorm:"type:uuid;primaryKey"`
-	CategoryID uuid.UUID      `gorm:"type:uuid;primaryKey"`
-	CreatedAt  time.Time      `gorm:"autoCreateTime"`
-	DeletedAt  gorm.DeletedAt `gorm:"index"`
-}
-
-// DTO model
-type CategoryDTO struct {
-	ID   uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
-	Name string    `json:"name" binding:"required,min=1,max=255"`
-}
-
 func (c Category) ConvertToDTO() CategoryDTO {
 	return CategoryDTO{
 		ID:   c.ID,
@@ -72,6 +53,17 @@ func (c Category) ConvertAllToDTO(categories []Category) []CategoryDTO {
 	}
 
 	return data
+}
+
+//func (category *Category) BeforeCreate(tx *gorm.DB) (err error) {
+//	category.ID = uuid.New()
+//	return
+//}
+
+// DTO model
+type CategoryDTO struct {
+	ID   uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
+	Name string    `json:"name" binding:"required,min=1,max=255"`
 }
 
 func (c CategoryDTO) ConvertFromDTO() Category {

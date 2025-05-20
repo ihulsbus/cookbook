@@ -26,25 +26,6 @@ type DifficultyLevel struct {
 	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
-func (difficultyLevel *DifficultyLevel) BeforeCreate(tx *gorm.DB) (err error) {
-	difficultyLevel.ID = uuid.New()
-	return
-}
-
-// Association model
-type RecipeDifficultyLevel struct {
-	RecipeID          uuid.UUID      `gorm:"type:uuid;primaryKey;unique"`
-	DifficultyLevelID uuid.UUID      `gorm:"type:uuid;primaryKey"`
-	CreatedAt         time.Time      `gorm:"autoCreateTime"`
-	DeletedAt         gorm.DeletedAt `gorm:"index"`
-}
-
-// DTO model
-type DifficultyLevelDTO struct {
-	ID    uuid.UUID `json:"id,omitempty" binding:"uuid"`
-	Level int       `json:"level" binding:"required,numeric,min=1,max=5"`
-}
-
 func (d DifficultyLevel) ConvertToDTO() DifficultyLevelDTO {
 	return DifficultyLevelDTO{
 		ID:    d.ID,
@@ -60,6 +41,17 @@ func (d DifficultyLevel) ConvertAllToDTO(difficultyLevels []DifficultyLevel) []D
 	}
 
 	return data
+}
+
+//func (difficultyLevel *DifficultyLevel) BeforeCreate(tx *gorm.DB) (err error) {
+//	difficultyLevel.ID = uuid.New()
+//	return
+//}
+
+// DTO model
+type DifficultyLevelDTO struct {
+	ID    uuid.UUID `json:"id,omitempty" binding:"uuid"`
+	Level int       `json:"level" binding:"required,numeric,min=1,max=5"`
 }
 
 func (d DifficultyLevelDTO) ConvertFromDTO() DifficultyLevel {
