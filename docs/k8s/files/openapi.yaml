@@ -2034,6 +2034,249 @@ paths:
               type: object
               properties: {}
       description: Delete an unit
+  /images/search:
+    get:
+      summary: Search Image
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageData'
+              examples:
+                Example 1:
+                  value:
+                    id: 6d279760-11be-4adb-af72-1873cb90dc27
+                    entity_type: recipe
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    size: 93055
+                    type: image/jpeg
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: search-image
+      x-stoplight:
+        id: doied4wa4ts3t
+      description: Search for images based on their associated EntityType and EntityID
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: entityType
+          description: 'Type of the entity queried. E.g.: recipe'
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: id
+          description: UUID of the entity referencing in the search
+      requestBody:
+        description: None
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      tags:
+        - image
+  '/amount/{RecipeID}':
+    parameters:
+      - name: RecipeID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: UUID of a recipe
+    get:
+      summary: Get recipe ingredient amounts
+      tags:
+        - amount
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngredientAmounts'
+                  x-stoplight:
+                    id: k2nzs2q3en2mz
+              examples:
+                Example 1:
+                  value:
+                    - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                      unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                      quantity: 3
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-recipe-amounts
+      x-stoplight:
+        id: 1b6cilgvs03vd
+      description: Get the quantities of the ingredients belonging to a recipe
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+        description: No body.
+    post:
+      summary: Create recipe ingredient amounts
+      tags:
+        - amount
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngredientAmounts'
+                  x-stoplight:
+                    id: ytxaxhhqu9bcj
+              examples:
+                Example 1:
+                  value:
+                    - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                      unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                      quantity: 3
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: post-recipe-amounts
+      x-stoplight:
+        id: 07b4p6ye3cqi4
+      description: Set the quantities of the ingredients belonging to a recipe
+      requestBody:
+        description: Array of ingredient amounts that will be linked to the provided recipe UUID in the path
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngredientAmounts'
+                x-stoplight:
+                  id: unzmbt8h7bzqm
+            examples:
+              Example 1:
+                value:
+                  - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                    unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                    quantity: 3
+    put:
+      summary: Update recipe ingredient amounts
+      tags:
+        - amount
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngredientAmounts'
+                  x-stoplight:
+                    id: zbne3e62dwcp0
+              examples:
+                Example 1:
+                  value:
+                    - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                      unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                      quantity: 3
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: put-recipe-amounts
+      x-stoplight:
+        id: omgpv8bovfkc3
+      description: Update the quantities of the ingredients belonging to a recipe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngredientAmounts'
+                x-stoplight:
+                  id: fgam7diu6rifo
+            examples:
+              Example 1:
+                value:
+                  - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                    unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                    quantity: 3
+        description: Provide one or multiple ingredient amounts linked to the related recipe.
+    delete:
+      summary: Delete recipe ingredient amounts
+      tags:
+        - amount
+      responses:
+        '204':
+          description: No Content
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-recipe-amounts
+      x-stoplight:
+        id: kvtyowxx7fh03
+      description: |-
+        Delete ingredient quantities belonging to a recipe.
+        Each provided ingredient reference will be deleted. If you want to delete all ingredients belonging to a recipe, send all.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngredientAmounts'
+                x-stoplight:
+                  id: m28jpsix95kph
+            examples:
+              Example 1:
+                value:
+                  - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                    unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                    quantity: 3
+        description: Array of ingredientAmounts
 components:
   schemas:
     ImageData:
@@ -2376,6 +2619,33 @@ components:
       description: Definition of an error returned
       x-tags:
         - error
+    IngredientAmounts:
+      title: IngredientAmounts
+      x-stoplight:
+        id: 816d6xxp5iskj
+      type: object
+      examples:
+        - recipeID: 3142c13e-04d8-465e-bca8-dec957ae61dd
+          ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+          unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+          quantity: 3
+      x-tags:
+        - amount
+      properties:
+        ingredientID:
+          type: string
+          x-stoplight:
+            id: g2xpfj11on81q
+          format: uuid
+        unitID:
+          type: string
+          x-stoplight:
+            id: om2wbkm08scn6
+          format: uuid
+        quantity:
+          type: number
+          x-stoplight:
+            id: eyzfcp6nuz7bj
   securitySchemes:
     apiKey_1:
       type: openIdConnect
@@ -2536,31 +2806,18 @@ components:
 security:
   - apiKey_1: []
 tags:
+  - name: amount
   - name: api
-    description: tag
   - name: category
-    description: tag
   - name: cookbook
-    description: tag
   - name: cuisinetype
-    description: tag
   - name: difficultylevel
-    description: tag
   - name: image
-    description: tag
   - name: ingredient
-    description: tag
   - name: instruction
-    description: tag
   - name: metadata
-    description: tag
   - name: preparationtime
-    description: tag
   - name: recipe
-    description: tag
   - name: search
-    description: tag
   - name: tag
-    description: tag
   - name: unit
-    description: tag
