@@ -2,8 +2,11 @@
 # User defined #
 ################
 
+dev.env
 **/config.yaml
+!**/config.yaml.example
 **/config.yml
+!**/config.yml.example
 **/images
 **/*.env
 **/manifest.yaml

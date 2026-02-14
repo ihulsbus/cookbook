@@ -1,0 +1,16 @@
+go 1.25.0
+
+use (
+	./image-service
+	./ingredient-service
+	./instruction-service
+	./metadata-service
+	./notification-service
+	./recipe-service
+	./search-service
+	./shared/httpclient
+	./shared/imageclient
+	./shared/keycloak
+	./shared/rabbitmq
+	./shared/recipeclient
+)

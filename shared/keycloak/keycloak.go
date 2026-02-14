@@ -118,7 +118,6 @@ func fetchRealmPublicKey(jwksURL string) (*rsa.PublicKey, error) {
 func (km *KeycloakModule) ValidateToken(ctx context.Context, token string) (*gocloak.IntroSpectTokenResult, error) {
 	introspection, err := km.Client.RetrospectToken(ctx, token, km.ClientID, km.ClientSecret, km.Realm)
 	if err != nil {
-		fmt.Printf("error: %s\n", err.Error())
 		return nil, err
 	}
 
@@ -131,9 +130,6 @@ func (km *KeycloakModule) ValidateToken(ctx context.Context, token string) (*goc
 
 // handleError is a helper function to log and respond with an error
 func (km *KeycloakModule) handleError(c *gin.Context, statusCode int, message string, err error) {
-	if err != nil {
-		fmt.Printf("%s: %v\n", message, err)
-	}
 	c.AbortWithStatusJSON(statusCode, gin.H{"error": message})
 }
 

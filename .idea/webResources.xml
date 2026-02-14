@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebResourcesPaths">
+    <contentEntries>
+      <entry url="file://$PROJECT_DIR$">
+        <entryData>
+          <resourceRoots>
+            <path value="file://$PROJECT_DIR$/metadata-service" />
+            <path value="file://$PROJECT_DIR$/instruction-service" />
+            <path value="file://$PROJECT_DIR$/ingredient-service" />
+            <path value="file://$PROJECT_DIR$/image-service" />
+            <path value="file://$PROJECT_DIR$/notification-service" />
+            <path value="file://$PROJECT_DIR$/recipe-service" />
+            <path value="file://$PROJECT_DIR$/search-service" />
+          </resourceRoots>
+        </entryData>
+      </entry>
+    </contentEntries>
+  </component>
+</project>

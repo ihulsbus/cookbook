@@ -47,7 +47,6 @@ func (r *RecipeMetadataRepository) FindSingle(recipeID uuid.UUID) (*m.RecipeMeta
 		}
 		return nil, err
 	}
-	fmt.Printf("%+v", meta)
 	return &meta, nil
 }
 

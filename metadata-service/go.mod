@@ -8,9 +8,9 @@ require (
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/uuid v1.6.0
-	github.com/ihulsbus/cookbook/shared/httpclient v0.0.0-20250518213556-868807a53cfe
-	github.com/ihulsbus/cookbook/shared/keycloak v0.0.0-20250516092540-a1676f6528ba
-	github.com/ihulsbus/cookbook/shared/recipeclient v0.0.0-20250519200451-ff84d953456d
+	github.com/ihulsbus/cookbook/shared/httpclient v0.0.0
+	github.com/ihulsbus/cookbook/shared/keycloak v0.0.0
+	github.com/ihulsbus/cookbook/shared/recipeclient v0.0.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0

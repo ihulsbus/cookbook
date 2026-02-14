@@ -2,7 +2,6 @@ package testcommon
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -21,7 +20,7 @@ func createImage() *image.RGBA {
 	// Colors are defined by Red, Green, Blue, Alpha uint8 values.
 	cyan := color.RGBA{100, 200, 200, 0xff}
 
-	// Set color for each pixel.
+	// Set colour for each pixel.
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
 			switch {
@@ -38,7 +37,7 @@ func createImage() *image.RGBA {
 	return img
 }
 
-func CreateFile() bytes.Buffer {
+func CreateFile() (bytes.Buffer, error) {
 	var buff bytes.Buffer
 	var err error
 
@@ -46,9 +45,9 @@ func CreateFile() bytes.Buffer {
 
 	err = png.Encode(&buff, img)
 	if err != nil {
-		fmt.Printf("ERROR: %v", err)
+		return buff, err
 	}
 
-	return buff
+	return buff, nil
 
 }

@@ -74,7 +74,6 @@ func TestSearch_OK(t *testing.T) {
 	assert.NoError(t, err)
 	assert.IsType(t, []m.MetadataSearchResult{}, result)
 	assert.Len(t, result, 1)
-	fmt.Printf("%+v\n", result[0])
 	assert.Len(t, result[0].CategoryIDs, 1)
 	assert.Len(t, result[0].TagIDs, 1)
 	assert.Equal(t, result[0].RecipeID, id)

@@ -44,8 +44,6 @@ func (c *RecipeAPIClient) RecipeExists(recipeID string) (bool, error) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("%+v\n", resp)
-
 	if resp.StatusCode == http.StatusNotFound {
 		return false, nil
 	}

@@ -38,8 +38,6 @@ func (c *ImageAPIClient) ImageExists(imageID string) (bool, error) {
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("%+v\n", resp)
-
 	if resp.StatusCode == http.StatusNotFound {
 		return false, nil
 	}

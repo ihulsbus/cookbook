@@ -32,12 +32,12 @@ var (
 		Payload:    RecipePayload{},
 	}
 	RecipeUpdatedEvent = Event{
-		Name:       "RecipeCreated",
+		Name:       "RecipeUpdated",
 		RoutingKey: RecipeUpdatedRoutingKey,
 		Payload:    RecipePayload{},
 	}
 	RecipeDeletedEvent = Event{
-		Name:       "RecipeCreated",
+		Name:       "RecipeDeleted",
 		RoutingKey: RecipeDeletedRoutingKey,
 		Payload:    RecipePayload{},
 	}
