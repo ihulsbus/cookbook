@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	m "ingredient-service/internal/models"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type AmountService interface {
@@ -74,7 +75,7 @@ func (h AmountHandlers) Create(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, amountDTOResponse)
+	ctx.JSON(http.StatusCreated, amountDTOResponse)
 
 }
 

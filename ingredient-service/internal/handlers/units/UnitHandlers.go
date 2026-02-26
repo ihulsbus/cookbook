@@ -29,7 +29,7 @@ func NewUnitHandlers(units UnitService, logger m.LoggerInterface) *UnitHandlers 
 	}
 }
 
-// Get all units
+// GetAll Get all units
 func (h UnitHandlers) GetAll(ctx *gin.Context) {
 	var unitDTO []m.UnitDTO
 	var err error
@@ -49,7 +49,7 @@ func (h UnitHandlers) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, unitDTO)
 }
 
-// Get a single unit
+// GetSingle Get a single unit
 func (h UnitHandlers) GetSingle(ctx *gin.Context) {
 	var unitDTO m.UnitDTO
 	var err error
@@ -75,7 +75,7 @@ func (h UnitHandlers) GetSingle(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, unitDTO)
 }
 
-// Create an unit
+// Create creates a unit
 func (h UnitHandlers) Create(ctx *gin.Context) {
 	var unitDTO m.UnitDTO
 	var err error
@@ -94,6 +94,7 @@ func (h UnitHandlers) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, unitDTO)
 }
 
+// Update updates a unit
 func (h UnitHandlers) Update(ctx *gin.Context) {
 	var unitDTO m.UnitDTO
 	var err error
@@ -109,7 +110,7 @@ func (h UnitHandlers) Update(ctx *gin.Context) {
 		return
 	}
 
-	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
+	// deliberately set this to ensure the parameter ID is used instead of an accidental id in body
 	// perhaps separate create/update DTO's are needed
 	unitDTO.ID = id
 
@@ -122,7 +123,7 @@ func (h UnitHandlers) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, unitDTO)
 }
 
-// Delete an unit
+// Delete deletes a unit
 func (h UnitHandlers) Delete(ctx *gin.Context) {
 	var unitDTO m.UnitDTO
 	var err error
@@ -139,5 +140,5 @@ func (h UnitHandlers) Delete(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Status(http.StatusOK)
+	ctx.Status(http.StatusNoContent)
 }

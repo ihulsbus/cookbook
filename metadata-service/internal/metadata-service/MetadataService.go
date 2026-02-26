@@ -178,7 +178,7 @@ func MetadataService(ctx context.Context) {
 		}
 
 		// Search routes
-		search := metadata.Group("/metadata/search")
+		search := metadata.Group("/search")
 		{
 			all := search.Group("/all")
 			all.Use(c.KeycloakModule.Middleware("administrator"))

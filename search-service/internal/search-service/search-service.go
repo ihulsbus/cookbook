@@ -32,10 +32,10 @@ func IngredientService(ctx context.Context) {
 	{
 		search := v2.Group("/search")
 		{
-			readIngredient := search.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			doSearch := search.Group("")
+			doSearch.Use(c.KeycloakModule.Middleware("administrator"))
 			{
-				readIngredient.GET("", nil)
+				doSearch.GET("", c.SearchHandlers.Search)
 			}
 		}
 

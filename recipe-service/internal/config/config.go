@@ -1,6 +1,7 @@
 package config
 
 import (
+	healthh "recipe-service/internal/handlers/health"
 	hh "recipe-service/internal/handlers/http"
 	rh "recipe-service/internal/handlers/rabbitmq"
 	m "recipe-service/internal/models"
@@ -37,6 +38,7 @@ var (
 	// Handlers
 	HttpHandler     *hh.HttpHandlers
 	RabbitMQHandler *rh.RabbitMQHandler
+	HealthHandler   *healthh.Handlers
 )
 
 func init() {
@@ -83,4 +85,5 @@ func init() {
 		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
 		Logger.Fatal("Encountered fatal error. Exiting.")
 	}
+	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 }

@@ -1,9 +1,0 @@
-{
-  "editor.fontFamily": "Menlo",
-  "terminal.integrated.fontFamily": "'MesloLGS NF'",
-  "sonarlint.connectedMode.project": {
-    "connectionId": "ihulsbus",
-    "projectKey": "ihulsbus_cookbook"
-  },
-  "sarif-viewer.connectToGithubCodeScanning": "on"
-}

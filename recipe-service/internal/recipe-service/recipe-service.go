@@ -40,6 +40,14 @@ func httpServer(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
+	// Health check endpoints (no auth required)
+	health := router.Group("/health")
+	{
+		health.GET("/live", c.HealthHandler.Liveness)
+		health.GET("/ready", c.HealthHandler.Readiness)
+		health.GET("/startup", c.HealthHandler.Startup)
+	}
+
 	v2 := router.Group("/api/v2")
 	{
 		recipe := v2.Group("/recipe")
@@ -52,20 +60,20 @@ func httpServer(ctx context.Context) {
 			}
 
 			createRecipe := recipe.Group("")
-			readRecipe.Use(c.KeycloakModule.Middleware("administrator"))
+			createRecipe.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createRecipe.POST("", c.HttpHandler.Create)
 			}
 
 			updateRecipe := recipe.Group("")
-			readRecipe.Use(c.KeycloakModule.Middleware("administrator"))
+			updateRecipe.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 
 				updateRecipe.PUT(":id", c.HttpHandler.Update)
 			}
 
 			adminRecipe := recipe.Group("")
-			readRecipe.Use(c.KeycloakModule.Middleware("administrator"))
+			adminRecipe.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				adminRecipe.DELETE(":id", c.HttpHandler.Delete)
 			}
