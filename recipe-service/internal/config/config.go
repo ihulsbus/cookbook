@@ -1,13 +1,14 @@
 package config
 
 import (
-	healthh "recipe-service/internal/handlers/health"
 	hh "recipe-service/internal/handlers/http"
 	rh "recipe-service/internal/handlers/rabbitmq"
 	m "recipe-service/internal/models"
 	dr "recipe-service/internal/repositories/database"
 	rr "recipe-service/internal/repositories/rabbitmq"
 	s "recipe-service/internal/services"
+
+	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"

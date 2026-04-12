@@ -10,10 +10,10 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
+	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	"github.com/ihulsbus/cookbook/shared/keycloak"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"gorm.io/gorm"
 )
 
 var (
@@ -21,7 +21,6 @@ var (
 	err           error
 
 	Logger         *log.Logger = log.New()
-	DatabaseClient *gorm.DB
 	Cors           cors.Config
 	KeycloakModule *keycloak.KeycloakModule
 
@@ -35,6 +34,7 @@ var (
 
 	// Handlers
 	SearchHandlers *sh.SearchHandlers
+	HealthHandler  *healthh.Handlers
 )
 
 func init() {
@@ -66,4 +66,5 @@ func init() {
 
 	// Init handlers
 	SearchHandlers = sh.NewSearchHandlers(SearchService)
+	HealthHandler = healthh.NewHealthHandlers(nil, Logger)
 }

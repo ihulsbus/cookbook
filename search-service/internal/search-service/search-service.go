@@ -28,6 +28,14 @@ func IngredientService(ctx context.Context) {
 	// Cors handler
 	router.Use(cors.New(c.Cors))
 
+	// Health check endpoints (no auth required)
+	health := router.Group("/health")
+	{
+		health.GET("/live", c.HealthHandler.Liveness)
+		health.GET("/ready", c.HealthHandler.Readiness)
+		health.GET("/startup", c.HealthHandler.Startup)
+	}
+
 	v2 := router.Group("/api/v2")
 	{
 		search := v2.Group("/search")

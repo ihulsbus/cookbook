@@ -12,6 +12,8 @@ import (
 	is "ingredient-service/internal/services/ingredients"
 	us "ingredient-service/internal/services/units"
 
+	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
 	"github.com/ihulsbus/cookbook/shared/keycloak"
@@ -42,6 +44,7 @@ var (
 	AmountHandlers     *ah.AmountHandlers
 	IngredientHandlers *ih.IngredientHandlers
 	UnitHandlers       *uh.UnitHandlers
+	HealthHandler      *healthh.Handlers
 )
 
 func init() {
@@ -79,4 +82,5 @@ func init() {
 	AmountHandlers = ah.NewAmountHandlers(AmountService, Logger)
 	IngredientHandlers = ih.NewIngredientHandlers(IngredientService, Logger)
 	UnitHandlers = uh.NewUnitHandlers(UnitService, Logger)
+	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 }

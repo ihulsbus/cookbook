@@ -10,6 +10,7 @@ import (
 	ir "instruction-service/internal/repositories/instructions"
 	sr "instruction-service/internal/repositories/search"
 
+	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	hc "github.com/ihulsbus/cookbook/shared/httpclient"
 	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 
@@ -46,6 +47,7 @@ var (
 	// Handlers
 	InstructionHandlers *ih.InstructionHandlers
 	SearchHandlers      *sh.SearchHandlers
+	HealthHandler       *healthh.Handlers
 )
 
 func init() {
@@ -72,7 +74,10 @@ func init() {
 	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
 	InstructionRepository = ir.NewInstructionRepository(DatabaseClient)
 	SearchRepository = sr.NewSearchRepository(DatabaseClient)
-	RecipeRepository = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
+	RecipeRepository, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
+	if err != nil {
+		Logger.Panicf("error initialising recipe client: %v", err)
+	}
 
 	// Init services
 	InstructionService = is.NewInstructionService(InstructionRepository, RecipeRepository)
@@ -81,4 +86,5 @@ func init() {
 	// Init handlers
 	InstructionHandlers = ih.NewInstructionHandlers(InstructionService, Logger)
 	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
+	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 }

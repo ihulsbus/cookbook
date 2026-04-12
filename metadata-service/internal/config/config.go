@@ -1,6 +1,7 @@
 package config
 
 import (
+	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	hc "github.com/ihulsbus/cookbook/shared/httpclient"
 	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 	"time"
@@ -71,6 +72,7 @@ var (
 	SearchHandlers          *sh.SearchHandlers
 	TagHandlers             *th.TagHandlers
 	MetadataHandlers        *mh.MetadataHandlers
+	HealthHandler           *healthh.Handlers
 )
 
 func init() {
@@ -127,4 +129,5 @@ func init() {
 	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
 	TagHandlers = th.NewTagHandlers(TagService, Logger)
 	MetadataHandlers = mh.NewMetadataHandlers(MetadataService, Logger)
+	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 }

@@ -9,6 +9,8 @@ import (
 	sr "image-service/internal/repositories/s3"
 	s "image-service/internal/services"
 
+	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
+
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -41,6 +43,7 @@ var (
 	// Handlers
 	HttpHandler     *hh.HttpHandler
 	RabbitMQHandler *rh.RabbitMQHandler
+	HealthHandler   *healthh.Handlers
 )
 
 func init() {
@@ -95,4 +98,5 @@ func init() {
 		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
 		Logger.Fatal("Encountered fatal error. Exiting.")
 	}
+	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 }
