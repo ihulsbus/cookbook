@@ -9,7 +9,8 @@ type Config struct {
 
 // GlobalConfig holds global configuration items
 type GlobalConfig struct {
-	LogLevel string
+	LogLevel   string
+	ListenPort string
 }
 
 // DatabaseConfig holds database configuration items

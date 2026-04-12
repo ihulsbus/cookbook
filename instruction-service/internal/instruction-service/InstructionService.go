@@ -77,7 +77,7 @@ func InstructionService(ctx context.Context) {
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":8080",
+		Addr:         ":" + c.Configuration.Global.ListenPort,
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -87,7 +87,7 @@ func InstructionService(ctx context.Context) {
 		srv.Shutdown(ctx)
 	}()
 
-	log.Info("instruction service available on port 8080")
+	log.Infof("instruction service available on port %s", c.Configuration.Global.ListenPort)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Error(err)
 	}

@@ -205,7 +205,7 @@ func MetadataService(ctx context.Context) {
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":8080",
+		Addr:         ":" + c.Configuration.Global.ListenPort,
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -218,7 +218,7 @@ func MetadataService(ctx context.Context) {
 		}
 	}()
 
-	log.Info("metadata service available on port 8080")
+	log.Infof("metadata service available on port %s", c.Configuration.Global.ListenPort)
 	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		log.Error(err)
 	}

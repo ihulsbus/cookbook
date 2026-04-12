@@ -5,7 +5,6 @@ type Config struct {
 	Cors     CorsConfig
 	Oauth    OauthConfig
 	Database DatabaseConfig
-	S3       S3Config
 	RabbitMQ RabbitMQConfig
 }
 
@@ -39,14 +38,6 @@ type CorsConfig struct {
 	AllowCredentials bool
 	AllowedHeaders   []string
 	AllowedMethods   []string
-}
-
-type S3Config struct {
-	AWSRegion       string
-	AWSAccessKey    string
-	AWSAccessSecret string
-	BucketName      string
-	Endpoint        string
 }
 
 type RabbitMQConfig struct {

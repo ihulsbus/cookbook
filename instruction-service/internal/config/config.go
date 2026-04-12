@@ -63,6 +63,11 @@ func init() {
 		initLogging()
 	})
 
+	if Configuration.Global.ListenPort == "" {
+		Logger.Warn("Listen port is empty. Defaulting to 8080")
+		Configuration.Global.ListenPort = "8080"
+	}
+
 	initDatabase()
 	initCors()
 	KeycloakModule, err = initOauth()

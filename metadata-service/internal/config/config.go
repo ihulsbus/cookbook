@@ -1,10 +1,11 @@
 package config
 
 import (
+	"time"
+
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	hc "github.com/ihulsbus/cookbook/shared/httpclient"
 	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
-	"time"
 
 	ch "metadata-service/internal/handlers/category"
 	cuh "metadata-service/internal/handlers/cuisinetype"
@@ -27,13 +28,14 @@ import (
 	ss "metadata-service/internal/services/search"
 	ts "metadata-service/internal/services/tag"
 
+	m "metadata-service/internal/models"
+
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
 	"github.com/ihulsbus/cookbook/shared/keycloak"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
-	m "metadata-service/internal/models"
 )
 
 var (
@@ -87,6 +89,11 @@ func init() {
 		initConfig()
 		initLogging()
 	})
+
+	if Configuration.Global.ListenPort == "" {
+		Logger.Warn("Listen port is empty. Defaulting to 8080")
+		Configuration.Global.ListenPort = "8080"
+	}
 
 	initDatabase()
 	initCategories()
