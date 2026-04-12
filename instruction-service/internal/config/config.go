@@ -1,8 +1,9 @@
 package config
 
 import (
-	m "github.com/ihulsbus/cookbook/shared/models"
 	"time"
+
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	ih "instruction-service/internal/handlers/instructions"
 	sh "instruction-service/internal/handlers/search"
@@ -26,7 +27,7 @@ import (
 )
 
 type instructionConfig struct {
-	m.Config
+	m.Config     `mapstructure:",squash"`
 	RecipeClient m.ApiClient
 }
 

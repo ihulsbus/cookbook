@@ -77,6 +77,7 @@ func (h HttpHandlers) Create(ctx *gin.Context) {
 	var err error
 
 	if err = ctx.ShouldBindJSON(&recipeDTO); err != nil {
+		h.logger.Errorf("failed to bind JSON to DTO: %s", err.Error())
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unexpected JSON input"})
 		return
 	}

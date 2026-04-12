@@ -75,3 +75,9 @@ func (p *Publisher) PublishImageUpdated(payload ImagePayload) error {
 	event.Payload = payload
 	return p.Publish(event)
 }
+
+func (p *Publisher) PublishImageDeleted(payload ImagePayload) error {
+	var event = ImageDeletedEvent
+	event.Payload = payload
+	return p.Publish(event)
+}

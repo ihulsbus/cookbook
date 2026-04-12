@@ -18,7 +18,7 @@ import (
 )
 
 type searchConfig struct {
-	m.Config
+	m.Config          `mapstructure:",squash"`
 	IngredientService m.ApiClient
 	MetadataService   m.ApiClient
 	RecipeService     m.ApiClient

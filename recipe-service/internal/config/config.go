@@ -83,7 +83,7 @@ func init() {
 	}
 
 	// Init services
-	RecipeService = s.NewRecipeService(DatabaseRepository)
+	RecipeService = s.NewRecipeService(DatabaseRepository, RabbitMQRepository, Logger)
 
 	// Init handlers
 	HttpHandler = hh.NewHttpHandlers(RecipeService, Logger)

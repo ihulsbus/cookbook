@@ -39,7 +39,7 @@ import (
 )
 
 type metadataConfig struct {
-	m.Config
+	m.Config     `mapstructure:",squash"`
 	RecipeClient m.ApiClient
 }
 

@@ -15,14 +15,24 @@ type RecipeRepository interface {
 	Delete(recipe m.Recipe) error
 }
 
+type RabbitMQRepository interface {
+	RecipeCreatedEvent(recipe m.Recipe) error
+	RecipeUpdatedEvent(recipe m.Recipe) error
+	RecipeDeletedEvent(recipeID uuid.UUID) error
+}
+
 type RecipeService struct {
-	repo RecipeRepository
+	recipe   RecipeRepository
+	rabbitmq RabbitMQRepository
+	logger   m.LoggerInterface
 }
 
 // NewRecipeService creates a new RecipeService instance
-func NewRecipeService(recipeRepo RecipeRepository) *RecipeService {
+func NewRecipeService(recipeRepo RecipeRepository, rabbitMQRepo RabbitMQRepository, logger m.LoggerInterface) *RecipeService {
 	return &RecipeService{
-		repo: recipeRepo,
+		recipe:   recipeRepo,
+		rabbitmq: rabbitMQRepo,
+		logger:   logger,
 	}
 }
 
@@ -30,7 +40,7 @@ func NewRecipeService(recipeRepo RecipeRepository) *RecipeService {
 func (s RecipeService) FindAll() ([]m.RecipeDTO, error) {
 	var recipes []m.Recipe
 
-	recipes, err := s.repo.FindAll()
+	recipes, err := s.recipe.FindAll()
 	if err != nil {
 		switch err.Error() {
 		case "not found":
@@ -47,7 +57,7 @@ func (s RecipeService) FindAll() ([]m.RecipeDTO, error) {
 func (s RecipeService) FindSingle(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 	var recipe m.Recipe
 
-	recipe, err := s.repo.FindSingle(recipeDTO.ConvertFromDTO())
+	recipe, err := s.recipe.FindSingle(recipeDTO.ConvertFromDTO())
 	if err != nil {
 		switch err.Error() {
 		case "not found":
@@ -62,6 +72,7 @@ func (s RecipeService) FindSingle(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 
 // Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing
 func (s RecipeService) Create(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
+	s.logger.Infof("%+v", recipeDTO)
 
 	if recipeDTO.ID != uuid.Nil {
 		return m.RecipeDTO{}, errors.New("existing id on new element is not allowed")
@@ -79,19 +90,23 @@ func (s RecipeService) Create(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 		return m.RecipeDTO{}, errors.New("serving count 0 is not allowed")
 	}
 
-	recipe, err := s.repo.Create(recipeDTO.ConvertFromDTO())
+	createdRecipe, err := s.recipe.Create(recipeDTO.ConvertFromDTO())
 	if err != nil {
 		return m.RecipeDTO{}, err
 	}
 
-	return recipe.ConvertToDTO(), nil
+	if err := s.rabbitmq.RecipeCreatedEvent(createdRecipe); err != nil {
+		s.logger.Errorf("failed publishing recipe created event to servicebus")
+	}
+
+	return createdRecipe.ConvertToDTO(), nil
 }
 
 func (s RecipeService) Update(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 	var updatedRecipe m.Recipe
 	var originalRecipe m.Recipe
 
-	originalRecipe, err := s.repo.FindSingle(recipeDTO.ConvertFromDTO())
+	originalRecipe, err := s.recipe.FindSingle(recipeDTO.ConvertFromDTO())
 	if err != nil {
 		return m.RecipeDTO{}, err
 	}
@@ -108,9 +123,13 @@ func (s RecipeService) Update(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 		recipeDTO.ServingCount = originalRecipe.ServingCount
 	}
 
-	updatedRecipe, err = s.repo.Update(recipeDTO.ConvertFromDTO())
+	updatedRecipe, err = s.recipe.Update(recipeDTO.ConvertFromDTO())
 	if err != nil {
 		return m.RecipeDTO{}, err
+	}
+
+	if err := s.rabbitmq.RecipeUpdatedEvent(updatedRecipe); err != nil {
+		s.logger.Errorf("failed publishing recipe update event to servicebus")
 	}
 
 	return updatedRecipe.ConvertToDTO(), nil
@@ -118,8 +137,12 @@ func (s RecipeService) Update(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 
 func (s RecipeService) Delete(recipeDTO m.RecipeDTO) error {
 	// TODO create safety logic
-	if err := s.repo.Delete(recipeDTO.ConvertFromDTO()); err != nil {
+	if err := s.recipe.Delete(recipeDTO.ConvertFromDTO()); err != nil {
 		return err
+	}
+
+	if err := s.rabbitmq.RecipeDeletedEvent(recipeDTO.ID); err != nil {
+		s.logger.Errorf("failed publishing recipe deleted event to servicebus")
 	}
 
 	return nil

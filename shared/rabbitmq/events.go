@@ -48,6 +48,12 @@ var (
 		RoutingKey: ImageUpdatedRoutingKey,
 		Payload:    ImagePayload{},
 	}
+
+	ImageDeletedEvent = Event{
+		Name:       "ImageDeleted",
+		RoutingKey: ImageDeletedRoutingKey,
+		Payload:    ImagePayload{},
+	}
 )
 
 // Recipe payload definitions

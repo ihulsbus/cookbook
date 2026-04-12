@@ -3,9 +3,11 @@ package config
 import (
 	ah "ingredient-service/internal/handlers/amounts"
 	ih "ingredient-service/internal/handlers/ingredients"
+	rh "ingredient-service/internal/handlers/rabbitmq"
 	uh "ingredient-service/internal/handlers/units"
 	ar "ingredient-service/internal/repositories/amounts"
 	ir "ingredient-service/internal/repositories/ingredients"
+	rr "ingredient-service/internal/repositories/rabbitmq"
 	ur "ingredient-service/internal/repositories/units"
 	as "ingredient-service/internal/services/amounts"
 	is "ingredient-service/internal/services/ingredients"
@@ -13,6 +15,7 @@ import (
 
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	m "github.com/ihulsbus/cookbook/shared/models"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -30,11 +33,14 @@ var (
 	DatabaseClient *gorm.DB
 	KeycloakModule *keycloak.KeycloakModule
 	Cors           cors.Config
+	RabbitMQClient *rmq.RabbitMQ
 
 	// Repositories
 	AmountRepository     *ar.AmountRepository
 	IngredientRepository *ir.IngredientRepository
 	UnitRepository       *ur.UnitRepository
+	RabbitMQRepository   *rr.Repository
+
 	// Services
 	AmountService     *as.AmountService
 	IngredientService *is.IngredientService
@@ -45,6 +51,7 @@ var (
 	IngredientHandlers *ih.IngredientHandlers
 	UnitHandlers       *uh.UnitHandlers
 	HealthHandler      *healthh.Handlers
+	RabbitMQHandler    *rh.RabbitMQHandler
 )
 
 func init() {

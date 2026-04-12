@@ -1,0 +1,3178 @@
+openapi: 3.1.0
+x-stoplight:
+  id: isr7fh356zetw
+info:
+  title: Cookbook
+  version: '2.0'
+  summary: Backend API belonging to the gourmedy app
+  contact:
+    name: Ian Hulsbus
+    url: 'https://github.com/ihulsbus/cookbook/issues'
+    email: github@hulsbus.be
+  termsOfService: 'https://github.com/ihulsbus/cookbook/blob/feature/V2-microservices/LICENSE'
+  license:
+    name: AGPL-3.0
+    url: 'https://github.com/ihulsbus/cookbook/blob/feature/V2-microservices/LICENSE'
+  description: Backend API belonging to the gourmedy app.
+servers:
+  - url: 'https://api-staging.gourmedy.com/api/v2'
+    description: Staging
+paths:
+  /recipe:
+    get:
+      summary: Get all recipes
+      tags:
+        - recipe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+                  x-stoplight:
+                    id: i7rw87q63m8gg
+              examples:
+                Example 1:
+                  value:
+                    - id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                      name: Test
+                      description: test
+                      serving_count: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-recipes
+      x-stoplight:
+        id: x9bcpbqs4cmse
+      description: 'retrieves all recipes known to the api. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No request body required
+        content:
+          text/plain:
+            schema:
+              type: string
+    post:
+      summary: Create recipe
+      tags:
+        - recipe
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+              examples:
+                Example 1:
+                  value:
+                    id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    name: Test
+                    description: test
+                    serving_count: 1
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-recipe
+      x-stoplight:
+        id: no4i864r4raqb
+      description: Create a recipe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipe'
+            examples:
+              Example 1:
+                value:
+                  name: Test
+                  description: test
+                  serving_count: 1
+        description: Create a recipe. Omit the ID field in the body. It will be generated internally on creation
+  '/recipe/{RecipeID}':
+    parameters:
+      - $ref: '#/components/parameters/RecipeID'
+    get:
+      summary: Get single recipe
+      tags:
+        - recipe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+              examples:
+                Example 1:
+                  value:
+                    id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    name: Test
+                    description: test
+                    serving_count: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-recipe
+      x-stoplight:
+        id: yki87keu89sns
+      description: Get a single recipe based on the provided recipeID
+      parameters: []
+      requestBody:
+        description: No request body required
+        content:
+          text/plain:
+            schema:
+              type: string
+    put:
+      summary: Update recipe
+      tags:
+        - recipe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+              examples:
+                Example 1:
+                  value:
+                    id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    name: Test
+                    description: test
+                    serving_count: 1
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-recipe
+      x-stoplight:
+        id: ynrp85bvdyxac
+      description: Update a recipe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipe'
+            examples:
+              Example 1:
+                value:
+                  name: Test
+                  description: test
+                  serving_count: 1
+        description: "Update a recipe. Omit the ID field in the body. It will be set based on the path parameter. \r\nID's in the body will be overwritten"
+    delete:
+      summary: Delete recipe
+      tags:
+        - recipe
+      responses:
+        '204':
+          description: No Content is returned on a succesful delete
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-recipe
+      x-stoplight:
+        id: 448hl592drnse
+      description: Delete a recipe
+      requestBody:
+        description: No request body required
+        content:
+          text/plain:
+            schema:
+              type: string
+  /images:
+    get:
+      summary: Get all images
+      tags:
+        - image
+      responses:
+        '200':
+          description: Returned on a succesful query
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImageData'
+                  x-stoplight:
+                    id: g6l1fmkugvxyy
+              examples:
+                Example 1:
+                  value:
+                    - id: 6d279760-11be-4adb-af72-1873cb90dc27
+                      entity_type: recipe
+                      entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                      size: 93055
+                      type: image/jpeg
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          description: Returned if there are no images to return
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                Example 1:
+                  value:
+                    error: this is an error message
+        '500':
+          description: Returned if an unrecoverable internal error occured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                Example 1:
+                  value:
+                    error: this is an error message
+      operationId: get-all-images
+      x-stoplight:
+        id: ljycxo1ieh3yj
+      description: 'returns all images stored in the API. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body required
+        content:
+          text/plain:
+            schema:
+              type: object
+  '/images/{ImageID}':
+    parameters:
+      - $ref: '#/components/parameters/ImageID'
+    get:
+      summary: Get single image
+      tags:
+        - image
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageData'
+              examples:
+                Example 1:
+                  value:
+                    id: 6d279760-11be-4adb-af72-1873cb90dc27
+                    entity_type: recipe
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    size: 93055
+                    type: image/jpeg
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-image
+      x-stoplight:
+        id: env5ojh6evrka
+      description: Get information of an image based on the imageID
+      requestBody:
+        description: No body present on this request
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    put:
+      summary: Update image
+      tags:
+        - image
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageData'
+              examples:
+                Example 1:
+                  value:
+                    id: 6d279760-11be-4adb-af72-1873cb90dc27
+                    entity_type: recipe
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    size: 93055
+                    type: image/jpeg
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-image
+      x-stoplight:
+        id: v4x9i5gl3jt3f
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  x-stoplight:
+                    id: scryqm2skvxi7
+                  format: binary
+                  description: 'image file, either JPG or PNG'
+            examples:
+              Example 1:
+                value:
+                  image: <image file>
+        description: Update an image file in the CDN. Image can either be JPEG or PNG.
+      description: |-
+        Update an image. Image can either be JPEG or PNG. The dimensions must be between 300x300 and 1000x1000.
+        Max file size is 5MB
+    delete:
+      summary: Delete image
+      tags:
+        - image
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-images
+      x-stoplight:
+        id: y29segr5ltd4b
+      description: Deletes an image and it's associated file in the CDN
+      requestBody:
+        description: No body required
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+  '/images/{EntityType}/{EntityID}':
+    parameters:
+      - $ref: '#/components/parameters/EntityType'
+      - $ref: '#/components/parameters/EntityID'
+    post:
+      summary: Create image
+      tags:
+        - image
+      responses:
+        '201':
+          description: Image created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageData'
+              examples:
+                Example 1:
+                  value:
+                    id: 6d279760-11be-4adb-af72-1873cb90dc27
+                    entity_type: recipe
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    size: 93055
+                    type: image/jpeg
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-image
+      x-stoplight:
+        id: dnlqad98huh6h
+      description: |-
+        Endpoint to create an image. Image can either be JPEG or PNG. The dimensions must be between 300x300 and 1000x1000.
+        Max file size is 5MB
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  x-stoplight:
+                    id: 3soeayt6oubis
+                  format: binary
+            examples: {}
+        description: |-
+          Create an image file in the CDN. Image can either be JPEG or PNG. The dimensions must be between 300x300 and 1000x1000.
+          Max file size is 5MB
+  /instruction/search:
+    get:
+      summary: Search instructions
+      tags:
+        - search
+        - instruction
+      responses:
+        '200':
+          description: Successful request and returned data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructionSearch'
+              examples:
+                Example 1:
+                  value:
+                    recipe_id: ee1aada7-f5dd-4e28-9b63-54e00b3176d5
+                    instruction_ids:
+                      - daee456e-9271-40e3-b293-55702716d2b9
+                      - ef3908c8-44ca-4038-a1a5-97017f33e8c6
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: search-instruction
+      x-stoplight:
+        id: 3khgg9d9mjzgk
+      description: 'Search instructions. Currently, this endpoint does not support pagination. This will be added in the future'
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+          in: query
+          name: RecipeID
+          required: true
+          description: ID of an recipe
+      requestBody:
+        description: No Body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+  '/instruction/{EntityID}':
+    get:
+      summary: Get instruction
+      tags:
+        - instruction
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instruction'
+                  x-stoplight:
+                    id: jdlkg1w1wxnpq
+              examples:
+                Example 1:
+                  value:
+                    - sequence: 1
+                      description: This is the text of an instruction
+                      media_id: 23582396-12a3-425b-a597-8a22052823da
+                      entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                      entity_type: recipe
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-instruction
+      x-stoplight:
+        id: lj4fc6rx32kp1
+      description: Retrieve an instruction via it's entity ID
+      requestBody:
+        description: No Request body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    parameters:
+      - $ref: '#/components/parameters/EntityID'
+    post:
+      summary: Create instruction
+      tags:
+        - instruction
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instruction'
+                  x-stoplight:
+                    id: 3ova6yapvbeft
+              examples:
+                Example 1:
+                  value:
+                    - sequence: 1
+                      description: This is the text of an instruction
+                      media_id: 23582396-12a3-425b-a597-8a22052823da
+                      entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                      entity_type: recipe
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-instruction
+      x-stoplight:
+        id: iqvv0kgtjz464
+      description: Creates an instruction for an entity.
+      requestBody:
+        description: "Body specifies the instruction information. Entity ID is taken from the path and forced on each instruction object.\r\nCurrently the entityType is forced to `recipe`"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Instruction'
+            examples:
+              Example 1:
+                value:
+                  - sequence: 1
+                    description: This is the text of an instruction
+                    media_id: 23582396-12a3-425b-a597-8a22052823da
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    entity_type: recipe
+    put:
+      summary: Update instruction
+      tags:
+        - instruction
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instruction'
+                  x-stoplight:
+                    id: 5ta79j7ve2o2x
+              examples:
+                Example 1:
+                  value:
+                    - sequence: 1
+                      description: This is the text of an instruction
+                      media_id: 23582396-12a3-425b-a597-8a22052823da
+                      entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                      entity_type: recipe
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-instruction
+      x-stoplight:
+        id: 1me0xy6204sn3
+      requestBody:
+        description: Object to update an instruction. ID in the body must be omitted as it will be overwritten with the path parameter.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Instruction'
+                x-stoplight:
+                  id: hdgjrevsx5r4q
+            examples:
+              Example 1:
+                value:
+                  - sequence: 1
+                    description: This is the text of an instruction
+                    media_id: 23582396-12a3-425b-a597-8a22052823da
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    entity_type: recipe
+      description: Update an entity's instruction via the entityID
+    delete:
+      summary: Delete instruction
+      tags:
+        - instruction
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-instruction
+      x-stoplight:
+        id: rga7qn93c6q8r
+      requestBody:
+        description: No body on this request
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      description: Deletes an instruction
+  /metadata/tag:
+    get:
+      summary: Get all tags
+      tags:
+        - tag
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tag'
+                  x-stoplight:
+                    id: shgfwpfvfymt0
+              examples:
+                Example 1:
+                  value:
+                    - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                      name: testtag
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-tags
+      x-stoplight:
+        id: 7zno3wnhfucis
+      description: 'Retrieves all tags known in the system. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    post:
+      summary: Create tag
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+              examples:
+                Example 1:
+                  value:
+                    id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                    name: testtag
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-tag
+      x-stoplight:
+        id: 3gv0rahl4v39w
+      tags:
+        - tag
+      description: Create a tag
+      requestBody:
+        description: 'Body to create a tag. ID field must be omitted. If presented, the ID field will be ignored.'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+            examples:
+              Example 1:
+                value:
+                  name: testtag
+  '/metadata/tag/{TagID}':
+    parameters:
+      - $ref: '#/components/parameters/TagID'
+    get:
+      summary: Get single tag
+      tags:
+        - tag
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+              examples:
+                Example 1:
+                  value:
+                    id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                    name: testtag
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-tag
+      x-stoplight:
+        id: t44qtkovgtai8
+      description: Get a single tag
+      requestBody:
+        description: No Body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    put:
+      summary: Update a tag
+      tags:
+        - tag
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tag'
+              examples:
+                Example 1:
+                  value:
+                    id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                    name: testtag
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-tag
+      x-stoplight:
+        id: ymw579l15at4y
+      description: Update a tag
+      requestBody:
+        description: "Body to update a tag. the ID field is ignored\r\n"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+            examples:
+              Example 1:
+                value:
+                  name: testtag
+    delete:
+      summary: Delete tag
+      tags:
+        - tag
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-tag
+      x-stoplight:
+        id: 0jdusef330zqt
+      description: Delete a tag
+      requestBody:
+        description: No Body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+  /metadata/recipe:
+    get:
+      summary: Get all recipe metadata
+      tags:
+        - metadata
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipeMetadata'
+              examples:
+                Example 1:
+                  value:
+                    - recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                      categories:
+                        - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                          name: category
+                      cuisine_type:
+                        id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: Italian
+                      tags:
+                        - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                          name: testtag
+                      difficulty_level:
+                        id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        level: 1
+                      preparation_time: 45
+                      serving_count: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-recipe-metadata
+      description: 'Retrieves all metadata of all recipe known to the api. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: 'No Body. '
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      x-stoplight:
+        id: 4zk4lnm0rtr1o
+    parameters: []
+  '/metadata/recipe/{RecipeID}':
+    parameters:
+      - $ref: '#/components/parameters/RecipeID'
+    get:
+      summary: Get single recipe metadata
+      tags:
+        - metadata
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeMetadata'
+              examples:
+                Example 1:
+                  value:
+                    recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                    categories:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: category
+                    cuisine_type:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: Italian
+                    tags:
+                      - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                        name: testtag
+                    difficulty_level:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      level: 1
+                    preparation_time: 45
+                    serving_count: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-recipe-metadata
+      description: Get the metadata of a single recipe
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      x-stoplight:
+        id: 9emjrfq9pya0z
+    post:
+      summary: Create recpe metadata
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeMetadata'
+              examples:
+                Example 1:
+                  value:
+                    recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                    categories:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: category
+                    cuisine_type:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: Italian
+                    tags:
+                      - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                        name: testtag
+                    difficulty_level:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      level: 1
+                    preparation_time: 45
+                    serving_count: 2
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-recipe-metadata
+      description: Create metadata for a recipe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeMetadata'
+            examples:
+              Example 1:
+                value:
+                  recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                  categories:
+                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: category
+                  cuisine_type:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: Italian
+                  tags:
+                    - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                      name: testtag
+                  difficulty_level:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    level: 1
+                  preparation_time: 45
+                  serving_count: 2
+        description: 'Creates metadata for a recipe. ID field can be omitted. If presented, field will be overwritten with the path parameter'
+      x-stoplight:
+        id: t5z7rwtacwth2
+      tags:
+        - metadata
+    put:
+      summary: Update recipe metadata
+      tags:
+        - metadata
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeMetadata'
+              examples:
+                Example 1:
+                  value:
+                    recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                    categories:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: category
+                    cuisine_type:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: Italian
+                    tags:
+                      - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                        name: testtag
+                    difficulty_level:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      level: 1
+                    preparation_time: 45
+                    serving_count: 2
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-recipe-metadata
+      requestBody:
+        description: 'Updates a recipes metadata. ID field can be omitted. If presented, field will be overwritten by the path parameter'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeMetadata'
+            examples:
+              Example 1:
+                value:
+                  recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                  categories:
+                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: category
+                  cuisine_type:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: Italian
+                  tags:
+                    - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                      name: testtag
+                  difficulty_level:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    level: 1
+                  preparation_time: 45
+                  serving_count: 2
+      description: Updates the metadata for a recipe
+      x-stoplight:
+        id: sowkkijpblaxv
+    delete:
+      summary: Delete recipe metadata
+      tags:
+        - metadata
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-recipe-metadata
+      description: Delete a category
+      requestBody:
+        description: No body required
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      x-stoplight:
+        id: 62k00lgn9r7ou
+  /metadata/category:
+    get:
+      summary: Get all categories
+      tags:
+        - category
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+                  x-stoplight:
+                    id: oinscbhcnpc7w
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-category
+      x-stoplight:
+        id: mff4qvq8w7ykb
+      description: 'Retrieves all categories known to the api. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: 'No Body. '
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    post:
+      summary: Create category
+      tags:
+        - category
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: category
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-category
+      x-stoplight:
+        id: sgcxok5m1k4ib
+      description: Create a category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+            examples:
+              Example 1:
+                value:
+                  name: category
+        description: 'Creates a category. ID field must be omitted. If presented, field will be ignored'
+  '/metadata/category/{CategoryID}':
+    parameters:
+      - $ref: '#/components/parameters/CategoryID'
+    get:
+      summary: Get single category
+      tags:
+        - category
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: category
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-category
+      x-stoplight:
+        id: skqreqrd72aue
+      description: Get a single category
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    put:
+      summary: Update category
+      tags:
+        - category
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: category
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-category
+      x-stoplight:
+        id: ny33hqrp5ydpp
+      requestBody:
+        description: 'Updates a category. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+            examples:
+              Example 1:
+                value:
+                  name: category
+      description: Updates a category
+    delete:
+      summary: Delete category
+      tags:
+        - category
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-category
+      x-stoplight:
+        id: 2t426o3w3hyjz
+      description: Delete a category
+      requestBody:
+        description: No body required
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+  /metadata/cuisinetype:
+    get:
+      summary: Get all cuisinetypes
+      tags:
+        - cuisinetype
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CuisineType'
+                  x-stoplight:
+                    id: yfm7b1s16c6t6
+              examples:
+                Example 1:
+                  value:
+                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: Italian
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-cuisinetype
+      x-stoplight:
+        id: weslv0rrj8xh0
+      description: 'Get all cuisinetypes known to the API. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    post:
+      summary: Create cuisinetype
+      tags:
+        - category
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuisineType'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: Italian
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-cuisinetype
+      x-stoplight:
+        id: ec0fxvyzmz7mk
+      description: Create a cuisinetype
+      requestBody:
+        description: 'Creates a cuisinetype. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CuisineType'
+            examples:
+              Example 1:
+                value:
+                  name: Italian
+  '/metadata/cuisinetype/{CuisineTypeID}':
+    parameters:
+      - $ref: '#/components/parameters/CuisineTypeID'
+    get:
+      summary: Get cuisinetype
+      tags:
+        - cuisinetype
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuisineType'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: Italian
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-cuisinetype
+      x-stoplight:
+        id: ef0xeouj3wedt
+      description: Get a single cuisinetype definition
+      requestBody:
+        description: No body.
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    put:
+      summary: Update cuisinetype
+      tags:
+        - cuisinetype
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuisineType'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: Italian
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-cuisinetype
+      x-stoplight:
+        id: zbla206sqss12
+      description: Update a cuisinetype definition
+      requestBody:
+        description: 'Updates a cuisinetype. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CuisineType'
+            examples:
+              Example 1:
+                value:
+                  name: Italian
+    delete:
+      summary: Delete a Cuisinetype
+      tags:
+        - cuisinetype
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-cuisinetype
+      x-stoplight:
+        id: eamar6qlp22xe
+      description: Delete a cuisinetype
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+  /metadata/difficultylevel:
+    get:
+      summary: Get all difficultylevels
+      tags:
+        - difficultylevel
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DifficultyLevel'
+                  x-stoplight:
+                    id: p0cd7rskc6s7y
+              examples:
+                Example 1:
+                  value:
+                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      level: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-dificultylevels
+      x-stoplight:
+        id: 1hyv7sb1ok9hz
+      description: 'Retrieve all difficultylevels known to the api. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+            examples: {}
+    post:
+      summary: Create difficultylevel
+      tags:
+        - difficultylevel
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyLevel'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    level: 1
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-difficultylevel
+      x-stoplight:
+        id: mlby0tx7jdh46
+      requestBody:
+        description: 'Creates a difficultylevel. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DifficultyLevel'
+            examples:
+              Example 1:
+                value:
+                  level: 1
+      description: Create a difficultylevel
+  '/metadata/difficultylevel/{DifficultyLevelID}':
+    parameters:
+      - $ref: '#/components/parameters/DifficultyLevelID'
+    get:
+      summary: Get single difficultylevel
+      tags:
+        - difficultylevel
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyLevel'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    level: 1
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-single-difficultylevel
+      x-stoplight:
+        id: wny8uy2zvjmvj
+      description: Get a single difficultylevel definition
+      requestBody:
+        description: No Body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    put:
+      summary: Update difficultylevel
+      tags:
+        - difficultylevel
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyLevel'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    level: 1
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-difficultylevel
+      x-stoplight:
+        id: adwlmlq8t4nja
+      description: Update a difficultylevel
+      requestBody:
+        description: 'Updates a difficultylevel. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DifficultyLevel'
+            examples:
+              Example 1:
+                value:
+                  level: 1
+    delete:
+      summary: Delete difficultylevel
+      tags:
+        - difficultylevel
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-difficultylevel
+      x-stoplight:
+        id: 9yf0lppvgss0w
+      description: Delete a difficultylevel
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+  /metadata/preparationtime:
+    get:
+      summary: Get all preparation times
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PreparationTime'
+                  x-stoplight:
+                    id: r90eo9ovejvsp
+              examples:
+                Example 1:
+                  value:
+                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      duration: 75
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-preparationtime
+      x-stoplight:
+        id: 2k652220xs12u
+      description: 'Retrieves all preparation times the server knows. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      tags:
+        - preparationtime
+    post:
+      summary: Create preparation time
+      tags:
+        - preparationtime
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreparationTime'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    duration: 75
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-preparationtime
+      x-stoplight:
+        id: iq82s1kp7f29j
+      description: Creates a preparation time
+      requestBody:
+        description: 'Creates a preparation time. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreparationTime'
+            examples:
+              Example 1:
+                value:
+                  duration: 75
+  '/metadata/preparationtime/{PreparationTimeID}':
+    get:
+      summary: Get preparation time
+      tags:
+        - preparationtime
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreparationTime'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    duration: 75
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-preparationtime
+      x-stoplight:
+        id: qon0mwgx15ij6
+      description: Get a single preparationID
+      requestBody:
+        description: No Body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    parameters:
+      - $ref: '#/components/parameters/PreparationTimeID'
+    put:
+      summary: Update preparation time
+      tags:
+        - preparationtime
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreparationTime'
+              examples:
+                Example 1:
+                  value:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    duration: 75
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: put-preparationtime
+      x-stoplight:
+        id: pfecqgsgkfdse
+      description: Update preparation time entry
+      requestBody:
+        description: 'Updates a preparation time. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PreparationTime'
+            examples:
+              Example 1:
+                value:
+                  duration: 75
+    delete:
+      summary: Delete preparation time
+      tags:
+        - preparationtime
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-preparationtime
+      x-stoplight:
+        id: dfmedrb1n3nbi
+      description: Delete a preparation time object
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+  /metadata/search:
+    post:
+      summary: Search metadata
+      tags:
+        - metadata
+        - search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetadataSearchResponse'
+              examples:
+                Example 1:
+                  value:
+                    recipe_id: string
+                    category_ids:
+                      - string
+                    tag_ids:
+                      - string
+                    difficulty_level_id: string
+                    preparation_time_id: string
+                    cuisine_type_id: string
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: search-metadata
+      x-stoplight:
+        id: yj22120ksivoy
+      description: Search through metadata
+      requestBody:
+        description: 'All fields are optional, but at least one field is required. '
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetadataSearchRequest'
+            examples:
+              Example 1:
+                value:
+                  category_id: 0194b87e-7b64-44ad-98e3-6e292d7fc437
+              Example 2:
+                value:
+                  min_prep_time: 1
+              Example 3:
+                value:
+                  min_prep_time: 1
+                  max_prep_time: 30
+  /search:
+    get:
+      summary: Search
+      tags:
+        - search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recipes:
+                    type: array
+                    x-stoplight:
+                      id: symvkedsm93kf
+                    items: {}
+                  ingredients:
+                    type: array
+                    x-stoplight:
+                      id: pnwjrz9k25jcd
+                    items: {}
+                  metadata:
+                    type: array
+                    x-stoplight:
+                      id: pmsdixynihh7l
+                    items: {}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: global-search
+      x-stoplight:
+        id: i6q73t3a48mdp
+      description: Search through all records globally in the API. This request is still being developed
+      x-internal: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  x-stoplight:
+                    id: rgkomex9y17nl
+                limit:
+                  type: string
+                  x-stoplight:
+                    id: bbt05z4h38maz
+                page:
+                  type: string
+                  x-stoplight:
+                    id: rbs1mqco0ohqw
+            examples:
+              Example 1:
+                value:
+                  query: string
+                  limit: string
+                  page: string
+        description: Under construction
+  /ingredient:
+    get:
+      summary: Get all ingredients
+      tags:
+        - ingredient
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+                  x-stoplight:
+                    id: 5awute6tawa2n
+              examples:
+                Example 1:
+                  value:
+                    - id: d95751c7-6cf3-4a24-8e60-620121d7b050
+                      name: Asparagus
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-ingredient
+      x-stoplight:
+        id: beppedunt2x3u
+      description: 'Get all ingredients known to the API. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    post:
+      summary: Create ingredient
+      tags:
+        - ingredient
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+              examples:
+                Example 1:
+                  value:
+                    id: d95751c7-6cf3-4a24-8e60-620121d7b050
+                    name: Asparagus
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-ingredient
+      x-stoplight:
+        id: 05yjqvkz70fk2
+      description: Create an ingredient
+      requestBody:
+        description: 'Creates an ingredient. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ingredient'
+            examples:
+              Example 1:
+                value:
+                  name: Asparagus
+  '/ingredient/{IngredientID}':
+    parameters:
+      - $ref: '#/components/parameters/IngredientID'
+    get:
+      summary: Get single ingredient
+      tags:
+        - ingredient
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+              examples:
+                Example 1:
+                  value:
+                    id: d95751c7-6cf3-4a24-8e60-620121d7b050
+                    name: Asparagus
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-ingredient
+      x-stoplight:
+        id: qxz8wegkuthj0
+      description: Get a single ingredient
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    put:
+      summary: Update ingredient
+      tags:
+        - ingredient
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingredient'
+              examples:
+                Example 1:
+                  value:
+                    id: d95751c7-6cf3-4a24-8e60-620121d7b050
+                    name: Asparagus
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-ingredient
+      x-stoplight:
+        id: atushs1890z8s
+      description: Update an ingredient
+      requestBody:
+        description: 'Updates an ingredient. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ingredient'
+            examples:
+              Example 1:
+                value:
+                  name: Asparagus
+    delete:
+      summary: Delete ingredient
+      tags:
+        - ingredient
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-ingredient
+      x-stoplight:
+        id: ik0jpqgb1rzvl
+      description: Delete an ingredient
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+  /unit:
+    get:
+      summary: Get all units
+      tags:
+        - unit
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Unit'
+                  x-stoplight:
+                    id: bj3o75ntjcudn
+              examples:
+                Example 1:
+                  value:
+                    - ID: 7a449aa5-cbdc-44a3-ba2c-53db53c7329a
+                      FullName: Tablespoon
+                      ShortName: tbsp
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-units
+      x-stoplight:
+        id: jjakt0nofkpxd
+      description: 'Retrieve all units known to the API. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+    post:
+      summary: Create unit
+      tags:
+        - unit
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+              examples:
+                Example 1:
+                  value:
+                    ID: 7a449aa5-cbdc-44a3-ba2c-53db53c7329a
+                    FullName: Tablespoon
+                    ShortName: tbsp
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-unit
+      x-stoplight:
+        id: 8tgcyt0824kuc
+      description: Create a new unit
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Unit'
+            examples:
+              Example 1:
+                value:
+                  FullName: Tablespoon
+                  ShortName: tbsp
+        description: 'Creates an unit. ID field must be omitted. If presented, field will be ignored'
+  '/unit/{UnitID}':
+    parameters:
+      - $ref: '#/components/parameters/UnitID'
+    get:
+      summary: Get unit
+      tags:
+        - unit
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+              examples:
+                Example 1:
+                  value:
+                    ID: 7a449aa5-cbdc-44a3-ba2c-53db53c7329a
+                    FullName: Tablespoon
+                    ShortName: tbsp
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-single-unit
+      x-stoplight:
+        id: 8wzu8yr9i6zfo
+      requestBody:
+        description: No Body.
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      description: Get a single unit
+    put:
+      summary: Update unit
+      tags:
+        - unit
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+              examples:
+                Example 1:
+                  value:
+                    ID: 7a449aa5-cbdc-44a3-ba2c-53db53c7329a
+                    FullName: Tablespoon
+                    ShortName: tbsp
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-unit
+      x-stoplight:
+        id: ycj74u83owovd
+      description: Update a unit
+      requestBody:
+        description: 'Updates an unit. ID field must be omitted. If presented, field will be ignored'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Unit'
+            examples:
+              Example 1:
+                value:
+                  FullName: Tablespoon
+                  ShortName: tbsp
+    delete:
+      summary: Delete unit
+      tags:
+        - unit
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-unit
+      x-stoplight:
+        id: hq9dabyf2z4nf
+      requestBody:
+        description: No Body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      description: Delete an unit
+  /images/search:
+    get:
+      summary: Search Image
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageData'
+              examples:
+                Example 1:
+                  value:
+                    id: 6d279760-11be-4adb-af72-1873cb90dc27
+                    entity_type: recipe
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    size: 93055
+                    type: image/jpeg
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: search-image
+      x-stoplight:
+        id: doied4wa4ts3t
+      description: Search for images based on their associated EntityType and EntityID
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: entityType
+          description: 'Type of the entity queried. E.g.: recipe'
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: id
+          description: UUID of the entity referencing in the search
+      requestBody:
+        description: None
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      tags:
+        - image
+  '/amount/{RecipeID}':
+    parameters:
+      - name: RecipeID
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: UUID of a recipe
+    get:
+      summary: Get recipe ingredient amounts
+      tags:
+        - amount
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngredientAmounts'
+                  x-stoplight:
+                    id: k2nzs2q3en2mz
+              examples:
+                Example 1:
+                  value:
+                    - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                      unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                      quantity: 3
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-recipe-amounts
+      x-stoplight:
+        id: 1b6cilgvs03vd
+      description: Get the quantities of the ingredients belonging to a recipe
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+        description: No body.
+    post:
+      summary: Create recipe ingredient amounts
+      tags:
+        - amount
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngredientAmounts'
+                  x-stoplight:
+                    id: ytxaxhhqu9bcj
+              examples:
+                Example 1:
+                  value:
+                    - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                      unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                      quantity: 3
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: post-recipe-amounts
+      x-stoplight:
+        id: 07b4p6ye3cqi4
+      description: Set the quantities of the ingredients belonging to a recipe
+      requestBody:
+        description: Array of ingredient amounts that will be linked to the provided recipe UUID in the path
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngredientAmounts'
+                x-stoplight:
+                  id: unzmbt8h7bzqm
+            examples:
+              Example 1:
+                value:
+                  - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                    unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                    quantity: 3
+    put:
+      summary: Update recipe ingredient amounts
+      tags:
+        - amount
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngredientAmounts'
+                  x-stoplight:
+                    id: zbne3e62dwcp0
+              examples:
+                Example 1:
+                  value:
+                    - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                      unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                      quantity: 3
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: put-recipe-amounts
+      x-stoplight:
+        id: omgpv8bovfkc3
+      description: Update the quantities of the ingredients belonging to a recipe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngredientAmounts'
+                x-stoplight:
+                  id: fgam7diu6rifo
+            examples:
+              Example 1:
+                value:
+                  - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+                    unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+                    quantity: 3
+        description: Provide one or multiple ingredient amounts linked to the related recipe.
+    delete:
+      summary: Delete recipe ingredient amounts
+      tags:
+        - amount
+      responses:
+        '204':
+          description: No Content
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-recipe-amounts
+      x-stoplight:
+        id: kvtyowxx7fh03
+      description: |-
+        Delete ingredient quantities belonging to a recipe. 
+        Each provided ingredient reference will be deleted. If you want to delete all ingredients belonging to a recipe, send all. 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+            examples: {}
+        description: No body required. Delete deletes all ingredient amounts linked to a recipe
+components:
+  schemas:
+    ImageData:
+      type: object
+      description: Model returns information about the queried mediaID
+      examples:
+        - id: 6d279760-11be-4adb-af72-1873cb90dc27
+          entity_type: recipe
+          entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+          size: 93055
+          type: image/jpeg
+      x-tags:
+        - image
+      title: ImageData
+      required:
+        - id
+        - entity_type
+        - entity_id
+        - size
+        - type
+      properties:
+        id:
+          type: string
+          description: ID of the requested media resource
+        entity_type:
+          type: string
+          description: type of entity associated to the media file
+        entity_id:
+          type: string
+          description: ID of the entity associated to the media file
+        size:
+          type: integer
+          description: size of the media file
+        type:
+          type: string
+          description: type of media
+    Ingredient:
+      type: object
+      examples:
+        - id: d95751c7-6cf3-4a24-8e60-620121d7b050
+          name: Asparagus
+      description: Returns information about an ingredient
+      title: Ingredient
+      x-tags:
+        - ingredient
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: ID of the ingredient
+        name:
+          type: string
+          description: Name of the ingredient
+    Unit:
+      type: object
+      examples:
+        - id: 7a449aa5-cbdc-44a3-ba2c-53db53c7329a
+          full_name: Tablespoon
+          short_name: tbsp
+      description: Returns information about a unit of measurement
+      title: Unit
+      x-tags:
+        - unit
+      required:
+        - id
+        - full_name
+        - short_name
+      properties:
+        id:
+          type: string
+          description: ID of the unit
+          x-stoplight:
+            id: 4ar4rpk7fiegy
+        full_name:
+          type: string
+          description: Full name of the unit
+          x-stoplight:
+            id: njzyjqya0g1uv
+        short_name:
+          type: string
+          description: Abbreviation of the unit
+          x-stoplight:
+            id: hbikll06uprkg
+    InstructionSearch:
+      type: object
+      description: Returns searchresult of instructions belonging to the queried recipe
+      title: InstructionSearch
+      x-tags:
+        - instruction
+      properties:
+        recipe_id:
+          type: string
+          description: ID of the recipe
+        instruction_ids:
+          type: array
+          description: Array with ID's of instructions
+          items:
+            type: string
+    Instruction:
+      type: object
+      examples:
+        - id: a34ab6d5-5980-414c-b176-22c873e65be6
+          sequence: 1
+          description: This is the text of an instruction
+          media_id: 23582396-12a3-425b-a597-8a22052823da
+          entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+          entity_type: recipe
+        - sequence: 1
+          Description: This is the text of an instruction
+          media_id: 23582396-12a3-425b-a597-8a22052823da
+          entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+          entity_type: recipe
+      description: 'Information about an instruction. '
+      title: Instruction
+      x-tags:
+        - instruction
+      required:
+        - id
+        - sequence
+        - description
+        - media_id
+        - entity_id
+        - entity_type
+      properties:
+        id:
+          type: string
+          description: ID of the instruction
+        sequence:
+          type: integer
+          description: Sequence position of the instruction
+        description:
+          type: string
+          description: |
+            instruction content
+          x-stoplight:
+            id: jspmx6lj6sm9k
+        media_id:
+          type: string
+          description: mediaID associated to the instruction
+        entity_id:
+          type: string
+          description: entity ID the instruction belongs to
+        entity_type:
+          type: string
+    Tag:
+      type: object
+      examples:
+        - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+          name: testtag
+      description: Information about a tag
+      title: Tag
+      x-tags:
+        - tag
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: ID of the tag
+        name:
+          type: string
+          description: Name of the tag
+    Category:
+      type: object
+      examples:
+        - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+          name: category
+      description: Information about a category
+      title: Category
+      x-tags:
+        - category
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: ID of a category
+        name:
+          type: string
+          description: Name of a category
+    CuisineType:
+      type: object
+      x-stoplight:
+        id: juechjczuy382
+      examples:
+        - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+          name: Italian
+      description: Information about a Cuisine Type
+      title: CuisineType
+      x-tags:
+        - cuisinetype
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: ID of a cuisine type
+        name:
+          type: string
+          description: name of a cuisine type
+    DifficultyLevel:
+      type: object
+      x-stoplight:
+        id: cm6fby1s3ogic
+      examples:
+        - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+          level: 1
+      description: Information about a Dificulty Level
+      title: DificultyLevel
+      x-tags:
+        - difficultylevel
+      required:
+        - id
+        - level
+      properties:
+        id:
+          type: string
+          description: ID of a Dificulty Level
+        level:
+          type: integer
+          description: name of a Dificulty Level
+          x-stoplight:
+            id: 1gty33m96208r
+          example: 1
+          minimum: 1
+          maximum: 5
+    PreparationTime:
+      type: object
+      x-stoplight:
+        id: moo0jx0vb2fal
+      examples:
+        - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+          duration: 75
+      description: Information about a Peparation Time
+      title: PreparationTime
+      x-tags:
+        - preparationtime
+      required:
+        - id
+        - duration
+      properties:
+        id:
+          type: string
+          description: |
+            ID of a Peparation Time
+        duration:
+          type: integer
+          description: name of a Peparation Time
+          example: 1
+          minimum: 1
+          maximum: 100
+          x-stoplight:
+            id: 98s0af2d37h7a
+    MetadataSearchRequest:
+      type: object
+      properties:
+        recipe_id:
+          type: string
+          description: ID of a recipe to base the search on
+        category_id:
+          type: string
+          description: ID of a category to base the search on
+        tag_id:
+          type: string
+          description: ID of a tag to base the search on
+        difficulty_level_id:
+          type: string
+          description: ID of a difficulty level to base the search on
+        cuisine_type_id:
+          type: string
+          description: ID of a cuisine type to base the search on
+        min_prep_time:
+          type: integer
+          description: 'minimum preparation time in minutes '
+        max_prep_time:
+          type: integer
+          description: maximum preparation time in minutes
+      examples:
+        - recipe_id: 5f5f2c8e-c1af-4af1-967c-89fb5ead8939
+          category_id: 0194b87e-7b64-44ad-98e3-6e292d7fc437
+          tag_id: 61da3d8d-2a19-4ebb-972a-92989d6bf668
+          difficulty_level_id: 19b5af88-7b24-44b6-9066-77be4ebfb7f8
+          cuisine_type_id: b725a21d-c36b-4a71-8358-ab01c45d84ab
+          min_prep_time: 0
+          max_prep_time: 0
+      description: 'Model to send to the metadata search endpoint. All fields are optional, but at least one is required'
+      title: MetadataSearchRequest
+      x-tags:
+        - metadata
+    MetadataSearchResponse:
+      type: object
+      description: Response on a metadata search request
+      properties:
+        recipe_id:
+          type: string
+          description: UUID of the recipe
+        category_ids:
+          type: array
+          description: Array with category UUIDs belonging to the recipe
+          items:
+            type: string
+        tag_ids:
+          type: array
+          description: Array with tag UUIDs belonging to the recipe
+          items:
+            type: string
+        difficulty_level_id:
+          type: string
+          description: UUID of the difficulty level associated to a recipe
+        preparation_time_id:
+          type: string
+          description: UUID of the preparation time associated to a recipe
+        cuisine_type_id:
+          type: string
+          description: UUID of the cuisine type associated to a recipe
+      title: MetadataSearchResponse
+      x-tags:
+        - metadata
+    Recipe:
+      type: object
+      examples:
+        - id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+          name: Test
+          description: test
+          serving_count: 1
+      description: Definition of a recipe
+      title: Recipe
+      x-tags:
+        - recipe
+      required:
+        - id
+        - name
+        - description
+        - serving_count
+      properties:
+        id:
+          type: string
+          description: ID of a recipe
+          x-stoplight:
+            id: p8s1zmij8luky
+        name:
+          type: string
+          description: Name of a recipe
+        description:
+          type: string
+          description: "Short description of the recipe\r\n"
+        serving_count:
+          type: integer
+          description: amount of servings a recipe makes
+          x-stoplight:
+            id: 2rx8kbenft4fm
+    Error:
+      title: Error
+      x-stoplight:
+        id: 0dvpf1j4bgao6
+      type: object
+      examples:
+        - error: this is an error message
+      description: Definition of an error returned
+      x-tags:
+        - error
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          x-stoplight:
+            id: ypd6bfe2esfiy
+          description: field specifying the error that the API encountered
+    IngredientAmounts:
+      title: IngredientAmounts
+      x-stoplight:
+        id: 816d6xxp5iskj
+      type: object
+      examples:
+        - recipeID: 3142c13e-04d8-465e-bca8-dec957ae61dd
+          ingredientID: a796f891-d42f-4182-9ff7-893a41726643
+          unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
+          quantity: 3
+      x-tags:
+        - amount
+      required:
+        - ingredientID
+        - unitID
+        - quantity
+      properties:
+        ingredientID:
+          type: string
+          x-stoplight:
+            id: g2xpfj11on81q
+          format: uuid
+        unitID:
+          type: string
+          x-stoplight:
+            id: om2wbkm08scn6
+          format: uuid
+        quantity:
+          type: number
+          x-stoplight:
+            id: eyzfcp6nuz7bj
+    RecipeMetadata:
+      title: RecipeMetadata
+      x-stoplight:
+        id: 2oqkgbyf2x2we
+      type: object
+      properties:
+        recipe_id:
+          type: string
+          x-stoplight:
+            id: 8cejpvvfcssqz
+        categories:
+          type: array
+          x-stoplight:
+            id: qsoo76yixsxqw
+          items:
+            $ref: '#/components/schemas/Category'
+            x-stoplight:
+              id: n5ua4l9iacckn
+        cuisine_type:
+          $ref: '#/components/schemas/CuisineType'
+          x-stoplight:
+            id: y30ivttzoq2na
+        tags:
+          type: array
+          x-stoplight:
+            id: piklqvyqubqmh
+          items:
+            $ref: '#/components/schemas/Tag'
+            x-stoplight:
+              id: zo1f3yjkxdzrf
+        difficulty_level:
+          $ref: '#/components/schemas/DifficultyLevel'
+          x-stoplight:
+            id: 8uw8tpogh6psf
+        preparation_time:
+          type: number
+          x-stoplight:
+            id: ea7gwhd435n5s
+        serving_count:
+          type: number
+          x-stoplight:
+            id: ej1lohmwddq7v
+      examples:
+        - recipe_id: 23582396-12a3-425b-a597-8a22052823da
+          categories:
+            - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+              name: category
+          cuisine_type:
+            id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+            name: Italian
+          tags:
+            - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+              name: testtag
+          difficulty_level:
+            id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+            level: 1
+          preparation_time: 45
+          serving_count: 2
+      description: Model of metadata associated to a recipe
+  securitySchemes:
+    apiKey_1:
+      type: openIdConnect
+      openIdConnectUrl: 'https://auth.gourmedy.com/realms/gourmedy/.well-known/openid-configuration'
+      description: The API uses bearer tokens through an OIDC provider
+  parameters:
+    EntityID:
+      name: EntityID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of a entity
+    ImageID:
+      name: ImageID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID of an image
+    EntityType:
+      name: EntityType
+      in: path
+      schema:
+        type: string
+        example: recipe
+        enum:
+          - recipe
+          - ingredient
+      description: Type of the entity queried
+      required: true
+    InstructionID:
+      name: InstructionID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID of an instruction
+    RecipeID:
+      name: RecipeID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of a recipe
+    TagID:
+      name: TagID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of a tag
+    CategoryID:
+      name: CategoryID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of a category
+    CuisineTypeID:
+      name: CuisineTypeID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of a cuisine type
+    DifficultyLevelID:
+      name: DifficultyLevelID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of a difficulty level
+    PreparationTimeID:
+      name: PreparationTimeID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of a PreparationTime
+    IngredientID:
+      name: IngredientID
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: UUID of an Ingredient
+    UnitID:
+      name: UnitID
+      in: path
+      schema:
+        type: string
+        format: uuid
+      description: UUID of the unit
+      required: true
+  responses:
+    Internal-server-error:
+      description: Returned if an unrecoverable error occured internally
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            Example 1:
+              value:
+                error: this is an error message
+    Bad-request:
+      description: Response when the request is malformed or unprocessable due to user error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            Example 1:
+              value:
+                error: this is an error message
+    Not-Found:
+      description: Response when requested resource is not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            Example 1:
+              value:
+                error: resource not found
+    Unauthorized:
+      description: Response returned when the requestor lacks sufficient authentication
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            Example 1:
+              value: invalid token
+            Example 2:
+              value: missing Authorization header
+    Insufficient-permissions:
+      description: 'Returned when the requestor has proper authentication, but lacks the permissions for the requested resource'
+      content:
+        text/plain:
+          schema:
+            type: string
+          examples:
+            Example 1:
+              value: insufficient permissions
+  requestBodies: {}
+security:
+  - apiKey_1: []
+tags:
+  - name: amount
+  - name: api
+  - name: category
+  - name: cookbook
+  - name: cuisinetype
+  - name: difficultylevel
+  - name: image
+  - name: ingredient
+  - name: instruction
+  - name: metadata
+  - name: preparationtime
+  - name: recipe
+  - name: search
+  - name: tag
+  - name: unit

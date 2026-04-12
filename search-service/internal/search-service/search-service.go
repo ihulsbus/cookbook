@@ -62,7 +62,7 @@ func IngredientService(ctx context.Context) {
 		srv.Shutdown(ctx)
 	}()
 
-	log.Info("search service available on port 8080")
+	log.Infof("search service available on port %s", c.Configuration.Global.ListenPort)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Error(err)
 	}

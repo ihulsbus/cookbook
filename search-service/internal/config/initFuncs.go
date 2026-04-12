@@ -55,8 +55,6 @@ func initConfig() {
 		Logger.Fatalf("error unmarshaling config: %v", err)
 	}
 
-	Logger.Infof("%+s", &Configuration)
-
 	Logger.Info("config file loaded")
 }
 
