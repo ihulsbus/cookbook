@@ -13,4 +13,5 @@ use (
 	./shared/keycloak
 	./shared/rabbitmq
 	./shared/recipeclient
+	./shared/healthchecks
 )
