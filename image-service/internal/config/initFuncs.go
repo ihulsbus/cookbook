@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"image-service/internal/helpers"
-	m "image-service/internal/models"
 	"strings"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gin-contrib/cors"
 	"github.com/ihulsbus/cookbook/shared/keycloak"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"

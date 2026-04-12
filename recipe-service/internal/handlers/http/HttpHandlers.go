@@ -3,18 +3,19 @@ package handlers
 import (
 	"net/http"
 
-	m "recipe-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type RecipeService interface {
-	FindAll() ([]m.RecipeDTO, error)
-	FindSingle(recipe m.RecipeDTO) (m.RecipeDTO, error)
-	Create(recipe m.RecipeDTO) (m.RecipeDTO, error)
-	Update(recipe m.RecipeDTO) (m.RecipeDTO, error)
-	Delete(recipe m.RecipeDTO) error
+	FindAll() ([]models.RecipeDTO, error)
+	FindSingle(recipe models.RecipeDTO) (models.RecipeDTO, error)
+	Create(recipe models.RecipeDTO) (models.RecipeDTO, error)
+	Update(recipe models.RecipeDTO) (models.RecipeDTO, error)
+	Delete(recipe models.RecipeDTO) error
 }
 
 type HttpHandlers struct {
@@ -47,7 +48,7 @@ func (h HttpHandlers) GetAll(ctx *gin.Context) {
 }
 
 func (h HttpHandlers) Get(ctx *gin.Context) {
-	var recipeDTO m.RecipeDTO
+	var recipeDTO models.RecipeDTO
 	var err error
 
 	recipeDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -72,7 +73,7 @@ func (h HttpHandlers) Get(ctx *gin.Context) {
 }
 
 func (h HttpHandlers) Create(ctx *gin.Context) {
-	var recipeDTO m.RecipeDTO
+	var recipeDTO models.RecipeDTO
 	var err error
 
 	if err = ctx.ShouldBindJSON(&recipeDTO); err != nil {
@@ -90,7 +91,7 @@ func (h HttpHandlers) Create(ctx *gin.Context) {
 }
 
 func (h HttpHandlers) Update(ctx *gin.Context) {
-	var recipeDTO m.RecipeDTO
+	var recipeDTO models.RecipeDTO
 	var err error
 
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -118,7 +119,7 @@ func (h HttpHandlers) Update(ctx *gin.Context) {
 }
 
 func (h HttpHandlers) Delete(ctx *gin.Context) {
-	var recipeDTO m.RecipeDTO
+	var recipeDTO models.RecipeDTO
 	var err error
 
 	recipeDTO.ID, err = uuid.Parse(ctx.Param("id"))

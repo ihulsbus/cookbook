@@ -1,15 +1,16 @@
 package handlers
 
 import (
-	m "metadata-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type SearchService interface {
-	GetAllRecipeMetadata() (*[]m.MetadataSearchResultDTO, error)
-	SearchMetadata(m.MetadataSearchRequestDTO) ([]m.MetadataSearchResultDTO, error)
+	GetAllRecipeMetadata() (*[]models.MetadataSearchResultDTO, error)
+	SearchMetadata(models.MetadataSearchRequestDTO) ([]models.MetadataSearchResultDTO, error)
 }
 
 type SearchHandlers struct {
@@ -36,7 +37,7 @@ func (h *SearchHandlers) GetAllMetadata(ctx *gin.Context) {
 }
 
 func (h *SearchHandlers) SearchMetadata(ctx *gin.Context) {
-	var searchRequestDTO m.MetadataSearchRequestDTO
+	var searchRequestDTO models.MetadataSearchRequestDTO
 	var err error
 
 	if err = ctx.ShouldBindJSON(&searchRequestDTO); err != nil {

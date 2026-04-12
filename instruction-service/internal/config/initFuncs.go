@@ -3,12 +3,12 @@ package config
 import (
 	"fmt"
 	"instruction-service/internal/helpers"
-	m "instruction-service/internal/models"
 	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/ihulsbus/cookbook/shared/keycloak"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"

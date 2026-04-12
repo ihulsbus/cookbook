@@ -2,10 +2,10 @@ package services
 
 import (
 	"errors"
-	m "metadata-service/internal/models"
 	"testing"
 
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 

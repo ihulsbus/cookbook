@@ -28,7 +28,7 @@ import (
 	ss "metadata-service/internal/services/search"
 	ts "metadata-service/internal/services/tag"
 
-	m "metadata-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -38,8 +38,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type metadataConfig struct {
+	m.Config
+	RecipeClient m.ApiClient
+}
+
 var (
-	Configuration m.Config
+	Configuration metadataConfig
 	err           error
 
 	Logger         *log.Logger = log.New()

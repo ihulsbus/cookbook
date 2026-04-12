@@ -4,7 +4,6 @@ import (
 	ah "ingredient-service/internal/handlers/amounts"
 	ih "ingredient-service/internal/handlers/ingredients"
 	uh "ingredient-service/internal/handlers/units"
-	m "ingredient-service/internal/models"
 	ar "ingredient-service/internal/repositories/amounts"
 	ir "ingredient-service/internal/repositories/ingredients"
 	ur "ingredient-service/internal/repositories/units"
@@ -13,6 +12,7 @@ import (
 	us "ingredient-service/internal/services/units"
 
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"

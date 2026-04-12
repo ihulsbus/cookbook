@@ -3,18 +3,19 @@ package handlers
 import (
 	"net/http"
 
-	m "metadata-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type DifficultyLevelService interface {
-	FindAll() ([]m.DifficultyLevelDTO, error)
-	FindSingle(difficultyLevelDTO m.DifficultyLevelDTO) (m.DifficultyLevelDTO, error)
-	Create(difficultyLevelDTO m.DifficultyLevelDTO) (m.DifficultyLevelDTO, error)
-	Update(difficultyLevelDTO m.DifficultyLevelDTO) (m.DifficultyLevelDTO, error)
-	Delete(difficultyLevelDTO m.DifficultyLevelDTO) error
+	FindAll() ([]models.DifficultyLevelDTO, error)
+	FindSingle(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error)
+	Create(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error)
+	Update(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error)
+	Delete(difficultyLevelDTO models.DifficultyLevelDTO) error
 }
 
 type DifficultyLevelHandlers struct {
@@ -46,7 +47,7 @@ func (h *DifficultyLevelHandlers) GetAll(ctx *gin.Context) {
 }
 
 func (h *DifficultyLevelHandlers) Get(ctx *gin.Context) {
-	var difficultyLevelDTO m.DifficultyLevelDTO
+	var difficultyLevelDTO models.DifficultyLevelDTO
 	var err error
 
 	difficultyLevelDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -71,7 +72,7 @@ func (h *DifficultyLevelHandlers) Get(ctx *gin.Context) {
 }
 
 func (h *DifficultyLevelHandlers) Create(ctx *gin.Context) {
-	var difficultyLevelDTO m.DifficultyLevelDTO
+	var difficultyLevelDTO models.DifficultyLevelDTO
 	var err error
 
 	if err = ctx.ShouldBindJSON(&difficultyLevelDTO); err != nil {
@@ -89,7 +90,7 @@ func (h *DifficultyLevelHandlers) Create(ctx *gin.Context) {
 }
 
 func (h *DifficultyLevelHandlers) Update(ctx *gin.Context) {
-	var difficultyLevelDTO m.DifficultyLevelDTO
+	var difficultyLevelDTO models.DifficultyLevelDTO
 	var err error
 
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -117,7 +118,7 @@ func (h *DifficultyLevelHandlers) Update(ctx *gin.Context) {
 }
 
 func (h *DifficultyLevelHandlers) Delete(ctx *gin.Context) {
-	var difficultyLevelDTO m.DifficultyLevelDTO
+	var difficultyLevelDTO models.DifficultyLevelDTO
 	var err error
 
 	difficultyLevelDTO.ID, err = uuid.Parse(ctx.Param("id"))

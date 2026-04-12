@@ -6,11 +6,10 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/wagslane/go-rabbitmq"
-
-	"image-service/internal/models"
 )
 
 // MockImageService is a mock for the imageService interface.

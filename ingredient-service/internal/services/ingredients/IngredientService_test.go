@@ -4,28 +4,27 @@ import (
 	"errors"
 	"testing"
 
-	m "ingredient-service/internal/models"
-
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	findAllIngredient m.Ingredient = m.Ingredient{
+	findAllIngredient models.Ingredient = models.Ingredient{
 		ID:   uuid.New(),
 		Name: "ingredient",
 	}
-	ingredient m.Ingredient = m.Ingredient{
+	ingredient models.Ingredient = models.Ingredient{
 		ID:   uuid.New(),
 		Name: "ingredient",
 	}
 
-	findAllUnit m.Unit = m.Unit{
+	findAllUnit models.Unit = models.Unit{
 		ID:        uuid.New(),
 		FullName:  "unit",
 		ShortName: "u",
 	}
-	unit m.Unit = m.Unit{
+	unit models.Unit = models.Unit{
 		ID:        uuid.New(),
 		FullName:  "unit",
 		ShortName: "u",
@@ -34,10 +33,10 @@ var (
 
 type IngredientRepositoryMock struct{}
 
-func (IngredientRepositoryMock) FindAll() ([]m.Ingredient, error) {
+func (IngredientRepositoryMock) FindAll() ([]models.Ingredient, error) {
 	switch findAllIngredient.Name {
 	case "findall": // OK
-		var ingredients []m.Ingredient
+		var ingredients []models.Ingredient
 		ingredients = append(ingredients, ingredient)
 		return ingredients, nil
 	case "notfound":
@@ -47,7 +46,7 @@ func (IngredientRepositoryMock) FindAll() ([]m.Ingredient, error) {
 	}
 }
 
-func (IngredientRepositoryMock) FindSingle(ingredientInput m.Ingredient) (m.Ingredient, error) {
+func (IngredientRepositoryMock) FindSingle(ingredientInput models.Ingredient) (models.Ingredient, error) {
 	switch ingredientInput.Name {
 	case "find":
 		return ingredient, nil
@@ -62,33 +61,33 @@ func (IngredientRepositoryMock) FindSingle(ingredientInput m.Ingredient) (m.Ingr
 	case "":
 		return ingredient, nil
 	case "notfound":
-		return m.Ingredient{}, errors.New("not found")
+		return models.Ingredient{}, errors.New("not found")
 	default:
-		return m.Ingredient{}, errors.New("error")
+		return models.Ingredient{}, errors.New("error")
 	}
 }
 
-func (IngredientRepositoryMock) Create(ingredientInput m.Ingredient) (m.Ingredient, error) {
+func (IngredientRepositoryMock) Create(ingredientInput models.Ingredient) (models.Ingredient, error) {
 	switch ingredientInput.Name {
 	case "create":
 		return ingredient, nil
 	default:
-		return m.Ingredient{}, errors.New("error")
+		return models.Ingredient{}, errors.New("error")
 	}
 }
 
-func (IngredientRepositoryMock) Update(ingredientInput m.Ingredient) (m.Ingredient, error) {
+func (IngredientRepositoryMock) Update(ingredientInput models.Ingredient) (models.Ingredient, error) {
 	switch ingredientInput.Name {
 	case "update":
 		return ingredient, nil
 	case "ingredient":
 		return ingredient, nil
 	default:
-		return m.Ingredient{}, errors.New("error")
+		return models.Ingredient{}, errors.New("error")
 	}
 }
 
-func (IngredientRepositoryMock) Delete(ingredientInput m.Ingredient) error {
+func (IngredientRepositoryMock) Delete(ingredientInput models.Ingredient) error {
 	switch ingredientInput.Name {
 	case "delete":
 		return nil
@@ -136,14 +135,14 @@ func TestRecipeFindAll_NotFound(t *testing.T) {
 func TestIngredientFindSingle_OK(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "find",
 	}
 	result, err := s.FindSingle(ingredientDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.Equal(t, "ingredient", result.Name)
 	assert.Equal(t, ingredient.ID, result.ID)
 }
@@ -151,129 +150,129 @@ func TestIngredientFindSingle_OK(t *testing.T) {
 func TestIngredientFindSingle_FindErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "error",
 	}
 	result, err := s.FindSingle(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.EqualError(t, err, "internal server error")
 }
 
 func TestIngredientFindSingle_NotFoundErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "notfound",
 	}
 	result, err := s.FindSingle(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.EqualError(t, err, "not found")
 }
 
 func TestIngredientCreate_OK(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		Name: "create",
 	}
 	result, err := s.Create(ingredientDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.Equal(t, "ingredient", result.Name)
 }
 
 func TestIngredientCreate_IDErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "create",
 	}
 	result, err := s.Create(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.EqualError(t, err, "existing id on new element is not allowed")
 }
 
 func TestIngredientCreate_ExistsErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		Name: "find",
 	}
 	result, err := s.Create(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.EqualError(t, err, "ingredient already exists")
 }
 
 func TestIngredientCreate_Err(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		Name: "error",
 	}
 	result, err := s.Create(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.EqualError(t, err, "error")
 }
 
 func TestIngredientCreate_NoName(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		Name: "",
 	}
 	result, err := s.Create(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.EqualError(t, err, "name is empty")
 }
 
 func TestIngredientUpdate_Ok(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "update",
 	}
 	result, err := s.Update(ingredientDTO)
 
 	assert.NoError(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.Equal(t, result.Name, "ingredient")
 }
 
 func TestIngredientUpdate_NotFoundErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "notfound",
 	}
 	result, err := s.Update(ingredientDTO)
 
 	assert.Error(t, err)
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 	assert.EqualError(t, err, "ingredient does not exist. nothing to update")
 }
 
 func TestIngredientUpdate_Err(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "updateerror",
 	}
@@ -281,13 +280,13 @@ func TestIngredientUpdate_Err(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
-	assert.IsType(t, m.IngredientDTO{}, result)
+	assert.IsType(t, models.IngredientDTO{}, result)
 }
 
 func TestIngredientDelete_Ok(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "delete",
 	}
@@ -299,7 +298,7 @@ func TestIngredientDelete_Ok(t *testing.T) {
 func TestIngredientDelete_NotFoundErr(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "notfound",
 	}
@@ -312,7 +311,7 @@ func TestIngredientDelete_NotFoundErr(t *testing.T) {
 func TestIngredientDelete_Err(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
-	ingredientDTO := m.IngredientDTO{
+	ingredientDTO := models.IngredientDTO{
 		ID:   ingredient.ID,
 		Name: "deleteerror",
 	}

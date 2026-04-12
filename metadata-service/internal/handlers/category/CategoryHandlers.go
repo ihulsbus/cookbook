@@ -3,18 +3,19 @@ package handlers
 import (
 	"net/http"
 
-	m "metadata-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type CategoryService interface {
-	FindAll() ([]m.CategoryDTO, error)
-	FindSingle(CategoryDTO m.CategoryDTO) (m.CategoryDTO, error)
-	Create(CategoryDTO m.CategoryDTO) (m.CategoryDTO, error)
-	Update(CategoryDTO m.CategoryDTO) (m.CategoryDTO, error)
-	Delete(CategoryDTO m.CategoryDTO) error
+	FindAll() ([]models.CategoryDTO, error)
+	FindSingle(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
+	Create(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
+	Update(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
+	Delete(CategoryDTO models.CategoryDTO) error
 }
 
 type CategoryHandlers struct {
@@ -47,7 +48,7 @@ func (h *CategoryHandlers) GetAll(ctx *gin.Context) {
 }
 
 func (h *CategoryHandlers) Get(ctx *gin.Context) {
-	var categoryDTO m.CategoryDTO
+	var categoryDTO models.CategoryDTO
 	var err error
 
 	categoryDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -72,7 +73,7 @@ func (h *CategoryHandlers) Get(ctx *gin.Context) {
 }
 
 func (h *CategoryHandlers) Create(ctx *gin.Context) {
-	var categoryDTO m.CategoryDTO
+	var categoryDTO models.CategoryDTO
 	var err error
 
 	if err = ctx.ShouldBindJSON(&categoryDTO); err != nil {
@@ -90,7 +91,7 @@ func (h *CategoryHandlers) Create(ctx *gin.Context) {
 }
 
 func (h *CategoryHandlers) Update(ctx *gin.Context) {
-	var categoryDTO m.CategoryDTO
+	var categoryDTO models.CategoryDTO
 	var err error
 
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -118,7 +119,7 @@ func (h *CategoryHandlers) Update(ctx *gin.Context) {
 }
 
 func (h *CategoryHandlers) Delete(ctx *gin.Context) {
-	var categoryDTO m.CategoryDTO
+	var categoryDTO models.CategoryDTO
 	var err error
 
 	categoryDTO.ID, err = uuid.Parse(ctx.Param("id"))

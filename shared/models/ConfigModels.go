@@ -55,6 +55,10 @@ type RabbitMQConfig struct {
 	Host     string
 }
 
+type ApiClient struct {
+	BaseURL string
+}
+
 type LoggerInterface interface {
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})

@@ -3,8 +3,7 @@ package repositories
 import (
 	"errors"
 
-	m "recipe-service/internal/models"
-
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"gorm.io/gorm"
 )
 

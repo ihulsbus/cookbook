@@ -3,13 +3,13 @@ package config
 import (
 	hh "image-service/internal/handlers/http"
 	rh "image-service/internal/handlers/rabbitmq"
-	m "image-service/internal/models"
 	dr "image-service/internal/repositories/database"
 	rr "image-service/internal/repositories/rabbitmq"
 	sr "image-service/internal/repositories/s3"
 	s "image-service/internal/services"
 
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fsnotify/fsnotify"

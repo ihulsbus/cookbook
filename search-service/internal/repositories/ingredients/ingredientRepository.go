@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	m "search-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type IngredientRepository struct {

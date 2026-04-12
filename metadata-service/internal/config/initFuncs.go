@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"gorm.io/gorm/clause"
 	"metadata-service/internal/helpers"
-	m "metadata-service/internal/models"
 	"strings"
 	"time"
+
+	"github.com/ihulsbus/cookbook/shared/models"
+	"gorm.io/gorm/clause"
 
 	"github.com/gin-contrib/cors"
 	"github.com/ihulsbus/cookbook/shared/keycloak"
@@ -87,11 +88,11 @@ func initDatabase() {
 
 	Logger.Info("performing database migrations")
 	if err := DatabaseClient.AutoMigrate(
-		&m.Tag{},
-		&m.Category{},
-		&m.CuisineType{},
-		&m.DifficultyLevel{},
-		&m.RecipeMetadata{},
+		&models.Tag{},
+		&models.Category{},
+		&models.CuisineType{},
+		&models.DifficultyLevel{},
+		&models.RecipeMetadata{},
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}
@@ -103,7 +104,7 @@ func initCategories() {
 	if err := DatabaseClient.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.OnConflict{
 			DoNothing: true,
-		}).Create(m.DefaultCategories).Error; err != nil {
+		}).Create(models.DefaultCategories).Error; err != nil {
 			return err
 		}
 
@@ -118,7 +119,7 @@ func initCuisineTypes() {
 	if err := DatabaseClient.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.OnConflict{
 			DoNothing: true,
-		}).Create(m.DefaultCuisineTypes).Error; err != nil {
+		}).Create(models.DefaultCuisineTypes).Error; err != nil {
 			return err
 		}
 
@@ -133,7 +134,7 @@ func initDifficultyLevels() {
 	if err := DatabaseClient.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.OnConflict{
 			DoNothing: true,
-		}).Create(m.DefaultDifficultyLevels).Error; err != nil {
+		}).Create(models.DefaultDifficultyLevels).Error; err != nil {
 			return err
 		}
 

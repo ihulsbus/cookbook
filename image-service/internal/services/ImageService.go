@@ -2,9 +2,9 @@ package services
 
 import (
 	"errors"
-	m "image-service/internal/models"
 
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type S3Repository interface {

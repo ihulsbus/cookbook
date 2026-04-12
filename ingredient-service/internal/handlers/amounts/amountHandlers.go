@@ -1,17 +1,18 @@
 package handlers
 
 import (
-	m "ingredient-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type AmountService interface {
-	Find(recipeID uuid.UUID) (*[]m.AmountDTO, error)
-	Create(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[]m.AmountDTO, error)
-	Update(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[]m.AmountDTO, error)
+	Find(recipeID uuid.UUID) (*[]models.AmountDTO, error)
+	Create(recipeID uuid.UUID, amountsDTO *[]models.AmountDTO) (*[]models.AmountDTO, error)
+	Update(recipeID uuid.UUID, amountsDTO *[]models.AmountDTO) (*[]models.AmountDTO, error)
 	Delete(recipeID uuid.UUID) error
 }
 
@@ -29,7 +30,7 @@ func NewAmountHandlers(ingredients AmountService, logger m.LoggerInterface) *Amo
 
 func (h AmountHandlers) Find(ctx *gin.Context) {
 	var recipeID uuid.UUID
-	var amountDTO *[]m.AmountDTO
+	var amountDTO *[]models.AmountDTO
 	var err error
 
 	recipeID, err = uuid.Parse(ctx.Param("id"))
@@ -55,7 +56,7 @@ func (h AmountHandlers) Find(ctx *gin.Context) {
 
 func (h AmountHandlers) Create(ctx *gin.Context) {
 	var recipeID uuid.UUID
-	var amountDTO []m.AmountDTO
+	var amountDTO []models.AmountDTO
 	var err error
 
 	recipeID, err = uuid.Parse(ctx.Param("id"))
@@ -81,7 +82,7 @@ func (h AmountHandlers) Create(ctx *gin.Context) {
 
 func (h AmountHandlers) Update(ctx *gin.Context) {
 	var recipeID uuid.UUID
-	var amountDTO []m.AmountDTO
+	var amountDTO []models.AmountDTO
 	var err error
 
 	recipeID, err = uuid.Parse(ctx.Param("id"))

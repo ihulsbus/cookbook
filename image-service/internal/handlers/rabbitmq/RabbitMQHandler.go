@@ -3,25 +3,25 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	m "image-service/internal/models"
 
+	"github.com/ihulsbus/cookbook/shared/models"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	"github.com/wagslane/go-rabbitmq"
 )
 
 type imageService interface {
-	FindAll() ([]m.ImageDataDTO, error)
-	Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error)
-	Delete(imageDTO m.ImageDataDTO) error
+	FindAll() ([]models.ImageDataDTO, error)
+	Find(imageDTO models.ImageDataDTO) (models.ImageDataDTO, error)
+	Delete(imageDTO models.ImageDataDTO) error
 }
 
 type RabbitMQHandler struct {
 	service  imageService
-	logger   m.LoggerInterface
+	logger   models.LoggerInterface
 	consumer *rmq.Consumer
 }
 
-func NewRabbitMQHandler(imageService imageService, logger m.LoggerInterface) (*RabbitMQHandler, error) {
+func NewRabbitMQHandler(imageService imageService, logger models.LoggerInterface) (*RabbitMQHandler, error) {
 	return &RabbitMQHandler{service: imageService, logger: logger}, nil
 }
 
@@ -50,7 +50,7 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 	routingKey := d.RoutingKey
 	c.logger.Infof("Received message with routing key: %s", routingKey)
 
-	var event m.ImageDataDTO
+	var event models.ImageDataDTO
 	if err = json.Unmarshal(d.Body, &event); err != nil {
 		c.logger.Errorf("Failed to unmarshal message: %v", err)
 		return rabbitmq.NackRequeue
@@ -61,7 +61,7 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 	case "image.findall":
 		_, err = c.service.FindAll()
 	case "image.find":
-		_, err = c.service.Find(m.ImageDataDTO{})
+		_, err = c.service.Find(models.ImageDataDTO{})
 	case "recipe.deleted":
 		fmt.Println(string(d.Body))
 	default:

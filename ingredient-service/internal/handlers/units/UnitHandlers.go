@@ -3,18 +3,19 @@ package handlers
 import (
 	"net/http"
 
-	m "ingredient-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type UnitService interface {
-	FindAll() ([]m.UnitDTO, error)
-	FindSingle(unitDTO m.UnitDTO) (m.UnitDTO, error)
-	Create(unitDTO m.UnitDTO) (m.UnitDTO, error)
-	Update(unitDTO m.UnitDTO) (m.UnitDTO, error)
-	Delete(unitDTO m.UnitDTO) error
+	FindAll() ([]models.UnitDTO, error)
+	FindSingle(unitDTO models.UnitDTO) (models.UnitDTO, error)
+	Create(unitDTO models.UnitDTO) (models.UnitDTO, error)
+	Update(unitDTO models.UnitDTO) (models.UnitDTO, error)
+	Delete(unitDTO models.UnitDTO) error
 }
 
 type UnitHandlers struct {
@@ -31,7 +32,7 @@ func NewUnitHandlers(units UnitService, logger m.LoggerInterface) *UnitHandlers 
 
 // GetAll Get all units
 func (h UnitHandlers) GetAll(ctx *gin.Context) {
-	var unitDTO []m.UnitDTO
+	var unitDTO []models.UnitDTO
 	var err error
 
 	unitDTO, err = h.unitService.FindAll()
@@ -51,7 +52,7 @@ func (h UnitHandlers) GetAll(ctx *gin.Context) {
 
 // GetSingle Get a single unit
 func (h UnitHandlers) GetSingle(ctx *gin.Context) {
-	var unitDTO m.UnitDTO
+	var unitDTO models.UnitDTO
 	var err error
 
 	unitDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -77,7 +78,7 @@ func (h UnitHandlers) GetSingle(ctx *gin.Context) {
 
 // Create creates a unit
 func (h UnitHandlers) Create(ctx *gin.Context) {
-	var unitDTO m.UnitDTO
+	var unitDTO models.UnitDTO
 	var err error
 
 	if err = ctx.ShouldBindJSON(&unitDTO); err != nil {
@@ -96,7 +97,7 @@ func (h UnitHandlers) Create(ctx *gin.Context) {
 
 // Update updates a unit
 func (h UnitHandlers) Update(ctx *gin.Context) {
-	var unitDTO m.UnitDTO
+	var unitDTO models.UnitDTO
 	var err error
 
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -125,7 +126,7 @@ func (h UnitHandlers) Update(ctx *gin.Context) {
 
 // Delete deletes a unit
 func (h UnitHandlers) Delete(ctx *gin.Context) {
-	var unitDTO m.UnitDTO
+	var unitDTO models.UnitDTO
 	var err error
 
 	unitDTO.ID, err = uuid.Parse(ctx.Param("id"))

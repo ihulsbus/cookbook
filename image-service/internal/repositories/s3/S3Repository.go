@@ -3,10 +3,10 @@ package repositories
 import (
 	"bytes"
 	"fmt"
-	m "image-service/internal/models"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type LoggerInterface interface {

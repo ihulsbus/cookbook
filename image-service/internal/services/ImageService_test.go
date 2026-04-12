@@ -2,11 +2,11 @@ package services
 
 import (
 	"errors"
-	m "image-service/internal/models"
 	tc "image-service/internal/test_common"
 	"testing"
 
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 

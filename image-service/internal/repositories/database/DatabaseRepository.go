@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"errors"
-	m "image-service/internal/models"
 
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"gorm.io/gorm"
 )
 

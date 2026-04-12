@@ -8,10 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"recipe-service/internal/models"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

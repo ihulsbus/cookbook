@@ -2,13 +2,12 @@ package repositories
 
 import (
 	"errors"
-	"fmt"
+
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"gorm.io/gorm/clause"
 
 	"gorm.io/gorm"
-
-	m "metadata-service/internal/models"
 )
 
 type RecipeMetadataRepository struct {

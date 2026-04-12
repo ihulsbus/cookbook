@@ -5,10 +5,9 @@ import (
 	"regexp"
 	"testing"
 
-	m "instruction-service/internal/models"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 
 	co "instruction-service/internal/common/test"

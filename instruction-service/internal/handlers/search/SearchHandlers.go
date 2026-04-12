@@ -1,15 +1,16 @@
 package handlers
 
 import (
-	m "instruction-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type SearchService interface {
-	SearchInstruction(m.InstructionSearchRequestDTO) (m.InstructionSearchResultDTO, error)
+	SearchInstruction(models.InstructionSearchRequestDTO) (models.InstructionSearchResultDTO, error)
 }
 
 type SearchHandlers struct {
@@ -25,7 +26,7 @@ func NewSearchHandlers(searchs SearchService, logger m.LoggerInterface) *SearchH
 }
 
 func (h *SearchHandlers) SearchInstruction(ctx *gin.Context) {
-	var searchRequestDTO m.InstructionSearchRequestDTO
+	var searchRequestDTO models.InstructionSearchRequestDTO
 	var err error
 
 	searchRequestDTO.RecipeID = uuid.MustParse(ctx.Query("recipeID"))

@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"gorm.io/gorm/clause"
 	"ingredient-service/internal/helpers"
-	m "ingredient-service/internal/models"
 	"strings"
 	"time"
+
+	"github.com/ihulsbus/cookbook/shared/models"
+	"gorm.io/gorm/clause"
 
 	"github.com/gin-contrib/cors"
 	"github.com/ihulsbus/cookbook/shared/keycloak"
@@ -87,9 +88,9 @@ func initDatabase() {
 
 	Logger.Info("performing database migrations")
 	if err := DatabaseClient.AutoMigrate(
-		&m.Ingredient{},
-		&m.Unit{},
-		&m.Amount{},
+		&models.Ingredient{},
+		&models.Unit{},
+		&models.Amount{},
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}
@@ -101,7 +102,7 @@ func initUnits() {
 	if err := DatabaseClient.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Clauses(clause.OnConflict{
 			DoNothing: true,
-		}).Create(m.DefaultUnits).Error; err != nil {
+		}).Create(models.DefaultUnits).Error; err != nil {
 			return err
 		}
 

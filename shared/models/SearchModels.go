@@ -2,6 +2,48 @@ package models
 
 import "github.com/google/uuid"
 
+type InstructionSearchRequest struct {
+	RecipeID uuid.UUID
+}
+
+type InstructionSearchRequestDTO struct {
+	RecipeID uuid.UUID `json:"recipe_id"`
+}
+
+type InstructionSearchResult struct {
+	RecipeID       uuid.UUID
+	InstructionIDs []uuid.UUID
+}
+
+type InstructionSearchResultDTO struct {
+	RecipeID       uuid.UUID   `json:"recipe_id"`
+	InstructionIDs []uuid.UUID `json:"instruction_ids"`
+}
+
+type SearchRequest struct {
+	Query string `json:"query" form:"query" binding:"required"`
+	Limit int    `json:"limit" form:"limit" binding:"omitempty,min=1"`
+	Page  int    `json:"page" form:"page" binding:"omitempty,min=1"`
+}
+
+type SearchResult struct {
+	Recipes     []RecipeResult         `json:"recipes"`
+	Ingredients []IngredientResult     `json:"ingredients"`
+	Metadata    []MetadataSearchResult `json:"metadata"`
+}
+
+type RecipeResult struct {
+	ID           uuid.UUID
+	Name         string `gorm:"not null" json:"name" example:"apple pie"`
+	Description  string `gorm:"size:65535;not null" json:"description" example:"pie with apples"`
+	ServingCount int    `gorm:"default:0" json:"servingcount" example:"4"`
+}
+
+type IngredientResult struct {
+	ID   uuid.UUID `json:"id" example:"23582396-12a3-425b-a597-8a22052823da"`
+	Name string    `json:"name" example:"asparagus"`
+}
+
 // request
 type MetadataSearchRequest struct {
 	RecipeID          *uuid.UUID `json:"recipe_id,omitempty"`

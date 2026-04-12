@@ -3,9 +3,9 @@ package services
 import (
 	"errors"
 	"fmt"
-	m "instruction-service/internal/models"
 
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type InstructionRepository interface {

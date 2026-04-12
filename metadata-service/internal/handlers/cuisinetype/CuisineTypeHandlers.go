@@ -3,18 +3,19 @@ package handlers
 import (
 	"net/http"
 
-	m "metadata-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type CuisineTypeService interface {
-	FindAll() ([]m.CuisineTypeDTO, error)
-	FindSingle(cuisineTypeDTO m.CuisineTypeDTO) (m.CuisineTypeDTO, error)
-	Create(cuisineTypeDTO m.CuisineTypeDTO) (m.CuisineTypeDTO, error)
-	Update(cuisineTypeDTO m.CuisineTypeDTO) (m.CuisineTypeDTO, error)
-	Delete(cuisineTypeDTO m.CuisineTypeDTO) error
+	FindAll() ([]models.CuisineTypeDTO, error)
+	FindSingle(cuisineTypeDTO models.CuisineTypeDTO) (models.CuisineTypeDTO, error)
+	Create(cuisineTypeDTO models.CuisineTypeDTO) (models.CuisineTypeDTO, error)
+	Update(cuisineTypeDTO models.CuisineTypeDTO) (models.CuisineTypeDTO, error)
+	Delete(cuisineTypeDTO models.CuisineTypeDTO) error
 }
 
 type CuisineTypeHandlers struct {
@@ -46,7 +47,7 @@ func (h *CuisineTypeHandlers) GetAll(ctx *gin.Context) {
 }
 
 func (h *CuisineTypeHandlers) Get(ctx *gin.Context) {
-	var cuisineTypeDTO m.CuisineTypeDTO
+	var cuisineTypeDTO models.CuisineTypeDTO
 	var err error
 
 	cuisineTypeDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -71,7 +72,7 @@ func (h *CuisineTypeHandlers) Get(ctx *gin.Context) {
 }
 
 func (h *CuisineTypeHandlers) Create(ctx *gin.Context) {
-	var cuisineTypeDTO m.CuisineTypeDTO
+	var cuisineTypeDTO models.CuisineTypeDTO
 	var err error
 
 	if err = ctx.ShouldBindJSON(&cuisineTypeDTO); err != nil {
@@ -89,7 +90,7 @@ func (h *CuisineTypeHandlers) Create(ctx *gin.Context) {
 }
 
 func (h *CuisineTypeHandlers) Update(ctx *gin.Context) {
-	var cuisineTypeDTO m.CuisineTypeDTO
+	var cuisineTypeDTO models.CuisineTypeDTO
 	var err error
 
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -117,7 +118,7 @@ func (h *CuisineTypeHandlers) Update(ctx *gin.Context) {
 }
 
 func (h *CuisineTypeHandlers) Delete(ctx *gin.Context) {
-	var cuisineTypeDTO m.CuisineTypeDTO
+	var cuisineTypeDTO models.CuisineTypeDTO
 	var err error
 
 	cuisineTypeDTO.ID, err = uuid.Parse(ctx.Param("id"))

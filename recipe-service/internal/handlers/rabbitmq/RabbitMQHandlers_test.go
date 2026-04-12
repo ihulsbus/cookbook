@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"recipe-service/internal/models"
 	"testing"
 
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/wagslane/go-rabbitmq"

@@ -3,18 +3,19 @@ package handlers
 import (
 	"net/http"
 
-	m "ingredient-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type IngredientService interface {
-	FindAll() ([]m.IngredientDTO, error)
-	FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
-	Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
-	Update(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error)
-	Delete(ingredientDTO m.IngredientDTO) error
+	FindAll() ([]models.IngredientDTO, error)
+	FindSingle(ingredientDTO models.IngredientDTO) (models.IngredientDTO, error)
+	Create(ingredientDTO models.IngredientDTO) (models.IngredientDTO, error)
+	Update(ingredientDTO models.IngredientDTO) (models.IngredientDTO, error)
+	Delete(ingredientDTO models.IngredientDTO) error
 }
 
 type IngredientHandlers struct {
@@ -31,7 +32,7 @@ func NewIngredientHandlers(ingredients IngredientService, logger m.LoggerInterfa
 
 // Get all ingredients
 func (h IngredientHandlers) GetAll(ctx *gin.Context) {
-	var ingredientDTO []m.IngredientDTO
+	var ingredientDTO []models.IngredientDTO
 	var err error
 
 	ingredientDTO, err = h.ingredientService.FindAll()
@@ -51,7 +52,7 @@ func (h IngredientHandlers) GetAll(ctx *gin.Context) {
 
 // Get a single ingredient
 func (h IngredientHandlers) GetSingle(ctx *gin.Context) {
-	var ingredientDTO m.IngredientDTO
+	var ingredientDTO models.IngredientDTO
 	var err error
 
 	ingredientDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -77,7 +78,7 @@ func (h IngredientHandlers) GetSingle(ctx *gin.Context) {
 
 // Create an ingredient
 func (h IngredientHandlers) Create(ctx *gin.Context) {
-	var ingredientDTO m.IngredientDTO
+	var ingredientDTO models.IngredientDTO
 	var err error
 
 	if err = ctx.ShouldBindJSON(&ingredientDTO); err != nil {
@@ -95,7 +96,7 @@ func (h IngredientHandlers) Create(ctx *gin.Context) {
 }
 
 func (h IngredientHandlers) Update(ctx *gin.Context) {
-	var ingredientDTO m.IngredientDTO
+	var ingredientDTO models.IngredientDTO
 	var err error
 
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -124,7 +125,7 @@ func (h IngredientHandlers) Update(ctx *gin.Context) {
 
 // Delete an ingredient
 func (h IngredientHandlers) Delete(ctx *gin.Context) {
-	var ingredientDTO m.IngredientDTO
+	var ingredientDTO models.IngredientDTO
 	var err error
 
 	ingredientDTO.ID, err = uuid.Parse(ctx.Param("id"))

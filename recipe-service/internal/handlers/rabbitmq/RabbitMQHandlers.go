@@ -3,18 +3,19 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	m "recipe-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
+	"github.com/ihulsbus/cookbook/shared/models"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	"github.com/wagslane/go-rabbitmq"
 )
 
 type recipeService interface {
-	FindAll() ([]m.RecipeDTO, error)
-	FindSingle(recipeDTO m.RecipeDTO) (m.RecipeDTO, error)
-	Create(recipeDTO m.RecipeDTO) (m.RecipeDTO, error)
-	Update(recipeDTO m.RecipeDTO) (m.RecipeDTO, error)
-	Delete(recipeDTO m.RecipeDTO) error
+	FindAll() ([]models.RecipeDTO, error)
+	FindSingle(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)
+	Create(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)
+	Update(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)
+	Delete(recipeDTO models.RecipeDTO) error
 }
 
 type RabbitMQHandler struct {
@@ -52,7 +53,7 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 	routingKey := d.RoutingKey
 	c.logger.Infof("Received message with routing key: %s", routingKey)
 
-	var event m.RecipeDTO
+	var event models.RecipeDTO
 	if err = json.Unmarshal(d.Body, &event); err != nil {
 		c.logger.Errorf("Failed to unmarshal message: %v", err)
 		return rabbitmq.NackRequeue

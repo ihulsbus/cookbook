@@ -9,10 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	m "ingredient-service/internal/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,32 +19,32 @@ type AmountServiceMock struct {
 }
 
 var (
-	ingredients []m.IngredientDTO
-	ingredient  m.IngredientDTO = m.IngredientDTO{
+	ingredients []models.IngredientDTO
+	ingredient  models.IngredientDTO = models.IngredientDTO{
 		ID:   uuid.New(),
 		Name: "ingredient",
 	}
 
-	units []m.UnitDTO
-	unit  m.UnitDTO = m.UnitDTO{
+	units []models.UnitDTO
+	unit  models.UnitDTO = models.UnitDTO{
 		ID:        uuid.New(),
 		FullName:  "Fluid Ounce",
 		ShortName: "fl oz",
 	}
 )
 
-func (s *AmountServiceMock) Find(recipeID uuid.UUID) (*[]m.AmountDTO, error) {
+func (s *AmountServiceMock) Find(recipeID uuid.UUID) (*[]models.AmountDTO, error) {
 	switch ingredient.Name {
 	case "find":
 		return ingredient, nil
 	case "notfound":
-		return m.IngredientDTO{}, errors.New("not found")
+		return models.IngredientDTO{}, errors.New("not found")
 	default:
-		return m.IngredientDTO{}, errors.New("error")
+		return models.IngredientDTO{}, errors.New("error")
 	}
 }
 
-func (s *AmountServiceMock) Create(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[]m.AmountDTO, error) {
+func (s *AmountServiceMock) Create(recipeID uuid.UUID, amountsDTO *[]models.AmountDTO) (*[]models.AmountDTO, error) {
 	switch ingredientDTO.Name {
 	case "create":
 		return ingredient, nil
@@ -54,7 +53,7 @@ func (s *AmountServiceMock) Create(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO
 	}
 }
 
-func (s *AmountServiceMock) Update(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[]m.AmountDTO, error) {
+func (s *AmountServiceMock) Update(recipeID uuid.UUID, amountsDTO *[]models.AmountDTO) (*[]models.AmountDTO, error) {
 	switch ingredientDTO.Name {
 	case "update":
 		return ingredient, nil
@@ -173,7 +172,7 @@ func TestIngredientCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewAmountHandlers(&AmountServiceMock{}, &LoggerInterfaceMock{})
 
-	createIngredient := m.IngredientDTO{
+	createIngredient := models.IngredientDTO{
 		Name: "create",
 	}
 	reqBody, _ := json.Marshal(createIngredient)
@@ -215,7 +214,7 @@ func TestIngredientCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewAmountHandlers(&AmountServiceMock{}, &LoggerInterfaceMock{})
 
-	createRecipe := m.IngredientDTO{
+	createRecipe := models.IngredientDTO{
 		Name: "error",
 	}
 	reqBody, _ := json.Marshal(createRecipe)

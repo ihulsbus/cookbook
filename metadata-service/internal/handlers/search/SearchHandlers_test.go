@@ -5,13 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	m "metadata-service/internal/models"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,7 +23,7 @@ var (
 	maxTime int       = 2
 	id      uuid.UUID = uuid.New()
 
-	searchRequestDTO m.MetadataSearchRequestDTO = m.MetadataSearchRequestDTO{
+	searchRequestDTO models.MetadataSearchRequestDTO = models.MetadataSearchRequestDTO{
 		RecipeID:          id,
 		CategoryID:        id,
 		TagID:             id,
@@ -33,7 +33,7 @@ var (
 		MaxPrepTime:       &maxTime,
 	}
 
-	searchResultDTO m.MetadataSearchResultDTO = m.MetadataSearchResultDTO{
+	searchResultDTO models.MetadataSearchResultDTO = models.MetadataSearchResultDTO{
 		RecipeID:          id,
 		CategoryIDs:       []uuid.UUID{id},
 		TagIDs:            []uuid.UUID{id},
@@ -45,14 +45,14 @@ var (
 
 // ====== SearchService ======
 
-func (s *SearchServiceMock) GetAllRecipeMetadata() (*[]m.MetadataSearchResultDTO, error) {
+func (s *SearchServiceMock) GetAllRecipeMetadata() (*[]models.MetadataSearchResultDTO, error) {
 	return nil, nil
 }
 
-func (s *SearchServiceMock) SearchMetadata(request m.MetadataSearchRequestDTO) ([]m.MetadataSearchResultDTO, error) {
+func (s *SearchServiceMock) SearchMetadata(request models.MetadataSearchRequestDTO) ([]models.MetadataSearchResultDTO, error) {
 	switch *request.MinPrepTime {
 	case 1:
-		var response []m.MetadataSearchResultDTO
+		var response []models.MetadataSearchResultDTO
 		response = append(response, searchResultDTO)
 		return response, nil
 	default:
@@ -63,7 +63,7 @@ func (s *SearchServiceMock) SearchMetadata(request m.MetadataSearchRequestDTO) (
 // ====== Tests ======
 
 func TestSearch_OK(t *testing.T) {
-	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(searchRequestDTO)
 
@@ -77,14 +77,14 @@ func TestSearch_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal([]m.MetadataSearchResultDTO{searchResultDTO})
+	expectedBody, _ := json.Marshal([]models.MetadataSearchResultDTO{searchResultDTO})
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
 }
 
 func TestSearch_UnmarshalErr(t *testing.T) {
-	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -101,7 +101,7 @@ func TestSearch_UnmarshalErr(t *testing.T) {
 }
 
 func TestSearch_SearchErr(t *testing.T) {
-	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
 
 	minTime = 2
 

@@ -1,14 +1,12 @@
 package repositories
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
 
-	m "metadata-service/internal/models"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 
 	co "metadata-service/internal/common/test"

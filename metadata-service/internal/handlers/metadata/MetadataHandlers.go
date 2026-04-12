@@ -3,17 +3,18 @@ package handlers
 import (
 	"net/http"
 
-	m "metadata-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type MetadataService interface {
-	FindAll() (*[]m.RecipeMetadataDTO, error)
-	Find(recipeID uuid.UUID) (*m.RecipeMetadataDTO, error)
-	Create(recipeID uuid.UUID, meta *m.RecipeMetadataDTO) (*m.RecipeMetadataDTO, error)
-	Update(recipeID uuid.UUID, meta *m.RecipeMetadataDTO) (*m.RecipeMetadataDTO, error)
+	FindAll() (*[]models.RecipeMetadataDTO, error)
+	Find(recipeID uuid.UUID) (*models.RecipeMetadataDTO, error)
+	Create(recipeID uuid.UUID, meta *models.RecipeMetadataDTO) (*models.RecipeMetadataDTO, error)
+	Update(recipeID uuid.UUID, meta *models.RecipeMetadataDTO) (*models.RecipeMetadataDTO, error)
 	Delete(recipeID uuid.UUID) error
 }
 
@@ -73,7 +74,7 @@ func (h *MetadataHandlers) Get(ctx *gin.Context) {
 
 func (h *MetadataHandlers) Create(ctx *gin.Context) {
 	var recipeID uuid.UUID
-	var metadata m.RecipeMetadataDTO
+	var metadata models.RecipeMetadataDTO
 	var err error
 
 	recipeID, err = uuid.Parse(ctx.Param("id"))
@@ -98,7 +99,7 @@ func (h *MetadataHandlers) Create(ctx *gin.Context) {
 
 func (h *MetadataHandlers) Update(ctx *gin.Context) {
 	var recipeID uuid.UUID
-	var metadata m.RecipeMetadataDTO
+	var metadata models.RecipeMetadataDTO
 	var err error
 
 	recipeID, err = uuid.Parse(ctx.Param("id"))

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	m "image-service/internal/models"
 	tc "image-service/internal/test_common"
 	"image/jpeg"
 	"image/png"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 

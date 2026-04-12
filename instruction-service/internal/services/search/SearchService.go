@@ -1,7 +1,7 @@
 package services
 
 import (
-	m "instruction-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type SearchRepository interface {

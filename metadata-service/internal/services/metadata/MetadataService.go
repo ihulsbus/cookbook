@@ -3,8 +3,9 @@ package services
 import (
 	"errors"
 	"fmt"
+
 	"github.com/google/uuid"
-	m "metadata-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type MetadataRepository interface {

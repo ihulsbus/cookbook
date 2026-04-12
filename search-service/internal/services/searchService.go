@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	m "search-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type RecipeRepository interface {

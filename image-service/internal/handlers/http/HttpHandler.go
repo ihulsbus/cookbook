@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	m "image-service/internal/models"
 	"image/jpeg"
 	"image/png"
 	"io"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 const (
@@ -20,19 +20,19 @@ const (
 )
 
 type imageService interface {
-	FindAll() ([]m.ImageDataDTO, error)
-	Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error)
-	Create(imageDTO m.ImageFileDTO) (m.ImageDataDTO, error)
-	Update(imageDTO m.ImageFileDTO) (m.ImageDataDTO, error)
-	Delete(imageDTO m.ImageDataDTO) error
+	FindAll() ([]models.ImageDataDTO, error)
+	Find(imageDTO models.ImageDataDTO) (models.ImageDataDTO, error)
+	Create(imageDTO models.ImageFileDTO) (models.ImageDataDTO, error)
+	Update(imageDTO models.ImageFileDTO) (models.ImageDataDTO, error)
+	Delete(imageDTO models.ImageDataDTO) error
 }
 
 type HttpHandler struct {
 	imageService imageService
-	logger       m.LoggerInterface
+	logger       models.LoggerInterface
 }
 
-func NewHttpHandler(service imageService, logger m.LoggerInterface) *HttpHandler {
+func NewHttpHandler(service imageService, logger models.LoggerInterface) *HttpHandler {
 	return &HttpHandler{
 		imageService: service,
 		logger:       logger,
@@ -56,7 +56,7 @@ func (h HttpHandler) FindAll(ctx *gin.Context) {
 }
 
 func (h HttpHandler) Find(ctx *gin.Context) {
-	var imageDTO m.ImageDataDTO
+	var imageDTO models.ImageDataDTO
 	var err error
 
 	imageDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -81,7 +81,7 @@ func (h HttpHandler) Find(ctx *gin.Context) {
 }
 
 func (h HttpHandler) SearchByRecipe(ctx *gin.Context) {
-	var imageDTO m.ImageDataDTO
+	var imageDTO models.ImageDataDTO
 	var err error
 
 	imageDTO.EntityType = ctx.Query("entityType")
@@ -108,7 +108,7 @@ func (h HttpHandler) SearchByRecipe(ctx *gin.Context) {
 
 func (h HttpHandler) Create(ctx *gin.Context) {
 	var file multipart.File
-	var imageFileDTO m.ImageFileDTO
+	var imageFileDTO models.ImageFileDTO
 	var err error
 
 	imageFileDTO.EntityID, err = uuid.Parse(ctx.Param("entityID"))
@@ -151,7 +151,7 @@ func (h HttpHandler) Create(ctx *gin.Context) {
 
 func (h HttpHandler) Update(ctx *gin.Context) {
 	var file multipart.File
-	var imageFileDTO m.ImageFileDTO
+	var imageFileDTO models.ImageFileDTO
 	var err error
 
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -190,7 +190,7 @@ func (h HttpHandler) Update(ctx *gin.Context) {
 }
 
 func (h HttpHandler) Delete(ctx *gin.Context) {
-	var imageDTO m.ImageDataDTO
+	var imageDTO models.ImageDataDTO
 	var err error
 
 	imageDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -208,7 +208,7 @@ func (h HttpHandler) Delete(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-func (h HttpHandler) verifyImage(imageFileDTO *m.ImageFileDTO, file io.Reader, header *multipart.FileHeader) error {
+func (h HttpHandler) verifyImage(imageFileDTO *models.ImageFileDTO, file io.Reader, header *multipart.FileHeader) error {
 	var err error
 
 	// Check file size

@@ -2,10 +2,11 @@ package repositories
 
 import (
 	"errors"
+
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"gorm.io/gorm"
-	m "ingredient-service/internal/models"
 )
 
 type AmountRepository struct {

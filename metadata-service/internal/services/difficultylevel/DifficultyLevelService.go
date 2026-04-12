@@ -3,9 +3,8 @@ package services
 import (
 	"errors"
 
-	m "metadata-service/internal/models"
-
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type DifficultyLevelRepository interface {

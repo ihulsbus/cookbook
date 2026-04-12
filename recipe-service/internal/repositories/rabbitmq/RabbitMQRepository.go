@@ -1,9 +1,10 @@
 package rabbitmq
 
 import (
-	m "recipe-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	"github.com/wagslane/go-rabbitmq"
 )
@@ -25,7 +26,7 @@ func NewRabbitMQRepository(conn *rabbitmq.Conn, exchangeName string, logger m.Lo
 	return &RabbitMQRepository{publisher: publisher, logger: logger}, nil
 }
 
-func (r RabbitMQRepository) RecipeUpdatedEvent(recipe m.Recipe) error {
+func (r RabbitMQRepository) RecipeUpdatedEvent(recipe models.Recipe) error {
 	var payload rmq.RecipePayload = rmq.RecipePayload{
 		ID:           recipe.ID,
 		Name:         recipe.Name,

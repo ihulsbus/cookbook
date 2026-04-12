@@ -1,17 +1,19 @@
 package handlers
 
 import (
-	m "instruction-service/internal/models"
 	"net/http"
+
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type InstructionService interface {
-	Find(recipeID uuid.UUID) (*[]m.InstructionDTO, error)
-	Create(entityID uuid.UUID, instructionDTO *[]m.InstructionDTO) (*[]m.InstructionDTO, error)
-	Update(entityID uuid.UUID, instructionDTO *[]m.InstructionDTO) (*[]m.InstructionDTO, error)
+	Find(recipeID uuid.UUID) (*[]models.InstructionDTO, error)
+	Create(entityID uuid.UUID, instructionDTO *[]models.InstructionDTO) (*[]models.InstructionDTO, error)
+	Update(entityID uuid.UUID, instructionDTO *[]models.InstructionDTO) (*[]models.InstructionDTO, error)
 	Delete(recipeID uuid.UUID) error
 }
 
@@ -28,7 +30,7 @@ func NewInstructionHandlers(service InstructionService, logger m.LoggerInterface
 }
 
 func (h InstructionHandlers) Get(ctx *gin.Context) {
-	var instructionDTO *[]m.InstructionDTO
+	var instructionDTO *[]models.InstructionDTO
 
 	entityID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
@@ -52,7 +54,7 @@ func (h InstructionHandlers) Get(ctx *gin.Context) {
 }
 
 func (h InstructionHandlers) Create(ctx *gin.Context) {
-	var instructionDTO []m.InstructionDTO
+	var instructionDTO []models.InstructionDTO
 
 	entityID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
@@ -80,7 +82,7 @@ func (h InstructionHandlers) Create(ctx *gin.Context) {
 }
 
 func (h InstructionHandlers) Update(ctx *gin.Context) {
-	var instructionDTO []m.InstructionDTO
+	var instructionDTO []models.InstructionDTO
 
 	entityID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {

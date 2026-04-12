@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	m "instruction-service/internal/models"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,11 +21,11 @@ type SearchServiceMock struct {
 var (
 	id uuid.UUID = uuid.New()
 
-	searchRequestDTO m.InstructionSearchRequestDTO = m.InstructionSearchRequestDTO{
+	searchRequestDTO models.InstructionSearchRequestDTO = models.InstructionSearchRequestDTO{
 		RecipeID: id,
 	}
 
-	searchResultDTO m.InstructionSearchResultDTO = m.InstructionSearchResultDTO{
+	searchResultDTO models.InstructionSearchResultDTO = models.InstructionSearchResultDTO{
 		RecipeID:       id,
 		InstructionIDs: []uuid.UUID{id},
 	}
@@ -35,12 +35,12 @@ var (
 
 // ====== SearchService ======
 
-func (s *SearchServiceMock) SearchInstruction(request m.InstructionSearchRequestDTO) (m.InstructionSearchResultDTO, error) {
+func (s *SearchServiceMock) SearchInstruction(request models.InstructionSearchRequestDTO) (models.InstructionSearchResultDTO, error) {
 	switch switchCheck {
 	case "search":
 		return searchResultDTO, nil
 	default:
-		return m.InstructionSearchResultDTO{}, errors.New("error")
+		return models.InstructionSearchResultDTO{}, errors.New("error")
 	}
 }
 
@@ -48,7 +48,7 @@ func (s *SearchServiceMock) SearchInstruction(request m.InstructionSearchRequest
 
 func TestSearch_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
 
 	switchCheck = "search"
 	reqBody, _ := json.Marshal(searchRequestDTO)
@@ -72,7 +72,7 @@ func TestSearch_OK(t *testing.T) {
 
 func TestSearch_SearchErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewSearchHandlers(&SearchServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
 
 	switchCheck = "error"
 

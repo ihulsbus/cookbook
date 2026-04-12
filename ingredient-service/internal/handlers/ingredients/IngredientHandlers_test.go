@@ -9,10 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	m "ingredient-service/internal/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,21 +19,21 @@ type IngredientServiceMock struct {
 }
 
 var (
-	ingredients []m.IngredientDTO
-	ingredient  m.IngredientDTO = m.IngredientDTO{
+	ingredients []models.IngredientDTO
+	ingredient  models.IngredientDTO = models.IngredientDTO{
 		ID:   uuid.New(),
 		Name: "ingredient",
 	}
 
-	units []m.UnitDTO
-	unit  m.UnitDTO = m.UnitDTO{
+	units []models.UnitDTO
+	unit  models.UnitDTO = models.UnitDTO{
 		ID:        uuid.New(),
 		FullName:  "Fluid Ounce",
 		ShortName: "fl oz",
 	}
 )
 
-func (s *IngredientServiceMock) FindAll() ([]m.IngredientDTO, error) {
+func (s *IngredientServiceMock) FindAll() ([]models.IngredientDTO, error) {
 	switch ingredient.Name {
 	case "findall":
 		ingredients = append(ingredients, ingredient)
@@ -46,18 +45,18 @@ func (s *IngredientServiceMock) FindAll() ([]m.IngredientDTO, error) {
 	}
 }
 
-func (s *IngredientServiceMock) FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
+func (s *IngredientServiceMock) FindSingle(ingredientDTO models.IngredientDTO) (models.IngredientDTO, error) {
 	switch ingredient.Name {
 	case "find":
 		return ingredient, nil
 	case "notfound":
-		return m.IngredientDTO{}, errors.New("not found")
+		return models.IngredientDTO{}, errors.New("not found")
 	default:
-		return m.IngredientDTO{}, errors.New("error")
+		return models.IngredientDTO{}, errors.New("error")
 	}
 }
 
-func (s *IngredientServiceMock) Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
+func (s *IngredientServiceMock) Create(ingredientDTO models.IngredientDTO) (models.IngredientDTO, error) {
 	switch ingredientDTO.Name {
 	case "create":
 		return ingredient, nil
@@ -66,7 +65,7 @@ func (s *IngredientServiceMock) Create(ingredientDTO m.IngredientDTO) (m.Ingredi
 	}
 }
 
-func (s *IngredientServiceMock) Update(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
+func (s *IngredientServiceMock) Update(ingredientDTO models.IngredientDTO) (models.IngredientDTO, error) {
 	switch ingredientDTO.Name {
 	case "update":
 		return ingredient, nil
@@ -75,7 +74,7 @@ func (s *IngredientServiceMock) Update(ingredientDTO m.IngredientDTO) (m.Ingredi
 	}
 }
 
-func (s *IngredientServiceMock) Delete(ingredientDTO m.IngredientDTO) error {
+func (s *IngredientServiceMock) Delete(ingredientDTO models.IngredientDTO) error {
 	switch ingredient.Name {
 	case "delete":
 		return nil
@@ -250,7 +249,7 @@ func TestIngredientCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	createIngredient := m.IngredientDTO{
+	createIngredient := models.IngredientDTO{
 		Name: "create",
 	}
 	reqBody, _ := json.Marshal(createIngredient)
@@ -292,7 +291,7 @@ func TestIngredientCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
-	createRecipe := m.IngredientDTO{
+	createRecipe := models.IngredientDTO{
 		Name: "error",
 	}
 	reqBody, _ := json.Marshal(createRecipe)

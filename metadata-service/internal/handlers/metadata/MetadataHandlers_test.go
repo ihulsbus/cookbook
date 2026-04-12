@@ -9,10 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	m "metadata-service/internal/models"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,17 +19,17 @@ type MetadataServiceMock struct {
 }
 
 var (
-	metadata = m.RecipeMetadataDTO{
+	metadata = models.RecipeMetadataDTO{
 		RecipeID: uuid.New(),
-		CuisineType: m.CuisineTypeDTO{
+		CuisineType: models.CuisineTypeDTO{
 			ID:   uuid.New(),
 			Name: "Cuisine",
 		},
-		DifficultyLevel: m.DifficultyLevelDTO{
+		DifficultyLevel: models.DifficultyLevelDTO{
 			ID:    uuid.New(),
 			Level: 1,
 		},
-		Tags:            []m.TagDTO{{ID: uuid.New(), Name: "Tag"}},
+		Tags:            []models.TagDTO{{ID: uuid.New(), Name: "Tag"}},
 		PreparationTime: 99,
 		ServingCount:    99,
 	}
@@ -38,10 +37,10 @@ var (
 
 // ====== MetadataService ======
 
-func (s *MetadataServiceMock) FindAll() (*[]m.RecipeMetadataDTO, error) {
+func (s *MetadataServiceMock) FindAll() (*[]models.RecipeMetadataDTO, error) {
 	switch metadata.ServingCount {
 	case 1: // find all
-		metadataArray := []m.RecipeMetadataDTO{metadata}
+		metadataArray := []models.RecipeMetadataDTO{metadata}
 		return &metadataArray, nil
 	case 0: // not found
 		return nil, errors.New("not found")
@@ -50,7 +49,7 @@ func (s *MetadataServiceMock) FindAll() (*[]m.RecipeMetadataDTO, error) {
 	}
 }
 
-func (s *MetadataServiceMock) Find(recipeID uuid.UUID) (*m.RecipeMetadataDTO, error) {
+func (s *MetadataServiceMock) Find(recipeID uuid.UUID) (*models.RecipeMetadataDTO, error) {
 	switch metadata.ServingCount {
 	case 2: // find
 		return &metadata, nil
@@ -61,7 +60,7 @@ func (s *MetadataServiceMock) Find(recipeID uuid.UUID) (*m.RecipeMetadataDTO, er
 	}
 }
 
-func (s *MetadataServiceMock) Create(recipeID uuid.UUID, meta *m.RecipeMetadataDTO) (*m.RecipeMetadataDTO, error) {
+func (s *MetadataServiceMock) Create(recipeID uuid.UUID, meta *models.RecipeMetadataDTO) (*models.RecipeMetadataDTO, error) {
 	switch metadata.ServingCount {
 	case 3: // create
 		return &metadata, nil
@@ -70,7 +69,7 @@ func (s *MetadataServiceMock) Create(recipeID uuid.UUID, meta *m.RecipeMetadataD
 	}
 }
 
-func (s *MetadataServiceMock) Update(recipeID uuid.UUID, meta *m.RecipeMetadataDTO) (*m.RecipeMetadataDTO, error) {
+func (s *MetadataServiceMock) Update(recipeID uuid.UUID, meta *models.RecipeMetadataDTO) (*models.RecipeMetadataDTO, error) {
 	switch metadata.ServingCount {
 	case 4: // update
 		return &metadata, nil
@@ -90,10 +89,10 @@ func (s *MetadataServiceMock) Delete(recipeID uuid.UUID) error {
 
 func TestMetadataGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 1
-	metadataArray := []m.RecipeMetadataDTO{metadata}
+	metadataArray := []models.RecipeMetadataDTO{metadata}
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/metadata", nil)
 	w := httptest.NewRecorder()
@@ -113,7 +112,7 @@ func TestMetadataGetAll_OK(t *testing.T) {
 
 func TestMetadataGetAll_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 0
 
@@ -133,7 +132,7 @@ func TestMetadataGetAll_NotFound(t *testing.T) {
 
 func TestMetadataGetAll_Error(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 99
 
@@ -153,7 +152,7 @@ func TestMetadataGetAll_Error(t *testing.T) {
 
 func TestMetadataGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 2
 
@@ -178,7 +177,7 @@ func TestMetadataGet_OK(t *testing.T) {
 
 func TestMetadataGet_ID(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/metadata/1", nil)
 	w := httptest.NewRecorder()
@@ -196,7 +195,7 @@ func TestMetadataGet_ID(t *testing.T) {
 
 func TestMetadataGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 0
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/metadata/1", nil)
@@ -218,7 +217,7 @@ func TestMetadataGet_NotFound(t *testing.T) {
 
 func TestMetadataGet_FindErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 99
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/metadata/1", nil)
@@ -240,7 +239,7 @@ func TestMetadataGet_FindErr(t *testing.T) {
 
 func TestMetadataCreate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 3
 	reqBody, _ := json.Marshal(metadata)
@@ -266,7 +265,7 @@ func TestMetadataCreate_OK(t *testing.T) {
 
 func TestMetadataCreate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/metadata/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -287,7 +286,7 @@ func TestMetadataCreate_UnmarshalErr(t *testing.T) {
 
 func TestMetadataCreate_CreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 99
 	reqBody, _ := json.Marshal(metadata)
@@ -311,7 +310,7 @@ func TestMetadataCreate_CreateErr(t *testing.T) {
 
 func TestMetadataUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 4
 	reqBody, _ := json.Marshal(metadata)
@@ -335,7 +334,7 @@ func TestMetadataUpdate_OK(t *testing.T) {
 
 func TestMetadataUpdate_UnmarshalErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/metadata/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
@@ -356,7 +355,7 @@ func TestMetadataUpdate_UnmarshalErr(t *testing.T) {
 
 func TestMetadataUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	reqBody, _ := json.Marshal(metadata)
 
@@ -376,7 +375,7 @@ func TestMetadataUpdate_IDRequiredErr(t *testing.T) {
 
 func TestMetadataUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 99
 	reqBody, _ := json.Marshal(metadata)
@@ -400,7 +399,7 @@ func TestMetadataUpdate_UpdateErr(t *testing.T) {
 
 func TestMetadataDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 5
 
@@ -423,7 +422,7 @@ func TestMetadataDelete_OK(t *testing.T) {
 
 func TestMetadataDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/metadata/1", nil)
 	w := httptest.NewRecorder()
@@ -441,7 +440,7 @@ func TestMetadataDelete_IDRequiredErr(t *testing.T) {
 
 func TestMetadataDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &m.LoggerInterfaceMock{})
+	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
 
 	metadata.ServingCount = 99
 

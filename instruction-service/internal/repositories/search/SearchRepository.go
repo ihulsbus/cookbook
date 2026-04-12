@@ -1,9 +1,8 @@
 package repositories
 
 import (
-	m "instruction-service/internal/models"
-
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"gorm.io/gorm"
 )
 

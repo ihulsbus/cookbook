@@ -2,11 +2,12 @@ package config
 
 import (
 	sh "search-service/internal/handlers"
-	m "search-service/internal/models"
 	ir "search-service/internal/repositories/ingredients"
 	mr "search-service/internal/repositories/metadata"
 	rr "search-service/internal/repositories/recipes"
 	ss "search-service/internal/services"
+
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -16,8 +17,15 @@ import (
 	"github.com/spf13/viper"
 )
 
+type searchConfig struct {
+	m.Config
+	IngredientService m.ApiClient
+	MetadataService   m.ApiClient
+	RecipeService     m.ApiClient
+}
+
 var (
-	Configuration m.Config
+	Configuration searchConfig
 	err           error
 
 	Logger         *log.Logger = log.New()

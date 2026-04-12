@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"errors"
-	m "instruction-service/internal/models"
 	"log"
 	"os"
 	"regexp"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

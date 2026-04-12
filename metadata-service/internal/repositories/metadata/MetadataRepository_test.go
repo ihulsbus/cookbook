@@ -11,7 +11,7 @@ package repositories
 // 	"github.com/stretchr/testify/require"
 
 // 	co "metadata-service/internal/common/test"
-// 	m "metadata-service/internal/models"
+// 	m "github.com/ihulsbus/cookbook/shared/models"
 // )
 
 // var (

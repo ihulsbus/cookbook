@@ -3,18 +3,19 @@ package handlers
 import (
 	"net/http"
 
-	m "metadata-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type TagService interface {
-	FindAll() ([]m.TagDTO, error)
-	FindSingle(tagDTO m.TagDTO) (m.TagDTO, error)
-	Create(tagDTO m.TagDTO) (m.TagDTO, error)
-	Update(tagDTO m.TagDTO) (m.TagDTO, error)
-	Delete(tagDTO m.TagDTO) error
+	FindAll() ([]models.TagDTO, error)
+	FindSingle(tagDTO models.TagDTO) (models.TagDTO, error)
+	Create(tagDTO models.TagDTO) (models.TagDTO, error)
+	Update(tagDTO models.TagDTO) (models.TagDTO, error)
+	Delete(tagDTO models.TagDTO) error
 }
 
 type TagHandlers struct {
@@ -46,7 +47,7 @@ func (h *TagHandlers) GetAll(ctx *gin.Context) {
 }
 
 func (h *TagHandlers) Get(ctx *gin.Context) {
-	var tagDTO m.TagDTO
+	var tagDTO models.TagDTO
 	var err error
 
 	tagDTO.ID, err = uuid.Parse(ctx.Param("id"))
@@ -71,7 +72,7 @@ func (h *TagHandlers) Get(ctx *gin.Context) {
 }
 
 func (h *TagHandlers) Create(ctx *gin.Context) {
-	var tagDTO m.TagDTO
+	var tagDTO models.TagDTO
 	var err error
 
 	if err = ctx.ShouldBindJSON(&tagDTO); err != nil {
@@ -89,7 +90,7 @@ func (h *TagHandlers) Create(ctx *gin.Context) {
 }
 
 func (h *TagHandlers) Update(ctx *gin.Context) {
-	var tagDTO m.TagDTO
+	var tagDTO models.TagDTO
 	var err error
 
 	id, err := uuid.Parse(ctx.Param("id"))
@@ -117,7 +118,7 @@ func (h *TagHandlers) Update(ctx *gin.Context) {
 }
 
 func (h *TagHandlers) Delete(ctx *gin.Context) {
-	var tagDTO m.TagDTO
+	var tagDTO models.TagDTO
 	var err error
 
 	tagDTO.ID, err = uuid.Parse(ctx.Param("id"))

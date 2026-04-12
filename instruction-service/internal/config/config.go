@@ -1,7 +1,7 @@
 package config
 
 import (
-	m "instruction-service/internal/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	"time"
 
 	ih "instruction-service/internal/handlers/instructions"
@@ -25,9 +25,14 @@ import (
 	"gorm.io/gorm"
 )
 
+type instructionConfig struct {
+	m.Config
+	RecipeClient m.ApiClient
+}
+
 var (
 	err           error
-	Configuration m.Config
+	Configuration instructionConfig
 
 	Logger         *log.Logger = log.New()
 	DatabaseClient *gorm.DB
