@@ -15,4 +15,5 @@ use (
 	./shared/recipeclient
 	./shared/healthchecks
 	./shared/models
+	shared/cache
 )

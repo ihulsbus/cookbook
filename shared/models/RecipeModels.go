@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -61,4 +62,14 @@ func (t RecipeDTO) ConvertAllFromDTO(recipeDTOs []RecipeDTO) []Recipe {
 	}
 
 	return data
+}
+
+// MarshalBinary implements encoding.BinaryMarshaler
+func (r RecipeDTO) MarshalBinary() ([]byte, error) {
+	return json.Marshal(r)
+}
+
+// UnmarshalBinary implements encoding.BinaryUnmarshaler
+func (r *RecipeDTO) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, r)
 }

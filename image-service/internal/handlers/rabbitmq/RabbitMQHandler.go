@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/ihulsbus/cookbook/shared/models"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
+	"github.com/olric-data/olric"
 	"github.com/wagslane/go-rabbitmq"
 )
 
@@ -17,18 +18,20 @@ type imageService interface {
 
 type RabbitMQHandler struct {
 	service  imageService
+	cache    olric.DMap
 	logger   models.LoggerInterface
-	consumer *rmq.Consumer
+	ctx      *context.Context
+	consumer *rmq.Consumer // created in this package
 }
 
-func NewRabbitMQHandler(imageService imageService, logger models.LoggerInterface) (*RabbitMQHandler, error) {
-	return &RabbitMQHandler{service: imageService, logger: logger}, nil
+func NewRabbitMQHandler(imageService imageService, cache *olric.DMap, ctx *context.Context, logger models.LoggerInterface) (*RabbitMQHandler, error) {
+	return &RabbitMQHandler{service: imageService, cache: *cache, ctx: ctx, logger: logger}, nil
 }
 
 func (c *RabbitMQHandler) StartConsuming(connection *rabbitmq.Conn, queueName, exchangeName string) error {
 	var err error
 
-	var routingKeys []string = []string{"image.findall", "image.find", "recipe.deleted"}
+	var routingKeys = []string{"image.findall", "image.find", "recipe.created", "recipe.deleted"}
 
 	c.consumer, err = rmq.NewConsumer(connection, queueName, routingKeys, exchangeName, c.rabbitMQConsumerHandler)
 	if err != nil {
@@ -50,20 +53,39 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 	routingKey := d.RoutingKey
 	c.logger.Infof("Received message with routing key: %s", routingKey)
 
-	var event models.ImageDataDTO
-	if err = json.Unmarshal(d.Body, &event); err != nil {
-		c.logger.Errorf("Failed to unmarshal message: %v", err)
-		return rabbitmq.NackRequeue
-	}
-
 	// TODO: Implement response feature
 	switch routingKey {
 	case "image.findall":
 		_, err = c.service.FindAll()
 	case "image.find":
 		_, err = c.service.Find(models.ImageDataDTO{})
+	case "recipe.created":
+		var event models.RecipeDTO
+		if err = json.Unmarshal(d.Body, &event); err != nil {
+			c.logger.Errorf("Failed to unmarshal message: %v", err)
+			return rabbitmq.NackRequeue
+		}
+
+		if err := c.cache.Put(*c.ctx, event.ID.String(), event); err != nil {
+			c.logger.Errorf("Failed to put event into cache: %v", err)
+			return rabbitmq.NackRequeue
+		}
+
+		c.logger.Debugf("added recipe %s into the cache", event.ID.String())
 	case "recipe.deleted":
-		fmt.Println(string(d.Body))
+		var event models.RecipeDTO
+		if err = json.Unmarshal(d.Body, &event); err != nil {
+			c.logger.Errorf("Failed to unmarshal message: %v", err)
+			return rabbitmq.NackRequeue
+		}
+
+		count, err := c.cache.Delete(*c.ctx, event.ID.String())
+		if err != nil {
+			c.logger.Errorf("Failed to put event into cache: %v", err)
+			return rabbitmq.NackRequeue
+		}
+
+		c.logger.Debugf("deleted %d instance(s) from the cache", count)
 	default:
 		c.logger.Warnf("Discarding message. Unknown routing key received: %s", routingKey)
 		return rabbitmq.NackDiscard

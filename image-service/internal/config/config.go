@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	hh "image-service/internal/handlers/http"
 	rh "image-service/internal/handlers/rabbitmq"
 	dr "image-service/internal/repositories/database"
@@ -10,6 +11,7 @@ import (
 
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	m "github.com/ihulsbus/cookbook/shared/models"
+	"github.com/olric-data/olric"
 
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fsnotify/fsnotify"
@@ -23,6 +25,7 @@ import (
 
 var (
 	Configuration m.Config
+	Ctx           context.Context
 	err           error
 
 	Logger         *log.Logger = log.New()
@@ -31,6 +34,7 @@ var (
 	KeycloakModule *keycloak.KeycloakModule
 	Cors           cors.Config
 	RabbitMQClient *rmq.RabbitMQ
+	Cache          *olric.DMap
 
 	// Repositories
 	DatabaseRepository *dr.DatabaseRepository
@@ -47,8 +51,12 @@ var (
 )
 
 func init() {
+	Ctx = context.Background()
+
 	initViper()
+
 	initConfig()
+
 	initLogging()
 
 	viper.WatchConfig()
@@ -65,6 +73,7 @@ func init() {
 	}
 
 	initDatabase()
+
 	S3Client = initS3(
 		Configuration.S3.Endpoint,
 		Configuration.S3.AWSAccessSecret,
@@ -72,10 +81,16 @@ func init() {
 		"us-east-1",
 	)
 	initCors()
+	Cache, err = initCache()
+	if err != nil {
+		Logger.Panicf("error initialising cache: %v", err)
+	}
+
 	KeycloakModule, err = initOauth()
 	if err != nil {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
+
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
@@ -98,10 +113,12 @@ func init() {
 
 	// Init handlers
 	HttpHandler = hh.NewHttpHandler(ImageService, Logger)
-	RabbitMQHandler, err = rh.NewRabbitMQHandler(ImageService, Logger)
+
+	RabbitMQHandler, err = rh.NewRabbitMQHandler(ImageService, Cache, &Ctx, Logger)
 	if err != nil {
 		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
 		Logger.Fatal("Encountered fatal error. Exiting.")
 	}
+
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 }
