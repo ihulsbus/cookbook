@@ -4,28 +4,33 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/ihulsbus/cookbook/shared/models"
+	m "github.com/ihulsbus/cookbook/shared/models"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
-	"github.com/olric-data/olric"
 	"github.com/wagslane/go-rabbitmq"
 )
 
 type imageService interface {
-	FindAll() ([]models.ImageDataDTO, error)
-	Find(imageDTO models.ImageDataDTO) (models.ImageDataDTO, error)
-	Delete(imageDTO models.ImageDataDTO) error
+	FindAll() ([]m.ImageDataDTO, error)
+	Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error)
+	Delete(imageDTO m.ImageDataDTO) error
+}
+
+type CacheService interface {
+	AddRecipe(recipe m.RecipeDTO) error
+	RemoveRecipe(id string) error
+	GetRecipe(id string) (m.RecipeDTO, error) // if you need reads too
 }
 
 type RabbitMQHandler struct {
-	service  imageService
-	cache    olric.DMap
-	logger   models.LoggerInterface
+	service  *imageService
+	cache    *CacheService
+	logger   m.LoggerInterface
 	ctx      *context.Context
 	consumer *rmq.Consumer // created in this package
 }
 
-func NewRabbitMQHandler(imageService imageService, cache *olric.DMap, ctx *context.Context, logger models.LoggerInterface) (*RabbitMQHandler, error) {
-	return &RabbitMQHandler{service: imageService, cache: *cache, ctx: ctx, logger: logger}, nil
+func NewRabbitMQHandler(imageService *imageService, cache *CacheService, ctx *context.Context, logger m.LoggerInterface) (*RabbitMQHandler, error) {
+	return &RabbitMQHandler{service: imageService, cache: cache, ctx: ctx, logger: logger}, nil
 }
 
 func (c *RabbitMQHandler) StartConsuming(connection *rabbitmq.Conn, queueName, exchangeName string) error {
@@ -58,9 +63,9 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 	case "image.findall":
 		_, err = c.service.FindAll()
 	case "image.find":
-		_, err = c.service.Find(models.ImageDataDTO{})
+		_, err = c.service.Find(m.ImageDataDTO{})
 	case "recipe.created":
-		var event models.RecipeDTO
+		var event m.RecipeDTO
 		if err = json.Unmarshal(d.Body, &event); err != nil {
 			c.logger.Errorf("Failed to unmarshal message: %v", err)
 			return rabbitmq.NackRequeue
@@ -73,7 +78,7 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 
 		c.logger.Debugf("added recipe %s into the cache", event.ID.String())
 	case "recipe.deleted":
-		var event models.RecipeDTO
+		var event m.RecipeDTO
 		if err = json.Unmarshal(d.Body, &event); err != nil {
 			c.logger.Errorf("Failed to unmarshal message: %v", err)
 			return rabbitmq.NackRequeue

@@ -11,10 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/gin-contrib/cors"
-	"github.com/ihulsbus/cookbook/shared/cache"
 	"github.com/ihulsbus/cookbook/shared/keycloak"
 	m "github.com/ihulsbus/cookbook/shared/models"
-	"github.com/olric-data/olric"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -139,22 +137,4 @@ func initOauth() (*keycloak.KeycloakModule, error) {
 	}
 
 	return module, nil
-}
-
-func initCache() (*olric.DMap, error) {
-	var dmap olric.DMap
-	var err error
-
-	cacheModule, err := cache.NewCacheModule(Ctx, Logger)
-	if err != nil {
-		return nil, err
-	}
-
-	cacheClient := cacheModule.NewEmbeddedClient()
-	dmap, err = cacheClient.NewDMap("recipes")
-	if err != nil {
-		return nil, err
-	}
-
-	return &dmap, err
 }

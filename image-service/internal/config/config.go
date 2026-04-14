@@ -7,10 +7,14 @@ import (
 	dr "image-service/internal/repositories/database"
 	rr "image-service/internal/repositories/rabbitmq"
 	sr "image-service/internal/repositories/s3"
-	s "image-service/internal/services"
+	cs "image-service/internal/services/CacheService"
+	is "image-service/internal/services/ImageService"
+	"time"
 
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
+	hc "github.com/ihulsbus/cookbook/shared/httpclient"
 	m "github.com/ihulsbus/cookbook/shared/models"
+	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 	"github.com/olric-data/olric"
 
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -23,18 +27,27 @@ import (
 	"gorm.io/gorm"
 )
 
+type imageConfig struct {
+	m.Config     `mapstructure:",squash"`
+	RecipeClient m.ApiClient
+}
+
 var (
-	Configuration m.Config
+	Configuration imageConfig
 	Ctx           context.Context
 	err           error
 
 	Logger         *log.Logger = log.New()
-	DatabaseClient *gorm.DB
-	S3Client       *s3.S3
 	KeycloakModule *keycloak.KeycloakModule
 	Cors           cors.Config
-	RabbitMQClient *rmq.RabbitMQ
 	Cache          *olric.DMap
+
+	// Clients
+	HttpClient     *hc.HTTPClient
+	S3Client       *s3.S3
+	DatabaseClient *gorm.DB
+	RabbitMQClient *rmq.RabbitMQ
+	RecipeClient   *rc.RecipeAPIClient
 
 	// Repositories
 	DatabaseRepository *dr.DatabaseRepository
@@ -42,7 +55,8 @@ var (
 	S3Repository       *sr.S3Repository
 
 	// Services
-	ImageService *s.ImageService
+	CacheService *cs.CacheService
+	ImageService *is.ImageService
 
 	// Handlers
 	HttpHandler     *hh.HttpHandler
@@ -54,9 +68,7 @@ func init() {
 	Ctx = context.Background()
 
 	initViper()
-
 	initConfig()
-
 	initLogging()
 
 	viper.WatchConfig()
@@ -72,16 +84,7 @@ func init() {
 		Configuration.Global.ListenPort = "8080"
 	}
 
-	initDatabase()
-
-	S3Client = initS3(
-		Configuration.S3.Endpoint,
-		Configuration.S3.AWSAccessSecret,
-		Configuration.S3.AWSAccessKey,
-		"us-east-1",
-	)
 	initCors()
-	Cache, err = initCache()
 	if err != nil {
 		Logger.Panicf("error initialising cache: %v", err)
 	}
@@ -91,34 +94,46 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
+	// Init clients
+	initDatabase()
+	S3Client = initS3(
+		Configuration.S3.Endpoint,
+		Configuration.S3.AWSAccessSecret,
+		Configuration.S3.AWSAccessKey,
+		"us-east-1",
+	)
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
 		Configuration.RabbitMQ.Host,
 		Logger,
 	)
+	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
+	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
+	if err != nil {
+		Logger.Panicf("error initialising recipe client: %v", err)
+	}
 
 	// Init repositories
 	DatabaseRepository = dr.NewDatabaseRepository(DatabaseClient)
 	RabbitMQRepository, err = rr.NewRabbitMQRepository(RabbitMQClient.Connection, "cookbook", Logger)
 	if err != nil {
-		Logger.Errorf("Error setting up RabbitMQ publisher: %v", err)
-		Logger.Fatal("Encountered fatal error. Exiting.")
+		Logger.Fatalf("Error setting up RabbitMQ publisher: %v", err)
 	}
-
 	S3Repository = sr.NewS3Repository(S3Client, Logger, Configuration.S3.BucketName)
 
 	// Init services
-	ImageService = s.NewImageService(DatabaseRepository, RabbitMQRepository, S3Repository, Logger)
+	CacheService, err = cs.NewCacheService(Ctx, RecipeClient, Logger)
+	if err != nil {
+		Logger.Fatalf("Error setting up cache: %v", err)
+	}
+	ImageService = is.NewImageService(DatabaseRepository, RabbitMQRepository, S3Repository, Logger)
 
 	// Init handlers
 	HttpHandler = hh.NewHttpHandler(ImageService, Logger)
-
-	RabbitMQHandler, err = rh.NewRabbitMQHandler(ImageService, Cache, &Ctx, Logger)
+	RabbitMQHandler, err = rh.NewRabbitMQHandler(ImageService, CacheService, &Ctx, Logger)
 	if err != nil {
-		Logger.Errorf("Error setting up RabbitMQ Consumer: %v", err)
-		Logger.Fatal("Encountered fatal error. Exiting.")
+		Logger.Fatalf("Error setting up RabbitMQ Consumer: %v", err)
 	}
-
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 }
