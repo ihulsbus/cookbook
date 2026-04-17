@@ -28,7 +28,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set up Go
       uses: actions/setup-go@v6
@@ -67,7 +67,7 @@ jobs:
       id-token: write
     needs: test
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     # Install the cosign tool except on PR
     # https://github.com/sigstore/cosign-installer
@@ -135,7 +135,7 @@ jobs:
     needs: [test, build]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
 
       - name: Install Digital Ocean CLI
         uses: digitalocean/action-doctl@v2
