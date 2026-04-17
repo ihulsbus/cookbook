@@ -42,7 +42,7 @@ jobs:
         go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 
     - name: Test
-      uses: robherley/go-test-action@v0.4.1
+      uses: robherley/go-test-action@v0.7.1
       with:
         moduleDirectory: ${{ env.MODULE }}
 
