@@ -1,9 +1,12 @@
 package recipeclient
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+
+	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 // RecipeAPIClient interacts with the Recipe microservice.
@@ -28,6 +31,33 @@ func NewRecipeAPIClient(baseURL string, httpClient HttpClient) (*RecipeAPIClient
 		BaseURL:    baseURL,
 		HTTPClient: httpClient,
 	}, nil
+}
+
+// GetAllRecipes fetches all recipes from the recipe service.
+func (c *RecipeAPIClient) GetAllRecipes() ([]m.RecipeDTO, error) {
+	url := fmt.Sprintf("%s/recipe", c.BaseURL)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("unexpected response status: %d, body: %s", resp.StatusCode, body)
+	}
+
+	var recipes []m.RecipeDTO
+	if err := json.NewDecoder(resp.Body).Decode(&recipes); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return recipes, nil
 }
 
 // RecipeExists checks if a recipe exists by its ID.

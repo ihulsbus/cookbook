@@ -18,19 +18,17 @@ type imageService interface {
 type CacheService interface {
 	AddRecipe(recipe m.RecipeDTO) error
 	RemoveRecipe(id string) error
-	GetRecipe(id string) (m.RecipeDTO, error) // if you need reads too
 }
 
 type RabbitMQHandler struct {
-	service  *imageService
-	cache    *CacheService
+	cache    CacheService
 	logger   m.LoggerInterface
 	ctx      *context.Context
 	consumer *rmq.Consumer // created in this package
 }
 
-func NewRabbitMQHandler(imageService *imageService, cache *CacheService, ctx *context.Context, logger m.LoggerInterface) (*RabbitMQHandler, error) {
-	return &RabbitMQHandler{service: imageService, cache: cache, ctx: ctx, logger: logger}, nil
+func NewRabbitMQHandler(cache CacheService, ctx *context.Context, logger m.LoggerInterface) (*RabbitMQHandler, error) {
+	return &RabbitMQHandler{cache: cache, ctx: ctx, logger: logger}, nil
 }
 
 func (c *RabbitMQHandler) StartConsuming(connection *rabbitmq.Conn, queueName, exchangeName string) error {
@@ -60,10 +58,6 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 
 	// TODO: Implement response feature
 	switch routingKey {
-	case "image.findall":
-		_, err = c.service.FindAll()
-	case "image.find":
-		_, err = c.service.Find(m.ImageDataDTO{})
 	case "recipe.created":
 		var event m.RecipeDTO
 		if err = json.Unmarshal(d.Body, &event); err != nil {
@@ -71,7 +65,7 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 			return rabbitmq.NackRequeue
 		}
 
-		if err := c.cache.Put(*c.ctx, event.ID.String(), event); err != nil {
+		if err := c.cache.AddRecipe(event); err != nil {
 			c.logger.Errorf("Failed to put event into cache: %v", err)
 			return rabbitmq.NackRequeue
 		}
@@ -84,13 +78,11 @@ func (c *RabbitMQHandler) rabbitMQConsumerHandler(d rabbitmq.Delivery) rabbitmq.
 			return rabbitmq.NackRequeue
 		}
 
-		count, err := c.cache.Delete(*c.ctx, event.ID.String())
+		err := c.cache.RemoveRecipe(event.ID.String())
 		if err != nil {
 			c.logger.Errorf("Failed to put event into cache: %v", err)
 			return rabbitmq.NackRequeue
 		}
-
-		c.logger.Debugf("deleted %d instance(s) from the cache", count)
 	default:
 		c.logger.Warnf("Discarding message. Unknown routing key received: %s", routingKey)
 		return rabbitmq.NackDiscard

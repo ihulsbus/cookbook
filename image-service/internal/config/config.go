@@ -131,7 +131,7 @@ func init() {
 
 	// Init handlers
 	HttpHandler = hh.NewHttpHandler(ImageService, Logger)
-	RabbitMQHandler, err = rh.NewRabbitMQHandler(ImageService, CacheService, &Ctx, Logger)
+	RabbitMQHandler, err = rh.NewRabbitMQHandler(CacheService, &Ctx, Logger)
 	if err != nil {
 		Logger.Fatalf("Error setting up RabbitMQ Consumer: %v", err)
 	}

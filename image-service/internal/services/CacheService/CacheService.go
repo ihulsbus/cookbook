@@ -5,30 +5,26 @@ import (
 
 	"github.com/ihulsbus/cookbook/shared/cache"
 	m "github.com/ihulsbus/cookbook/shared/models"
-	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
-	"github.com/olric-data/olric"
 )
 
-type CacheService struct {
-	cache  *olric.DMap
-	client *rc.RecipeAPIClient
-	logger m.LoggerInterface
+type RecipeClient interface {
+	GetAllRecipes() ([]m.RecipeDTO, error)
 }
 
-func NewCacheService(ctx context.Context, client *rc.RecipeAPIClient, logger m.LoggerInterface) (*CacheService, error) {
-	cacheModule, err := cache.NewCacheModule(ctx, logger)
-	if err != nil {
-		return nil, err
-	}
+type CacheService struct {
+	cache  *cache.Cache
+	client RecipeClient
+	logger cache.Logger
+}
 
-	cacheClient := cacheModule.NewEmbeddedClient()
-	dmap, err := cacheClient.NewDMap("recipes")
+func NewCacheService(ctx context.Context, client RecipeClient, logger cache.Logger) (*CacheService, error) {
+	c, err := cache.New(ctx, logger, "recipes")
 	if err != nil {
 		return nil, err
 	}
 
 	service := &CacheService{
-		cache:  &dmap,
+		cache:  c,
 		client: client,
 		logger: logger,
 	}
@@ -43,13 +39,13 @@ func NewCacheService(ctx context.Context, client *rc.RecipeAPIClient, logger m.L
 func (s *CacheService) PopulateCache() error {
 	s.logger.Info("populating cache from database")
 
-	recipes, err := s.client.GetAllRecipes() // or whatever method
+	recipes, err := s.client.GetAllRecipes()
 	if err != nil {
 		return err
 	}
 
 	for _, recipe := range recipes {
-		if err := s.cache.Put(recipe.ID, recipe); err != nil {
+		if err := s.cache.Put(recipe.ID.String(), recipe); err != nil {
 			s.logger.Errorf("failed to cache recipe %s: %v", recipe.ID, err)
 		}
 	}
@@ -58,9 +54,8 @@ func (s *CacheService) PopulateCache() error {
 	return nil
 }
 
-// Called by RabbitMQ handlers
 func (s *CacheService) AddRecipe(recipe m.RecipeDTO) error {
-	return s.cache.Put(recipe.ID, recipe)
+	return s.cache.Put(recipe.ID.String(), recipe)
 }
 
 func (s *CacheService) RemoveRecipe(id string) error {
