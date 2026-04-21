@@ -1,12 +1,16 @@
 package config
 
 import (
+	"context"
+	rh "instruction-service/internal/handlers/RabbitmqHandlers"
+	cs "instruction-service/internal/services/CacheService"
 	"time"
 
 	m "github.com/ihulsbus/cookbook/shared/models"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 
-	ih "instruction-service/internal/handlers/instructions"
-	sh "instruction-service/internal/handlers/search"
+	ih "instruction-service/internal/handlers/InstructionHandlers"
+	sh "instruction-service/internal/handlers/SearchHandlers"
 
 	ir "instruction-service/internal/repositories/instructions"
 	sr "instruction-service/internal/repositories/search"
@@ -15,8 +19,8 @@ import (
 	hc "github.com/ihulsbus/cookbook/shared/httpclient"
 	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 
-	is "instruction-service/internal/services/instructions"
-	ss "instruction-service/internal/services/search"
+	is "instruction-service/internal/services/InstructionService"
+	ss "instruction-service/internal/services/SearchService"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -33,30 +37,38 @@ type instructionConfig struct {
 
 var (
 	err           error
+	Ctx           context.Context
 	Configuration instructionConfig
 
-	Logger         *log.Logger = log.New()
-	DatabaseClient *gorm.DB
+	Logger         = log.New()
 	KeycloakModule *keycloak.KeycloakModule
 	Cors           cors.Config
 
+	// Clients
+	DatabaseClient *gorm.DB
+	HttpClient     *hc.HTTPClient
+	RabbitMQClient *rmq.RabbitMQ
+	RecipeClient   *rc.RecipeAPIClient
+
 	// Repositories
-	HttpClient            *hc.HTTPClient
 	InstructionRepository *ir.InstructionRepository
 	SearchRepository      *sr.SearchRepository
-	RecipeRepository      *rc.RecipeAPIClient
 
 	// Services
 	InstructionService *is.InstructionService
 	SearchService      *ss.SearchService
+	CacheService       *cs.CacheService
 
 	// Handlers
 	InstructionHandlers *ih.InstructionHandlers
 	SearchHandlers      *sh.SearchHandlers
-	HealthHandler       *healthh.Handlers
+	HealthHandlers      *healthh.Handlers
+	RabbitMQHandler     *rh.RabbitMQHandler
 )
 
 func init() {
+	Ctx = context.Background()
+
 	initViper()
 	initConfig()
 	initLogging()
@@ -81,21 +93,37 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
-	// Init repositories
+	// Init clients
 	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
-	InstructionRepository = ir.NewInstructionRepository(DatabaseClient)
-	SearchRepository = sr.NewSearchRepository(DatabaseClient)
-	RecipeRepository, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
+	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
 	if err != nil {
 		Logger.Panicf("error initialising recipe client: %v", err)
 	}
+	RabbitMQClient, err = rmq.NewRabbitMQConnection(
+		Configuration.RabbitMQ.Username,
+		Configuration.RabbitMQ.Password,
+		Configuration.RabbitMQ.Host,
+		Logger,
+	)
+
+	// Init repositories
+	InstructionRepository = ir.NewInstructionRepository(DatabaseClient)
+	SearchRepository = sr.NewSearchRepository(DatabaseClient)
 
 	// Init services
-	InstructionService = is.NewInstructionService(InstructionRepository, RecipeRepository)
+	CacheService, err = cs.NewCacheService(Ctx, RecipeClient, Logger)
+	if err != nil {
+		Logger.Fatalf("Error setting up cache: %v", err)
+	}
+	InstructionService = is.NewInstructionService(InstructionRepository, RecipeClient)
 	SearchService = ss.NewSearchService(SearchRepository)
 
 	// Init handlers
 	InstructionHandlers = ih.NewInstructionHandlers(InstructionService, Logger)
 	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
-	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
+	HealthHandlers = healthh.NewHealthHandlers(DatabaseClient, Logger)
+	RabbitMQHandler, err = rh.NewRabbitMQHandler(CacheService, &Ctx, Logger)
+	if err != nil {
+		Logger.Fatalf("Error setting up RabbitMQ Consumer: %v", err)
+	}
 }

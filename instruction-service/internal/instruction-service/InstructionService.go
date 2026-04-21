@@ -17,6 +17,15 @@ var (
 )
 
 func InstructionService(ctx context.Context) {
+	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "instructions", "cookbook")
+	if err != nil {
+		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
+		return
+	}
+	httpServer(ctx)
+}
+
+func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
@@ -32,9 +41,9 @@ func InstructionService(ctx context.Context) {
 	// Health check endpoints (no auth required)
 	health := router.Group("/health")
 	{
-		health.GET("/live", c.HealthHandler.Liveness)
-		health.GET("/ready", c.HealthHandler.Readiness)
-		health.GET("/startup", c.HealthHandler.Startup)
+		health.GET("/live", c.HealthHandlers.Liveness)
+		health.GET("/ready", c.HealthHandlers.Readiness)
+		health.GET("/startup", c.HealthHandlers.Startup)
 	}
 
 	// API versioning setup

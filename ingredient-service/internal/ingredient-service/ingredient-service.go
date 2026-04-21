@@ -11,16 +11,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	log = c.Logger
-)
-
 func IngredientService(ctx context.Context) {
+	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "ingredients", "cookbook")
+	if err != nil {
+		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
+		return
+	}
+	httpServer(ctx)
+}
+
+func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
 	// Logging
-	router.Use(m.Logger(log))
+	router.Use(m.Logger(c.Logger))
 
 	// Panic recovery
 	router.Use(gin.Recovery())
@@ -132,8 +137,8 @@ func IngredientService(ctx context.Context) {
 		srv.Shutdown(ctx)
 	}()
 
-	log.Infof("ingredient service available on port %s", c.Configuration.Global.ListenPort)
+	c.Logger.Infof("ingredient service available on port %s", c.Configuration.Global.ListenPort)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		log.Error(err)
+		c.Logger.Error(err)
 	}
 }

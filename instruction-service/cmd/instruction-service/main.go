@@ -14,7 +14,7 @@ var (
 )
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(c.Ctx)
 
 	sys := make(chan os.Signal, 1)
 	signal.Notify(sys, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)

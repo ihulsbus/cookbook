@@ -11,10 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	log = c.Logger
-)
-
 func ImageService(ctx context.Context) {
 	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "images", "cookbook")
 	if err != nil {
@@ -32,7 +28,7 @@ func httpServer(ctx context.Context) {
 	gin.SetMode(gin.ReleaseMode)
 
 	// Logging
-	router.Use(m.Logger(log))
+	router.Use(m.Logger(c.Logger))
 
 	// Panic recovery
 	router.Use(gin.Recovery())
@@ -93,12 +89,12 @@ func httpServer(ctx context.Context) {
 
 	go func() {
 		<-ctx.Done()
-		log.Info("Stopping webserver")
+		c.Logger.Info("Stopping webserver")
 		srv.Shutdown(ctx)
 	}()
 
-	log.Infof("instruction service available on port %s", c.Configuration.Global.ListenPort)
+	c.Logger.Infof("instruction service available on port %s", c.Configuration.Global.ListenPort)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		log.Error(err)
+		c.Logger.Error(err)
 	}
 }

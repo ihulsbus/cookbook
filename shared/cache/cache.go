@@ -30,8 +30,12 @@ type Cache struct {
 }
 
 // New starts an embedded Olric instance and returns a Cache for the named map.
-func New(ctx context.Context, logger Logger, name string) (*Cache, error) {
+func New(ctx context.Context, logger Logger, name string, bindPort int) (*Cache, error) {
 	c := config.New("local")
+	if bindPort == 0 {
+		bindPort = 3320 // fallback to default
+	}
+	c.BindPort = bindPort
 
 	startCtx, cancel := context.WithCancel(ctx)
 	c.Started = func() {

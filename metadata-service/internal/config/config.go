@@ -1,11 +1,15 @@
 package config
 
 import (
+	"context"
+	rh "metadata-service/internal/handlers/RabbitmqHandlers"
 	"time"
 
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	hc "github.com/ihulsbus/cookbook/shared/httpclient"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
+	chs "metadata-service/internal/services/CacheService"
 
 	ch "metadata-service/internal/handlers/category"
 	cuh "metadata-service/internal/handlers/cuisinetype"
@@ -46,15 +50,17 @@ type metadataConfig struct {
 var (
 	Configuration metadataConfig
 	err           error
+	Ctx           context.Context
 
-	Logger         *log.Logger = log.New()
-	DatabaseClient *gorm.DB
+	Logger         = log.New()
 	Cors           cors.Config
 	KeycloakModule *keycloak.KeycloakModule
 
 	// Clients
-	HttpClient   *hc.HTTPClient
-	RecipeClient *rc.RecipeAPIClient
+	DatabaseClient *gorm.DB
+	HttpClient     *hc.HTTPClient
+	RecipeClient   *rc.RecipeAPIClient
+	RabbitMQClient *rmq.RabbitMQ
 
 	// Repositories
 	CategoryRepository        *cr.CategoryRepository
@@ -71,6 +77,7 @@ var (
 	SearchService          *ss.SearchService
 	TagService             *ts.TagService
 	MetadataService        *ms.MetadataService
+	CacheService           *chs.CacheService
 
 	// Handlers
 	CategoryHandlers        *ch.CategoryHandlers
@@ -80,9 +87,12 @@ var (
 	TagHandlers             *th.TagHandlers
 	MetadataHandlers        *mh.MetadataHandlers
 	HealthHandler           *healthh.Handlers
+	RabbitMQHandler         *rh.RabbitMQHandler
 )
 
 func init() {
+	Ctx = context.Background()
+
 	initViper()
 	initConfig()
 	initLogging()
@@ -117,6 +127,12 @@ func init() {
 	if err != nil {
 		Logger.Panicf("error initialising recipe client: %v", err)
 	}
+	RabbitMQClient, err = rmq.NewRabbitMQConnection(
+		Configuration.RabbitMQ.Username,
+		Configuration.RabbitMQ.Password,
+		Configuration.RabbitMQ.Host,
+		Logger,
+	)
 
 	// Init repositories
 	CategoryRepository = cr.NewCategoryRepository(DatabaseClient)
@@ -133,6 +149,10 @@ func init() {
 	SearchService = ss.NewSearchService(SearchRepository)
 	TagService = ts.NewTagService(TagRepository)
 	MetadataService = ms.NewMetadataService(MetadataRepository, RecipeClient)
+	CacheService, err = chs.NewCacheService(Ctx, RecipeClient, Logger)
+	if err != nil {
+		Logger.Fatalf("Error setting up cache: %v", err)
+	}
 
 	// Init handlers
 	CategoryHandlers = ch.NewCategoryHandlers(CategoryService, Logger)
@@ -142,4 +162,8 @@ func init() {
 	TagHandlers = th.NewTagHandlers(TagService, Logger)
 	MetadataHandlers = mh.NewMetadataHandlers(MetadataService, Logger)
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
+	RabbitMQHandler, err = rh.NewRabbitMQHandler(CacheService, &Ctx, Logger)
+	if err != nil {
+		Logger.Fatalf("Error setting up RabbitMQ Consumer: %v", err)
+	}
 }

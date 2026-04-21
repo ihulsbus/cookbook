@@ -17,6 +17,15 @@ var (
 )
 
 func MetadataService(ctx context.Context) {
+	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "metadata", "cookbook")
+	if err != nil {
+		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
+		return
+	}
+	httpServer(ctx)
+}
+
+func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 

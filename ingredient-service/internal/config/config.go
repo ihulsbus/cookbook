@@ -1,21 +1,25 @@
 package config
 
 import (
+	"context"
 	ah "ingredient-service/internal/handlers/amounts"
 	ih "ingredient-service/internal/handlers/ingredients"
 	rh "ingredient-service/internal/handlers/rabbitmq"
 	uh "ingredient-service/internal/handlers/units"
 	ar "ingredient-service/internal/repositories/amounts"
 	ir "ingredient-service/internal/repositories/ingredients"
-	rr "ingredient-service/internal/repositories/rabbitmq"
 	ur "ingredient-service/internal/repositories/units"
-	as "ingredient-service/internal/services/amounts"
-	is "ingredient-service/internal/services/ingredients"
-	us "ingredient-service/internal/services/units"
+	as "ingredient-service/internal/services/AmountService"
+	cs "ingredient-service/internal/services/CacheService"
+	is "ingredient-service/internal/services/IngredientService"
+	us "ingredient-service/internal/services/UnitService"
+	"time"
 
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
+	hc "github.com/ihulsbus/cookbook/shared/httpclient"
 	m "github.com/ihulsbus/cookbook/shared/models"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
+	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -25,26 +29,36 @@ import (
 	"gorm.io/gorm"
 )
 
+type ingredientConfig struct {
+	m.Config     `mapstructure:",squash"`
+	RecipeClient m.ApiClient
+}
+
 var (
-	Configuration m.Config
+	Configuration ingredientConfig
+	Ctx           context.Context
 	err           error
 
 	Logger         *log.Logger = log.New()
-	DatabaseClient *gorm.DB
 	KeycloakModule *keycloak.KeycloakModule
 	Cors           cors.Config
+
+	// Clients
+	DatabaseClient *gorm.DB
+	HttpClient     *hc.HTTPClient
 	RabbitMQClient *rmq.RabbitMQ
+	RecipeClient   *rc.RecipeAPIClient
 
 	// Repositories
 	AmountRepository     *ar.AmountRepository
 	IngredientRepository *ir.IngredientRepository
 	UnitRepository       *ur.UnitRepository
-	RabbitMQRepository   *rr.Repository
 
 	// Services
 	AmountService     *as.AmountService
 	IngredientService *is.IngredientService
 	UnitService       *us.UnitService
+	CacheService      *cs.CacheService
 
 	// Handlers
 	AmountHandlers     *ah.AmountHandlers
@@ -55,6 +69,8 @@ var (
 )
 
 func init() {
+	Ctx = context.Background()
+
 	initViper()
 	initConfig()
 	initLogging()
@@ -80,12 +96,29 @@ func init() {
 	initUnits()
 	initCors()
 
+	// Init clients
+	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
+	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
+	if err != nil {
+		Logger.Panicf("error initialising recipe client: %v", err)
+	}
+	RabbitMQClient, err = rmq.NewRabbitMQConnection(
+		Configuration.RabbitMQ.Username,
+		Configuration.RabbitMQ.Password,
+		Configuration.RabbitMQ.Host,
+		Logger,
+	)
+
 	// Init repositories
 	AmountRepository = ar.NewAmountRepository(DatabaseClient)
 	IngredientRepository = ir.NewIngredientRepository(DatabaseClient)
 	UnitRepository = ur.NewUnitRepository(DatabaseClient)
 
 	// Init services
+	CacheService, err = cs.NewCacheService(Ctx, RecipeClient, Logger)
+	if err != nil {
+		Logger.Fatalf("Error setting up cache: %v", err)
+	}
 	AmountService = as.NewAmountService(AmountRepository)
 	IngredientService = is.NewIngredientService(IngredientRepository)
 	UnitService = us.NewUnitService(UnitRepository)
@@ -95,4 +128,8 @@ func init() {
 	IngredientHandlers = ih.NewIngredientHandlers(IngredientService, Logger)
 	UnitHandlers = uh.NewUnitHandlers(UnitService, Logger)
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
+	RabbitMQHandler, err = rh.NewRabbitMQHandler(CacheService, &Ctx, Logger)
+	if err != nil {
+		Logger.Fatalf("Error setting up RabbitMQ Consumer: %v", err)
+	}
 }
