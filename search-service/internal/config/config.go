@@ -58,9 +58,9 @@ func init() {
 		initLogging()
 	})
 
-	if Configuration.Global.ListenPort == "" {
+	if Configuration.Global.ListenPort == 0 {
 		Logger.Warn("Listen port is empty. Defaulting to 8080")
-		Configuration.Global.ListenPort = "8080"
+		Configuration.Global.ListenPort = 8080
 	}
 
 	initCors()

@@ -45,8 +45,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-recipes
@@ -236,16 +234,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          description: Returned if there are no images to return
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                Example 1:
-                  value:
-                    error: this is an error message
         '500':
           description: Returned if an unrecoverable internal error occured
           content:
@@ -684,8 +672,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-tags
@@ -875,8 +861,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-recipe-metadata
@@ -1118,8 +1102,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-category
@@ -1298,8 +1280,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-cuisinetype
@@ -1480,8 +1460,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-dificultylevels
@@ -1659,8 +1637,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-preparationtime
@@ -1958,8 +1934,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-ingredient
@@ -2141,8 +2115,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-units

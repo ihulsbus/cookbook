@@ -35,7 +35,7 @@ func (h *CuisineTypeHandlers) GetAll(ctx *gin.Context) {
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "no cuisineTypes found"})
+			ctx.JSON(http.StatusOK, []models.CuisineTypeDTO{})
 			return
 		default:
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

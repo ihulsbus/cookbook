@@ -1,4 +1,4 @@
-package instructionservice
+package metadataservice
 
 import (
 	"context"
@@ -6,6 +6,7 @@ import (
 	c "metadata-service/internal/config"
 	m "metadata-service/internal/middleware"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -22,6 +23,8 @@ func MetadataService(ctx context.Context) {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
 		return
 	}
+	defer c.RabbitMQHandler.StopConsuming()
+
 	httpServer(ctx)
 }
 
@@ -194,6 +197,35 @@ func httpServer(ctx context.Context) {
 			}
 		}
 
+		// PreparationTime routes
+		PreparationTime := metadata.Group("/preparationtime")
+		{
+			readPreparationTime := PreparationTime.Group("")
+			readPreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				readPreparationTime.GET("", c.PreparationTimeHandlers.GetAll)
+				readPreparationTime.GET(":id", c.PreparationTimeHandlers.Get)
+			}
+
+			createPreparationTime := PreparationTime.Group("")
+			createPreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				createPreparationTime.POST("", c.PreparationTimeHandlers.Create)
+			}
+
+			updatePreparationTime := PreparationTime.Group("")
+			updatePreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				updatePreparationTime.PUT(":id", c.PreparationTimeHandlers.Update)
+			}
+
+			deletePreparationTime := PreparationTime.Group("")
+			deletePreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
+			{
+				deletePreparationTime.DELETE(":id", c.PreparationTimeHandlers.Delete)
+			}
+		}
+
 		// Search routes
 		search := metadata.Group("/search")
 		{
@@ -214,7 +246,7 @@ func httpServer(ctx context.Context) {
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":" + c.Configuration.Global.ListenPort,
+		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -227,7 +259,7 @@ func httpServer(ctx context.Context) {
 		}
 	}()
 
-	log.Infof("metadata service available on port %s", c.Configuration.Global.ListenPort)
+	log.Infof("metadata service available on port %s", srv.Addr)
 	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		log.Error(err)
 	}

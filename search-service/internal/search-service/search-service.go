@@ -5,6 +5,7 @@ import (
 	"net/http"
 	c "search-service/internal/config"
 	m "search-service/internal/middleware"
+	"strconv"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -15,7 +16,7 @@ var (
 	log = c.Logger
 )
 
-func IngredientService(ctx context.Context) {
+func SearchService(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
@@ -52,7 +53,7 @@ func IngredientService(ctx context.Context) {
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":" + c.Configuration.Global.ListenPort,
+		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -62,7 +63,7 @@ func IngredientService(ctx context.Context) {
 		srv.Shutdown(ctx)
 	}()
 
-	log.Infof("search service available on port %s", c.Configuration.Global.ListenPort)
+	log.Infof("search service available on port %s", srv.Addr)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Error(err)
 	}

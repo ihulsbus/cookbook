@@ -39,7 +39,7 @@ func (h IngredientHandlers) GetAll(ctx *gin.Context) {
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "no ingredients found"})
+			ctx.JSON(http.StatusOK, []models.IngredientDTO{})
 			return
 		default:
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

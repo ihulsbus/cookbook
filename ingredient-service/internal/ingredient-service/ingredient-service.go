@@ -5,6 +5,7 @@ import (
 	c "ingredient-service/internal/config"
 	m "ingredient-service/internal/middleware"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -17,6 +18,8 @@ func IngredientService(ctx context.Context) {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
 		return
 	}
+	defer c.RabbitMQHandler.StopConsuming()
+
 	httpServer(ctx)
 }
 
@@ -43,7 +46,7 @@ func httpServer(ctx context.Context) {
 
 	v2 := router.Group("/api/v2")
 	{
-		amount := v2.Group("amount")
+		amount := v2.Group("/amount")
 		{
 			readAmounts := amount.Group("")
 			readAmounts.Use(c.KeycloakModule.Middleware("administrator"))
@@ -78,19 +81,19 @@ func httpServer(ctx context.Context) {
 			}
 
 			createIngredient := ingredient.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			createIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				createIngredient.POST("", c.IngredientHandlers.Create)
 			}
 
 			updateIngredient := ingredient.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			updateIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				updateIngredient.PUT(":id", c.IngredientHandlers.Update)
 			}
 
 			adminIngredient := ingredient.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			adminIngredient.Use(c.KeycloakModule.Middleware("administrator"))
 			{
 				adminIngredient.DELETE(":id", c.IngredientHandlers.Delete)
 			}
@@ -127,7 +130,7 @@ func httpServer(ctx context.Context) {
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":" + c.Configuration.Global.ListenPort,
+		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -137,7 +140,7 @@ func httpServer(ctx context.Context) {
 		srv.Shutdown(ctx)
 	}()
 
-	c.Logger.Infof("ingredient service available on port %s", c.Configuration.Global.ListenPort)
+	c.Logger.Infof("ingredient service available on port %s", srv.Addr)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		c.Logger.Error(err)
 	}

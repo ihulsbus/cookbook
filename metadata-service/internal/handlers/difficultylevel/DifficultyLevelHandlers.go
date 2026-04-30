@@ -35,7 +35,7 @@ func (h *DifficultyLevelHandlers) GetAll(ctx *gin.Context) {
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "no difficultyLevels found"})
+			ctx.JSON(http.StatusOK, []models.DifficultyLevelDTO{})
 			return
 		default:
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

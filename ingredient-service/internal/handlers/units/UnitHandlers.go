@@ -39,7 +39,7 @@ func (h UnitHandlers) GetAll(ctx *gin.Context) {
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "no units found"})
+			ctx.JSON(http.StatusOK, []models.UnitDTO{})
 			return
 		default:
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

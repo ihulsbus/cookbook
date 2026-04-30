@@ -5,11 +5,12 @@ import (
 	rh "metadata-service/internal/handlers/RabbitmqHandlers"
 	"time"
 
+	chs "metadata-service/internal/services/CacheService"
+
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	hc "github.com/ihulsbus/cookbook/shared/httpclient"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
-	chs "metadata-service/internal/services/CacheService"
 
 	ch "metadata-service/internal/handlers/category"
 	cuh "metadata-service/internal/handlers/cuisinetype"
@@ -105,9 +106,9 @@ func init() {
 		initLogging()
 	})
 
-	if Configuration.Global.ListenPort == "" {
+	if Configuration.Global.ListenPort == 0 {
 		Logger.Warn("Listen port is empty. Defaulting to 8080")
-		Configuration.Global.ListenPort = "8080"
+		Configuration.Global.ListenPort = 8080
 	}
 
 	initDatabase()
@@ -149,7 +150,7 @@ func init() {
 	SearchService = ss.NewSearchService(SearchRepository)
 	TagService = ts.NewTagService(TagRepository)
 	MetadataService = ms.NewMetadataService(MetadataRepository, RecipeClient)
-	CacheService, err = chs.NewCacheService(Ctx, RecipeClient, Logger)
+	CacheService, err = chs.NewCacheService(Ctx, RecipeClient, Logger, Configuration.Global.ListenPort+1000)
 	if err != nil {
 		Logger.Fatalf("Error setting up cache: %v", err)
 	}

@@ -36,7 +36,7 @@ func (h *MetadataHandlers) GetAll(ctx *gin.Context) {
 	if err != nil {
 		switch err.Error() {
 		case "not found":
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "no metadata for recipes found"})
+			ctx.JSON(http.StatusOK, []models.RecipeMetadataDTO{})
 			return
 		default:
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

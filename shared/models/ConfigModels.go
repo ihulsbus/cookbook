@@ -12,7 +12,7 @@ type Config struct {
 // GlobalConfig holds global configuration items
 type GlobalConfig struct {
 	LogLevel   string
-	ListenPort string
+	ListenPort int
 }
 
 // DatabaseConfig holds database configuration items

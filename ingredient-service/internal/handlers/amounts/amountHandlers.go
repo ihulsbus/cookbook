@@ -1,8 +1,9 @@
 package handlers
 
 import (
-	m "github.com/ihulsbus/cookbook/shared/models"
 	"net/http"
+
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

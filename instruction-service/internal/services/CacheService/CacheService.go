@@ -17,8 +17,8 @@ type CacheService struct {
 	logger cache.Logger
 }
 
-func NewCacheService(ctx context.Context, client RecipeClient, logger cache.Logger) (*CacheService, error) {
-	c, err := cache.New(ctx, logger, "recipes")
+func NewCacheService(ctx context.Context, client RecipeClient, logger cache.Logger, bindPort int) (*CacheService, error) {
+	c, err := cache.New(ctx, logger, "recipes", bindPort)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ import (
 	c "instruction-service/internal/config"
 	m "instruction-service/internal/middleware"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -22,6 +23,8 @@ func InstructionService(ctx context.Context) {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
 		return
 	}
+	defer c.RabbitMQHandler.StopConsuming()
+
 	httpServer(ctx)
 }
 
@@ -86,7 +89,7 @@ func httpServer(ctx context.Context) {
 	// Server startup
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":" + c.Configuration.Global.ListenPort,
+		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),
 		WriteTimeout: 300 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
@@ -96,7 +99,7 @@ func httpServer(ctx context.Context) {
 		srv.Shutdown(ctx)
 	}()
 
-	log.Infof("instruction service available on port %s", c.Configuration.Global.ListenPort)
+	log.Infof("instruction service available on port %s", srv.Addr)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Error(err)
 	}

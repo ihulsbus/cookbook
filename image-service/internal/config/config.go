@@ -79,9 +79,9 @@ func init() {
 		initLogging()
 	})
 
-	if Configuration.Global.ListenPort == "" {
+	if Configuration.Global.ListenPort == 0 {
 		Logger.Warn("Listen port is empty. Defaulting to 8080")
-		Configuration.Global.ListenPort = "8080"
+		Configuration.Global.ListenPort = 8080
 	}
 
 	initCors()
@@ -123,7 +123,7 @@ func init() {
 	S3Repository = sr.NewS3Repository(S3Client, Logger, Configuration.S3.BucketName)
 
 	// Init services
-	CacheService, err = cs.NewCacheService(Ctx, RecipeClient, Logger)
+	CacheService, err = cs.NewCacheService(Ctx, RecipeClient, Logger, Configuration.Global.ListenPort+1000)
 	if err != nil {
 		Logger.Fatalf("Error setting up cache: %v", err)
 	}

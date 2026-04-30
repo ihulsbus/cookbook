@@ -36,6 +36,7 @@ func New(ctx context.Context, logger Logger, name string, bindPort int) (*Cache,
 		bindPort = 3320 // fallback to default
 	}
 	c.BindPort = bindPort
+	c.MemberlistConfig.BindPort = bindPort + 1000
 
 	startCtx, cancel := context.WithCancel(ctx)
 	c.Started = func() {

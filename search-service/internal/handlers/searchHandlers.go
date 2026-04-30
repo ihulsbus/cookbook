@@ -1,13 +1,17 @@
 package handlers
 
 import (
-	m "github.com/ihulsbus/cookbook/shared/models"
+	"context"
 	"net/http"
+
+	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/gin-gonic/gin"
 )
 
-type SearchService interface{}
+type SearchService interface {
+	Search(ctx context.Context, req m.SearchRequest) (m.SearchResult, error)
+}
 
 type SearchHandlers struct {
 	service SearchService
@@ -26,6 +30,12 @@ func (h *SearchHandlers) Search(ctx *gin.Context) {
 
 	if err = ctx.ShouldBindJSON(&searchRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	searchResult, err = h.service.Search(ctx, searchRequest)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

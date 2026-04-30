@@ -32,7 +32,7 @@ func main() {
 		}
 	}()
 
-	s.IngredientService(ctx)
+	s.SearchService(ctx)
 
 	ctx.Done()
 
