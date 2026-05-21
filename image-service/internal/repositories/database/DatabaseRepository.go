@@ -17,18 +17,22 @@ func NewDatabaseRepository(db *gorm.DB) *DatabaseRepository {
 	}
 }
 
-func (r DatabaseRepository) FindAll() ([]m.ImageData, error) {
+func (r DatabaseRepository) FindAll(pagination m.PaginationRequest) ([]m.ImageData, int64, error) {
 	var images []m.ImageData
+	var total int64
 
-	if err := r.db.Find(&images).Error; err != nil {
-		return nil, err
+	if err := r.db.Model(&m.ImageData{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(images) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.
+		Limit(pagination.Limit).
+		Offset(pagination.Offset()).
+		Find(&images).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return images, nil
+	return images, total, nil
 }
 
 func (r DatabaseRepository) Find(image m.ImageData) (m.ImageData, error) {

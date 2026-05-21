@@ -13,7 +13,7 @@ type S3Repository interface {
 }
 
 type DatabaseRepository interface {
-	FindAll() ([]m.ImageData, error)
+	FindAll(pagination m.PaginationRequest) ([]m.ImageData, int64, error)
 	Find(image m.ImageData) (m.ImageData, error)
 	Create(image m.ImageData) (m.ImageData, error)
 	Update(image m.ImageData) (m.ImageData, error)
@@ -44,20 +44,18 @@ func NewImageService(databaseRepo DatabaseRepository, rabbitmqRepo RabbitMQRepos
 	}
 }
 
-func (s ImageService) FindAll() ([]m.ImageDataDTO, error) {
-	var images []m.ImageData
-
-	images, err := s.databaseRepo.FindAll()
+func (s ImageService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.ImageDataDTO], error) {
+	images, total, err := s.databaseRepo.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.ImageDataDTO]{}, errors.New("internal server error")
 	}
 
-	return m.ImageData{}.ConvertAllToDTO(images), nil
+	imageDTOs := m.ImageData{}.ConvertAllToDTO(images)
+
+	return m.PaginatedResponse[m.ImageDataDTO]{
+		Data:       imageDTOs,
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 func (s ImageService) Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error) {

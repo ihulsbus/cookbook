@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
 	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
@@ -20,7 +21,7 @@ const (
 )
 
 type imageService interface {
-	FindAll() ([]m.ImageDataDTO, error)
+	FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.ImageDataDTO], error)
 	Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error)
 	Create(imageDTO m.ImageFileDTO) (m.ImageDataDTO, error)
 	Update(imageDTO m.ImageFileDTO) (m.ImageDataDTO, error)
@@ -40,16 +41,16 @@ func NewHttpHandler(service imageService, logger m.LoggerInterface) *HttpHandler
 }
 
 func (h HttpHandler) FindAll(ctx *gin.Context) {
-	imageDTO, err := h.imageService.FindAll()
+	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusOK, []m.ImageDataDTO{})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	imageDTO, err := h.imageService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, imageDTO)
