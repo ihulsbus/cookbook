@@ -44,7 +44,7 @@ func SearchService(ctx context.Context) {
 			doSearch := search.Group("")
 			doSearch.Use(c.KeycloakModule.Middleware("administrator"))
 			{
-				doSearch.GET("", c.SearchHandlers.Search)
+				doSearch.POST("", c.SearchHandlers.Search)
 			}
 		}
 

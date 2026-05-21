@@ -155,13 +155,16 @@ func TestPreparationTimeGet_OK(t *testing.T) {
 	}
 
 	preparationTime.Duration = 1 * time.Minute
+	prep := preparationTime
+	prep.Duration = 1 * time.Minute
+	prep.ID = preparationTime.ID
 
 	h.Get(c)
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(preparationTime)
+	expectedBody, _ := json.Marshal(prep)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)

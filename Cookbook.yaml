@@ -1845,8 +1845,51 @@ paths:
                 value:
                   min_prep_time: 1
                   max_prep_time: 30
-  /search:
+  /metadata/search/all:
     get:
+      summary: Get all searchable metadata
+      tags:
+        - metadata
+        - search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetadataSearchResponse'
+              examples:
+                Example 1:
+                  value:
+                    - recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                      category_ids:
+                        - f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      tag_ids:
+                        - b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                      difficulty_level_id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      preparation_time_id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      cuisine_type_id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-searchable-metadata
+      x-stoplight:
+        id: get-all-searchable-metadata
+      description: 'Retrieves all searchable metadata records. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: { }
+  /search:
+    post:
       summary: Search
       tags:
         - search
@@ -1862,17 +1905,19 @@ paths:
                     type: array
                     x-stoplight:
                       id: symvkedsm93kf
-                    items: {}
+                    items: { }
                   ingredients:
                     type: array
                     x-stoplight:
                       id: pnwjrz9k25jcd
-                    items: {}
+                    items: { }
                   metadata:
                     type: array
                     x-stoplight:
                       id: pmsdixynihh7l
-                    items: {}
+                    items: { }
+        '400':
+          $ref: '#/components/responses/Bad-request'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1885,6 +1930,7 @@ paths:
       description: Search through all records globally in the API. This request is still being developed
       x-internal: true
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1895,20 +1941,18 @@ paths:
                   x-stoplight:
                     id: rgkomex9y17nl
                 limit:
-                  type: string
+                  type: integer
                   x-stoplight:
                     id: bbt05z4h38maz
+                  minimum: 1
                 page:
-                  type: string
+                  type: integer
                   x-stoplight:
                     id: rbs1mqco0ohqw
-            examples:
-              Example 1:
-                value:
-                  query: string
-                  limit: string
-                  page: string
-        description: Under construction
+                  minimum: 1
+              required:
+                - query
+        description: Search request
   /ingredient:
     get:
       summary: Get all ingredients
