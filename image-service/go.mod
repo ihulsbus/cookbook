@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/ihulsbus/cookbook/shared/cache v0.0.1
 	github.com/ihulsbus/cookbook/shared/healthchecks v0.0.1
+	github.com/ihulsbus/cookbook/shared/http v0.0.1
 	github.com/ihulsbus/cookbook/shared/httpclient v0.0.1
 	github.com/ihulsbus/cookbook/shared/keycloak v0.0.1
 	github.com/ihulsbus/cookbook/shared/models v0.0.1
@@ -60,7 +61,7 @@ require (
 	github.com/hashicorp/memberlist v0.5.3 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.9.1 // indirect
+	github.com/jackc/pgx/v5 v5.9.2 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
