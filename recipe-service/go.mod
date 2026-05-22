@@ -8,8 +8,8 @@ require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/google/uuid v1.6.0
-	github.com/ihulsbus/cookbook/shared/keycloak v0.0.0
-	github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.0
+	github.com/ihulsbus/cookbook/shared/keycloak v0.0.1
+	github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1

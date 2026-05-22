@@ -407,6 +407,13 @@ github.com/huandu/xstrings v1.3.2/go.mod h1:y5/lhBue+AyNmUVz9RLU9xbLR0o4KIIExikq
 github.com/iancoleman/strcase v0.3.0 h1:nTXanmYxhfFAMjZL34Ov6gkzEsSJZ5DbhxWjvSASxEI=
 github.com/iancoleman/strcase v0.3.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639 h1:mV02weKRL81bEnm8A0HT1/CAelMQDBuQIfLw8n+d6xI=
+github.com/ihulsbus/cookbook/shared/cache v0.0.1/go.mod h1:gsMJ4olUVLREkIA8ut3ZVRaAE6i7kS3egtijC8IPvXg=
+github.com/ihulsbus/cookbook/shared/healthchecks v0.0.1/go.mod h1:J/ccTqLJg1P4cCVzaCBTx7ZLGc7FdoOznlSWCMiFr1s=
+github.com/ihulsbus/cookbook/shared/httpclient v0.0.1/go.mod h1:kBBrB6wGW7TetyQSh7PQb47g4OXAuryiJayDdr0Yktc=
+github.com/ihulsbus/cookbook/shared/keycloak v0.0.1/go.mod h1:PzzyR0B+P7jg1bdSSVNVEKU2/07ypO8xhqPnOXrCxMc=
+github.com/ihulsbus/cookbook/shared/models v0.0.1/go.mod h1:/2ZLrNkY2wjm5FdTnslKVNYxRP7pdTUcWliCzZMiqO0=
+github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.1/go.mod h1:TN1MtWhlyqo4eGhkGtEJvR/p2e555QHDlnoHDcnjkDY=
+github.com/ihulsbus/cookbook/shared/recipeclient v0.0.1/go.mod h1:9VWDaXeD88g1RMcti8LTr+t+7CuIMcpOErvVxtNI5SA=
 github.com/imdario/mergo v0.3.11 h1:3tnifQM4i+fbajXKBHXWEH+KvNHqojZ778UH75j3bGA=
 github.com/imdario/mergo v0.3.11/go.mod h1:jmQim1M+e3UYxmgPu/WyfjB3N3VflVyUjjjwH0dnCYA=
 github.com/jordanlewis/gcassert v0.0.0-20250430164644-389ef753e22e h1:a+PGEeXb+exwBS3NboqXHyxarD9kaboBbrSp+7GuBuc=
