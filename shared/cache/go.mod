@@ -1,6 +1,6 @@
 module github.com/ihulsbus/cookbook/shared/cache
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/olric-data/olric v0.7.3
