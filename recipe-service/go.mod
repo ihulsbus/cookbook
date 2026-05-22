@@ -76,8 +76,3 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace (
-	github.com/ihulsbus/cookbook/shared/keycloak => ../shared/keycloak
-	github.com/ihulsbus/cookbook/shared/rabbitmq => ../shared/rabbitmq
-)
