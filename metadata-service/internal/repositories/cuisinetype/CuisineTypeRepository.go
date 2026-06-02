@@ -18,18 +18,19 @@ func NewCuisineTypeRepository(db *gorm.DB) *CuisineTypeRepository {
 	}
 }
 
-func (r *CuisineTypeRepository) FindAll() ([]m.CuisineType, error) {
+func (r *CuisineTypeRepository) FindAll(pagination m.PaginationRequest) ([]m.CuisineType, int64, error) {
 	var cuisineTypes []m.CuisineType
+	var total int64
 
-	if err := r.db.Preload(clause.Associations).Find(&cuisineTypes).Error; err != nil {
-		return nil, err
+	if err := r.db.Model(&m.CuisineType{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(cuisineTypes) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.Preload(clause.Associations).Limit(pagination.Limit).Offset(pagination.Offset()).Find(&cuisineTypes).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return cuisineTypes, nil
+	return cuisineTypes, total, nil
 }
 
 func (r *CuisineTypeRepository) FindSingle(cuisineType m.CuisineType) (m.CuisineType, error) {

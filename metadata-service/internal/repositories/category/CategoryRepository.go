@@ -17,18 +17,19 @@ func NewCategoryRepository(db *gorm.DB) *CategoryRepository {
 	}
 }
 
-func (r *CategoryRepository) FindAll() ([]m.Category, error) {
+func (r *CategoryRepository) FindAll(pagination m.PaginationRequest) ([]m.Category, int64, error) {
 	var categories []m.Category
+	var total int64
 
-	if err := r.db.Find(&categories).Error; err != nil {
-		return nil, err
+	if err := r.db.Model(&m.Category{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(categories) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.Limit(pagination.Limit).Offset(pagination.Offset()).Find(&categories).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return categories, nil
+	return categories, total, nil
 }
 
 func (r *CategoryRepository) FindSingle(category m.Category) (m.Category, error) {

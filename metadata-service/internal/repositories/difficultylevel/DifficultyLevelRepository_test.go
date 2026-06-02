@@ -24,17 +24,46 @@ func TestDifficultyLevelFindAll_OK(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "level"}).AddRow(difficultyLevel.ID, difficultyLevel.Level))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
+	assert.Equal(t, int64(1), total)
+	assert.Len(t, data, 1)
 
-	if result[0].Level != difficultyLevel.Level {
-		t.Errorf("expected difficultyLevel name %v, but got %v", difficultyLevel.Level, result[0].Level)
+	if data[0].Level != difficultyLevel.Level {
+		t.Errorf("expected difficultyLevel name %v, but got %v", difficultyLevel.Level, data[0].Level)
 	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestDifficultyLevelFindAll_Empty(t *testing.T) {
+	db, mock := co.NewMockDatabase(t)
+	r := NewDifficultyLevelRepository(db)
+
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "level"}))
+
+	data, total, err := r.FindAll(pagination)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), total)
+	assert.Len(t, data, 0)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %v", err)
@@ -45,13 +74,16 @@ func TestDifficultyLevelFindAll_Err(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewDifficultyLevelRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.Error(t, err)
-	assert.Len(t, result, 0)
+	assert.Equal(t, int64(0), total)
+	assert.Len(t, data, 0)
 	assert.EqualError(t, err, "error")
 }
 

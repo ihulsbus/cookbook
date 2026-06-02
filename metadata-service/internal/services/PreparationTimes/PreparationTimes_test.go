@@ -23,16 +23,14 @@ var (
 
 type PreparationTimeRepositoryMock struct{}
 
-func (*PreparationTimeRepositoryMock) FindAll() ([]m.PreparationTime, error) {
+func (*PreparationTimeRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.PreparationTime, int64, error) {
 	switch findAllPreparationTime.Duration {
 	case 1 * time.Minute:
 		var preparationTimes []m.PreparationTime
 		preparationTimes = append(preparationTimes, findAllPreparationTime)
-		return preparationTimes, nil
-	case 2 * time.Minute:
-		return nil, errors.New("not found")
+		return preparationTimes, 1, nil
 	default:
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	}
 }
 
@@ -80,33 +78,22 @@ func TestPreparationTimeFindAll_OK(t *testing.T) {
 	s := NewPreparationTimeService(&PreparationTimeRepositoryMock{})
 	findAllPreparationTime.Duration = 1 * time.Minute
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.PreparationTime{}, result)
-	assert.Len(t, result, 1)
+	assert.IsType(t, m.PaginatedResponse[m.PreparationTime]{}, result)
+	assert.Len(t, result.Data, 1)
 }
 
 func TestPreparationTimeFindAll_Err(t *testing.T) {
 	s := NewPreparationTimeService(&PreparationTimeRepositoryMock{})
 	findAllPreparationTime.Duration = 3 * time.Minute
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
+	assert.Equal(t, m.PaginatedResponse[m.PreparationTime]{}, result)
 	assert.EqualError(t, err, "internal server error")
-}
-
-func TestPreparationTimeFindAll_NotFound(t *testing.T) {
-	s := NewPreparationTimeService(&PreparationTimeRepositoryMock{})
-	findAllPreparationTime.Duration = 2 * time.Minute
-
-	result, err := s.FindAll()
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
 }
 
 func TestPreparationTimeFindSingle_OK(t *testing.T) {

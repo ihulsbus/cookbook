@@ -22,16 +22,14 @@ var (
 
 type CuisineTypeRepositoryMock struct{}
 
-func (*CuisineTypeRepositoryMock) FindAll() ([]m.CuisineType, error) {
+func (*CuisineTypeRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.CuisineType, int64, error) {
 	switch findAllCuisineType.Name {
 	case "findall":
 		var cuisineTypes []m.CuisineType
 		cuisineTypes = append(cuisineTypes, findAllCuisineType)
-		return cuisineTypes, nil
-	case "not found":
-		return nil, errors.New("not found")
+		return cuisineTypes, 1, nil
 	default:
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	}
 }
 
@@ -79,33 +77,22 @@ func TestCuisineTypeFindAll_OK(t *testing.T) {
 	s := NewCuisineTypeService(&CuisineTypeRepositoryMock{})
 	findAllCuisineType.Name = "findall"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.CuisineTypeDTO{}, result)
-	assert.Len(t, result, 1)
+	assert.IsType(t, m.PaginatedResponse[m.CuisineTypeDTO]{}, result)
+	assert.Len(t, result.Data, 1)
 }
 
 func TestCuisineTypeFindAll_Err(t *testing.T) {
 	s := NewCuisineTypeService(&CuisineTypeRepositoryMock{})
 	findAllCuisineType.Name = "fail"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
+	assert.Equal(t, m.PaginatedResponse[m.CuisineTypeDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
-}
-
-func TestCuisineTypeFindAll_NotFound(t *testing.T) {
-	s := NewCuisineTypeService(&CuisineTypeRepositoryMock{})
-	findAllCuisineType.Name = "not found"
-
-	result, err := s.FindAll()
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
 }
 
 func TestCuisineTypeFindSingle_OK(t *testing.T) {

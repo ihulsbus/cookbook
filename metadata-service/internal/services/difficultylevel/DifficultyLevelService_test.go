@@ -22,16 +22,14 @@ var (
 
 type DifficultyLevelRepositoryMock struct{}
 
-func (*DifficultyLevelRepositoryMock) FindAll() ([]m.DifficultyLevel, error) {
+func (*DifficultyLevelRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.DifficultyLevel, int64, error) {
 	switch findAllDifficultyLevel.Level {
 	case 1:
 		var difficultyLevels []m.DifficultyLevel
 		difficultyLevels = append(difficultyLevels, findAllDifficultyLevel)
-		return difficultyLevels, nil
-	case 2:
-		return nil, errors.New("not found")
+		return difficultyLevels, 1, nil
 	default:
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	}
 }
 
@@ -79,33 +77,22 @@ func TestDifficultyLevelFindAll_OK(t *testing.T) {
 	s := NewDifficultyLevelService(&DifficultyLevelRepositoryMock{})
 	findAllDifficultyLevel.Level = 1
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.DifficultyLevelDTO{}, result)
-	assert.Len(t, result, 1)
+	assert.IsType(t, m.PaginatedResponse[m.DifficultyLevelDTO]{}, result)
+	assert.Len(t, result.Data, 1)
 }
 
 func TestDifficultyLevelFindAll_Err(t *testing.T) {
 	s := NewDifficultyLevelService(&DifficultyLevelRepositoryMock{})
 	findAllDifficultyLevel.Level = 3
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
+	assert.Equal(t, m.PaginatedResponse[m.DifficultyLevelDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
-}
-
-func TestDifficultyLevelFindAll_NotFound(t *testing.T) {
-	s := NewDifficultyLevelService(&DifficultyLevelRepositoryMock{})
-	findAllDifficultyLevel.Level = 2
-
-	result, err := s.FindAll()
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
 }
 
 func TestDifficultyLevelFindSingle_OK(t *testing.T) {

@@ -51,14 +51,14 @@ func (s3RepositoryMock) DeleteImage(imageInput m.ImageData) error {
 	}
 }
 
-func (i databaseRepositoryMock) FindAll() ([]m.ImageData, error) {
+func (i databaseRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.ImageData, int64, error) {
 	switch imageDataDTO.EntityType {
 	case "findallFail":
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	case "notfound":
-		return []m.ImageData{}, errors.New("not found")
+		return nil, 0, errors.New("not found")
 	default:
-		return []m.ImageData{imageDataDTO.ConvertFromDTO()}, nil
+		return []m.ImageData{imageDataDTO.ConvertFromDTO()}, 1, nil
 	}
 }
 
@@ -117,33 +117,33 @@ func TestFindAllImage_OK(t *testing.T) {
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "findall"
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.ImageDataDTO{}, result)
-	assert.Len(t, result, 1)
-	assert.Equal(t, "findall", result[0].EntityType)
+	assert.IsType(t, m.PaginatedResponse[m.ImageDataDTO]{}, result)
+	assert.Len(t, result.Data, 1)
+	assert.Equal(t, "findall", result.Data[0].EntityType)
 }
 
 func TestFindAllImage_NotFoundErr(t *testing.T) {
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "notfound"
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
-	assert.IsType(t, []m.ImageDataDTO{}, result)
+	assert.EqualError(t, err, "internal server error")
+	assert.IsType(t, m.PaginatedResponse[m.ImageDataDTO]{}, result)
 }
 
 func TestFindAllImage_Err(t *testing.T) {
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "findallFail"
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.IsType(t, []m.ImageDataDTO{}, result)
+	assert.IsType(t, m.PaginatedResponse[m.ImageDataDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
 
 }

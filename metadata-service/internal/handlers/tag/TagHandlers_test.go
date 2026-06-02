@@ -28,14 +28,15 @@ var (
 
 // ====== TagService ======
 
-func (s *TagServiceMock) FindAll() ([]models.TagDTO, error) {
+func (s *TagServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.TagDTO], error) {
 	switch tag.Name {
 	case "findall":
-		return tags, nil
-	case "notfound":
-		return nil, errors.New("not found")
+		return models.PaginatedResponse[models.TagDTO]{
+			Data:       tags,
+			Pagination: models.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(tags))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return models.PaginatedResponse[models.TagDTO]{}, errors.New("error")
 	}
 }
 
@@ -93,30 +94,12 @@ func TestTagGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(tags)
+	pagination := models.NewPaginationMetadata(1, 25, int64(len(tags)))
+	expectedResponse := models.PaginatedResponse[models.TagDTO]{Data: tags, Pagination: pagination}
+	expectedBody, _ := json.Marshal(expectedResponse)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
-}
-
-func TestTagGetAll_NotFound(t *testing.T) {
-	tags = append(tags, tag)
-	h := NewTagHandlers(&TagServiceMock{}, &models.LoggerInterfaceMock{})
-
-	tag.Name = "notfound"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/tag", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no tags found"}`, string(body))
 }
 
 func TestTagGetAll_Error(t *testing.T) {

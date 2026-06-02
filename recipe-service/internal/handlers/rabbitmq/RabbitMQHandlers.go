@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+
 	m "github.com/ihulsbus/cookbook/shared/models"
 
 	"github.com/ihulsbus/cookbook/shared/models"
@@ -11,7 +12,7 @@ import (
 )
 
 type recipeService interface {
-	FindAll() ([]models.RecipeDTO, error)
+	FindAll(models.PaginationRequest) (models.PaginatedResponse[models.RecipeDTO], error)
 	FindSingle(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)
 	Create(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)
 	Update(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)

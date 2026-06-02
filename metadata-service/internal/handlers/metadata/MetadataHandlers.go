@@ -7,11 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
 	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type MetadataService interface {
-	FindAll() (*[]models.RecipeMetadataDTO, error)
+	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.RecipeMetadataDTO], error)
 	Find(recipeID uuid.UUID) (*models.RecipeMetadataDTO, error)
 	Create(recipeID uuid.UUID, meta *models.RecipeMetadataDTO) (*models.RecipeMetadataDTO, error)
 	Update(recipeID uuid.UUID, meta *models.RecipeMetadataDTO) (*models.RecipeMetadataDTO, error)
@@ -31,17 +32,16 @@ func NewMetadataHandlers(metadata MetadataService, logger m.LoggerInterface) *Me
 }
 
 func (h *MetadataHandlers) GetAll(ctx *gin.Context) {
-
-	metadata, err := h.MetadataService.FindAll()
+	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusOK, []models.RecipeMetadataDTO{})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	metadata, err := h.MetadataService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, metadata)

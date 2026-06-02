@@ -30,14 +30,15 @@ var (
 
 // ====== PreparationTimeService ======
 
-func (s *PreparationTimeServiceMock) FindAll() ([]m.PreparationTime, error) {
+func (s *PreparationTimeServiceMock) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.PreparationTime], error) {
 	switch preparationTime.Duration {
 	case 1 * time.Minute:
-		return preparationTimes, nil
-	case 2 * time.Minute:
-		return nil, errors.New("not found")
+		return m.PaginatedResponse[m.PreparationTime]{
+			Data:       preparationTimes,
+			Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(preparationTimes))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return m.PaginatedResponse[m.PreparationTime]{}, errors.New("error")
 	}
 }
 
@@ -96,30 +97,12 @@ func TestPreparationTimeGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(preparationTimes)
+	pagination := m.NewPaginationMetadata(1, 25, int64(len(preparationTimes)))
+	expectedResponse := m.PaginatedResponse[m.PreparationTime]{Data: preparationTimes, Pagination: pagination}
+	expectedBody, _ := json.Marshal(expectedResponse)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
-}
-
-func TestPreparationTimeGetAll_NotFound(t *testing.T) {
-	preparationTimes = append(preparationTimes, preparationTime)
-	h := NewPreparationTimeHandlers(&PreparationTimeServiceMock{}, &m.LoggerInterfaceMock{})
-
-	preparationTime.Duration = 2 * time.Minute
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/preparationTime", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	assert.Equal(t, `[]`, string(body))
 }
 
 func TestPreparationTimeGetAll_Error(t *testing.T) {

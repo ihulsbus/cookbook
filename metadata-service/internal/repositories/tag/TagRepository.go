@@ -17,18 +17,19 @@ func NewTagRepository(db *gorm.DB) *TagRepository {
 	}
 }
 
-func (r *TagRepository) FindAll() ([]m.Tag, error) {
+func (r *TagRepository) FindAll(pagination m.PaginationRequest) ([]m.Tag, int64, error) {
 	var tags []m.Tag
+	var total int64
 
-	if err := r.db.Find(&tags).Error; err != nil {
-		return nil, err
+	if err := r.db.Model(&m.Tag{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(tags) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.Limit(pagination.Limit).Offset(pagination.Offset()).Find(&tags).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return tags, nil
+	return tags, total, nil
 }
 
 func (r *TagRepository) FindSingle(tag m.Tag) (m.Tag, error) {

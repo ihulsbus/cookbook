@@ -8,7 +8,7 @@ import (
 )
 
 type IngredientRepository interface {
-	FindAll() ([]m.Ingredient, error)
+	FindAll(pagination m.PaginationRequest) ([]m.Ingredient, int64, error)
 	FindSingle(ingredient m.Ingredient) (m.Ingredient, error)
 	FindByName(name string) (m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
@@ -26,20 +26,16 @@ func NewIngredientService(ingredientRepo IngredientRepository) *IngredientServic
 	}
 }
 
-func (s IngredientService) FindAll() ([]m.IngredientDTO, error) {
-	var ingredients []m.Ingredient
-
-	ingredients, err := s.repo.FindAll()
+func (s IngredientService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.IngredientDTO], error) {
+	ingredients, total, err := s.repo.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.IngredientDTO]{}, errors.New("internal server error")
 	}
 
-	return m.Ingredient{}.ConvertAllToDTO(ingredients), nil
+	return m.PaginatedResponse[m.IngredientDTO]{
+		Data:       m.Ingredient{}.ConvertAllToDTO(ingredients),
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 func (s IngredientService) FindSingle(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {

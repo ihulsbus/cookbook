@@ -28,14 +28,15 @@ var (
 
 // ====== CategoryService ======
 
-func (s *CategoryServiceMock) FindAll() ([]models.CategoryDTO, error) {
+func (s *CategoryServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.CategoryDTO], error) {
 	switch category.Name {
 	case "findall":
-		return categories, nil
-	case "notfound":
-		return nil, errors.New("not found")
+		return models.PaginatedResponse[models.CategoryDTO]{
+			Data:       categories,
+			Pagination: models.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(categories))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return models.PaginatedResponse[models.CategoryDTO]{}, errors.New("error")
 	}
 }
 
@@ -94,31 +95,12 @@ func TestCategoryGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(categories)
+	pagination := models.NewPaginationMetadata(1, 25, int64(len(categories)))
+	expectedResponse := models.PaginatedResponse[models.CategoryDTO]{Data: categories, Pagination: pagination}
+	expectedBody, _ := json.Marshal(expectedResponse)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
-}
-
-func TestCategoryGetAll_NotFound(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	categories = append(categories, category)
-	h := NewCategoryHandlers(&CategoryServiceMock{}, &models.LoggerInterfaceMock{})
-
-	category.Name = "notfound"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/category", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no categories found"}`, string(body))
 }
 
 func TestCategoryGetAll_Error(t *testing.T) {

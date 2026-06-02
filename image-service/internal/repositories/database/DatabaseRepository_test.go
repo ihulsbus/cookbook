@@ -72,8 +72,13 @@ func timeFunc() time.Time {
 func TestImageFindAll_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
+	pagination := m.NormalizePagination(1, 25)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "images" WHERE "images"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "entity_type", "entity_id", "size", "type"}).
 			AddRow(
 				image.ID,
@@ -83,38 +88,46 @@ func TestImageFindAll_OK(t *testing.T) {
 				image.Type,
 			))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
+	assert.Len(t, data, 1)
+	assert.Equal(t, int64(1), total)
 }
 
-func TestImageFindAll_NotFoundErr(t *testing.T) {
+func TestImageFindAll_Empty(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
+	pagination := m.NormalizePagination(1, 25)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL`)).
-		WillReturnRows(&sqlmock.Rows{})
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "images" WHERE "images"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
-	result, err := r.FindAll()
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "entity_type", "entity_id", "size", "type"}))
 
-	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
-	assert.Len(t, result, 0)
+	data, total, err := r.FindAll(pagination)
+
+	assert.NoError(t, err)
+	assert.Len(t, data, 0)
+	assert.Equal(t, int64(0), total)
 }
 
 func TestImageFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
+	pagination := m.NormalizePagination(1, 25)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "images" WHERE "images"."deleted_at" IS NULL`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "images" WHERE "images"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
-	assert.Len(t, result, 0)
+	assert.Len(t, data, 0)
+	assert.Equal(t, int64(0), total)
 }
 
 func TestImageFind_OK(t *testing.T) {

@@ -23,24 +23,31 @@ paths:
       summary: Get all recipes
       tags:
         - recipe
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Recipe'
-                  x-stoplight:
-                    id: i7rw87q63m8gg
+                $ref: '#/components/schemas/PaginatedRecipeResponse'
               examples:
                 Example 1:
                   value:
-                    - id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
-                      name: Test
-                      description: test
-                      serving_count: 1
+                    data:
+                      - id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                        name: Test
+                        description: test
+                        serving_count: 1
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -50,7 +57,7 @@ paths:
       operationId: get-all-recipes
       x-stoplight:
         id: x9bcpbqs4cmse
-      description: 'retrieves all recipes known to the api. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Retrieves recipes from the API in a paginated format
       requestBody:
         description: No request body required
         content:
@@ -211,25 +218,32 @@ paths:
       summary: Get all images
       tags:
         - image
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: Returned on a succesful query
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ImageData'
-                  x-stoplight:
-                    id: g6l1fmkugvxyy
+                $ref: '#/components/schemas/PaginatedImageResponse'
               examples:
                 Example 1:
                   value:
-                    - id: 6d279760-11be-4adb-af72-1873cb90dc27
-                      entity_type: recipe
-                      entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
-                      size: 93055
-                      type: image/jpeg
+                    data:
+                      - id: 6d279760-11be-4adb-af72-1873cb90dc27
+                        entity_type: recipe
+                        entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                        size: 93055
+                        type: image/jpeg
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -247,7 +261,7 @@ paths:
       operationId: get-all-images
       x-stoplight:
         id: ljycxo1ieh3yj
-      description: 'returns all images stored in the API. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Returns images stored in the API in a paginated format
       requestBody:
         description: No body required
         content:
@@ -652,22 +666,29 @@ paths:
       summary: Get all tags
       tags:
         - tag
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Tag'
-                  x-stoplight:
-                    id: shgfwpfvfymt0
+                $ref: '#/components/schemas/PaginatedTagResponse'
               examples:
                 Example 1:
                   value:
-                    - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
-                      name: testtag
+                    data:
+                      - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                        name: testtag
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -677,7 +698,7 @@ paths:
       operationId: get-all-tags
       x-stoplight:
         id: 7zno3wnhfucis
-      description: 'Retrieves all tags known in the system. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Retrieves tags known in the system in a paginated format
       requestBody:
         description: No body
         content:
@@ -830,33 +851,42 @@ paths:
       summary: Get all recipe metadata
       tags:
         - metadata
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RecipeMetadata'
+                $ref: '#/components/schemas/PaginatedRecipeMetadataResponse'
               examples:
                 Example 1:
                   value:
-                    - recipe_id: 23582396-12a3-425b-a597-8a22052823da
-                      categories:
-                        - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
-                          name: category
-                      cuisine_type:
-                        id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
-                        name: Italian
-                      tags:
-                        - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
-                          name: testtag
-                      difficulty_level:
-                        id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
-                        level: 1
-                      preparation_time: 45
-                      serving_count: 2
+                    data:
+                      - recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                        categories:
+                          - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                            name: category
+                        cuisine_type:
+                          id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                          name: Italian
+                        tags:
+                          - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                            name: testtag
+                        difficulty_level:
+                          id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                          level: 1
+                        preparation_time: 45
+                        serving_count: 2
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -864,7 +894,7 @@ paths:
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-recipe-metadata
-      description: 'Retrieves all metadata of all recipe known to the api. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Retrieves metadata of all recipes known to the API in a paginated format
       requestBody:
         description: 'No Body. '
         content:
@@ -1087,17 +1117,29 @@ paths:
       summary: Get all categories
       tags:
         - category
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Category'
-                  x-stoplight:
-                    id: oinscbhcnpc7w
+                $ref: '#/components/schemas/PaginatedCategoryResponse'
+              examples:
+                Example 1:
+                  value:
+                    data:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: category
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1107,7 +1149,7 @@ paths:
       operationId: get-all-category
       x-stoplight:
         id: mff4qvq8w7ykb
-      description: 'Retrieves all categories known to the api. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Retrieves categories known to the API in a paginated format
       requestBody:
         description: 'No Body. '
         content:
@@ -1260,22 +1302,29 @@ paths:
       summary: Get all cuisinetypes
       tags:
         - cuisinetype
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/CuisineType'
-                  x-stoplight:
-                    id: yfm7b1s16c6t6
+                $ref: '#/components/schemas/PaginatedCuisineTypeResponse'
               examples:
                 Example 1:
                   value:
-                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
-                      name: Italian
+                    data:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: Italian
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1285,7 +1334,7 @@ paths:
       operationId: get-all-cuisinetype
       x-stoplight:
         id: weslv0rrj8xh0
-      description: 'Get all cuisinetypes known to the API. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Get all cuisinetypes known to the API in a paginated format
       requestBody:
         description: No body
         content:
@@ -1440,22 +1489,29 @@ paths:
       summary: Get all difficultylevels
       tags:
         - difficultylevel
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DifficultyLevel'
-                  x-stoplight:
-                    id: p0cd7rskc6s7y
+                $ref: '#/components/schemas/PaginatedDifficultyLevelResponse'
               examples:
                 Example 1:
                   value:
-                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
-                      level: 1
+                    data:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        level: 1
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1465,7 +1521,7 @@ paths:
       operationId: get-all-dificultylevels
       x-stoplight:
         id: 1hyv7sb1ok9hz
-      description: 'Retrieve all difficultylevels known to the api. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Retrieve all difficultylevels known to the API in a paginated format
       requestBody:
         description: No body
         content:
@@ -1617,22 +1673,29 @@ paths:
   /metadata/preparationtime:
     get:
       summary: Get all preparation times
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PreparationTime'
-                  x-stoplight:
-                    id: r90eo9ovejvsp
+                $ref: '#/components/schemas/PaginatedPreparationTimeResponse'
               examples:
                 Example 1:
                   value:
-                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
-                      duration: 75
+                    data:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        duration: 75
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1642,7 +1705,7 @@ paths:
       operationId: get-all-preparationtime
       x-stoplight:
         id: 2k652220xs12u
-      description: 'Retrieves all preparation times the server knows. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Retrieves all preparation times the server knows in a paginated format
       requestBody:
         description: No body
         content:
@@ -1958,22 +2021,29 @@ paths:
       summary: Get all ingredients
       tags:
         - ingredient
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Ingredient'
-                  x-stoplight:
-                    id: 5awute6tawa2n
+                $ref: '#/components/schemas/PaginatedIngredientResponse'
               examples:
                 Example 1:
                   value:
-                    - id: d95751c7-6cf3-4a24-8e60-620121d7b050
-                      name: Asparagus
+                    data:
+                      - id: d95751c7-6cf3-4a24-8e60-620121d7b050
+                        name: Asparagus
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1983,7 +2053,7 @@ paths:
       operationId: get-all-ingredient
       x-stoplight:
         id: beppedunt2x3u
-      description: 'Get all ingredients known to the API. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Get all ingredients known to the API in a paginated format
       requestBody:
         description: No body
         content:
@@ -2138,23 +2208,30 @@ paths:
       summary: Get all units
       tags:
         - unit
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
       responses:
         '200':
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Unit'
-                  x-stoplight:
-                    id: bj3o75ntjcudn
+                $ref: '#/components/schemas/PaginatedUnitResponse'
               examples:
                 Example 1:
                   value:
-                    - ID: 7a449aa5-cbdc-44a3-ba2c-53db53c7329a
-                      FullName: Tablespoon
-                      ShortName: tbsp
+                    data:
+                      - id: 7a449aa5-cbdc-44a3-ba2c-53db53c7329a
+                        full_name: Tablespoon
+                        short_name: tbsp
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -2164,7 +2241,7 @@ paths:
       operationId: get-all-units
       x-stoplight:
         id: jjakt0nofkpxd
-      description: 'Retrieve all units known to the API. Currently, this endpoint does not support pagination. This will be added in the future'
+      description: Retrieve all units known to the API in a paginated format
       requestBody:
         description: No body
         content:
@@ -3017,12 +3094,164 @@ components:
           preparation_time: 45
           serving_count: 2
       description: Model of metadata associated to a recipe
+    PaginationMetadata:
+      type: object
+      title: PaginationMetadata
+      description: Metadata about a paginated response
+      properties:
+        page:
+          type: integer
+          description: Current page number
+        limit:
+          type: integer
+          description: Number of items per page
+        total:
+          type: integer
+          description: Total number of items
+        total_pages:
+          type: integer
+          description: Total number of pages
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+        has_previous:
+          type: boolean
+          description: Whether there is a previous page
+    PaginatedRecipeResponse:
+      type: object
+      title: PaginatedRecipeResponse
+      description: Paginated list of recipes
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipe'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedImageResponse:
+      type: object
+      title: PaginatedImageResponse
+      description: Paginated list of images
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImageData'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedIngredientResponse:
+      type: object
+      title: PaginatedIngredientResponse
+      description: Paginated list of ingredients
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedUnitResponse:
+      type: object
+      title: PaginatedUnitResponse
+      description: Paginated list of units
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Unit'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedTagResponse:
+      type: object
+      title: PaginatedTagResponse
+      description: Paginated list of tags
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedCategoryResponse:
+      type: object
+      title: PaginatedCategoryResponse
+      description: Paginated list of categories
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedCuisineTypeResponse:
+      type: object
+      title: PaginatedCuisineTypeResponse
+      description: Paginated list of cuisine types
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CuisineType'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedDifficultyLevelResponse:
+      type: object
+      title: PaginatedDifficultyLevelResponse
+      description: Paginated list of difficulty levels
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DifficultyLevel'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedPreparationTimeResponse:
+      type: object
+      title: PaginatedPreparationTimeResponse
+      description: Paginated list of preparation times
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PreparationTime'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedRecipeMetadataResponse:
+      type: object
+      title: PaginatedRecipeMetadataResponse
+      description: Paginated list of recipe metadata
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeMetadata'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
   securitySchemes:
     apiKey_1:
       type: openIdConnect
       openIdConnectUrl: 'https://auth.gourmedy.com/realms/gourmedy/.well-known/openid-configuration'
       description: The API uses bearer tokens through an OIDC provider
   parameters:
+    PageParam:
+      name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+      description: Page number (1-indexed)
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+      description: Number of items per page (max 100)
     EntityID:
       name: EntityID
       in: path

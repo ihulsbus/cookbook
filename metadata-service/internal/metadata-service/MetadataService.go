@@ -203,26 +203,26 @@ func httpServer(ctx context.Context) {
 			readPreparationTime := PreparationTime.Group("")
 			readPreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
 			{
-				readPreparationTime.GET("", c.PreparationTimeHandlers.GetAll)
-				readPreparationTime.GET(":id", c.PreparationTimeHandlers.Get)
+				readPreparationTime.GET("", c.PreparationTimeHandler.GetAll)
+				readPreparationTime.GET(":id", c.PreparationTimeHandler.Get)
 			}
 
 			createPreparationTime := PreparationTime.Group("")
 			createPreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
 			{
-				createPreparationTime.POST("", c.PreparationTimeHandlers.Create)
+				createPreparationTime.POST("", c.PreparationTimeHandler.Create)
 			}
 
 			updatePreparationTime := PreparationTime.Group("")
 			updatePreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
 			{
-				updatePreparationTime.PUT(":id", c.PreparationTimeHandlers.Update)
+				updatePreparationTime.PUT(":id", c.PreparationTimeHandler.Update)
 			}
 
 			deletePreparationTime := PreparationTime.Group("")
 			deletePreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
 			{
-				deletePreparationTime.DELETE(":id", c.PreparationTimeHandlers.Delete)
+				deletePreparationTime.DELETE(":id", c.PreparationTimeHandler.Delete)
 			}
 		}
 

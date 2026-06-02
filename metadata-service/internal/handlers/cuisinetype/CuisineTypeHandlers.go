@@ -7,11 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
 	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type CuisineTypeService interface {
-	FindAll() ([]models.CuisineTypeDTO, error)
+	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.CuisineTypeDTO], error)
 	FindSingle(cuisineTypeDTO models.CuisineTypeDTO) (models.CuisineTypeDTO, error)
 	Create(cuisineTypeDTO models.CuisineTypeDTO) (models.CuisineTypeDTO, error)
 	Update(cuisineTypeDTO models.CuisineTypeDTO) (models.CuisineTypeDTO, error)
@@ -31,16 +32,16 @@ func NewCuisineTypeHandlers(cuisineTypes CuisineTypeService, logger m.LoggerInte
 }
 
 func (h *CuisineTypeHandlers) GetAll(ctx *gin.Context) {
-	cuisineTypeDTO, err := h.cuisineTypeService.FindAll()
+	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusOK, []models.CuisineTypeDTO{})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	cuisineTypeDTO, err := h.cuisineTypeService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, cuisineTypeDTO)

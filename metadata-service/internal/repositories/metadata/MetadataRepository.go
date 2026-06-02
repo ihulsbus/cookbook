@@ -20,18 +20,23 @@ func NewRecipeMetadataRepository(db *gorm.DB) *RecipeMetadataRepository {
 }
 
 // FindAll loads all metadata entries, including associations
-func (r *RecipeMetadataRepository) FindAll() (*[]m.RecipeMetadata, error) {
+func (r *RecipeMetadataRepository) FindAll(pagination m.PaginationRequest) ([]m.RecipeMetadata, int64, error) {
 	var metas []m.RecipeMetadata
+	var total int64
+
+	if err := r.db.Model(&m.RecipeMetadata{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
 	err := r.db.
 		Preload(clause.Associations).
+		Limit(pagination.Limit).Offset(pagination.Offset()).
 		Find(&metas).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	if len(metas) == 0 {
-		return nil, errors.New("not found")
-	}
-	return &metas, nil
+
+	return metas, total, nil
 }
 
 // FindSingle fetches metadata for a given RecipeID (expects meta.RecipeID set)

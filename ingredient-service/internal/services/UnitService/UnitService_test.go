@@ -24,16 +24,14 @@ var (
 
 type UnitRepositoryMock struct{}
 
-func (UnitRepositoryMock) FindAll() ([]m.Unit, error) {
+func (UnitRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.Unit, int64, error) {
 	switch findAllUnit.FullName {
 	case "findall": // OK
-		var units []m.Unit
-		units = append(units, unit)
-		return units, nil
+		return []m.Unit{unit}, 1, nil
 	case "notfound":
-		return nil, errors.New("not found")
+		return nil, 0, errors.New("not found")
 	default: // ERR
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	}
 }
 
@@ -92,11 +90,12 @@ func TestUnitFindAll_OK(t *testing.T) {
 
 	findAllUnit.FullName = "findall"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.Equal(t, "unit", result[0].FullName)
+	assert.IsType(t, m.PaginatedResponse[m.UnitDTO]{}, result)
+	assert.Len(t, result.Data, 1)
+	assert.Equal(t, "unit", result.Data[0].FullName)
 }
 
 func TestUnitFindAll_Err(t *testing.T) {
@@ -104,10 +103,10 @@ func TestUnitFindAll_Err(t *testing.T) {
 
 	findAllUnit.FullName = "error"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
+	assert.Equal(t, m.PaginatedResponse[m.UnitDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
 }
 
@@ -116,11 +115,11 @@ func TestUnitFindAll_NotFound(t *testing.T) {
 
 	findAllUnit.FullName = "notfound"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, m.PaginatedResponse[m.UnitDTO]{}, result)
+	assert.EqualError(t, err, "internal server error")
 }
 
 func TestUnitFindSingle_OK(t *testing.T) {

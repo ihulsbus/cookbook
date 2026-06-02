@@ -8,7 +8,7 @@ import (
 )
 
 type TagRepository interface {
-	FindAll() ([]m.Tag, error)
+	FindAll(pagination m.PaginationRequest) ([]m.Tag, int64, error)
 	FindSingle(tag m.Tag) (m.Tag, error)
 	Create(tag m.Tag) (m.Tag, error)
 	Update(tag m.Tag) (m.Tag, error)
@@ -25,20 +25,17 @@ func NewTagService(tagRepo TagRepository) *TagService {
 	}
 }
 
-func (s TagService) FindAll() ([]m.TagDTO, error) {
+func (s TagService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.TagDTO], error) {
 
-	tags, err := s.repo.FindAll()
+	tags, total, err := s.repo.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.TagDTO]{}, errors.New("internal server error")
 	}
 
-	result := m.Tag{}.ConvertAllToDTO(tags)
-	return result, nil
+	return m.PaginatedResponse[m.TagDTO]{
+		Data:       m.Tag{}.ConvertAllToDTO(tags),
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 func (s TagService) FindSingle(tagDTO m.TagDTO) (m.TagDTO, error) {

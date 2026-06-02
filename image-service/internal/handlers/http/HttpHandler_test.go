@@ -50,14 +50,15 @@ func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
 
-func (s *imgServiceMock) FindAll() ([]m.ImageDataDTO, error) {
+func (s *imgServiceMock) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.ImageDataDTO], error) {
 	switch imgDataDTO.EntityType {
 	case "findall":
-		return imgs, nil
-	case "notfound":
-		return nil, errors.New("not found")
+		return m.PaginatedResponse[m.ImageDataDTO]{
+			Data:       imgs,
+			Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(imgs))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return m.PaginatedResponse[m.ImageDataDTO]{}, errors.New("error")
 	}
 }
 
@@ -118,31 +119,11 @@ func TestImageGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(imgs)
+	pagination := m.NewPaginationMetadata(1, 25, int64(len(imgs)))
+	expectedBody, _ := json.Marshal(m.PaginatedResponse[m.ImageDataDTO]{Data: imgs, Pagination: pagination})
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
-}
-
-func TestImageGetAll_NotFound(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	imgs = append(imgs, imgDataDTO)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
-
-	imgDataDTO.EntityType = "notfound"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.FindAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no images found"}`, string(body))
 }
 
 func TestImageGetAll_Err(t *testing.T) {

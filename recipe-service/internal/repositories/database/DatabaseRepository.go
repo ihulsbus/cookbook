@@ -17,18 +17,20 @@ func NewDatabaseRepository(db *gorm.DB) *DatabaseRepository {
 	}
 }
 
-// FindAll retrieves all recipes from the database and returns them in a slice
-func (r DatabaseRepository) FindAll() ([]m.Recipe, error) {
+// FindAll retrieves a paginated list of recipes from the database
+func (r DatabaseRepository) FindAll(pagination m.PaginationRequest) ([]m.Recipe, int64, error) {
 	var recipes []m.Recipe
+	var total int64
 
-	if err := r.db.Find(&recipes).Error; err != nil {
-		return nil, err
-	}
-	if len(recipes) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.Model(&m.Recipe{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return recipes, nil
+	if err := r.db.Limit(pagination.Limit).Offset(pagination.Offset()).Find(&recipes).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return recipes, total, nil
 }
 
 // Find searches for a specific recipe in the database and returns it when found.

@@ -7,11 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
 	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type DifficultyLevelService interface {
-	FindAll() ([]models.DifficultyLevelDTO, error)
+	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.DifficultyLevelDTO], error)
 	FindSingle(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error)
 	Create(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error)
 	Update(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error)
@@ -31,16 +32,16 @@ func NewDifficultyLevelHandlers(difficultyLevels DifficultyLevelService, logger 
 }
 
 func (h *DifficultyLevelHandlers) GetAll(ctx *gin.Context) {
-	difficultyLevelDTO, err := h.difficultyLevelService.FindAll()
+	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusOK, []models.DifficultyLevelDTO{})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	difficultyLevelDTO, err := h.difficultyLevelService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, difficultyLevelDTO)

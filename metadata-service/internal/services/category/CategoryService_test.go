@@ -22,16 +22,14 @@ var (
 
 type CategoryRepositoryMock struct{}
 
-func (*CategoryRepositoryMock) FindAll() ([]m.Category, error) {
+func (*CategoryRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.Category, int64, error) {
 	switch findAllCategory.Name {
 	case "findall":
 		var categories []m.Category
 		categories = append(categories, findAllCategory)
-		return categories, nil
-	case "not found":
-		return nil, errors.New("not found")
+		return categories, 1, nil
 	default:
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	}
 }
 
@@ -81,33 +79,22 @@ func TestCategoryFindAll_OK(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 	findAllCategory.Name = "findall"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.CategoryDTO{}, result)
-	assert.Len(t, result, 1)
+	assert.IsType(t, m.PaginatedResponse[m.CategoryDTO]{}, result)
+	assert.Len(t, result.Data, 1)
 }
 
 func TestCategoryFindAll_err(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 	findAllCategory.Name = "fail"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
+	assert.Equal(t, m.PaginatedResponse[m.CategoryDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
-}
-
-func TestCategoryFindAll_NotFound(t *testing.T) {
-	s := NewCategoryService(&CategoryRepositoryMock{})
-	findAllCategory.Name = "not found"
-
-	result, err := s.FindAll()
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
 }
 
 func TestCategoryFindSingle_OK(t *testing.T) {

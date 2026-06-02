@@ -8,7 +8,7 @@ import (
 )
 
 type RecipeClient interface {
-	GetAllRecipes() ([]m.RecipeDTO, error)
+	GetAllRecipes(pagination ...m.PaginationRequest) (m.PaginatedResponse[m.RecipeDTO], error)
 }
 
 type CacheService struct {
@@ -39,18 +39,18 @@ func NewCacheService(ctx context.Context, client RecipeClient, logger cache.Logg
 func (s *CacheService) PopulateCache() error {
 	s.logger.Info("populating cache from database")
 
-	recipes, err := s.client.GetAllRecipes()
+	result, err := s.client.GetAllRecipes()
 	if err != nil {
 		return err
 	}
 
-	for _, recipe := range recipes {
+	for _, recipe := range result.Data {
 		if err := s.cache.Put(recipe.ID.String(), recipe); err != nil {
 			s.logger.Errorf("failed to cache recipe %s: %v", recipe.ID, err)
 		}
 	}
 
-	s.logger.Infof("cached %d recipes", len(recipes))
+	s.logger.Infof("cached %d recipes", len(result.Data))
 	return nil
 }
 

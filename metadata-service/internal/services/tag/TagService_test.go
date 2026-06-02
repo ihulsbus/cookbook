@@ -22,16 +22,14 @@ var (
 
 type TagRepositoryMock struct{}
 
-func (*TagRepositoryMock) FindAll() ([]m.Tag, error) {
+func (*TagRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.Tag, int64, error) {
 	switch findAllTag.Name {
 	case "findall":
 		var tags []m.Tag
 		tags = append(tags, findAllTag)
-		return tags, nil
-	case "not found":
-		return nil, errors.New("not found")
+		return tags, 1, nil
 	default:
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	}
 }
 
@@ -79,33 +77,22 @@ func TestTagFindAll_OK(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 	findAllTag.Name = "findall"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.TagDTO{}, result)
-	assert.Len(t, result, 1)
+	assert.IsType(t, m.PaginatedResponse[m.TagDTO]{}, result)
+	assert.Len(t, result.Data, 1)
 }
 
 func TestTagFindAll_Err(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 	findAllTag.Name = "fail"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
+	assert.Equal(t, m.PaginatedResponse[m.TagDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
-}
-
-func TestTagFindAll_NotFound(t *testing.T) {
-	s := NewTagService(&TagRepositoryMock{})
-	findAllTag.Name = "not found"
-
-	result, err := s.FindAll()
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
 }
 
 func TestTagFindSingle_OK(t *testing.T) {

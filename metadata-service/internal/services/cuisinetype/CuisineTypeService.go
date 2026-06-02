@@ -8,7 +8,7 @@ import (
 )
 
 type CuisineTypeRepository interface {
-	FindAll() ([]m.CuisineType, error)
+	FindAll(pagination m.PaginationRequest) ([]m.CuisineType, int64, error)
 	FindSingle(cuisineType m.CuisineType) (m.CuisineType, error)
 	Create(cuisineType m.CuisineType) (m.CuisineType, error)
 	Update(cuisineType m.CuisineType) (m.CuisineType, error)
@@ -25,20 +25,17 @@ func NewCuisineTypeService(cuisineTypeRepo CuisineTypeRepository) *CuisineTypeSe
 	}
 }
 
-func (s CuisineTypeService) FindAll() ([]m.CuisineTypeDTO, error) {
+func (s CuisineTypeService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.CuisineTypeDTO], error) {
 
-	cuisineTypes, err := s.repo.FindAll()
+	cuisineTypes, total, err := s.repo.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.CuisineTypeDTO]{}, errors.New("internal server error")
 	}
 
-	result := m.CuisineType{}.ConvertAllToDTO(cuisineTypes)
-	return result, nil
+	return m.PaginatedResponse[m.CuisineTypeDTO]{
+		Data:       m.CuisineType{}.ConvertAllToDTO(cuisineTypes),
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 func (s CuisineTypeService) FindSingle(cuisineTypeDTO m.CuisineTypeDTO) (m.CuisineTypeDTO, error) {

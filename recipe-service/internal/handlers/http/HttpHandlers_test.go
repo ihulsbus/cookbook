@@ -30,14 +30,15 @@ var (
 
 // ====== RecipeService ======
 
-func (s *RecipeServiceMock) FindAll() ([]m.RecipeDTO, error) {
+func (s *RecipeServiceMock) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.RecipeDTO], error) {
 	switch recipe.Name {
 	case "findall":
-		return recipes, nil
-	case "notfound":
-		return nil, errors.New("not found")
+		return m.PaginatedResponse[m.RecipeDTO]{
+			Data:       recipes,
+			Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(recipes))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return m.PaginatedResponse[m.RecipeDTO]{}, errors.New("error")
 	}
 }
 
@@ -105,31 +106,11 @@ func TestRecipeGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(recipes)
+	pagination := m.NewPaginationMetadata(1, 25, int64(len(recipes)))
+	expectedBody, _ := json.Marshal(m.PaginatedResponse[m.RecipeDTO]{Data: recipes, Pagination: pagination})
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
-}
-
-func TestRecipeGetAll_NotFound(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	recipes = append(recipes, recipe)
-	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
-
-	recipe.Name = "notfound"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no recipes found"}`, string(body))
 }
 
 func TestRecipeGetAll_Err(t *testing.T) {

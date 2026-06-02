@@ -17,18 +17,19 @@ func NewIngredientRepository(db *gorm.DB) *IngredientRepository {
 	}
 }
 
-func (r IngredientRepository) FindAll() ([]m.Ingredient, error) {
+func (r IngredientRepository) FindAll(pagination m.PaginationRequest) ([]m.Ingredient, int64, error) {
 	var ingredients []m.Ingredient
+	var total int64
 
-	if err := r.db.Find(&ingredients).Error; err != nil {
-		return nil, err
+	if err := r.db.Model(&m.Ingredient{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(ingredients) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.Limit(pagination.Limit).Offset(pagination.Offset()).Find(&ingredients).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return ingredients, nil
+	return ingredients, total, nil
 }
 
 func (r IngredientRepository) FindSingle(ingredient m.Ingredient) (m.Ingredient, error) {

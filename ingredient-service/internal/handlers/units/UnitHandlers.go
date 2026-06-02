@@ -7,11 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
 	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type UnitService interface {
-	FindAll() ([]models.UnitDTO, error)
+	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.UnitDTO], error)
 	FindSingle(unitDTO models.UnitDTO) (models.UnitDTO, error)
 	Create(unitDTO models.UnitDTO) (models.UnitDTO, error)
 	Update(unitDTO models.UnitDTO) (models.UnitDTO, error)
@@ -32,19 +33,16 @@ func NewUnitHandlers(units UnitService, logger m.LoggerInterface) *UnitHandlers 
 
 // GetAll Get all units
 func (h UnitHandlers) GetAll(ctx *gin.Context) {
-	var unitDTO []models.UnitDTO
-	var err error
-
-	unitDTO, err = h.unitService.FindAll()
+	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusOK, []models.UnitDTO{})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	unitDTO, err := h.unitService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, unitDTO)

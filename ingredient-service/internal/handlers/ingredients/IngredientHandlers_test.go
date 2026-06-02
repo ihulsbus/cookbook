@@ -33,15 +33,16 @@ var (
 	}
 )
 
-func (s *IngredientServiceMock) FindAll() ([]models.IngredientDTO, error) {
+func (s *IngredientServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.IngredientDTO], error) {
 	switch ingredient.Name {
 	case "findall":
 		ingredients = append(ingredients, ingredient)
-		return ingredients, nil
-	case "notfound":
-		return nil, errors.New("not found")
+		return models.PaginatedResponse[models.IngredientDTO]{
+			Data:       ingredients,
+			Pagination: models.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(ingredients))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return models.PaginatedResponse[models.IngredientDTO]{}, errors.New("error")
 	}
 }
 
@@ -91,6 +92,7 @@ func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 // ==================================================================================================
 func TestIngredientGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	ingredients = nil
 	ingredients = append(ingredients, ingredient)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
@@ -106,36 +108,15 @@ func TestIngredientGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(ingredients)
+	pagination := models.NewPaginationMetadata(1, 25, int64(len(ingredients)))
+	expectedBody, _ := json.Marshal(models.PaginatedResponse[models.IngredientDTO]{Data: ingredients, Pagination: pagination})
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
 }
 
-func TestIngredientGetAll_NotFound(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	ingredients = append(ingredients, ingredient)
-	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
-
-	ingredient.Name = "notfound"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredients", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no ingredients found"}`, string(body))
-}
-
 func TestIngredientGetAll_Err(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	ingredients = append(ingredients, ingredient)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
 	ingredient.Name = "error"

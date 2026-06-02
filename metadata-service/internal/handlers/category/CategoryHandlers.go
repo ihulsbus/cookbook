@@ -7,11 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
 	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type CategoryService interface {
-	FindAll() ([]models.CategoryDTO, error)
+	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.CategoryDTO], error)
 	FindSingle(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
 	Create(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
 	Update(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
@@ -31,17 +32,16 @@ func NewCategoryHandlers(categories CategoryService, logger m.LoggerInterface) *
 }
 
 func (h *CategoryHandlers) GetAll(ctx *gin.Context) {
-
-	categoryDTO, err := h.categoryService.FindAll()
+	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusOK, []models.CategoryDTO{})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	categoryDTO, err := h.categoryService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, categoryDTO)

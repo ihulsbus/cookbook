@@ -24,17 +24,46 @@ func TestTagFindAll_OK(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(tag.ID, tag.Name))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
+	assert.Equal(t, int64(1), total)
+	assert.Len(t, data, 1)
 
-	if result[0].Name != tag.Name {
-		t.Errorf("expected tag name %v, but got %v", tag.Name, result[0].Name)
+	if data[0].Name != tag.Name {
+		t.Errorf("expected tag name %v, but got %v", tag.Name, data[0].Name)
 	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestTagFindAll_Empty(t *testing.T) {
+	db, mock := co.NewMockDatabase(t)
+	r := NewTagRepository(db)
+
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+
+	data, total, err := r.FindAll(pagination)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), total)
+	assert.Len(t, data, 0)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %v", err)
@@ -45,13 +74,16 @@ func TestTagFindAll_Err(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewTagRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "tags" WHERE "tags"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.Error(t, err)
-	assert.Len(t, result, 0)
+	assert.Equal(t, int64(0), total)
+	assert.Len(t, data, 0)
 	assert.EqualError(t, err, "error")
 }
 

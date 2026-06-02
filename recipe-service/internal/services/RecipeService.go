@@ -8,7 +8,7 @@ import (
 )
 
 type RecipeRepository interface {
-	FindAll() ([]m.Recipe, error)
+	FindAll(pagination m.PaginationRequest) ([]m.Recipe, int64, error)
 	FindSingle(recipe m.Recipe) (m.Recipe, error)
 	Create(recipe m.Recipe) (m.Recipe, error)
 	Update(recipe m.Recipe) (m.Recipe, error)
@@ -36,21 +36,17 @@ func NewRecipeService(recipeRepo RecipeRepository, rabbitMQRepo RabbitMQReposito
 	}
 }
 
-// Find contains the business logic to get all recipes
-func (s RecipeService) FindAll() ([]m.RecipeDTO, error) {
-	var recipes []m.Recipe
-
-	recipes, err := s.recipe.FindAll()
+// FindAll contains the business logic to get all recipes
+func (s RecipeService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.RecipeDTO], error) {
+	recipes, total, err := s.recipe.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.RecipeDTO]{}, errors.New("internal server error")
 	}
 
-	return m.Recipe{}.ConvertAllToDTO(recipes), nil
+	return m.PaginatedResponse[m.RecipeDTO]{
+		Data:       m.Recipe{}.ConvertAllToDTO(recipes),
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 // Find contains the business logic to get a specific recipe

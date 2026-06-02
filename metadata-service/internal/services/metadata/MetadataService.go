@@ -9,7 +9,7 @@ import (
 )
 
 type MetadataRepository interface {
-	FindAll() (*[]m.RecipeMetadata, error)
+	FindAll(pagination m.PaginationRequest) ([]m.RecipeMetadata, int64, error)
 	FindSingle(recipeID uuid.UUID) (*m.RecipeMetadata, error)
 	Create(meta *m.RecipeMetadata) (*m.RecipeMetadata, error)
 	Update(meta *m.RecipeMetadata) (*m.RecipeMetadata, error)
@@ -33,17 +33,17 @@ func NewMetadataService(metadataRepo MetadataRepository, recipe RecipeRepository
 	}
 }
 
-func (s *MetadataService) FindAll() (*[]m.RecipeMetadataDTO, error) {
-	var metadataResult []m.RecipeMetadataDTO
+func (s *MetadataService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.RecipeMetadataDTO], error) {
 
-	result, err := s.repo.FindAll()
+	result, total, err := s.repo.FindAll(pagination)
 	if err != nil {
-		return nil, err
+		return m.PaginatedResponse[m.RecipeMetadataDTO]{}, errors.New("internal server error")
 	}
 
-	metadataResult = m.RecipeMetadata{}.ConvertAllToDTO(*result)
-
-	return &metadataResult, nil
+	return m.PaginatedResponse[m.RecipeMetadataDTO]{
+		Data:       m.RecipeMetadata{}.ConvertAllToDTO(result),
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 func (s *MetadataService) Find(recipeID uuid.UUID) (*m.RecipeMetadataDTO, error) {

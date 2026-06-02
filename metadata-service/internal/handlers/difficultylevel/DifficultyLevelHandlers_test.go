@@ -28,14 +28,15 @@ var (
 
 // ====== DifficultyLevelService ======
 
-func (s *DifficultyLevelServiceMock) FindAll() ([]models.DifficultyLevelDTO, error) {
+func (s *DifficultyLevelServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.DifficultyLevelDTO], error) {
 	switch difficultyLevel.Level {
 	case 1:
-		return difficultyLevels, nil
-	case 2:
-		return nil, errors.New("not found")
+		return models.PaginatedResponse[models.DifficultyLevelDTO]{
+			Data:       difficultyLevels,
+			Pagination: models.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(difficultyLevels))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return models.PaginatedResponse[models.DifficultyLevelDTO]{}, errors.New("error")
 	}
 }
 
@@ -93,30 +94,12 @@ func TestDifficultyLevelGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(difficultyLevels)
+	pagination := models.NewPaginationMetadata(1, 25, int64(len(difficultyLevels)))
+	expectedResponse := models.PaginatedResponse[models.DifficultyLevelDTO]{Data: difficultyLevels, Pagination: pagination}
+	expectedBody, _ := json.Marshal(expectedResponse)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
-}
-
-func TestDifficultyLevelGetAll_NotFound(t *testing.T) {
-	difficultyLevels = append(difficultyLevels, difficultyLevel)
-	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
-
-	difficultyLevel.Level = 2
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no difficultyLevels found"}`, string(body))
 }
 
 func TestDifficultyLevelGetAll_Error(t *testing.T) {

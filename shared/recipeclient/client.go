@@ -33,31 +33,63 @@ func NewRecipeAPIClient(baseURL string, httpClient HttpClient) (*RecipeAPIClient
 	}, nil
 }
 
-// GetAllRecipes fetches all recipes from the recipe service.
-func (c *RecipeAPIClient) GetAllRecipes() ([]m.RecipeDTO, error) {
-	url := fmt.Sprintf("%s/recipe", c.BaseURL)
+func (c *RecipeAPIClient) fetchPage(page, limit int) (m.PaginatedResponse[m.RecipeDTO], error) {
+	url := fmt.Sprintf("%s/recipe?page=%d&limit=%d", c.BaseURL, page, limit)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
+		return m.PaginatedResponse[m.RecipeDTO]{}, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	resp, err := c.HTTPClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
+		return m.PaginatedResponse[m.RecipeDTO]{}, fmt.Errorf("HTTP request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("unexpected response status: %d, body: %s", resp.StatusCode, body)
+		return m.PaginatedResponse[m.RecipeDTO]{}, fmt.Errorf("unexpected response status: %d, body: %s", resp.StatusCode, body)
 	}
 
-	var recipes []m.RecipeDTO
-	if err := json.NewDecoder(resp.Body).Decode(&recipes); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	var result m.PaginatedResponse[m.RecipeDTO]
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return m.PaginatedResponse[m.RecipeDTO]{}, fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return recipes, nil
+	return result, nil
+}
+
+// GetAllRecipes fetches recipes from the recipe service.
+// If no pagination is provided, all recipes are fetched across all pages.
+// If a PaginationRequest is provided, only that specific page is returned.
+func (c *RecipeAPIClient) GetAllRecipes(pagination ...m.PaginationRequest) (m.PaginatedResponse[m.RecipeDTO], error) {
+	if len(pagination) > 0 {
+		p := pagination[0]
+		return c.fetchPage(p.Page, p.Limit)
+	}
+
+	const maxLimit = 100
+	var allRecipes []m.RecipeDTO
+	var lastMeta m.PaginationMetadata
+	page := 1
+
+	for {
+		result, err := c.fetchPage(page, maxLimit)
+		if err != nil {
+			return m.PaginatedResponse[m.RecipeDTO]{}, err
+		}
+		allRecipes = append(allRecipes, result.Data...)
+		lastMeta = result.Pagination
+		if !result.Pagination.HasNext {
+			break
+		}
+		page++
+	}
+
+	return m.PaginatedResponse[m.RecipeDTO]{
+		Data:       allRecipes,
+		Pagination: lastMeta,
+	}, nil
 }
 
 // RecipeExists checks if a recipe exists by its ID.

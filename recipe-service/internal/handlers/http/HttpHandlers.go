@@ -7,11 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
 	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type RecipeService interface {
-	FindAll() ([]models.RecipeDTO, error)
+	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.RecipeDTO], error)
 	FindSingle(recipe models.RecipeDTO) (models.RecipeDTO, error)
 	Create(recipe models.RecipeDTO) (models.RecipeDTO, error)
 	Update(recipe models.RecipeDTO) (models.RecipeDTO, error)
@@ -31,17 +32,16 @@ func NewHttpHandlers(recipes RecipeService, logger m.LoggerInterface) *HttpHandl
 }
 
 func (h HttpHandlers) GetAll(ctx *gin.Context) {
-
-	recipeDTO, err := h.recipeService.FindAll()
+	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusOK, []m.RecipeDTO{})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	recipeDTO, err := h.recipeService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, recipeDTO)

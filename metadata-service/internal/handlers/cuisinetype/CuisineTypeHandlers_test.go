@@ -28,14 +28,15 @@ var (
 
 // ====== CuisineTypeService ======
 
-func (s *CuisineTypeServiceMock) FindAll() ([]models.CuisineTypeDTO, error) {
+func (s *CuisineTypeServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.CuisineTypeDTO], error) {
 	switch cuisineType.Name {
 	case "findall":
-		return cuisineTypes, nil
-	case "notfound":
-		return nil, errors.New("not found")
+		return models.PaginatedResponse[models.CuisineTypeDTO]{
+			Data:       cuisineTypes,
+			Pagination: models.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(cuisineTypes))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return models.PaginatedResponse[models.CuisineTypeDTO]{}, errors.New("error")
 	}
 }
 
@@ -93,30 +94,12 @@ func TestCuisineTypeGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(cuisineTypes)
+	pagination := models.NewPaginationMetadata(1, 25, int64(len(cuisineTypes)))
+	expectedResponse := models.PaginatedResponse[models.CuisineTypeDTO]{Data: cuisineTypes, Pagination: pagination}
+	expectedBody, _ := json.Marshal(expectedResponse)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
-}
-
-func TestCuisineTypeGetAll_NotFound(t *testing.T) {
-	cuisineTypes = append(cuisineTypes, cuisineType)
-	h := NewCuisineTypeHandlers(&CuisineTypeServiceMock{}, &models.LoggerInterfaceMock{})
-
-	cuisineType.Name = "notfound"
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/cuisineType", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no cuisineTypes found"}`, string(body))
 }
 
 func TestCuisineTypeGetAll_Error(t *testing.T) {

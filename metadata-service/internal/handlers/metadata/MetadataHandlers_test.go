@@ -37,15 +37,16 @@ var (
 
 // ====== MetadataService ======
 
-func (s *MetadataServiceMock) FindAll() (*[]models.RecipeMetadataDTO, error) {
+func (s *MetadataServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.RecipeMetadataDTO], error) {
 	switch metadata.ServingCount {
 	case 1: // find all
 		metadataArray := []models.RecipeMetadataDTO{metadata}
-		return &metadataArray, nil
-	case 0: // not found
-		return nil, errors.New("not found")
+		return models.PaginatedResponse[models.RecipeMetadataDTO]{
+			Data:       metadataArray,
+			Pagination: models.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(metadataArray))),
+		}, nil
 	default:
-		return nil, errors.New("error")
+		return models.PaginatedResponse[models.RecipeMetadataDTO]{}, errors.New("error")
 	}
 }
 
@@ -104,30 +105,12 @@ func TestMetadataGetAll_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	expectedBody, _ := json.Marshal(metadataArray)
+	pagination := models.NewPaginationMetadata(1, 25, int64(len(metadataArray)))
+	expectedResponse := models.PaginatedResponse[models.RecipeMetadataDTO]{Data: metadataArray, Pagination: pagination}
+	expectedBody, _ := json.Marshal(expectedResponse)
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, expectedBody, body)
-}
-
-func TestMetadataGetAll_NotFound(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	h := NewMetadataHandlers(&MetadataServiceMock{}, &models.LoggerInterfaceMock{})
-
-	metadata.ServingCount = 0
-
-	req := httptest.NewRequest("GET", "http://example.com/api/v2/metadata", nil)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
-
-	h.GetAll(c)
-
-	resp := w.Result()
-	body, _ := io.ReadAll(resp.Body)
-
-	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-	assert.Equal(t, `{"error":"no metadata for recipes found"}`, string(body))
 }
 
 func TestMetadataGetAll_Error(t *testing.T) {

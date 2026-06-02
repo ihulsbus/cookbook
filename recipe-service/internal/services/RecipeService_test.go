@@ -25,19 +25,28 @@ var (
 )
 
 type RecipeRepositoryMock struct{}
+type RabbitMQRepositoryMock struct{}
+type LoggerMock struct{}
 
-func (RecipeRepositoryMock) FindAll() ([]m.Recipe, error) {
+func (RecipeRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.Recipe, int64, error) {
 	switch findAllRecipe.Name {
 	case "findall":
-		var recipes []m.Recipe
-		recipes = append(recipes, recipe)
-		return recipes, nil
+		return []m.Recipe{recipe}, 1, nil
 	case "notfound":
-		return nil, errors.New("not found")
+		return nil, 0, errors.New("not found")
 	default:
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	}
 }
+
+func (RabbitMQRepositoryMock) RecipeCreatedEvent(r m.Recipe) error   { return nil }
+func (RabbitMQRepositoryMock) RecipeUpdatedEvent(r m.Recipe) error   { return nil }
+func (RabbitMQRepositoryMock) RecipeDeletedEvent(id uuid.UUID) error { return nil }
+
+func (LoggerMock) Debugf(format string, args ...interface{}) {}
+func (LoggerMock) Infof(format string, args ...interface{})  {}
+func (LoggerMock) Warnf(format string, args ...interface{})  {}
+func (LoggerMock) Errorf(format string, args ...interface{}) {}
 
 func (RecipeRepositoryMock) FindSingle(recipeInput m.Recipe) (m.Recipe, error) {
 	switch recipeInput.Name {
@@ -86,43 +95,43 @@ func (RecipeRepositoryMock) Delete(recipeInput m.Recipe) error {
 }
 
 func TestRecipeFindAll_OK(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	findAllRecipe.Name = "findall"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.IsType(t, []m.RecipeDTO{}, result)
-	assert.Len(t, result, 1)
+	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
+	assert.Len(t, result.Data, 1)
 }
 
 func TestRecipeFindAll_Err(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	findAllRecipe.Name = "error"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
+	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
 }
 
 func TestRecipeFindAll_NotFound(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	findAllRecipe.Name = "notfound"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
+	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
+	assert.EqualError(t, err, "internal server error")
 }
 
 func TestRecipeFindSingle_OK(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:   recipe.ID,
@@ -137,7 +146,7 @@ func TestRecipeFindSingle_OK(t *testing.T) {
 }
 
 func TestRecipeFindSingle_Err(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:   recipe.ID,
@@ -151,7 +160,7 @@ func TestRecipeFindSingle_Err(t *testing.T) {
 }
 
 func TestRecipeFindSingle_NotFound(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:   recipe.ID,
@@ -165,7 +174,7 @@ func TestRecipeFindSingle_NotFound(t *testing.T) {
 }
 
 func TestRecipeCreate_OK(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		Name:         "create",
@@ -181,7 +190,7 @@ func TestRecipeCreate_OK(t *testing.T) {
 }
 
 func TestRecipeCreate_IDErr(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:   recipe.ID,
@@ -195,7 +204,7 @@ func TestRecipeCreate_IDErr(t *testing.T) {
 }
 
 func TestRecipeCreate_NoName(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		Name: "",
@@ -208,7 +217,7 @@ func TestRecipeCreate_NoName(t *testing.T) {
 }
 
 func TestRecipeCreate_NoDescription(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		Name:        recipe.Name,
@@ -222,7 +231,7 @@ func TestRecipeCreate_NoDescription(t *testing.T) {
 }
 
 func TestRecipeCreate_NoServingCount(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		Name:         recipe.Name,
@@ -237,7 +246,7 @@ func TestRecipeCreate_NoServingCount(t *testing.T) {
 }
 
 func TestRecipeCreate_CreateErr(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		Name:         "error",
@@ -252,7 +261,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 }
 
 func TestRecipeUpdate_Ok(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:           recipe.ID,
@@ -271,7 +280,7 @@ func TestRecipeUpdate_Ok(t *testing.T) {
 }
 
 func TestRecipeUpdate_NoNameErr(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:           recipe.ID,
@@ -286,7 +295,7 @@ func TestRecipeUpdate_NoNameErr(t *testing.T) {
 }
 
 func TestRecipeUpdate_NoDescription(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:           recipe.ID,
@@ -301,7 +310,7 @@ func TestRecipeUpdate_NoDescription(t *testing.T) {
 }
 
 func TestRecipeUpdate_NoServingCount(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:           recipe.ID,
@@ -316,7 +325,7 @@ func TestRecipeUpdate_NoServingCount(t *testing.T) {
 }
 
 func TestRecipeUpdate_FindErr(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:           recipe.ID,
@@ -332,7 +341,7 @@ func TestRecipeUpdate_FindErr(t *testing.T) {
 }
 
 func TestRecipeUpdate_UpdateErr(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:           recipe.ID,
@@ -348,7 +357,7 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 }
 
 func TestRecipeDelete_Ok(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:   recipe.ID,
@@ -360,7 +369,7 @@ func TestRecipeDelete_Ok(t *testing.T) {
 }
 
 func TestRecipeDelete_DeleteErr(t *testing.T) {
-	s := NewRecipeService(&RecipeRepositoryMock{})
+	s := NewRecipeService(&RecipeRepositoryMock{}, &RabbitMQRepositoryMock{}, &LoggerMock{})
 
 	recipeDTO := m.RecipeDTO{
 		ID:   recipe.ID,

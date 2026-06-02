@@ -28,9 +28,9 @@ type mockRecipeClient struct {
 	mock.Mock
 }
 
-func (mr *mockRecipeClient) GetAllRecipes() ([]m.RecipeDTO, error) {
+func (mr *mockRecipeClient) GetAllRecipes(pagination ...m.PaginationRequest) (m.PaginatedResponse[m.RecipeDTO], error) {
 	args := mr.Called()
-	return args.Get(0).([]m.RecipeDTO), args.Error(1)
+	return args.Get(0).(m.PaginatedResponse[m.RecipeDTO]), args.Error(1)
 }
 
 type mockLogger struct {
@@ -87,18 +87,18 @@ func (s *testCacheService) RemoveRecipe(id string) error {
 func (s *testCacheService) PopulateCache() error {
 	s.logger.Info("populating cache from database")
 
-	recipes, err := s.client.GetAllRecipes()
+	result, err := s.client.GetAllRecipes()
 	if err != nil {
 		return err
 	}
 
-	for _, recipe := range recipes {
+	for _, recipe := range result.Data {
 		if err := s.cache.Put(recipe.ID.String(), recipe); err != nil {
 			s.logger.Errorf("failed to cache recipe %s: %v", recipe.ID, err)
 		}
 	}
 
-	s.logger.Infof("cached %d recipes", len(recipes))
+	s.logger.Infof("cached %d recipes", len(result.Data))
 	return nil
 }
 
@@ -160,7 +160,7 @@ func TestPopulateCache(t *testing.T) {
 		{ID: uuid.MustParse("00000000-0000-0000-0000-000000000002")},
 	}
 
-	mr.On("GetAllRecipes").Return(recipes, nil)
+	mr.On("GetAllRecipes").Return(m.PaginatedResponse[m.RecipeDTO]{Data: recipes}, nil)
 	mc.On("Put", recipes[0].ID.String(), recipes[0]).Return(nil)
 	mc.On("Put", recipes[1].ID.String(), recipes[1]).Return(nil)
 	ml.On("Info", mock.Anything).Return()
@@ -178,7 +178,7 @@ func TestPopulateCache_ClientError(t *testing.T) {
 	mr := new(mockRecipeClient)
 	ml := new(mockLogger)
 
-	mr.On("GetAllRecipes").Return([]m.RecipeDTO{}, errors.New("client error"))
+	mr.On("GetAllRecipes").Return(m.PaginatedResponse[m.RecipeDTO]{}, errors.New("client error"))
 	ml.On("Info", mock.Anything).Return()
 
 	svc := &testCacheService{cache: mc, client: mr, logger: ml}
@@ -198,7 +198,7 @@ func TestPopulateCache_PartialCacheError(t *testing.T) {
 		{ID: uuid.MustParse("00000000-0000-0000-0000-000000000002")},
 	}
 
-	mr.On("GetAllRecipes").Return(recipes, nil)
+	mr.On("GetAllRecipes").Return(m.PaginatedResponse[m.RecipeDTO]{Data: recipes}, nil)
 	mc.On("Put", recipes[0].ID.String(), recipes[0]).Return(errors.New("cache error"))
 	mc.On("Put", recipes[1].ID.String(), recipes[1]).Return(nil)
 	ml.On("Info", mock.Anything).Return()

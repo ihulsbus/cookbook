@@ -16,6 +16,7 @@ import (
 	cuh "metadata-service/internal/handlers/cuisinetype"
 	dh "metadata-service/internal/handlers/difficultylevel"
 	mh "metadata-service/internal/handlers/metadata"
+	ph "metadata-service/internal/handlers/preparationtimes"
 	sh "metadata-service/internal/handlers/search"
 	th "metadata-service/internal/handlers/tag"
 
@@ -23,9 +24,11 @@ import (
 	cur "metadata-service/internal/repositories/cuisinetype"
 	dr "metadata-service/internal/repositories/difficultylevel"
 	mr "metadata-service/internal/repositories/metadata"
+	pr "metadata-service/internal/repositories/preparationtime"
 	sr "metadata-service/internal/repositories/search"
 	tr "metadata-service/internal/repositories/tag"
 
+	ps "metadata-service/internal/services/PreparationTimes"
 	cs "metadata-service/internal/services/category"
 	cus "metadata-service/internal/services/cuisinetype"
 	ds "metadata-service/internal/services/difficultylevel"
@@ -70,6 +73,7 @@ var (
 	SearchRepository          *sr.SearchRepository
 	TagRepository             *tr.TagRepository
 	MetadataRepository        *mr.RecipeMetadataRepository
+	PreparationRepository     *pr.PreparationTimeRepository
 
 	// Services
 	CategoryService        *cs.CategoryService
@@ -79,6 +83,7 @@ var (
 	TagService             *ts.TagService
 	MetadataService        *ms.MetadataService
 	CacheService           *chs.CacheService
+	PreparationTimeService *ps.PreparationTime
 
 	// Handlers
 	CategoryHandlers        *ch.CategoryHandlers
@@ -89,6 +94,7 @@ var (
 	MetadataHandlers        *mh.MetadataHandlers
 	HealthHandler           *healthh.Handlers
 	RabbitMQHandler         *rh.RabbitMQHandler
+	PreparationTimeHandler  *ph.PreparationTime
 )
 
 func init() {
@@ -142,6 +148,7 @@ func init() {
 	SearchRepository = sr.NewSearchRepository(DatabaseClient)
 	TagRepository = tr.NewTagRepository(DatabaseClient)
 	MetadataRepository = mr.NewRecipeMetadataRepository(DatabaseClient)
+	PreparationRepository = pr.NewPreparationTimeRepository(DatabaseClient)
 
 	// Init services
 	CategoryService = cs.NewCategoryService(CategoryRepository)
@@ -150,6 +157,7 @@ func init() {
 	SearchService = ss.NewSearchService(SearchRepository)
 	TagService = ts.NewTagService(TagRepository)
 	MetadataService = ms.NewMetadataService(MetadataRepository, RecipeClient)
+	PreparationTimeService = ps.NewPreparationTimeService(PreparationRepository)
 	CacheService, err = chs.NewCacheService(Ctx, RecipeClient, Logger, Configuration.Global.ListenPort+1000)
 	if err != nil {
 		Logger.Fatalf("Error setting up cache: %v", err)
@@ -162,6 +170,7 @@ func init() {
 	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
 	TagHandlers = th.NewTagHandlers(TagService, Logger)
 	MetadataHandlers = mh.NewMetadataHandlers(MetadataService, Logger)
+	PreparationTimeHandler = ph.NewPreparationTimeHandlers(PreparationTimeService, Logger)
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 	RabbitMQHandler, err = rh.NewRabbitMQHandler(CacheService, &Ctx, Logger)
 	if err != nil {

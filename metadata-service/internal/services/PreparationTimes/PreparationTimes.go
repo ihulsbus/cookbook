@@ -8,39 +8,37 @@ import (
 )
 
 type PreparationTimeRepository interface {
-	FindAll() ([]m.PreparationTime, error)
+	FindAll(pagination m.PaginationRequest) ([]m.PreparationTime, int64, error)
 	FindSingle(preparationTime m.PreparationTime) (m.PreparationTime, error)
 	Create(preparationTime m.PreparationTime) (m.PreparationTime, error)
 	Update(preparationTime m.PreparationTime) (m.PreparationTime, error)
 	Delete(preparationTime m.PreparationTime) error
 }
-type PreparationTimeService struct {
+type PreparationTime struct {
 	repo PreparationTimeRepository
 }
 
-// NewPreparationTimeService creates a new PreparationTimeService instance
-func NewPreparationTimeService(preparationTimeRepo PreparationTimeRepository) *PreparationTimeService {
-	return &PreparationTimeService{
+// NewPreparationTimeService creates a new PreparationTime instance
+func NewPreparationTimeService(preparationTimeRepo PreparationTimeRepository) *PreparationTime {
+	return &PreparationTime{
 		repo: preparationTimeRepo,
 	}
 }
 
-func (s PreparationTimeService) FindAll() ([]m.PreparationTime, error) {
+func (s PreparationTime) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.PreparationTime], error) {
 
-	preparationTimes, err := s.repo.FindAll()
+	preparationTimes, total, err := s.repo.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.PreparationTime]{}, errors.New("internal server error")
 	}
 
-	return preparationTimes, nil
+	return m.PaginatedResponse[m.PreparationTime]{
+		Data:       preparationTimes,
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
-func (s PreparationTimeService) FindSingle(preparationTime m.PreparationTime) (m.PreparationTime, error) {
+func (s PreparationTime) FindSingle(preparationTime m.PreparationTime) (m.PreparationTime, error) {
 
 	preparationTime, err := s.repo.FindSingle(preparationTime)
 	if err != nil {
@@ -55,7 +53,7 @@ func (s PreparationTimeService) FindSingle(preparationTime m.PreparationTime) (m
 	return preparationTime, nil
 }
 
-func (s PreparationTimeService) Create(preparationTime m.PreparationTime) (m.PreparationTime, error) {
+func (s PreparationTime) Create(preparationTime m.PreparationTime) (m.PreparationTime, error) {
 
 	if preparationTime.ID != uuid.Nil {
 		return m.PreparationTime{}, errors.New("existing id on new element is not allowed")
@@ -73,7 +71,7 @@ func (s PreparationTimeService) Create(preparationTime m.PreparationTime) (m.Pre
 	return created, nil
 }
 
-func (s PreparationTimeService) Update(preparationTime m.PreparationTime) (m.PreparationTime, error) {
+func (s PreparationTime) Update(preparationTime m.PreparationTime) (m.PreparationTime, error) {
 
 	if preparationTime.Duration == 0 {
 		return m.PreparationTime{}, errors.New("name is empty")
@@ -87,7 +85,7 @@ func (s PreparationTimeService) Update(preparationTime m.PreparationTime) (m.Pre
 	return updatedPreparationTime, nil
 }
 
-func (s PreparationTimeService) Delete(preparationTime m.PreparationTime) error {
+func (s PreparationTime) Delete(preparationTime m.PreparationTime) error {
 
 	err := s.repo.Delete(preparationTime)
 	if err != nil {

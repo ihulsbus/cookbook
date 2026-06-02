@@ -25,17 +25,46 @@ func TestPreparationTimeFindAll_OK(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "preparation_times"`)).
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "preparation_times"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "preparation_times" LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "duration"}).AddRow(preparationTime.ID, preparationTime.Duration))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
+	assert.Equal(t, int64(1), total)
+	assert.Len(t, data, 1)
 
-	if result[0].Duration != preparationTime.Duration {
-		t.Errorf("expected preparationTime name %v, but got %v", preparationTime.Duration, result[0].Duration)
+	if data[0].Duration != preparationTime.Duration {
+		t.Errorf("expected preparationTime name %v, but got %v", preparationTime.Duration, data[0].Duration)
 	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %v", err)
+	}
+}
+
+func TestPreparationTimeFindAll_Empty(t *testing.T) {
+	db, mock := co.NewMockDatabase(t)
+	r := NewPreparationTimeRepository(db)
+
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "preparation_times"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "preparation_times" LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "duration"}))
+
+	data, total, err := r.FindAll(pagination)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), total)
+	assert.Len(t, data, 0)
 
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %v", err)
@@ -46,13 +75,16 @@ func TestPreparationTimeFindAll_Err(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewPreparationTimeRepository(db)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "preparation_times"`)).
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "preparation_times"`)).
 		WillReturnError(errors.New("error"))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.Error(t, err)
-	assert.Len(t, result, 0)
+	assert.Equal(t, int64(0), total)
+	assert.Len(t, data, 0)
 	assert.EqualError(t, err, "error")
 }
 

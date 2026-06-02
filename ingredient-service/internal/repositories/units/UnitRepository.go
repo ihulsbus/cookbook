@@ -18,18 +18,19 @@ func NewUnitRepository(db *gorm.DB) *UnitRepository {
 	}
 }
 
-func (r UnitRepository) FindAll() ([]m.Unit, error) {
+func (r UnitRepository) FindAll(pagination m.PaginationRequest) ([]m.Unit, int64, error) {
 	var units []m.Unit
+	var total int64
 
-	if err := r.db.Find(&units).Error; err != nil {
-		return nil, err
+	if err := r.db.Model(&m.Unit{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(units) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.Limit(pagination.Limit).Offset(pagination.Offset()).Find(&units).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return units, nil
+	return units, total, nil
 }
 
 func (r UnitRepository) FindSingle(unit m.Unit) (m.Unit, error) {

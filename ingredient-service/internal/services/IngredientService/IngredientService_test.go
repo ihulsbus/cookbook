@@ -33,16 +33,23 @@ var (
 
 type IngredientRepositoryMock struct{}
 
-func (IngredientRepositoryMock) FindAll() ([]models.Ingredient, error) {
+func (IngredientRepositoryMock) FindAll(pagination models.PaginationRequest) ([]models.Ingredient, int64, error) {
 	switch findAllIngredient.Name {
-	case "findall": // OK
-		var ingredients []models.Ingredient
-		ingredients = append(ingredients, ingredient)
-		return ingredients, nil
+	case "findall":
+		return []models.Ingredient{ingredient}, 1, nil
 	case "notfound":
-		return nil, errors.New("not found")
-	default: // ERR
-		return nil, errors.New("error")
+		return nil, 0, errors.New("not found")
+	default:
+		return nil, 0, errors.New("error")
+	}
+}
+
+func (IngredientRepositoryMock) FindByName(name string) (models.Ingredient, error) {
+	switch name {
+	case "ingredient":
+		return ingredient, nil
+	default:
+		return models.Ingredient{}, nil
 	}
 }
 
@@ -101,11 +108,12 @@ func TestIngredientFindAll_OK(t *testing.T) {
 
 	findAllIngredient.Name = "findall"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(models.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.Equal(t, "ingredient", result[0].Name)
+	assert.IsType(t, models.PaginatedResponse[models.IngredientDTO]{}, result)
+	assert.Len(t, result.Data, 1)
+	assert.Equal(t, "ingredient", result.Data[0].Name)
 }
 
 func TestIngredientFindAll_Err(t *testing.T) {
@@ -113,23 +121,23 @@ func TestIngredientFindAll_Err(t *testing.T) {
 
 	findAllIngredient.Name = "error"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(models.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
+	assert.Equal(t, models.PaginatedResponse[models.IngredientDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
 }
 
-func TestRecipeFindAll_NotFound(t *testing.T) {
+func TestIngredientFindAll_NotFound(t *testing.T) {
 	s := NewIngredientService(&IngredientRepositoryMock{})
 
 	findAllIngredient.Name = "notfound"
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(models.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, models.PaginatedResponse[models.IngredientDTO]{}, result)
+	assert.EqualError(t, err, "internal server error")
 }
 
 func TestIngredientFindSingle_OK(t *testing.T) {

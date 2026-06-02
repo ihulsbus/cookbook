@@ -23,16 +23,14 @@ var (
 type RecipeMetadataRepositoryMock struct{}
 type RecipeRepositoryMock struct{}
 
-func (*RecipeMetadataRepositoryMock) FindAll() (*[]m.RecipeMetadata, error) {
+func (*RecipeMetadataRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.RecipeMetadata, int64, error) {
 	switch recipeMetadata.ServingCount {
 	case 1: // find all
 		var findall []m.RecipeMetadata
 		findall = append(findall, recipeMetadata)
-		return &findall, nil
-	case 0: // not found
-		return nil, errors.New("not found")
+		return findall, 1, nil
 	default:
-		return nil, errors.New("error")
+		return nil, 0, errors.New("error")
 	}
 }
 
@@ -99,34 +97,22 @@ func TestRecipeMetadataFindAll_OK(t *testing.T) {
 	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
 	recipeMetadata.ServingCount = 1
 
-	result, err := s.FindAll()
-	derefResult := *result
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.NoError(t, err)
-	assert.IsType(t, &[]m.RecipeMetadataDTO{}, result)
-	assert.Len(t, derefResult, 1)
+	assert.IsType(t, m.PaginatedResponse[m.RecipeMetadataDTO]{}, result)
+	assert.Len(t, result.Data, 1)
 }
 
 func TestRecipeMetadataFindAll_err(t *testing.T) {
 	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
 	recipeMetadata.ServingCount = 99
 
-	result, err := s.FindAll()
+	result, err := s.FindAll(m.NormalizePagination(1, 25))
 
 	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "error")
-}
-
-func TestRecipeMetadataFindAll_NotFound(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
-	recipeMetadata.ServingCount = 0
-
-	result, err := s.FindAll()
-
-	assert.Error(t, err)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "not found")
+	assert.Equal(t, m.PaginatedResponse[m.RecipeMetadataDTO]{}, result)
+	assert.EqualError(t, err, "internal server error")
 }
 
 func TestRecipeMetadataFindSingle_OK(t *testing.T) {

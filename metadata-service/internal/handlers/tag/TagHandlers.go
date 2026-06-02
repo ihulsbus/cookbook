@@ -7,11 +7,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
 	"github.com/ihulsbus/cookbook/shared/models"
 )
 
 type TagService interface {
-	FindAll() ([]models.TagDTO, error)
+	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.TagDTO], error)
 	FindSingle(tagDTO models.TagDTO) (models.TagDTO, error)
 	Create(tagDTO models.TagDTO) (models.TagDTO, error)
 	Update(tagDTO models.TagDTO) (models.TagDTO, error)
@@ -31,16 +32,16 @@ func NewTagHandlers(tags TagService, logger m.LoggerInterface) *TagHandlers {
 }
 
 func (h *TagHandlers) GetAll(ctx *gin.Context) {
-	tagDTO, err := h.tagService.FindAll()
+	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			ctx.JSON(http.StatusOK, []models.TagDTO{})
-			return
-		default:
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	tagDTO, err := h.tagService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, tagDTO)

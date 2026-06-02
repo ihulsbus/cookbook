@@ -8,7 +8,7 @@ import (
 )
 
 type UnitRepository interface {
-	FindAll() ([]m.Unit, error)
+	FindAll(pagination m.PaginationRequest) ([]m.Unit, int64, error)
 	FindSingle(unit m.Unit) (m.Unit, error)
 	Create(unit m.Unit) (m.Unit, error)
 	Update(unit m.Unit) (m.Unit, error)
@@ -25,20 +25,16 @@ func NewUnitService(unitRepo UnitRepository) *UnitService {
 	}
 }
 
-func (s UnitService) FindAll() ([]m.UnitDTO, error) {
-	var units []m.Unit
-
-	units, err := s.repo.FindAll()
+func (s UnitService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.UnitDTO], error) {
+	units, total, err := s.repo.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.UnitDTO]{}, errors.New("internal server error")
 	}
 
-	return m.Unit{}.ConvertAllToDTO(units), nil
+	return m.PaginatedResponse[m.UnitDTO]{
+		Data:       m.Unit{}.ConvertAllToDTO(units),
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 func (s UnitService) FindSingle(unitDTO m.UnitDTO) (m.UnitDTO, error) {

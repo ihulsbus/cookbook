@@ -8,7 +8,7 @@ import (
 )
 
 type CategoryRepository interface {
-	FindAll() ([]m.Category, error)
+	FindAll(pagination m.PaginationRequest) ([]m.Category, int64, error)
 	FindSingle(recipe m.Category) (m.Category, error)
 	Create(recipe m.Category) (m.Category, error)
 	Update(recipe m.Category) (m.Category, error)
@@ -25,20 +25,17 @@ func NewCategoryService(categoryRepo CategoryRepository) *CategoryService {
 	}
 }
 
-func (s CategoryService) FindAll() ([]m.CategoryDTO, error) {
+func (s CategoryService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.CategoryDTO], error) {
 
-	categories, err := s.repo.FindAll()
+	categories, total, err := s.repo.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.CategoryDTO]{}, errors.New("internal server error")
 	}
 
-	categoryDTOs := m.Category{}.ConvertAllToDTO(categories)
-	return categoryDTOs, nil
+	return m.PaginatedResponse[m.CategoryDTO]{
+		Data:       m.Category{}.ConvertAllToDTO(categories),
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 func (s CategoryService) FindSingle(categoryDTO m.CategoryDTO) (m.CategoryDTO, error) {

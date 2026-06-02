@@ -8,7 +8,7 @@ import (
 )
 
 type DifficultyLevelRepository interface {
-	FindAll() ([]m.DifficultyLevel, error)
+	FindAll(pagination m.PaginationRequest) ([]m.DifficultyLevel, int64, error)
 	FindSingle(difficultyLevel m.DifficultyLevel) (m.DifficultyLevel, error)
 	Create(difficultyLevel m.DifficultyLevel) (m.DifficultyLevel, error)
 	Update(difficultyLevel m.DifficultyLevel) (m.DifficultyLevel, error)
@@ -25,20 +25,17 @@ func NewDifficultyLevelService(difficultyLevelRepo DifficultyLevelRepository) *D
 	}
 }
 
-func (s DifficultyLevelService) FindAll() ([]m.DifficultyLevelDTO, error) {
+func (s DifficultyLevelService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.DifficultyLevelDTO], error) {
 
-	difficultyLevels, err := s.repo.FindAll()
+	difficultyLevels, total, err := s.repo.FindAll(pagination)
 	if err != nil {
-		switch err.Error() {
-		case "not found":
-			return nil, err
-		default:
-			return nil, errors.New("internal server error")
-		}
+		return m.PaginatedResponse[m.DifficultyLevelDTO]{}, errors.New("internal server error")
 	}
 
-	result := m.DifficultyLevel{}.ConvertAllToDTO(difficultyLevels)
-	return result, nil
+	return m.PaginatedResponse[m.DifficultyLevelDTO]{
+		Data:       m.DifficultyLevel{}.ConvertAllToDTO(difficultyLevels),
+		Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, total),
+	}, nil
 }
 
 func (s DifficultyLevelService) FindSingle(difficultyLevelDTO m.DifficultyLevelDTO) (m.DifficultyLevelDTO, error) {

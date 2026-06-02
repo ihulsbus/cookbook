@@ -18,18 +18,19 @@ func NewPreparationTimeRepository(db *gorm.DB) *PreparationTimeRepository {
 	}
 }
 
-func (r *PreparationTimeRepository) FindAll() ([]m.PreparationTime, error) {
+func (r *PreparationTimeRepository) FindAll(pagination m.PaginationRequest) ([]m.PreparationTime, int64, error) {
 	var preparationTimes []m.PreparationTime
+	var total int64
 
-	if err := r.db.Preload(clause.Associations).Find(&preparationTimes).Error; err != nil {
-		return nil, err
+	if err := r.db.Model(&m.PreparationTime{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(preparationTimes) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.Preload(clause.Associations).Limit(pagination.Limit).Offset(pagination.Offset()).Find(&preparationTimes).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return preparationTimes, nil
+	return preparationTimes, total, nil
 }
 
 func (r *PreparationTimeRepository) FindSingle(preparationTime m.PreparationTime) (m.PreparationTime, error) {

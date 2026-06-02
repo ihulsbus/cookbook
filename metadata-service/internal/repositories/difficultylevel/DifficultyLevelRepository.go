@@ -18,18 +18,19 @@ func NewDifficultyLevelRepository(db *gorm.DB) *DifficultyLevelRepository {
 	}
 }
 
-func (r *DifficultyLevelRepository) FindAll() ([]m.DifficultyLevel, error) {
+func (r *DifficultyLevelRepository) FindAll(pagination m.PaginationRequest) ([]m.DifficultyLevel, int64, error) {
 	var difficultyLevels []m.DifficultyLevel
+	var total int64
 
-	if err := r.db.Preload(clause.Associations).Find(&difficultyLevels).Error; err != nil {
-		return nil, err
+	if err := r.db.Model(&m.DifficultyLevel{}).Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
-	if len(difficultyLevels) <= 0 {
-		return nil, errors.New("not found")
+	if err := r.db.Preload(clause.Associations).Limit(pagination.Limit).Offset(pagination.Offset()).Find(&difficultyLevels).Error; err != nil {
+		return nil, 0, err
 	}
 
-	return difficultyLevels, nil
+	return difficultyLevels, total, nil
 }
 
 func (r *DifficultyLevelRepository) FindSingle(difficultyLevel m.DifficultyLevel) (m.DifficultyLevel, error) {

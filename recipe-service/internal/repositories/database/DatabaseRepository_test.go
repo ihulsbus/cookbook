@@ -71,9 +71,14 @@ func timeFunc() time.Time {
 func TestRecipeFindAll_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
+	pagination := models.NormalizePagination(1, 25)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "servingcount"}).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count"}).
 			AddRow(
 				recipe.ID,
 				recipe.Name,
@@ -81,38 +86,48 @@ func TestRecipeFindAll_OK(t *testing.T) {
 				recipe.ServingCount,
 			))
 
-	result, err := r.FindAll()
+	data, total, err := r.FindAll(pagination)
 
 	assert.NoError(t, err)
-	assert.Len(t, result, 1)
-	assert.Equal(t, recipe.ID, result[0].ID)
-	assert.Equal(t, recipe.Name, result[0].Name)
-	assert.Equal(t, recipe.Description, result[0].Description)
+	assert.Len(t, data, 1)
+	assert.Equal(t, int64(1), total)
+	assert.Equal(t, recipe.ID, data[0].ID)
+	assert.Equal(t, recipe.Name, data[0].Name)
+	assert.Equal(t, recipe.Description, data[0].Description)
 }
 
 func TestRecipeFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
+	pagination := models.NormalizePagination(1, 25)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
 		WillReturnError(errors.New("error"))
-	result, err := r.FindAll()
+
+	data, total, err := r.FindAll(pagination)
 
 	assert.Error(t, err)
-	assert.Len(t, result, 0)
+	assert.Len(t, data, 0)
+	assert.Equal(t, int64(0), total)
 }
 
-func TestRecipeFindAll_NotFoundErr(t *testing.T) {
+func TestRecipeFindAll_Empty(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
+	pagination := models.NormalizePagination(1, 25)
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
-		WillReturnRows(&sqlmock.Rows{})
-	result, err := r.FindAll()
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
-	assert.Error(t, err)
-	assert.EqualError(t, err, "not found")
-	assert.Len(t, result, 0)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
+		WithArgs(25, 0).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count"}))
+
+	data, total, err := r.FindAll(pagination)
+
+	assert.NoError(t, err)
+	assert.Len(t, data, 0)
+	assert.Equal(t, int64(0), total)
 }
 
 func TestRecipeFindSingle_Ok(t *testing.T) {
