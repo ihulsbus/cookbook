@@ -24,22 +24,29 @@ import (
 
 var (
 	imgs       []m.ImageDataDTO
-	imgDataDTO m.ImageDataDTO = m.ImageDataDTO{
+	imgDataDTO m.ImageDataDTO
+	imgFileDTO m.ImageFileDTO
+)
+
+func init() {
+	imgDataDTO = m.ImageDataDTO{
 		ID:         uuid.New(),
 		EntityID:   uuid.New(),
 		EntityType: "recipe",
 		Size:       0,
 		Type:       "img/jpeg",
 	}
-	imgFileDTO m.ImageFileDTO = m.ImageFileDTO{
+
+	file, _ := tc.CreateFile()
+	imgFileDTO = m.ImageFileDTO{
 		ID:         imgDataDTO.ID,
 		EntityID:   imgDataDTO.EntityID,
 		EntityType: imgDataDTO.EntityType,
 		Size:       imgDataDTO.Size,
 		Type:       imgDataDTO.Type,
-		File:       tc.CreateFile(),
+		File:       file,
 	}
-)
+}
 
 type imgServiceMock struct{}
 

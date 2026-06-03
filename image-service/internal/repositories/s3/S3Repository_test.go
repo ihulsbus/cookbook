@@ -58,7 +58,7 @@ func TestImageUpload_OK(t *testing.T) {
 
 	r := NewS3Repository(&S3InterfaceMock{}, &LoggerInterfaceMock{}, "bucket")
 	filename = imgFile.ID.String()
-	imgFile.File = tc.CreateFile()
+	imgFile.File, _ = tc.CreateFile()
 
 	err := r.UploadImage(imgFile)
 
@@ -68,7 +68,7 @@ func TestImageUpload_OK(t *testing.T) {
 func TestImageUpload_PutErr(t *testing.T) {
 	r := NewS3Repository(&S3InterfaceMock{}, &LoggerInterfaceMock{}, "bucket")
 	filename = "filename"
-	imgFile.File = tc.CreateFile()
+	imgFile.File, _ = tc.CreateFile()
 
 	err := r.UploadImage(imgFile)
 
@@ -79,7 +79,7 @@ func TestImageDelete_OK(t *testing.T) {
 
 	r := NewS3Repository(&S3InterfaceMock{}, &LoggerInterfaceMock{}, "bucket")
 	filename = imgFile.ID.String()
-	imgFile.File = tc.CreateFile()
+	imgFile.File, _ = tc.CreateFile()
 
 	err := r.DeleteImage(imgData)
 

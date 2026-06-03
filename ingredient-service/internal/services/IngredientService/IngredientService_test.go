@@ -48,6 +48,8 @@ func (IngredientRepositoryMock) FindByName(name string) (models.Ingredient, erro
 	switch name {
 	case "ingredient":
 		return ingredient, nil
+	case "find":
+		return ingredient, nil
 	default:
 		return models.Ingredient{}, nil
 	}

@@ -42,10 +42,14 @@ func (s *PreparationTimeServiceMock) FindAll(pagination m.PaginationRequest) (m.
 	}
 }
 
-func (s *PreparationTimeServiceMock) FindSingle(preparationTime m.PreparationTime) (m.PreparationTime, error) {
+func (s *PreparationTimeServiceMock) FindSingle(input m.PreparationTime) (m.PreparationTime, error) {
+	// Use the global preparationTime variable's Duration to determine behavior
+	// The handler only passes the ID, so we need to check against global state
 	switch preparationTime.Duration {
 	case 1 * time.Minute:
-		return preparationTime, nil
+		result := input
+		result.Duration = 1 * time.Minute
+		return result, nil
 	case 2 * time.Minute:
 		return m.PreparationTime{}, errors.New("not found")
 	default:
@@ -72,7 +76,9 @@ func (s *PreparationTimeServiceMock) Update(preparationTime m.PreparationTime) (
 	}
 }
 
-func (s *PreparationTimeServiceMock) Delete(preparationTime m.PreparationTime) error {
+func (s *PreparationTimeServiceMock) Delete(input m.PreparationTime) error {
+	// Use the global preparationTime variable's Duration to determine behavior
+	// The handler only passes the ID, so we need to check against global state
 	switch preparationTime.Duration {
 	case 1 * time.Minute:
 		return nil
@@ -237,7 +243,8 @@ func TestPreparationTimeCreate_OK(t *testing.T) {
 
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
-	assertBody, _ := json.Marshal(preparationTime)
+	// The mock returns the same object that was sent, so compare with what we sent
+	assertBody, _ := json.Marshal(createPreparationTime)
 
 	assert.Equal(t, http.StatusCreated, resp.StatusCode)
 	assert.Equal(t, assertBody, body)
@@ -392,7 +399,7 @@ func TestPreparationTimeDelete_OK(t *testing.T) {
 	resp := w.Result()
 	body, _ := io.ReadAll(resp.Body)
 
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 	assert.Equal(t, []byte(``), body)
 }
 

@@ -28,8 +28,8 @@ func TestDifficultyLevelFindAll_OK(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
-		WithArgs(25, 0).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL LIMIT $1`)).
+		WithArgs(25).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "level"}).AddRow(difficultyLevel.ID, difficultyLevel.Level))
 
 	data, total, err := r.FindAll(pagination)
@@ -55,8 +55,8 @@ func TestDifficultyLevelFindAll_Empty(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
-		WithArgs(25, 0).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."deleted_at" IS NULL LIMIT $1`)).
+		WithArgs(25).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "level"}))
 
 	data, total, err := r.FindAll(pagination)

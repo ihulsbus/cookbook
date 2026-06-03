@@ -28,8 +28,8 @@ func TestCuisineTypeFindAll_OK(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
-		WithArgs(25, 0).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL LIMIT $1`)).
+		WithArgs(25).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(cuisineType.ID, cuisineType.Name))
 
 	data, total, err := r.FindAll(pagination)
@@ -55,8 +55,8 @@ func TestCuisineTypeFindAll_Empty(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
-		WithArgs(25, 0).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."deleted_at" IS NULL LIMIT $1`)).
+		WithArgs(25).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
 
 	data, total, err := r.FindAll(pagination)

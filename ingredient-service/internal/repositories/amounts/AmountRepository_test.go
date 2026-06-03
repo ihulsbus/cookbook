@@ -175,9 +175,7 @@ func TestAmountDelete_OK(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	var deleteRequest []m.Amount
-	deleteRequest = append(deleteRequest, amount)
-	err := r.Delete(&deleteRequest)
+	err := r.Delete(amount)
 
 	assert.NoError(t, err)
 }
@@ -195,9 +193,7 @@ func TestAmountDelete_Err(t *testing.T) {
 		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
 
-	var deleteRequest []m.Amount
-	deleteRequest = append(deleteRequest, amount)
-	err := r.Delete(&deleteRequest)
+	err := r.Delete(amount)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

@@ -11,22 +11,29 @@ import (
 )
 
 var (
-	imageDataDTO m.ImageDataDTO = m.ImageDataDTO{
+	imageDataDTO m.ImageDataDTO
+	imageFileDTO m.ImageFileDTO
+)
+
+func init() {
+	imageDataDTO = m.ImageDataDTO{
 		ID:         uuid.New(),
 		EntityID:   uuid.New(),
 		EntityType: "",
 		Size:       0,
 		Type:       "image/jpeg",
 	}
-	imageFileDTO m.ImageFileDTO = m.ImageFileDTO{
+
+	file, _ := tc.CreateFile()
+	imageFileDTO = m.ImageFileDTO{
 		ID:         imageDataDTO.ID,
 		EntityID:   imageDataDTO.EntityID,
 		EntityType: imageDataDTO.EntityType,
 		Size:       imageDataDTO.Size,
 		Type:       imageDataDTO.Type,
-		File:       tc.CreateFile(),
+		File:       file,
 	}
-)
+}
 
 type s3RepositoryMock struct{}
 type databaseRepositoryMock struct{}
@@ -183,7 +190,7 @@ func TestFindImage_Err(t *testing.T) {
 }
 
 func TestCreateImage_OK(t *testing.T) {
-	imageFileDTO.File = tc.CreateFile()
+	imageFileDTO.File, _ = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
@@ -200,7 +207,7 @@ func TestCreateImage_OK(t *testing.T) {
 }
 
 func TestCreateImage_S3Err(t *testing.T) {
-	imageFileDTO.File = tc.CreateFile()
+	imageFileDTO.File, _ = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
@@ -217,7 +224,7 @@ func TestCreateImage_S3Err(t *testing.T) {
 }
 
 func TestCreateImage_Err(t *testing.T) {
-	imageFileDTO.File = tc.CreateFile()
+	imageFileDTO.File, _ = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
@@ -234,7 +241,7 @@ func TestCreateImage_Err(t *testing.T) {
 }
 
 func TestUpdateImage_OK(t *testing.T) {
-	imageFileDTO.File = tc.CreateFile()
+	imageFileDTO.File, _ = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
@@ -251,7 +258,7 @@ func TestUpdateImage_OK(t *testing.T) {
 }
 
 func TestUpdateImage_FindErr(t *testing.T) {
-	imageFileDTO.File = tc.CreateFile()
+	imageFileDTO.File, _ = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
@@ -268,7 +275,7 @@ func TestUpdateImage_FindErr(t *testing.T) {
 }
 
 func TestUpdateImage_S3Err(t *testing.T) {
-	imageFileDTO.File = tc.CreateFile()
+	imageFileDTO.File, _ = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{
@@ -286,7 +293,7 @@ func TestUpdateImage_S3Err(t *testing.T) {
 
 // TODO: Cannot be fixed until this is switched to actual mocks
 // func TestUpdateImage_Err(t *testing.T) {
-// 	imageFileDTO.File = tc.CreateFile()
+// 	imageFileDTO.File, _ = tc.CreateFile()
 // 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 // 	createImage := m.ImageFileDTO{
@@ -303,7 +310,7 @@ func TestUpdateImage_S3Err(t *testing.T) {
 // }
 
 func TestUpdateImage_RabbitmqErr(t *testing.T) {
-	imageFileDTO.File = tc.CreateFile()
+	imageFileDTO.File, _ = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	createImage := m.ImageFileDTO{

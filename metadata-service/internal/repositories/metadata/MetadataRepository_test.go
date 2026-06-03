@@ -32,8 +32,8 @@ func TestMetadataFindAll_OK(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipe_metadata"`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipe_metadata" LIMIT $1 OFFSET $2`)).
-		WithArgs(25, 0).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipe_metadata" LIMIT $1`)).
+		WithArgs(25).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"recipe_id", "preparation_time", "serving_count", "cuisine_type_id", "difficulty_level_id",
 		}).AddRow(
@@ -43,6 +43,15 @@ func TestMetadataFindAll_OK(t *testing.T) {
 			sampleMeta.CuisineTypeID,
 			sampleMeta.DifficultyLevelID,
 		))
+	// Mock preload queries for associations (Categories, CuisineType, DifficultyLevel, Tags)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
 
 	data, total, err := r.FindAll(pagination)
 	assert.NoError(t, err)
@@ -61,8 +70,8 @@ func TestMetadataFindAll_Empty(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipe_metadata"`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipe_metadata" LIMIT $1 OFFSET $2`)).
-		WithArgs(25, 0).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipe_metadata" LIMIT $1`)).
+		WithArgs(25).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"recipe_id", "preparation_time", "serving_count", "cuisine_type_id", "difficulty_level_id",
 		}))

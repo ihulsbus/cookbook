@@ -88,6 +88,8 @@ type LoggerInterfaceMock struct{}
 
 func (l *LoggerInterfaceMock) Debugf(format string, args ...interface{}) {}
 func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
+func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
+func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 
 // ==================================================================================================
 func TestIngredientGetAll_OK(t *testing.T) {

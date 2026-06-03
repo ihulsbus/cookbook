@@ -74,8 +74,8 @@ func TestUnitFindAll_OK(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "units" WHERE "units"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "units" WHERE "units"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
-		WithArgs(25, 0).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "units" WHERE "units"."deleted_at" IS NULL LIMIT $1`)).
+		WithArgs(25).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "full_name", "short_name"}).
 			AddRow(unit.ID, unit.FullName, unit.ShortName))
 
@@ -93,8 +93,8 @@ func TestUnitFindAll_Empty(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "units" WHERE "units"."deleted_at" IS NULL`)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "units" WHERE "units"."deleted_at" IS NULL LIMIT $1 OFFSET $2`)).
-		WithArgs(25, 0).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "units" WHERE "units"."deleted_at" IS NULL LIMIT $1`)).
+		WithArgs(25).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "full_name", "short_name"}))
 
 	data, total, err := r.FindAll(pagination)
