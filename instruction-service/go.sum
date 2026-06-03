@@ -141,8 +141,8 @@ github.com/ihulsbus/cookbook/shared/models v0.0.1 h1:LzSsTvIjblxyAwyqlLtrObT/K7h
 github.com/ihulsbus/cookbook/shared/models v0.0.1/go.mod h1:/2ZLrNkY2wjm5FdTnslKVNYxRP7pdTUcWliCzZMiqO0=
 github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.1 h1:Hdu9lhJqwmyTcVBr7X1WIbiMI+KkMPkA/gbQcZ9yu6Q=
 github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.1/go.mod h1:TN1MtWhlyqo4eGhkGtEJvR/p2e555QHDlnoHDcnjkDY=
-github.com/ihulsbus/cookbook/shared/recipeclient v0.0.1 h1:JsfCv1oaWEAA3zmrSVYMtPEo+U4YTuka9v7azJZ2fHo=
-github.com/ihulsbus/cookbook/shared/recipeclient v0.0.1/go.mod h1:9VWDaXeD88g1RMcti8LTr+t+7CuIMcpOErvVxtNI5SA=
+github.com/ihulsbus/cookbook/shared/recipeclient v0.0.2 h1:AJmgpuAYsEPH9r/eiLZYBGqyizQxbUj1wQVo2fno+y8=
+github.com/ihulsbus/cookbook/shared/recipeclient v0.0.2/go.mod h1:XpjUIIiynrmE5wnzeMYOo0coubrX8wRPg2abYGpHvO8=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
 github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
 github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
