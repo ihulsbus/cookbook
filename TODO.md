@@ -17,13 +17,6 @@ Split route groups: keep `administrator` for writes (POST/PUT/DELETE), and eithe
 
 ---
 
-### 6. No pagination on any collection endpoint
-**Spec note:** Every `GET` collection endpoint description says _"this endpoint does not support pagination. This will be added in the future."_
-
-Currently there is zero pagination infrastructure. All list endpoints return every record. Before a frontend is usable at scale, add `page` / `limit` query parameters (or cursor-based pagination) to at minimum: `GET /recipe`, `GET /ingredient`, `GET /unit`, `GET /images`, `GET /metadata/tag`, `GET /metadata/category`, `GET /metadata/cuisinetype`, `GET /metadata/difficultylevel`, `GET /metadata/preparationtime`.
-
----
-
 ## Low — Code quality / minor issues
 
 ### 8. Search service has no RabbitMQ consumer
@@ -50,3 +43,4 @@ The following items from the previous review have been confirmed fixed:
 - ✅ Preparation time CRUD endpoints are entirely missing
 - ✅ `GET /api/v2/metadata/search/all` is not in the spec
 - ✅ Image service: `GET /images/search` uses same `Find` method as `GET /images/{id}`
+- ✅ No pagination on any collection endpoint
