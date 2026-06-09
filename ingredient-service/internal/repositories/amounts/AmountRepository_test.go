@@ -167,8 +167,10 @@ func TestAmountDelete_OK(t *testing.T) {
 	r := NewAmountRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "amounts" WHERE ("amounts"."recipe_id","amounts"."ingredient_id") IN (($1,$2))`)).
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "amounts" WHERE (recipe_id = $1 AND ingredient_id = $2) AND ("amounts"."recipe_id","amounts"."ingredient_id") IN (($3,$4))`)).
 		WithArgs(
+			amount.RecipeID,
+			amount.IngredientID,
 			amount.RecipeID,
 			amount.IngredientID,
 		).
@@ -185,8 +187,10 @@ func TestAmountDelete_Err(t *testing.T) {
 	r := NewAmountRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "amounts" WHERE ("amounts"."recipe_id","amounts"."ingredient_id") IN (($1,$2))`)).
+	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "amounts" WHERE (recipe_id = $1 AND ingredient_id = $2) AND ("amounts"."recipe_id","amounts"."ingredient_id") IN (($3,$4))`)).
 		WithArgs(
+			amount.RecipeID,
+			amount.IngredientID,
 			amount.RecipeID,
 			amount.IngredientID,
 		).

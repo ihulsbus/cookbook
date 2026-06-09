@@ -10,6 +10,10 @@ import (
 	hh "github.com/ihulsbus/cookbook/shared/http"
 )
 
+const (
+	invalidID = "invalid preparationTime ID"
+)
+
 type PreparationTimeService interface {
 	FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.PreparationTime], error)
 	FindSingle(preparationTime m.PreparationTime) (m.PreparationTime, error)
@@ -52,7 +56,7 @@ func (h *PreparationTime) Get(ctx *gin.Context) {
 
 	preparationTime.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid preparationTime ID"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": invalidID})
 		return
 	}
 
@@ -95,7 +99,7 @@ func (h *PreparationTime) Update(ctx *gin.Context) {
 
 	id, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid preparationTime ID"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": invalidID})
 		return
 	}
 
@@ -123,7 +127,7 @@ func (h *PreparationTime) Delete(ctx *gin.Context) {
 
 	preparationTime.ID, err = uuid.Parse(ctx.Param("id"))
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid preparationTime ID"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": invalidID})
 		return
 	}
 
@@ -133,5 +137,5 @@ func (h *PreparationTime) Delete(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Status(http.StatusNoContent)
+	ctx.Data(http.StatusNoContent, "application/json", nil)
 }

@@ -396,7 +396,8 @@ func TestPreparationTimeDelete_OK(t *testing.T) {
 
 	h.Delete(c)
 
-	assert.Equal(t, http.StatusNoContent, w.Code)
+	resp := w.Result()
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 }
 
 func TestPreparationTimeDelete_IDRequiredErr(t *testing.T) {

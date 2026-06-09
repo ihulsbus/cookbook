@@ -5,7 +5,6 @@ import (
 
 	"github.com/google/uuid"
 	m "github.com/ihulsbus/cookbook/shared/models"
-	"gorm.io/gorm/clause"
 
 	"gorm.io/gorm"
 )
@@ -29,7 +28,10 @@ func (r *RecipeMetadataRepository) FindAll(pagination m.PaginationRequest) ([]m.
 	}
 
 	err := r.db.
-		Preload(clause.Associations).
+		Preload("Categories").
+		Preload("CuisineType").
+		Preload("DifficultyLevel").
+		Preload("Tags").
 		Limit(pagination.Limit).Offset(pagination.Offset()).
 		Find(&metas).Error
 	if err != nil {
@@ -43,7 +45,10 @@ func (r *RecipeMetadataRepository) FindAll(pagination m.PaginationRequest) ([]m.
 func (r *RecipeMetadataRepository) FindSingle(recipeID uuid.UUID) (*m.RecipeMetadata, error) {
 	var meta m.RecipeMetadata
 	err := r.db.
-		Preload(clause.Associations).
+		Preload("Categories").
+		Preload("CuisineType").
+		Preload("DifficultyLevel").
+		Preload("Tags").
 		First(&meta, "recipe_id = ?", recipeID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {

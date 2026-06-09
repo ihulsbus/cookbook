@@ -43,15 +43,23 @@ func TestMetadataFindAll_OK(t *testing.T) {
 			sampleMeta.CuisineTypeID,
 			sampleMeta.DifficultyLevelID,
 		))
-	// Mock preload queries for associations (Categories, CuisineType, DifficultyLevel, Tags)
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "categories"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "tags"`)).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+	// Mock preload queries
+	// Categories (many2many) - GORM uses "recipe_metadata_recipe_id" for join table
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipe_categories" WHERE "recipe_categories"."recipe_metadata_recipe_id" = $1`)).
+		WithArgs(sampleMeta.RecipeID).
+		WillReturnRows(sqlmock.NewRows([]string{"recipe_metadata_recipe_id", "category_id"}))
+	// CuisineType (belongs-to)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "cuisine_types" WHERE "cuisine_types"."id" = $1`)).
+		WithArgs(sampleMeta.CuisineTypeID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(sampleMeta.CuisineTypeID, "Test Cuisine"))
+	// DifficultyLevel (belongs-to)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "difficulty_levels" WHERE "difficulty_levels"."id" = $1`)).
+		WithArgs(sampleMeta.DifficultyLevelID).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(sampleMeta.DifficultyLevelID, "Test Difficulty"))
+	// Tags (many2many)
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipe_tags" WHERE "recipe_tags"."recipe_metadata_recipe_id" = $1`)).
+		WithArgs(sampleMeta.RecipeID).
+		WillReturnRows(sqlmock.NewRows([]string{"recipe_metadata_recipe_id", "tag_id"}))
 
 	data, total, err := r.FindAll(pagination)
 	assert.NoError(t, err)
