@@ -146,6 +146,251 @@ services:
       retries: 30
       start_period: 300s
 
+  # Recipe Service
+  recipe-service:
+    image: ghcr.io/ihulsbus/cookbook/recipe-service:latest
+    container_name: recipe-service
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: recipe
+      DATABASE_USER: recipe
+      DATABASE_PASSWORD: recipe_pass
+      DATABASE_SSLMODE: disable
+      DATABASE_TIMEZONE: Europe/Amsterdam
+      RABBITMQ_HOST: rabbitmq:5672
+      RABBITMQ_USERNAME: admin
+      RABBITMQ_PASSWORD: wENbwHUirBwZQbHpRB46egb9C
+      OAUTH_CLIENTID: gourmedy
+      OAUTH_CLIENTSECRET: ""
+      OAUTH_AUDIENCE: gourmedyfr
+      OAUTH_URL: http://keycloak:8080
+      OAUTH_REALM: gourmedy
+      GLOBAL_LOGLEVEL: INFO
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.recipe-service.rule: "PathPrefix(`/api/v2/recipe`)"
+      traefik.http.services.recipe-service.loadbalancer.server.port: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - cookbook-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Metadata Service
+  metadata-service:
+    image: ghcr.io/ihulsbus/cookbook/metadata-service:latest
+    container_name: metadata-service
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: metadata
+      DATABASE_USER: metadata
+      DATABASE_PASSWORD: metadata_pass
+      DATABASE_SSLMODE: disable
+      DATABASE_TIMEZONE: Europe/Amsterdam
+      OAUTH_CLIENTID: gourmedy
+      OAUTH_CLIENTSECRET: ""
+      OAUTH_AUDIENCE: gourmedyfr
+      OAUTH_URL: http://keycloak:8080
+      OAUTH_REALM: gourmedy
+      GLOBAL_LOGLEVEL: INFO
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.metadata-service.rule: "PathPrefix(`/api/v2/metadata`)"
+      traefik.http.services.metadata-service.loadbalancer.server.port: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - cookbook-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Ingredient Service
+  ingredient-service:
+    image: ghcr.io/ihulsbus/cookbook/ingredient-service:latest
+    container_name: ingredient-service
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: ingredient
+      DATABASE_USER: ingredient
+      DATABASE_PASSWORD: ingredient_pass
+      DATABASE_SSLMODE: disable
+      DATABASE_TIMEZONE: Europe/Amsterdam
+      OAUTH_CLIENTID: gourmedy
+      OAUTH_CLIENTSECRET: ""
+      OAUTH_AUDIENCE: gourmedyfr
+      OAUTH_URL: http://keycloak:8080
+      OAUTH_REALM: gourmedy
+      GLOBAL_LOGLEVEL: INFO
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ingredient-service.rule: "PathPrefix(`/api/v2/ingredient`) || PathPrefix(`/api/v2/unit`) || PathPrefix(`/api/v2/amount`)"
+      traefik.http.services.ingredient-service.loadbalancer.server.port: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - cookbook-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Instruction Service
+  instruction-service:
+    image: ghcr.io/ihulsbus/cookbook/instruction-service:latest
+    container_name: instruction-service
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: instruction
+      DATABASE_USER: instruction
+      DATABASE_PASSWORD: instruction_pass
+      DATABASE_SSLMODE: disable
+      DATABASE_TIMEZONE: Europe/Amsterdam
+      OAUTH_CLIENTID: gourmedy
+      OAUTH_CLIENTSECRET: ""
+      OAUTH_AUDIENCE: gourmedyfr
+      OAUTH_URL: http://keycloak:8080
+      OAUTH_REALM: gourmedy
+      RECIPECLIENT_BASEURL: http://recipe-service:8080/api/v2
+      GLOBAL_LOGLEVEL: INFO
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.instruction-service.rule: "PathPrefix(`/api/v2/instruction`)"
+      traefik.http.services.instruction-service.loadbalancer.server.port: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      recipe-service:
+        condition: service_healthy
+    networks:
+      - cookbook-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Image Service
+  image-service:
+    image: ghcr.io/ihulsbus/cookbook/image-service:latest
+    container_name: image-service
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: image
+      DATABASE_USER: image
+      DATABASE_PASSWORD: image_pass
+      DATABASE_SSLMODE: disable
+      DATABASE_TIMEZONE: Europe/Amsterdam
+      RABBITMQ_HOST: rabbitmq:5672
+      RABBITMQ_USERNAME: admin
+      RABBITMQ_PASSWORD: wENbwHUirBwZQbHpRB46egb9C
+      OAUTH_CLIENTID: gourmedy
+      OAUTH_CLIENTSECRET: ""
+      OAUTH_AUDIENCE: gourmedyfr
+      OAUTH_URL: http://keycloak:8080
+      OAUTH_REALM: gourmedy
+      S3_REGION: us-east-1
+      S3_AWSACCESSKEY: admin
+      S3_AWSACCESSSECRET: adminpassword
+      S3_BUCKETNAME: cbhbe
+      S3_ENDPOINT: http://minio:9000
+      GLOBAL_LOGLEVEL: INFO
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.image-service.rule: "PathPrefix(`/api/v2/images`)"
+      traefik.http.services.image-service.loadbalancer.server.port: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - cookbook-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Search Service
+  search-service:
+    image: ghcr.io/ihulsbus/cookbook/search-service:latest
+    container_name: search-service
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: search
+      DATABASE_USER: search
+      DATABASE_PASSWORD: search_pass
+      DATABASE_SSLMODE: disable
+      DATABASE_TIMEZONE: Europe/Amsterdam
+      OAUTH_CLIENTID: gourmedy
+      OAUTH_CLIENTSECRET: ""
+      OAUTH_AUDIENCE: gourmedyfr
+      OAUTH_URL: http://keycloak:8080
+      OAUTH_REALM: gourmedy
+      GLOBAL_LOGLEVEL: INFO
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.search-service.rule: "PathPrefix(`/api/v2/search`)"
+      traefik.http.services.search-service.loadbalancer.server.port: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - cookbook-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Notification Service
+  notification-service:
+    image: ghcr.io/ihulsbus/cookbook/notification-service:latest
+    container_name: notification-service
+    environment:
+      RABBITMQ_HOST: rabbitmq:5672
+      RABBITMQ_USERNAME: admin
+      RABBITMQ_PASSWORD: wENbwHUirBwZQbHpRB46egb9C
+      GLOBAL_LOGLEVEL: INFO
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - cookbook-network
+
 networks:
   cookbook-network:
     driver: bridge

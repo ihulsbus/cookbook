@@ -3,6 +3,7 @@ set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
     -- Create users
+    CREATE USER keycloak WITH PASSWORD 'keycloak_pass';
     CREATE USER recipe WITH PASSWORD 'recipe_pass';
     CREATE USER ingredient WITH PASSWORD 'ingredient_pass';
     CREATE USER instruction WITH PASSWORD 'instruction_pass';
@@ -11,6 +12,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE USER search WITH PASSWORD 'search_pass';
 
     -- Create databases
+    CREATE DATABASE keycloak OWNER keycloak;
     CREATE DATABASE recipe OWNER recipe;
     CREATE DATABASE ingredient OWNER ingredient;
     CREATE DATABASE instruction OWNER instruction;
@@ -19,6 +21,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE search OWNER search;
 
     -- Grant privileges
+    GRANT ALL PRIVILEGES ON DATABASE keycloak TO keycloak;
     GRANT ALL PRIVILEGES ON DATABASE recipe TO recipe;
     GRANT ALL PRIVILEGES ON DATABASE ingredient TO ingredient;
     GRANT ALL PRIVILEGES ON DATABASE instruction TO instruction;
