@@ -25,6 +25,7 @@ RUN CGO_ENABLED=0 go build cmd/image-service/main.go
 FROM scratch
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
 USER 1000
 COPY --from=builder /build/main /go/bin/main
