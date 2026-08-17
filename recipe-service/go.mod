@@ -9,10 +9,11 @@ require (
 	github.com/gin-gonic/gin v1.12.0
 	github.com/google/uuid v1.6.0
 	github.com/ihulsbus/cookbook/shared/healthchecks v0.0.1
+	github.com/ihulsbus/cookbook/shared/http v0.0.1
 	github.com/ihulsbus/cookbook/shared/keycloak v0.0.1
 	github.com/ihulsbus/cookbook/shared/models v0.0.1
 	github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.1
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/wagslane/go-rabbitmq v0.15.0
@@ -37,7 +38,6 @@ require (
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
-	github.com/ihulsbus/cookbook/shared/http v0.0.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgx/v5 v5.9.2 // indirect
