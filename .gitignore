@@ -185,3 +185,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# go build outputs
+*/main
+*/cmd/*/[a-z]*-service
+
+# jetbrains
+.idea
