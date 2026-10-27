@@ -70,6 +70,42 @@ func TestSearch_OK(t *testing.T) {
 	assert.Equal(t, expectedBody, body)
 }
 
+func TestSearch_RecipeIDErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/search?recipeID=not-a-uuid", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.SearchInstruction(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid recipe ID"}`, string(body))
+}
+
+func TestSearch_RecipeIDMissing(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/instruction/search", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.SearchInstruction(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid recipe ID"}`, string(body))
+}
+
 func TestSearch_SearchErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})

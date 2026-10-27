@@ -29,7 +29,11 @@ func (h *SearchHandlers) SearchInstruction(ctx *gin.Context) {
 	var searchRequestDTO models.InstructionSearchRequestDTO
 	var err error
 
-	searchRequestDTO.RecipeID = uuid.MustParse(ctx.Query("recipeID"))
+	searchRequestDTO.RecipeID, err = uuid.Parse(ctx.Query("recipeID"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid recipe ID"})
+		return
+	}
 
 	searchResultDTO, err := h.searchService.SearchInstruction(searchRequestDTO)
 	if err != nil {
