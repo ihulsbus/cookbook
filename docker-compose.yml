@@ -376,21 +376,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Notification Service
-  notification-service:
-    image: ghcr.io/ihulsbus/cookbook/notification-service:latest
-    container_name: notification-service
-    environment:
-      RABBITMQ_HOST: rabbitmq:5672
-      RABBITMQ_USERNAME: admin
-      RABBITMQ_PASSWORD: wENbwHUirBwZQbHpRB46egb9C
-      GLOBAL_LOGLEVEL: INFO
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - cookbook-network
-
 networks:
   cookbook-network:
     driver: bridge
