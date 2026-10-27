@@ -1,0 +1,432 @@
+package handlers
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/ihulsbus/cookbook/shared/models"
+	"github.com/stretchr/testify/assert"
+)
+
+type DifficultyLevelServiceMock struct {
+}
+
+var (
+	difficultyLevels []models.DifficultyLevelDTO
+	difficultyLevel  models.DifficultyLevelDTO = models.DifficultyLevelDTO{
+		ID:    uuid.New(),
+		Level: 1,
+	}
+)
+
+// ====== DifficultyLevelService ======
+
+func (s *DifficultyLevelServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.DifficultyLevelDTO], error) {
+	switch difficultyLevel.Level {
+	case 1:
+		return models.PaginatedResponse[models.DifficultyLevelDTO]{
+			Data:       difficultyLevels,
+			Pagination: models.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(difficultyLevels))),
+		}, nil
+	default:
+		return models.PaginatedResponse[models.DifficultyLevelDTO]{}, errors.New("error")
+	}
+}
+
+func (s *DifficultyLevelServiceMock) FindSingle(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error) {
+	switch difficultyLevel.Level {
+	case 1:
+		return difficultyLevel, nil
+	case 2:
+		return models.DifficultyLevelDTO{}, errors.New("not found")
+	default:
+		return models.DifficultyLevelDTO{}, errors.New("error")
+	}
+}
+
+func (s *DifficultyLevelServiceMock) Create(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error) {
+	switch difficultyLevelDTO.Level {
+	case 1:
+		return difficultyLevel, nil
+	default:
+		return models.DifficultyLevelDTO{}, errors.New("error")
+	}
+}
+
+func (s *DifficultyLevelServiceMock) Update(difficultyLevelDTO models.DifficultyLevelDTO) (models.DifficultyLevelDTO, error) {
+	switch difficultyLevelDTO.Level {
+	case 1:
+		return difficultyLevel, nil
+	default:
+		return models.DifficultyLevelDTO{}, errors.New("error")
+	}
+}
+
+func (s *DifficultyLevelServiceMock) Delete(difficultyLevelDTO models.DifficultyLevelDTO) error {
+	switch difficultyLevel.Level {
+	case 1:
+		return nil
+	default:
+		return errors.New("error")
+	}
+}
+
+func TestDifficultyLevelGetAll_OK(t *testing.T) {
+	difficultyLevels = append(difficultyLevels, difficultyLevel)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	difficultyLevel.Level = 1
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	pagination := models.NewPaginationMetadata(1, 25, int64(len(difficultyLevels)))
+	expectedResponse := models.PaginatedResponse[models.DifficultyLevelDTO]{Data: difficultyLevels, Pagination: pagination}
+	expectedBody, _ := json.Marshal(expectedResponse)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, expectedBody, body)
+}
+
+func TestDifficultyLevelGetAll_Error(t *testing.T) {
+	difficultyLevels = append(difficultyLevels, difficultyLevel)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	difficultyLevel.Level = 3
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
+}
+
+func TestDifficultyLevelGet_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: difficultyLevel.ID.String()},
+	}
+
+	difficultyLevel.Level = 1
+
+	h.Get(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	expectedBody, _ := json.Marshal(difficultyLevel)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, expectedBody, body)
+}
+
+func TestDifficultyLevelGet_IDErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	difficultyLevel.Level = 1
+
+	h.Get(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid difficultyLevel ID"}`, string(body))
+}
+
+func TestDifficultyLevelGet_NotFound(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: difficultyLevel.ID.String()},
+	}
+
+	difficultyLevel.Level = 2
+
+	h.Get(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"difficultyLevel not found"}`, string(body))
+}
+
+func TestDifficultyLevelGet_FindErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/difficultyLevel/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: difficultyLevel.ID.String()},
+	}
+
+	difficultyLevel.Level = 3
+
+	h.Get(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
+}
+
+func TestDifficultyLevelCreate_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	createDifficultyLevel := models.DifficultyLevelDTO{
+		Level: 1,
+	}
+	reqBody, _ := json.Marshal(createDifficultyLevel)
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Create(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+	assertBody, _ := json.Marshal(difficultyLevel)
+
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	assert.Equal(t, assertBody, body)
+}
+
+func TestDifficultyLevelCreate_UnmarshalErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader([]byte{}))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Create(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"unexpected JSON input"}`, string(body))
+}
+
+func TestDifficultyLevelCreate_CreateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	createDifficultyLevel := models.DifficultyLevelDTO{
+		Level: 3,
+	}
+	reqBody, _ := json.Marshal(createDifficultyLevel)
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Create(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
+}
+
+func TestDifficultyLevelUpdate_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	difficultyLevel.Level = 1
+	reqBody, _ := json.Marshal(difficultyLevel)
+
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: difficultyLevel.ID.String()},
+	}
+
+	h.Update(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, reqBody, body)
+}
+
+func TestDifficultyLevelUpdate_UnmarshalErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader([]byte{}))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: difficultyLevel.ID.String()},
+	}
+
+	h.Update(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"EOF"}`, string(body))
+}
+
+func TestDifficultyLevelUpdate_IDRequiredErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	reqBody, _ := json.Marshal(difficultyLevel)
+
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Update(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid difficultyLevel ID"}`, string(body))
+}
+
+func TestDifficultyLevelUpdate_UpdateErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	difficultyLevel.Level = 3
+	reqBody, _ := json.Marshal(difficultyLevel)
+
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/difficultyLevel/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: difficultyLevel.ID.String()},
+	}
+
+	h.Update(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, `{"error":"error"}`, string(body))
+}
+
+func TestDifficultyLevelDelete_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	difficultyLevel.Level = 1
+
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/difficultyLevel/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: difficultyLevel.ID.String()},
+	}
+
+	h.Delete(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	assert.Equal(t, []byte(``), body)
+}
+
+func TestDifficultyLevelDelete_IDRequiredErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/difficultyLevel/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Delete(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, []byte(`{"error":"invalid difficultyLevel ID"}`), body)
+}
+
+func TestDifficultyLevelDelete_DeleteErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewDifficultyLevelHandlers(&DifficultyLevelServiceMock{}, &models.LoggerInterfaceMock{})
+
+	difficultyLevel.Level = 3
+
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/difficultyLevel/1", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: difficultyLevel.ID.String()},
+	}
+
+	h.Delete(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	assert.Equal(t, []byte(`{"error":"error"}`), body)
+}

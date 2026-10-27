@@ -1,0 +1,94 @@
+package repositories
+
+import (
+	"errors"
+
+	m "github.com/ihulsbus/cookbook/shared/models"
+	"gorm.io/gorm"
+)
+
+type TagRepository struct {
+	db *gorm.DB
+}
+
+func NewTagRepository(db *gorm.DB) *TagRepository {
+	return &TagRepository{
+		db: db,
+	}
+}
+
+func (r *TagRepository) FindAll(pagination m.PaginationRequest) ([]m.Tag, int64, error) {
+	var tags []m.Tag
+	var total int64
+
+	if err := r.db.Model(&m.Tag{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.db.Limit(pagination.Limit).Offset(pagination.Offset()).Find(&tags).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return tags, total, nil
+}
+
+func (r *TagRepository) FindSingle(tag m.Tag) (m.Tag, error) {
+
+	result := r.db.First(&tag)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return m.Tag{}, errors.New("not found")
+		} else {
+			return m.Tag{}, result.Error
+		}
+	}
+
+	return tag, nil
+}
+
+func (r *TagRepository) Create(tag m.Tag) (m.Tag, error) {
+
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+
+		if err = tx.Create(&tag).Error; err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return m.Tag{}, err
+	}
+
+	return tag, nil
+}
+
+func (r *TagRepository) Update(tag m.Tag) (m.Tag, error) {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+		var err error
+
+		if err = tx.Updates(&tag).Error; err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return m.Tag{}, err
+	}
+
+	return tag, nil
+}
+
+func (r *TagRepository) Delete(tag m.Tag) error {
+	if err := r.db.Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Delete(&tag).Error; err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}

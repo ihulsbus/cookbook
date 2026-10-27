@@ -1,0 +1,85 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+var (
+	DefaultCuisineTypes = []CuisineType{
+		{Name: "American"},
+		{Name: "Brazilian"},
+		{Name: "Chinese"},
+		{Name: "Ethiopian"},
+		{Name: "French"},
+		{Name: "Greek"},
+		{Name: "Indian"},
+		{Name: "Italian"},
+		{Name: "Japanese"},
+		{Name: "Korean"},
+		{Name: "Mediterranean"},
+		{Name: "Mexican"},
+		{Name: "Middle Eastern"},
+		{Name: "Moroccan"},
+		{Name: "Spanish"},
+		{Name: "Thai"},
+		{Name: "Turkish"},
+		{Name: "Vietnamese"},
+	}
+)
+
+// Database model
+type CuisineType struct {
+	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Name      string         `gorm:"type:varchar(100);unique;not null"`
+	CreatedAt time.Time      `gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+func (c CuisineType) ConvertToDTO() CuisineTypeDTO {
+	return CuisineTypeDTO{
+		ID:   c.ID,
+		Name: c.Name,
+	}
+}
+
+func (c CuisineType) ConvertAllToDTO(cuisineTypes []CuisineType) []CuisineTypeDTO {
+	var data []CuisineTypeDTO
+
+	for _, cuisineType := range cuisineTypes {
+		data = append(data, cuisineType.ConvertToDTO())
+	}
+
+	return data
+}
+
+//func (cuisineType *CuisineType) BeforeCreate(tx *gorm.DB) (err error) {
+//	cuisineType.ID = uuid.New()
+//	return
+//}
+
+// DTO model
+type CuisineTypeDTO struct {
+	ID   uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
+	Name string    `json:"name" binding:"required,min=1,max=255"`
+}
+
+func (c CuisineTypeDTO) ConvertFromDTO() CuisineType {
+	return CuisineType{
+		ID:   c.ID,
+		Name: c.Name,
+	}
+}
+
+func (c CuisineTypeDTO) ConvertAllFromDTO(cuisineTypes []CuisineTypeDTO) []CuisineType {
+	var data []CuisineType
+
+	for _, cuisineType := range cuisineTypes {
+		data = append(data, cuisineType.ConvertFromDTO())
+	}
+
+	return data
+}

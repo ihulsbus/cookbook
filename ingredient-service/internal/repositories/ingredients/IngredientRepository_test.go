@@ -1,0 +1,284 @@
+package repositories
+
+import (
+	"errors"
+	"log"
+	"os"
+	"regexp"
+	"testing"
+	"time"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/google/uuid"
+	m "github.com/ihulsbus/cookbook/shared/models"
+	"github.com/stretchr/testify/assert"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+)
+
+var (
+	ingredient m.Ingredient = m.Ingredient{
+		ID:   uuid.New(),
+		Name: "ingredient",
+	}
+)
+
+func newMockDatabase(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
+
+	var mockDB *gorm.DB
+
+	newLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             time.Second, // Slow SQL threshold
+			LogLevel:                  logger.Info, // Log level
+			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
+			Colorful:                  false,       // Disable color
+		},
+	)
+
+	sqlMockDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sql mock init failed: %v", err.Error())
+	}
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 sqlMockDB,
+		PreferSimpleProtocol: true,
+	})
+
+	mockDB, err = gorm.Open(dialector, &gorm.Config{
+		NowFunc: timeFunc,
+		Logger:  newLogger,
+	})
+	if err != nil {
+		t.Fatalf("gorm mock init failed: %v", err.Error())
+	}
+
+	return mockDB, mock
+}
+
+func timeFunc() time.Time {
+	time, _ := time.Parse("2006-01-02 15:04", "2023-02-04 18:00")
+	return time
+}
+
+func TestIngredientFindAll_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL LIMIT $1`)).
+		WithArgs(25).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
+			AddRow(ingredient.ID, ingredient.Name))
+
+	data, total, err := r.FindAll(pagination)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), total)
+	assert.Len(t, data, 1)
+}
+
+func TestIngredientFindAll_Empty(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL`)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL LIMIT $1`)).
+		WithArgs(25).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+
+	data, total, err := r.FindAll(pagination)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), total)
+	assert.Len(t, data, 0)
+}
+
+func TestIngredientFindAll_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+	pagination := m.NormalizePagination(1, 25)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL`)).
+		WillReturnError(errors.New("error"))
+
+	data, total, err := r.FindAll(pagination)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+	assert.Equal(t, int64(0), total)
+	assert.Len(t, data, 0)
+}
+
+func TestIngredientFindSingle_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL AND "ingredients"."id" = $1 ORDER BY "ingredients"."id" LIMIT $2`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).
+			AddRow(
+				ingredient.ID,
+				ingredient.Name,
+			))
+
+	result, err := r.FindSingle(ingredient)
+
+	assert.NoError(t, err)
+	assert.Equal(t, ingredient, result)
+}
+
+func TestIngredientFindSingle_NotFoundErr(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL AND "ingredients"."id" = $1 ORDER BY "ingredients"."id" LIMIT $2`)).
+		WillReturnRows(&sqlmock.Rows{})
+
+	result, err := r.FindSingle(ingredient)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "not found")
+	assert.IsType(t, m.Ingredient{}, result)
+}
+
+func TestIngredientFindSingle_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "ingredients" WHERE "ingredients"."deleted_at" IS NULL AND "ingredients"."id" = $1 ORDER BY "ingredients"."id" LIMIT $2`)).
+		WillReturnError(errors.New("error"))
+
+	result, err := r.FindSingle(ingredient)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+	assert.Equal(t, m.Ingredient{}, result)
+}
+
+func TestIngredientCreate_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
+		WithArgs(
+			ingredient.Name,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			nil,
+			sqlmock.AnyArg(),
+		).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).
+			AddRow(ingredient.ID))
+	mock.ExpectCommit()
+	result, err := r.Create(ingredient)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Ingredient{}, result)
+}
+
+func TestIngredientCreate_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
+		WithArgs(
+			ingredient.Name,
+			sqlmock.AnyArg(),
+			sqlmock.AnyArg(),
+			nil,
+			sqlmock.AnyArg(),
+		).WillReturnError(errors.New("error"))
+	mock.ExpectRollback()
+
+	_, err := r.Create(ingredient)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}
+
+func TestIngredientUpdate_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "name"=$1,"updated_at"=$2 WHERE "ingredients"."deleted_at" IS NULL AND "id" = $3`)).
+		WithArgs(
+			ingredient.Name,
+			sqlmock.AnyArg(),
+			ingredient.ID,
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+	result, err := r.Update(ingredient)
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.Ingredient{}, result)
+}
+
+func TestIngredientUpdate_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "name"=$1,"updated_at"=$2 WHERE "ingredients"."deleted_at" IS NULL AND "id" = $3`)).
+		WithArgs(
+			ingredient.Name,
+			sqlmock.AnyArg(),
+			ingredient.ID,
+		).
+		WillReturnError(errors.New("error"))
+	mock.ExpectRollback()
+
+	_, err := r.Update(ingredient)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}
+
+func TestIngredientDelete_OK(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "deleted_at"=$1 WHERE "ingredients"."id" = $2 AND "ingredients"."deleted_at" IS NULL`)).
+		WithArgs(
+			sqlmock.AnyArg(),
+			ingredient.ID,
+		).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	err := r.Delete(ingredient)
+
+	assert.NoError(t, err)
+}
+
+func TestIngredientDelete_Err(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewIngredientRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "deleted_at"=$1 WHERE "ingredients"."id" = $2 AND "ingredients"."deleted_at" IS NULL`)).
+		WithArgs(
+			sqlmock.AnyArg(),
+			ingredient.ID,
+		).
+		WillReturnError(errors.New("error"))
+	mock.ExpectRollback()
+
+	err := r.Delete(ingredient)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "error")
+}

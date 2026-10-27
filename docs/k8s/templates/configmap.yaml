@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}
+data:
+{{- range $path, $_ := .Files.Glob "files/*" }}
+  {{ regexReplaceAll "(.*)/" $path "" }}: |-
+{{- $.Files.Get $path | nindent 4 -}}
+{{- end }}

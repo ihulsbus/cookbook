@@ -1,0 +1,249 @@
+package handlers
+
+import (
+	"errors"
+	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
+	"io"
+	"mime/multipart"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
+	m "github.com/ihulsbus/cookbook/shared/models"
+)
+
+const (
+	MaxImageSize = 5 << 20 // 5 MB
+)
+
+type imageService interface {
+	FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.ImageDataDTO], error)
+	Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error)
+	Create(imageDTO m.ImageFileDTO) (m.ImageDataDTO, error)
+	Update(imageDTO m.ImageFileDTO) (m.ImageDataDTO, error)
+	Delete(imageDTO m.ImageDataDTO) error
+}
+
+type HttpHandler struct {
+	imageService imageService
+	logger       m.LoggerInterface
+}
+
+func NewHttpHandler(service imageService, logger m.LoggerInterface) *HttpHandler {
+	return &HttpHandler{
+		imageService: service,
+		logger:       logger,
+	}
+}
+
+func (h HttpHandler) FindAll(ctx *gin.Context) {
+	pagination, err := hh.ParsePagination(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	imageDTO, err := h.imageService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, imageDTO)
+}
+
+func (h HttpHandler) Find(ctx *gin.Context) {
+	var imageDTO m.ImageDataDTO
+	var err error
+
+	imageDTO.ID, err = uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image ID"})
+		return
+	}
+
+	imageDTO, err = h.imageService.Find(imageDTO)
+	if err != nil {
+		switch err.Error() {
+		case "not found":
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no images found"})
+			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, imageDTO)
+}
+
+func (h HttpHandler) SearchByRecipe(ctx *gin.Context) {
+	var imageDTO m.ImageDataDTO
+	var err error
+
+	imageDTO.EntityType = ctx.Query("entityType")
+	imageDTO.EntityID, err = uuid.Parse(ctx.Query("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image ID"})
+		return
+	}
+
+	imageDTO, err = h.imageService.Find(imageDTO)
+	if err != nil {
+		switch err.Error() {
+		case "not found":
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "no images found"})
+			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, imageDTO)
+}
+
+func (h HttpHandler) Create(ctx *gin.Context) {
+	var file multipart.File
+	var imageFileDTO m.ImageFileDTO
+	var err error
+
+	imageFileDTO.EntityID, err = uuid.Parse(ctx.Param("entityID"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid entityID"})
+		return
+	}
+
+	imageFileDTO.EntityType = ctx.Param("entityType")
+	if imageFileDTO.EntityType == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "entityType is required"})
+		return
+	}
+
+	var header *multipart.FileHeader
+	file, header, err = ctx.Request.FormFile("image")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
+		return
+	}
+	defer file.Close()
+
+	image := io.TeeReader(file, &imageFileDTO.File)
+
+	err = h.verifyImage(&imageFileDTO, image, header)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	imageDataDTO, err := h.imageService.Create(imageFileDTO)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, imageDataDTO)
+
+}
+
+func (h HttpHandler) Update(ctx *gin.Context) {
+	var file multipart.File
+	var imageFileDTO m.ImageFileDTO
+	var err error
+
+	id, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image ID"})
+		return
+	}
+
+	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
+	// perhaps separate create/update DTO's are needed
+	imageFileDTO.ID = id
+
+	var header *multipart.FileHeader
+	file, header, err = ctx.Request.FormFile("image")
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	defer file.Close()
+
+	image := io.TeeReader(file, &imageFileDTO.File)
+
+	err = h.verifyImage(&imageFileDTO, image, header)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	imageDataDTO, err := h.imageService.Update(imageFileDTO)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, imageDataDTO)
+}
+
+func (h HttpHandler) Delete(ctx *gin.Context) {
+	var imageDTO m.ImageDataDTO
+	var err error
+
+	imageDTO.ID, err = uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid image ID"})
+		return
+	}
+
+	err = h.imageService.Delete(imageDTO)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
+}
+
+func (h HttpHandler) verifyImage(imageFileDTO *m.ImageFileDTO, file io.Reader, header *multipart.FileHeader) error {
+	var err error
+
+	// Check file size
+	imageFileDTO.Size = header.Size
+	if imageFileDTO.Size > MaxImageSize {
+
+		return errors.New("image file is too large")
+	}
+
+	// Decode the image regardless of the format
+	var img image.Image
+	imageFileDTO.Type = header.Header.Get("Content-Type")
+	switch imageFileDTO.Type {
+	case "image/jpeg":
+		img, err = jpeg.Decode(file)
+	case "image/png":
+		img, err = png.Decode(file)
+	default:
+		return fmt.Errorf("unsupported image format: %s", imageFileDTO.Type)
+	}
+	if err != nil {
+		return fmt.Errorf("invalid image: %v", err)
+	}
+
+	// Check image dimensions
+	width := img.Bounds().Dx()
+	height := img.Bounds().Dy()
+	if width < 300 || height < 300 {
+		return errors.New("image dimensions are too small. Dimensions need to be between 300x300 and 1000x1000")
+	}
+
+	if width > 1000 || height > 1000 {
+		return errors.New("image dimensions are too big. Dimensions need to be between 300x300 and 1000x1000")
+	}
+
+	return nil
+}

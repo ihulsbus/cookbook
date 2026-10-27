@@ -1,0 +1,138 @@
+package handlers
+
+import (
+	"net/http"
+
+	m "github.com/ihulsbus/cookbook/shared/models"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	hh "github.com/ihulsbus/cookbook/shared/http"
+	"github.com/ihulsbus/cookbook/shared/models"
+)
+
+type CategoryService interface {
+	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.CategoryDTO], error)
+	FindSingle(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
+	Create(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
+	Update(CategoryDTO models.CategoryDTO) (models.CategoryDTO, error)
+	Delete(CategoryDTO models.CategoryDTO) error
+}
+
+type CategoryHandlers struct {
+	categoryService CategoryService
+	logger          m.LoggerInterface
+}
+
+func NewCategoryHandlers(categories CategoryService, logger m.LoggerInterface) *CategoryHandlers {
+	return &CategoryHandlers{
+		categoryService: categories,
+		logger:          logger,
+	}
+}
+
+func (h *CategoryHandlers) GetAll(ctx *gin.Context) {
+	pagination, err := hh.ParsePagination(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	categoryDTO, err := h.categoryService.FindAll(pagination)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, categoryDTO)
+}
+
+func (h *CategoryHandlers) Get(ctx *gin.Context) {
+	var categoryDTO models.CategoryDTO
+	var err error
+
+	categoryDTO.ID, err = uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid category ID"})
+		return
+	}
+
+	categoryDTO, err = h.categoryService.FindSingle(categoryDTO)
+	if err != nil {
+		switch err.Error() {
+		case "not found":
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "category not found"})
+			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, categoryDTO)
+}
+
+func (h *CategoryHandlers) Create(ctx *gin.Context) {
+	var categoryDTO models.CategoryDTO
+	var err error
+
+	if err = ctx.ShouldBindJSON(&categoryDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	categoryDTO, err = h.categoryService.Create(categoryDTO)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, categoryDTO)
+}
+
+func (h *CategoryHandlers) Update(ctx *gin.Context) {
+	var categoryDTO models.CategoryDTO
+	var err error
+
+	id, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid category ID"})
+		return
+	}
+
+	if err = ctx.ShouldBindJSON(&categoryDTO); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
+	// perhaps separate create/update DTO's are needed
+	categoryDTO.ID = id
+
+	categoryDTO, err = h.categoryService.Update(categoryDTO)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, categoryDTO)
+}
+
+func (h *CategoryHandlers) Delete(ctx *gin.Context) {
+	var categoryDTO models.CategoryDTO
+	var err error
+
+	categoryDTO.ID, err = uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid category ID"})
+		return
+	}
+
+	err = h.categoryService.Delete(categoryDTO)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.Status(http.StatusNoContent)
+}
