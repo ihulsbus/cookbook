@@ -1,0 +1,26 @@
+name: OpenAPI lint
+
+on:
+  push:
+    branches:
+    - master
+    - develop
+    - feature/V2-microservices
+    paths:
+    - 'openapi.yaml'
+    - '.github/workflows/openapi-lint.yaml'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+    - 'openapi.yaml'
+    - '.github/workflows/openapi-lint.yaml'
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Lint OpenAPI spec
+      run: npx --yes @redocly/cli lint openapi.yaml

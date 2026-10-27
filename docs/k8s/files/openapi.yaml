@@ -15,8 +15,8 @@ info:
     url: 'https://github.com/ihulsbus/cookbook/blob/feature/V2-microservices/LICENSE'
   description: Backend API belonging to the gourmedy app.
 servers:
-  - url: 'https://api-staging.gourmedy.com/api/v2'
-    description: Staging
+  - url: 'https://api.gourmedy.com/api/v2'
+    description: Backend api
 paths:
   /recipe:
     get:
@@ -52,8 +52,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-recipes
@@ -250,16 +248,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          description: Returned if there are no images to return
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-              examples:
-                Example 1:
-                  value:
-                    error: this is an error message
         '500':
           description: Returned if an unrecoverable internal error occured
           content:
@@ -498,9 +486,7 @@ paths:
             schema:
               type: object
               properties: {}
-  '/instruction/{InstructionID}':
-    parameters:
-      - $ref: '#/components/parameters/InstructionID'
+  '/instruction/{EntityID}':
     get:
       summary: Get instruction
       tags:
@@ -511,16 +497,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Instruction'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instruction'
+                  x-stoplight:
+                    id: jdlkg1w1wxnpq
               examples:
                 Example 1:
                   value:
-                    id: a34ab6d5-5980-414c-b176-22c873e65be6
-                    sequence: 1
-                    description: This is the text of an instruction
-                    media_id: 23582396-12a3-425b-a597-8a22052823da
-                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
-                    entity_type: recipe
+                    - sequence: 1
+                      description: This is the text of an instruction
+                      media_id: 23582396-12a3-425b-a597-8a22052823da
+                      entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                      entity_type: recipe
         '400':
           $ref: '#/components/responses/Bad-request'
         '401':
@@ -534,7 +523,7 @@ paths:
       operationId: get-instruction
       x-stoplight:
         id: lj4fc6rx32kp1
-      description: Retrieve an instruction via it's ID
+      description: Retrieve an instruction via it's entity ID
       requestBody:
         description: No Request body
         content:
@@ -542,6 +531,57 @@ paths:
             schema:
               type: object
               properties: {}
+    parameters:
+      - $ref: '#/components/parameters/EntityID'
+    post:
+      summary: Create instruction
+      tags:
+        - instruction
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instruction'
+                  x-stoplight:
+                    id: 3ova6yapvbeft
+              examples:
+                Example 1:
+                  value:
+                    - sequence: 1
+                      description: This is the text of an instruction
+                      media_id: 23582396-12a3-425b-a597-8a22052823da
+                      entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                      entity_type: recipe
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-instruction
+      x-stoplight:
+        id: iqvv0kgtjz464
+      description: Creates an instruction for an entity.
+      requestBody:
+        description: "Body specifies the instruction information. Entity ID is taken from the path and forced on each instruction object.\r\nCurrently the entityType is forced to `recipe`"
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Instruction'
+            examples:
+              Example 1:
+                value:
+                  - sequence: 1
+                    description: This is the text of an instruction
+                    media_id: 23582396-12a3-425b-a597-8a22052823da
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    entity_type: recipe
     put:
       summary: Update instruction
       tags:
@@ -552,16 +592,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Instruction'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Instruction'
+                  x-stoplight:
+                    id: 5ta79j7ve2o2x
               examples:
                 Example 1:
                   value:
-                    id: a34ab6d5-5980-414c-b176-22c873e65be6
-                    sequence: 1
-                    description: This is the text of an instruction
-                    media_id: 23582396-12a3-425b-a597-8a22052823da
-                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
-                    entity_type: recipe
+                    - sequence: 1
+                      description: This is the text of an instruction
+                      media_id: 23582396-12a3-425b-a597-8a22052823da
+                      entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                      entity_type: recipe
         '400':
           $ref: '#/components/responses/Bad-request'
         '401':
@@ -578,16 +621,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Instruction'
+              type: array
+              items:
+                $ref: '#/components/schemas/Instruction'
+                x-stoplight:
+                  id: hdgjrevsx5r4q
             examples:
               Example 1:
                 value:
-                  sequence: 1
-                  description: This is the text of an instruction
-                  media_id: 23582396-12a3-425b-a597-8a22052823da
-                  entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
-                  entity_type: recipe
-      description: Update an instruction
+                  - sequence: 1
+                    description: This is the text of an instruction
+                    media_id: 23582396-12a3-425b-a597-8a22052823da
+                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+                    entity_type: recipe
+      description: Update an entity's instruction via the entityID
     delete:
       summary: Delete instruction
       tags:
@@ -614,55 +661,6 @@ paths:
               type: object
               properties: {}
       description: Deletes an instruction
-  '/instruction/recipe/{RecipeID}':
-    parameters:
-      - $ref: '#/components/parameters/RecipeID'
-    post:
-      summary: Create instruction
-      tags:
-        - instruction
-      responses:
-        '201':
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Instruction'
-              examples:
-                Example 1:
-                  value:
-                    id: a34ab6d5-5980-414c-b176-22c873e65be6
-                    sequence: 1
-                    description: This is the text of an instruction
-                    media_id: 23582396-12a3-425b-a597-8a22052823da
-                    entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
-                    entity_type: recipe
-        '400':
-          $ref: '#/components/responses/Bad-request'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Insufficient-permissions'
-        '500':
-          $ref: '#/components/responses/Internal-server-error'
-      operationId: create-instruction
-      x-stoplight:
-        id: iqvv0kgtjz464
-      description: Creates an instruction for a recipe.
-      requestBody:
-        description: "Body specifies the instruction information. ID is omitted when creating the instruction as it is generated on creation.\r\nIf an ID is provided, it will be overruled internally"
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Instruction'
-            examples:
-              Example 1:
-                value:
-                  sequence: 1
-                  description: This is the text of an instruction
-                  media_id: 23582396-12a3-425b-a597-8a22052823da
-                  entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
-                  entity_type: recipe
   /metadata/tag:
     get:
       summary: Get all tags
@@ -695,8 +693,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-tags
@@ -850,6 +846,272 @@ paths:
             schema:
               type: object
               properties: {}
+  /metadata/recipe:
+    get:
+      summary: Get all recipe metadata
+      tags:
+        - metadata
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRecipeMetadataResponse'
+              examples:
+                Example 1:
+                  value:
+                    data:
+                      - recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                        categories:
+                          - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                            name: category
+                        cuisine_type:
+                          id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                          name: Italian
+                        tags:
+                          - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                            name: testtag
+                        difficulty_level:
+                          id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                          level: 1
+                        preparation_time: 45
+                        serving_count: 2
+                    pagination:
+                      page: 1
+                      limit: 25
+                      total: 1
+                      total_pages: 1
+                      has_next: false
+                      has_previous: false
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-recipe-metadata
+      description: Retrieves metadata of all recipes known to the API in a paginated format
+      requestBody:
+        description: 'No Body. '
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      x-stoplight:
+        id: 4zk4lnm0rtr1o
+    parameters: []
+  '/metadata/recipe/{RecipeID}':
+    parameters:
+      - $ref: '#/components/parameters/RecipeID'
+    get:
+      summary: Get single recipe metadata
+      tags:
+        - metadata
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeMetadata'
+              examples:
+                Example 1:
+                  value:
+                    recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                    categories:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: category
+                    cuisine_type:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: Italian
+                    tags:
+                      - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                        name: testtag
+                    difficulty_level:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      level: 1
+                    preparation_time: 45
+                    serving_count: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-recipe-metadata
+      description: Get the metadata of a single recipe
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      x-stoplight:
+        id: 9emjrfq9pya0z
+    post:
+      summary: Create recpe metadata
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeMetadata'
+              examples:
+                Example 1:
+                  value:
+                    recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                    categories:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: category
+                    cuisine_type:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: Italian
+                    tags:
+                      - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                        name: testtag
+                    difficulty_level:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      level: 1
+                    preparation_time: 45
+                    serving_count: 2
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: create-recipe-metadata
+      description: Create metadata for a recipe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeMetadata'
+            examples:
+              Example 1:
+                value:
+                  recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                  categories:
+                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: category
+                  cuisine_type:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: Italian
+                  tags:
+                    - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                      name: testtag
+                  difficulty_level:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    level: 1
+                  preparation_time: 45
+                  serving_count: 2
+        description: 'Creates metadata for a recipe. ID field can be omitted. If presented, field will be overwritten with the path parameter'
+      x-stoplight:
+        id: t5z7rwtacwth2
+      tags:
+        - metadata
+    put:
+      summary: Update recipe metadata
+      tags:
+        - metadata
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeMetadata'
+              examples:
+                Example 1:
+                  value:
+                    recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                    categories:
+                      - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                        name: category
+                    cuisine_type:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: Italian
+                    tags:
+                      - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                        name: testtag
+                    difficulty_level:
+                      id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      level: 1
+                    preparation_time: 45
+                    serving_count: 2
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-recipe-metadata
+      requestBody:
+        description: 'Updates a recipes metadata. ID field can be omitted. If presented, field will be overwritten by the path parameter'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeMetadata'
+            examples:
+              Example 1:
+                value:
+                  recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                  categories:
+                    - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      name: category
+                  cuisine_type:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    name: Italian
+                  tags:
+                    - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                      name: testtag
+                  difficulty_level:
+                    id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                    level: 1
+                  preparation_time: 45
+                  serving_count: 2
+      description: Updates the metadata for a recipe
+      x-stoplight:
+        id: sowkkijpblaxv
+    delete:
+      summary: Delete recipe metadata
+      tags:
+        - metadata
+      responses:
+        '204':
+          description: No Content
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-recipe-metadata
+      description: Delete a category
+      requestBody:
+        description: No body required
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: {}
+      x-stoplight:
+        id: 62k00lgn9r7ou
   /metadata/category:
     get:
       summary: Get all categories
@@ -882,8 +1144,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-category
@@ -1069,8 +1329,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-cuisinetype
@@ -1258,8 +1516,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-dificultylevels
@@ -1444,8 +1700,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-preparationtime
@@ -1654,8 +1908,51 @@ paths:
                 value:
                   min_prep_time: 1
                   max_prep_time: 30
-  /search:
+  /metadata/search/all:
     get:
+      summary: Get all searchable metadata
+      tags:
+        - metadata
+        - search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MetadataSearchResponse'
+              examples:
+                Example 1:
+                  value:
+                    - recipe_id: 23582396-12a3-425b-a597-8a22052823da
+                      category_ids:
+                        - f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      tag_ids:
+                        - b04f3132-3736-4ab1-9afe-3ba4c67cf119
+                      difficulty_level_id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      preparation_time_id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+                      cuisine_type_id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Insufficient-permissions'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-all-searchable-metadata
+      x-stoplight:
+        id: get-all-searchable-metadata
+      description: 'Retrieves all searchable metadata records. Currently, this endpoint does not support pagination. This will be added in the future'
+      requestBody:
+        description: No body
+        content:
+          text/plain:
+            schema:
+              type: object
+              properties: { }
+  /search:
+    post:
       summary: Search
       tags:
         - search
@@ -1671,17 +1968,19 @@ paths:
                     type: array
                     x-stoplight:
                       id: symvkedsm93kf
-                    items: {}
+                    items: { }
                   ingredients:
                     type: array
                     x-stoplight:
                       id: pnwjrz9k25jcd
-                    items: {}
+                    items: { }
                   metadata:
                     type: array
                     x-stoplight:
                       id: pmsdixynihh7l
-                    items: {}
+                    items: { }
+        '400':
+          $ref: '#/components/responses/Bad-request'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -1694,6 +1993,7 @@ paths:
       description: Search through all records globally in the API. This request is still being developed
       x-internal: true
       requestBody:
+        required: true
         content:
           application/json:
             schema:
@@ -1704,20 +2004,18 @@ paths:
                   x-stoplight:
                     id: rgkomex9y17nl
                 limit:
-                  type: string
+                  type: integer
                   x-stoplight:
                     id: bbt05z4h38maz
+                  minimum: 1
                 page:
-                  type: string
+                  type: integer
                   x-stoplight:
                     id: rbs1mqco0ohqw
-            examples:
-              Example 1:
-                value:
-                  query: string
-                  limit: string
-                  page: string
-        description: Under construction
+                  minimum: 1
+              required:
+                - query
+        description: Search request
   /ingredient:
     get:
       summary: Get all ingredients
@@ -1750,8 +2048,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: get-all-ingredient
@@ -1940,11 +2236,9 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
-        '404':
-          $ref: '#/components/responses/Not-Found'
         '500':
           $ref: '#/components/responses/Internal-server-error'
-      operationId: get-al-units
+      operationId: get-all-units
       x-stoplight:
         id: jjakt0nofkpxd
       description: Retrieve all units known to the API in a paginated format
@@ -2327,29 +2621,35 @@ paths:
       x-stoplight:
         id: kvtyowxx7fh03
       description: |-
-        Delete ingredient quantities belonging to a recipe.
-        Each provided ingredient reference will be deleted. If you want to delete all ingredients belonging to a recipe, send all.
+        Delete ingredient quantities belonging to a recipe. 
+        Each provided ingredient reference will be deleted. If you want to delete all ingredients belonging to a recipe, send all. 
       requestBody:
         content:
           application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/IngredientAmounts'
-                x-stoplight:
-                  id: m28jpsix95kph
-            examples:
-              Example 1:
-                value:
-                  - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
-                    unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
-                    quantity: 3
-        description: Array of ingredientAmounts
+              type: string
+            examples: {}
+        description: No body required. Delete deletes all ingredient amounts linked to a recipe
 components:
   schemas:
     ImageData:
       type: object
       description: Model returns information about the queried mediaID
+      examples:
+        - id: 6d279760-11be-4adb-af72-1873cb90dc27
+          entity_type: recipe
+          entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
+          size: 93055
+          type: image/jpeg
+      x-tags:
+        - image
+      title: ImageData
+      required:
+        - id
+        - entity_type
+        - entity_id
+        - size
+        - type
       properties:
         id:
           type: string
@@ -2366,24 +2666,8 @@ components:
         type:
           type: string
           description: type of media
-      examples:
-        - id: 6d279760-11be-4adb-af72-1873cb90dc27
-          entity_type: recipe
-          entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
-          size: 93055
-          type: image/jpeg
-      x-tags:
-        - image
-      title: ImageData
     Ingredient:
       type: object
-      properties:
-        id:
-          type: string
-          description: ID of the ingredient
-        name:
-          type: string
-          description: Name of the ingredient
       examples:
         - id: d95751c7-6cf3-4a24-8e60-620121d7b050
           name: Asparagus
@@ -2391,6 +2675,16 @@ components:
       title: Ingredient
       x-tags:
         - ingredient
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: ID of the ingredient
+        name:
+          type: string
+          description: Name of the ingredient
     Unit:
       type: object
       examples:
@@ -2399,6 +2693,12 @@ components:
           short_name: tbsp
       description: Returns information about a unit of measurement
       title: Unit
+      x-tags:
+        - unit
+      required:
+        - id
+        - full_name
+        - short_name
       properties:
         id:
           type: string
@@ -2415,10 +2715,12 @@ components:
           description: Abbreviation of the unit
           x-stoplight:
             id: hbikll06uprkg
-      x-tags:
-        - unit
     InstructionSearch:
       type: object
+      description: Returns searchresult of instructions belonging to the queried recipe
+      title: InstructionSearch
+      x-tags:
+        - instruction
       properties:
         recipe_id:
           type: string
@@ -2428,10 +2730,6 @@ components:
           description: Array with ID's of instructions
           items:
             type: string
-      description: Returns searchresult of instructions belonging to the queried recipe
-      title: InstructionSearch
-      x-tags:
-        - instruction
     Instruction:
       type: object
       examples:
@@ -2448,7 +2746,10 @@ components:
           entity_type: recipe
       description: 'Information about an instruction. '
       title: Instruction
+      x-tags:
+        - instruction
       required:
+        - id
         - sequence
         - description
         - media_id
@@ -2475,17 +2776,8 @@ components:
           description: entity ID the instruction belongs to
         entity_type:
           type: string
-      x-tags:
-        - instruction
     Tag:
       type: object
-      properties:
-        id:
-          type: string
-          description: ID of the tag
-        name:
-          type: string
-          description: Name of the tag
       examples:
         - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
           name: testtag
@@ -2493,11 +2785,28 @@ components:
       title: Tag
       x-tags:
         - tag
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: ID of the tag
+        name:
+          type: string
+          description: Name of the tag
     Category:
       type: object
       examples:
         - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
           name: category
+      description: Information about a category
+      title: Category
+      x-tags:
+        - category
+      required:
+        - id
+        - name
       properties:
         id:
           type: string
@@ -2505,10 +2814,6 @@ components:
         name:
           type: string
           description: Name of a category
-      description: Information about a category
-      title: Category
-      x-tags:
-        - category
     CuisineType:
       type: object
       x-stoplight:
@@ -2518,6 +2823,11 @@ components:
           name: Italian
       description: Information about a Cuisine Type
       title: CuisineType
+      x-tags:
+        - cuisinetype
+      required:
+        - id
+        - name
       properties:
         id:
           type: string
@@ -2525,8 +2835,6 @@ components:
         name:
           type: string
           description: name of a cuisine type
-      x-tags:
-        - cuisinetype
     DifficultyLevel:
       type: object
       x-stoplight:
@@ -2536,6 +2844,11 @@ components:
           level: 1
       description: Information about a Dificulty Level
       title: DificultyLevel
+      x-tags:
+        - difficultylevel
+      required:
+        - id
+        - level
       properties:
         id:
           type: string
@@ -2548,8 +2861,6 @@ components:
           example: 1
           minimum: 1
           maximum: 5
-      x-tags:
-        - difficultylevel
     PreparationTime:
       type: object
       x-stoplight:
@@ -2559,6 +2870,11 @@ components:
           duration: 75
       description: Information about a Peparation Time
       title: PreparationTime
+      x-tags:
+        - preparationtime
+      required:
+        - id
+        - duration
       properties:
         id:
           type: string
@@ -2572,8 +2888,6 @@ components:
           maximum: 100
           x-stoplight:
             id: 98s0af2d37h7a
-      x-tags:
-        - preparationtime
     MetadataSearchRequest:
       type: object
       properties:
@@ -2648,7 +2962,10 @@ components:
           serving_count: 1
       description: Definition of a recipe
       title: Recipe
+      x-tags:
+        - recipe
       required:
+        - id
         - name
         - description
         - serving_count
@@ -2669,24 +2986,24 @@ components:
           description: amount of servings a recipe makes
           x-stoplight:
             id: 2rx8kbenft4fm
-      x-tags:
-        - recipe
     Error:
       title: Error
       x-stoplight:
         id: 0dvpf1j4bgao6
       type: object
+      examples:
+        - error: this is an error message
+      description: Definition of an error returned
+      x-tags:
+        - error
+      required:
+        - error
       properties:
         error:
           type: string
           x-stoplight:
             id: ypd6bfe2esfiy
           description: field specifying the error that the API encountered
-      examples:
-        - error: this is an error message
-      description: Definition of an error returned
-      x-tags:
-        - error
     IngredientAmounts:
       title: IngredientAmounts
       x-stoplight:
@@ -2699,6 +3016,10 @@ components:
           quantity: 3
       x-tags:
         - amount
+      required:
+        - ingredientID
+        - unitID
+        - quantity
       properties:
         ingredientID:
           type: string
@@ -2714,6 +3035,65 @@ components:
           type: number
           x-stoplight:
             id: eyzfcp6nuz7bj
+    RecipeMetadata:
+      title: RecipeMetadata
+      x-stoplight:
+        id: 2oqkgbyf2x2we
+      type: object
+      properties:
+        recipe_id:
+          type: string
+          x-stoplight:
+            id: 8cejpvvfcssqz
+        categories:
+          type: array
+          x-stoplight:
+            id: qsoo76yixsxqw
+          items:
+            $ref: '#/components/schemas/Category'
+            x-stoplight:
+              id: n5ua4l9iacckn
+        cuisine_type:
+          $ref: '#/components/schemas/CuisineType'
+          x-stoplight:
+            id: y30ivttzoq2na
+        tags:
+          type: array
+          x-stoplight:
+            id: piklqvyqubqmh
+          items:
+            $ref: '#/components/schemas/Tag'
+            x-stoplight:
+              id: zo1f3yjkxdzrf
+        difficulty_level:
+          $ref: '#/components/schemas/DifficultyLevel'
+          x-stoplight:
+            id: 8uw8tpogh6psf
+        preparation_time:
+          type: number
+          x-stoplight:
+            id: ea7gwhd435n5s
+        serving_count:
+          type: number
+          x-stoplight:
+            id: ej1lohmwddq7v
+      examples:
+        - recipe_id: 23582396-12a3-425b-a597-8a22052823da
+          categories:
+            - id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+              name: category
+          cuisine_type:
+            id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+            name: Italian
+          tags:
+            - id: b04f3132-3736-4ab1-9afe-3ba4c67cf119
+              name: testtag
+          difficulty_level:
+            id: f6985444-1d5d-4ce6-a778-3e5383ee19bb
+            level: 1
+          preparation_time: 45
+          serving_count: 2
+      description: Model of metadata associated to a recipe
     PaginationMetadata:
       type: object
       title: PaginationMetadata
@@ -2834,6 +3214,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PreparationTime'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+    PaginatedRecipeMetadataResponse:
+      type: object
+      title: PaginatedRecipeMetadataResponse
+      description: Paginated list of recipe metadata
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeMetadata'
         pagination:
           $ref: '#/components/schemas/PaginationMetadata'
   securitySchemes:

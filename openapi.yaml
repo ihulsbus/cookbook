@@ -15,8 +15,8 @@ info:
     url: 'https://github.com/ihulsbus/cookbook/blob/feature/V2-microservices/LICENSE'
   description: Backend API belonging to the gourmedy app.
 servers:
-  - url: 'https://api-staging.gourmedy.com/api/v2'
-    description: Staging
+  - url: 'https://api.gourmedy.com/api/v2'
+    description: Backend api
 paths:
   /recipe:
     get:
