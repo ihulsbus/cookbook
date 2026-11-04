@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/ihulsbus/cookbook/shared/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -15,28 +16,28 @@ type MockRecipeService struct {
 	mock.Mock
 }
 
-func (m *MockRecipeService) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.RecipeDTO], error) {
-	args := m.Called(pagination)
+func (m *MockRecipeService) FindAll(pagination models.PaginationRequest, requesterID uuid.UUID) (models.PaginatedResponse[models.RecipeDTO], error) {
+	args := m.Called(pagination, requesterID)
 	return args.Get(0).(models.PaginatedResponse[models.RecipeDTO]), args.Error(1)
 }
 
-func (m *MockRecipeService) FindSingle(recipeDTO models.RecipeDTO) (models.RecipeDTO, error) {
-	args := m.Called(recipeDTO)
+func (m *MockRecipeService) FindSingle(recipeDTO models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error) {
+	args := m.Called(recipeDTO, requesterID)
 	return args.Get(0).(models.RecipeDTO), args.Error(1)
 }
 
-func (m *MockRecipeService) Create(recipeDTO models.RecipeDTO) (models.RecipeDTO, error) {
-	args := m.Called(recipeDTO)
+func (m *MockRecipeService) Create(recipeDTO models.RecipeDTO, ownerID uuid.UUID) (models.RecipeDTO, error) {
+	args := m.Called(recipeDTO, ownerID)
 	return args.Get(0).(models.RecipeDTO), args.Error(1)
 }
 
-func (m *MockRecipeService) Update(recipeDTO models.RecipeDTO) (models.RecipeDTO, error) {
-	args := m.Called(recipeDTO)
+func (m *MockRecipeService) Update(recipeDTO models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error) {
+	args := m.Called(recipeDTO, requesterID)
 	return args.Get(0).(models.RecipeDTO), args.Error(1)
 }
 
-func (m *MockRecipeService) Delete(recipeDTO models.RecipeDTO) error {
-	args := m.Called(recipeDTO)
+func (m *MockRecipeService) Delete(recipeDTO models.RecipeDTO, requesterID uuid.UUID) error {
+	args := m.Called(recipeDTO, requesterID)
 	return args.Error(0)
 }
 

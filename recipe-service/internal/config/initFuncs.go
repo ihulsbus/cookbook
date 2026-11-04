@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/cors"
 	m "github.com/ihulsbus/cookbook/shared/models"
 	"github.com/ihulsbus/cookbook/shared/oidc"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -90,6 +91,11 @@ func initDatabase() {
 		&m.Recipe{},
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
+	}
+	// Outbox table for reliable event publishing (KIT-26): written in the
+	// same transaction as a Recipe change, relayed to RabbitMQ by OutboxRelay.
+	if err := rmq.AutoMigrateOutbox(DatabaseClient); err != nil {
+		Logger.Fatalf("Error while automigrating outbox table: %s", err.Error())
 	}
 
 	Logger.Info("connected!")

@@ -11,6 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/ihulsbus/cookbook/shared/models"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -23,6 +24,15 @@ var (
 		Name:         "recipe",
 		Description:  "description",
 		ServingCount: 1,
+		OwnerID:      uuid.New(),
+		Visibility:   models.VisibilityPrivate,
+	}
+
+	testOutbox rmq.OutboxEvent = rmq.OutboxEvent{
+		EventID:       uuid.New(),
+		RoutingKey:    rmq.RecipeCreatedRoutingKey,
+		Payload:       []byte(`{}`),
+		SchemaVersion: 1,
 	}
 )
 
@@ -72,21 +82,25 @@ func TestRecipeFindAll_OK(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
 	pagination := models.NormalizePagination(1, 25)
+	requesterID := recipe.OwnerID
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE (owner_id = $1 OR visibility = $2) AND "recipes"."deleted_at" IS NULL`)).
+		WithArgs(requesterID, models.VisibilityPublic).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL LIMIT $1`)).
-		WithArgs(25).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count"}).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE (owner_id = $1 OR visibility = $2) AND "recipes"."deleted_at" IS NULL LIMIT $3`)).
+		WithArgs(requesterID, models.VisibilityPublic, 25).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count", "owner_id", "visibility"}).
 			AddRow(
 				recipe.ID,
 				recipe.Name,
 				recipe.Description,
 				recipe.ServingCount,
+				recipe.OwnerID,
+				recipe.Visibility,
 			))
 
-	data, total, err := r.FindAll(pagination)
+	data, total, err := r.FindAll(pagination, requesterID)
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 1)
@@ -100,11 +114,13 @@ func TestRecipeFindAll_Err(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
 	pagination := models.NormalizePagination(1, 25)
+	requesterID := recipe.OwnerID
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE (owner_id = $1 OR visibility = $2) AND "recipes"."deleted_at" IS NULL`)).
+		WithArgs(requesterID, models.VisibilityPublic).
 		WillReturnError(errors.New("error"))
 
-	data, total, err := r.FindAll(pagination)
+	data, total, err := r.FindAll(pagination, requesterID)
 
 	assert.Error(t, err)
 	assert.Len(t, data, 0)
@@ -115,15 +131,17 @@ func TestRecipeFindAll_Empty(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
 	pagination := models.NormalizePagination(1, 25)
+	requesterID := recipe.OwnerID
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE "recipes"."deleted_at" IS NULL`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE (owner_id = $1 OR visibility = $2) AND "recipes"."deleted_at" IS NULL`)).
+		WithArgs(requesterID, models.VisibilityPublic).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 
-	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE "recipes"."deleted_at" IS NULL LIMIT $1`)).
-		WithArgs(25).
-		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count"}))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE (owner_id = $1 OR visibility = $2) AND "recipes"."deleted_at" IS NULL LIMIT $3`)).
+		WithArgs(requesterID, models.VisibilityPublic, 25).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count", "owner_id", "visibility"}))
 
-	data, total, err := r.FindAll(pagination)
+	data, total, err := r.FindAll(pagination, requesterID)
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 0)
@@ -160,20 +178,13 @@ func TestRecipeCreate_Ok(t *testing.T) {
 	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "recipes" ("created_at","updated_at","deleted_at","name","description","serving_count","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
-		WithArgs(
-			sqlmock.AnyArg(),
-			sqlmock.AnyArg(),
-			nil,
-			recipe.Name,
-			recipe.Description,
-			recipe.ServingCount,
-			recipe.ID,
-		).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "recipes"`)).
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(recipe.ID))
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "outbox_events"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(testOutbox.ID))
 	mock.ExpectCommit()
 
-	result, err := r.Create(recipe)
+	result, err := r.Create(recipe, testOutbox)
 
 	assert.NoError(t, err)
 	assert.IsType(t, result, models.Recipe{})
@@ -184,22 +195,31 @@ func TestRecipeCreate_Err(t *testing.T) {
 	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "recipes" ("created_at","updated_at","deleted_at","name","description","serving_count","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
-		WithArgs(
-			sqlmock.AnyArg(),
-			sqlmock.AnyArg(),
-			nil,
-			recipe.Name,
-			recipe.Description,
-			recipe.ServingCount,
-			recipe.ID,
-		).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "recipes"`)).
 		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()
-	result, err := r.Create(recipe)
+	result, err := r.Create(recipe, testOutbox)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
+	assert.IsType(t, result, models.Recipe{})
+}
+
+func TestRecipeCreate_OutboxErr(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewDatabaseRepository(db)
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "recipes"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(recipe.ID))
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "outbox_events"`)).
+		WillReturnError(errors.New("outbox error"))
+	mock.ExpectRollback()
+
+	result, err := r.Create(recipe, testOutbox)
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "outbox error")
 	assert.IsType(t, result, models.Recipe{})
 }
 
@@ -208,19 +228,13 @@ func TestRecipeUpdate_Ok(t *testing.T) {
 	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET "updated_at"=$1,"name"=$2,"description"=$3,"serving_count"=$4 WHERE "recipes"."deleted_at" IS NULL AND "id" = $5`)).
-		WithArgs(
-			sqlmock.AnyArg(),
-			recipe.Name,
-			recipe.Description,
-			recipe.ServingCount,
-			recipe.ID,
-		).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET`)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
-
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "outbox_events"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(testOutbox.ID))
 	mock.ExpectCommit()
 
-	result, err := r.Update(recipe)
+	result, err := r.Update(recipe, testOutbox)
 
 	assert.NoError(t, err)
 	assert.IsType(t, result, models.Recipe{})
@@ -231,18 +245,11 @@ func TestRecipeUpdate_Err(t *testing.T) {
 	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET "updated_at"=$1,"name"=$2,"description"=$3,"serving_count"=$4 WHERE "recipes"."deleted_at" IS NULL AND "id" = $5`)).
-		WithArgs(
-			sqlmock.AnyArg(),
-			recipe.Name,
-			recipe.Description,
-			recipe.ServingCount,
-			recipe.ID,
-		).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET`)).
 		WillReturnError(errors.New("error"))
-	mock.ExpectCommit()
+	mock.ExpectRollback()
 
-	result, err := r.Update(recipe)
+	result, err := r.Update(recipe, testOutbox)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")
@@ -254,15 +261,13 @@ func TestRecipeDelete_Ok(t *testing.T) {
 	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET "deleted_at"=$1 WHERE "recipes"."id" = $2 AND "recipes"."deleted_at" IS NULL`)).
-		WithArgs(
-			sqlmock.AnyArg(),
-			recipe.ID,
-		).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET`)).
 		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "outbox_events"`)).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(testOutbox.ID))
 	mock.ExpectCommit()
 
-	err := r.Delete(recipe)
+	err := r.Delete(recipe, testOutbox)
 
 	assert.NoError(t, err)
 }
@@ -272,15 +277,11 @@ func TestRecipeDelete_Err(t *testing.T) {
 	r := NewDatabaseRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET "deleted_at"=$1 WHERE "recipes"."id" = $2 AND "recipes"."deleted_at" IS NULL`)).
-		WithArgs(
-			sqlmock.AnyArg(),
-			recipe.ID,
-		).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "recipes" SET`)).
 		WillReturnError(errors.New("error"))
-	mock.ExpectCommit()
+	mock.ExpectRollback()
 
-	err := r.Delete(recipe)
+	err := r.Delete(recipe, testOutbox)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

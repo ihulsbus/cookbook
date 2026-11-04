@@ -8,6 +8,7 @@ use (
 	./notification-service
 	./recipe-service
 	./search-service
+	./shared/authz
 	./shared/cache
 	./shared/healthchecks
 	./shared/http

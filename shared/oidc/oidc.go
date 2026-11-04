@@ -249,3 +249,10 @@ func PrincipalFromContext(c *gin.Context) (*Principal, bool) {
 	p, ok := v.(*Principal)
 	return p, ok
 }
+
+// SetPrincipal stores p in c exactly as RequireAuth/RequireRole would.
+// Exported for handler tests that need an authenticated context without
+// going through a real bearer token.
+func SetPrincipal(c *gin.Context, p *Principal) {
+	c.Set(principalContextKey, p)
+}

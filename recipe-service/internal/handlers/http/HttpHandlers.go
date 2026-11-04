@@ -9,14 +9,15 @@ import (
 	"github.com/google/uuid"
 	hh "github.com/ihulsbus/cookbook/shared/http"
 	"github.com/ihulsbus/cookbook/shared/models"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 )
 
 type RecipeService interface {
-	FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.RecipeDTO], error)
-	FindSingle(recipe models.RecipeDTO) (models.RecipeDTO, error)
-	Create(recipe models.RecipeDTO) (models.RecipeDTO, error)
-	Update(recipe models.RecipeDTO) (models.RecipeDTO, error)
-	Delete(recipe models.RecipeDTO) error
+	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID) (models.PaginatedResponse[models.RecipeDTO], error)
+	FindSingle(recipe models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error)
+	Create(recipe models.RecipeDTO, ownerID uuid.UUID) (models.RecipeDTO, error)
+	Update(recipe models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error)
+	Delete(recipe models.RecipeDTO, requesterID uuid.UUID) error
 }
 
 type HttpHandlers struct {
@@ -31,14 +32,42 @@ func NewHttpHandlers(recipes RecipeService, logger m.LoggerInterface) *HttpHandl
 	}
 }
 
+// principalID extracts the authenticated caller's user ID from the Gin
+// context (set by oidc.Module.RequireAuth, which every route in this
+// service's router already runs) and parses it as a UUID. It only fails
+// when RequireAuth wasn't actually run upstream, or the OIDC provider's
+// `sub` claim isn't a UUID - both treated as 401, since there's no valid
+// caller identity to authorize against.
+func (h HttpHandlers) principalID(ctx *gin.Context) (uuid.UUID, bool) {
+	principal, ok := oidc.PrincipalFromContext(ctx)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "missing authenticated principal"})
+		return uuid.Nil, false
+	}
+
+	id, err := uuid.Parse(principal.UserID)
+	if err != nil {
+		h.logger.Errorf("principal sub %q is not a UUID: %s", principal.UserID, err.Error())
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid principal"})
+		return uuid.Nil, false
+	}
+
+	return id, true
+}
+
 func (h HttpHandlers) GetAll(ctx *gin.Context) {
+	requesterID, ok := h.principalID(ctx)
+	if !ok {
+		return
+	}
+
 	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	recipeDTO, err := h.recipeService.FindAll(pagination)
+	recipeDTO, err := h.recipeService.FindAll(pagination, requesterID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -48,6 +77,11 @@ func (h HttpHandlers) GetAll(ctx *gin.Context) {
 }
 
 func (h HttpHandlers) Get(ctx *gin.Context) {
+	requesterID, ok := h.principalID(ctx)
+	if !ok {
+		return
+	}
+
 	var recipeDTO models.RecipeDTO
 	var err error
 
@@ -57,7 +91,7 @@ func (h HttpHandlers) Get(ctx *gin.Context) {
 		return
 	}
 
-	recipeDTO, err = h.recipeService.FindSingle(recipeDTO)
+	recipeDTO, err = h.recipeService.FindSingle(recipeDTO, requesterID)
 	if err != nil {
 		switch err.Error() {
 		case "not found":
@@ -73,6 +107,11 @@ func (h HttpHandlers) Get(ctx *gin.Context) {
 }
 
 func (h HttpHandlers) Create(ctx *gin.Context) {
+	ownerID, ok := h.principalID(ctx)
+	if !ok {
+		return
+	}
+
 	var recipeDTO models.RecipeDTO
 	var err error
 
@@ -82,7 +121,7 @@ func (h HttpHandlers) Create(ctx *gin.Context) {
 		return
 	}
 
-	recipeDTO, err = h.recipeService.Create(recipeDTO)
+	recipeDTO, err = h.recipeService.Create(recipeDTO, ownerID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -92,6 +131,11 @@ func (h HttpHandlers) Create(ctx *gin.Context) {
 }
 
 func (h HttpHandlers) Update(ctx *gin.Context) {
+	requesterID, ok := h.principalID(ctx)
+	if !ok {
+		return
+	}
+
 	var recipeDTO models.RecipeDTO
 	var err error
 
@@ -110,16 +154,27 @@ func (h HttpHandlers) Update(ctx *gin.Context) {
 	// perhaps separate create/update DTO's are needed
 	recipeDTO.ID = id
 
-	recipeDTO, err = h.recipeService.Update(recipeDTO)
+	recipeDTO, err = h.recipeService.Update(recipeDTO, requesterID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		switch err.Error() {
+		case "not found":
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "recipe not found"})
+			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	ctx.JSON(http.StatusOK, recipeDTO)
 }
 
 func (h HttpHandlers) Delete(ctx *gin.Context) {
+	requesterID, ok := h.principalID(ctx)
+	if !ok {
+		return
+	}
+
 	var recipeDTO models.RecipeDTO
 	var err error
 
@@ -129,10 +184,16 @@ func (h HttpHandlers) Delete(ctx *gin.Context) {
 		return
 	}
 
-	err = h.recipeService.Delete(recipeDTO)
+	err = h.recipeService.Delete(recipeDTO, requesterID)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		switch err.Error() {
+		case "not found":
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "recipe not found"})
+			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	ctx.Status(http.StatusNoContent)

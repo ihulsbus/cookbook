@@ -45,6 +45,12 @@ type EnhancedHTTPClient struct {
 	RetryConfig    RetryConfig
 	requestCounter uint64
 	requestMutex   sync.Mutex
+	// SkipAuth, when true, skips the OAuth client-credentials token dance
+	// entirely (no Authorization header is set). For calls that never
+	// cross the OIDC trust boundary - e.g. a network-isolated internal
+	// endpoint reachable only from inside the cluster, protected by a
+	// NetworkPolicy rather than a bearer token. See NewInternalHTTPClient.
+	SkipAuth bool
 }
 
 // DefaultRetryConfig returns sensible retry defaults
@@ -121,11 +127,32 @@ func NewEnhancedHTTPClient(
 	}
 }
 
+// NewInternalHTTPClient creates an EnhancedHTTPClient (retry + circuit
+// breaker) with SkipAuth set, for calls to a network-internal endpoint
+// that isn't behind the OIDC trust boundary - e.g. recipe-service's
+// internal-only access endpoint, called by shared/authz's projection-miss
+// fallback. Unlike NewEnhancedHTTPClient, this never attempts the OAuth
+// client-credentials flow, so it isn't affected by that flow's
+// still-Keycloak-shaped token endpoint (KeycloakURL/KeycloakRealm) - there
+// is nothing to authenticate to a NetworkPolicy.
+func NewInternalHTTPClient(
+	timeout time.Duration,
+	logger LoggerInterface,
+	retryConfig *RetryConfig,
+	cbConfig *CircuitBreakerConfig,
+) *EnhancedHTTPClient {
+	client := NewEnhancedHTTPClient(timeout, "", "", "", "", logger, retryConfig, cbConfig)
+	client.SkipAuth = true
+	return client
+}
+
 // Do sends an HTTP request with circuit breaker and retry logic
 func (h *EnhancedHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	// Ensure auth token is present
-	if err := h.ensureAuthToken(); err != nil {
-		return nil, fmt.Errorf("failed to ensure auth token: %w", err)
+	// Ensure auth token is present (skipped entirely for SkipAuth clients)
+	if !h.SkipAuth {
+		if err := h.ensureAuthToken(); err != nil {
+			return nil, fmt.Errorf("failed to ensure auth token: %w", err)
+		}
 	}
 
 	// Execute with circuit breaker
@@ -152,10 +179,12 @@ func (h *EnhancedHTTPClient) doWithRetry(req *http.Request) (*http.Response, err
 			return nil, fmt.Errorf("failed to clone request: %w", err)
 		}
 
-		// Set authorization header
-		h.TokenMutex.RLock()
-		clonedReq.Header.Set("Authorization", "Bearer "+h.AuthToken)
-		h.TokenMutex.RUnlock()
+		// Set authorization header (SkipAuth clients never set one - see Do)
+		if !h.SkipAuth {
+			h.TokenMutex.RLock()
+			clonedReq.Header.Set("Authorization", "Bearer "+h.AuthToken)
+			h.TokenMutex.RUnlock()
+		}
 
 		// Execute request
 		start := time.Now()

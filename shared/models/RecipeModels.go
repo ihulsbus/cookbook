@@ -8,6 +8,25 @@ import (
 	"gorm.io/gorm"
 )
 
+// Visibility controls who besides the owner can see a recipe.
+type Visibility string
+
+const (
+	VisibilityPrivate Visibility = "private"
+	VisibilityShared  Visibility = "shared"
+	VisibilityPublic  Visibility = "public"
+)
+
+// Valid reports whether v is one of the defined Visibility values.
+func (v Visibility) Valid() bool {
+	switch v {
+	case VisibilityPrivate, VisibilityShared, VisibilityPublic:
+		return true
+	default:
+		return false
+	}
+}
+
 // Recipe struct to hold recipe data
 type Recipe struct {
 	ID           uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
@@ -17,6 +36,13 @@ type Recipe struct {
 	Name         string         `gorm:"not null" json:"RecipeName" example:"apple pie"`
 	Description  string         `gorm:"size:65535;not null" json:"Description" example:"pie with apples"`
 	ServingCount int            `gorm:"default:0" json:"serving_count" example:"4"`
+	// OwnerID is the OIDC sub of the recipe's owner. Set from the
+	// authenticated Principal on create and never from client input.
+	OwnerID uuid.UUID `gorm:"type:uuid;not null;index" json:"owner_id"`
+	// Visibility controls read access for non-owners: private (owner only),
+	// shared (owner plus explicit shares - see shared/authz), or public
+	// (every authenticated user). Defaults to private.
+	Visibility Visibility `gorm:"type:varchar(10);not null;default:'private';index" json:"visibility" example:"private"`
 }
 
 func (r Recipe) ConvertToDTO() RecipeDTO {
@@ -25,6 +51,10 @@ func (r Recipe) ConvertToDTO() RecipeDTO {
 		Name:         r.Name,
 		Description:  r.Description,
 		ServingCount: r.ServingCount,
+		OwnerID:      r.OwnerID,
+		Visibility:   r.Visibility,
+		CreatedAt:    r.CreatedAt,
+		UpdatedAt:    r.UpdatedAt,
 	}
 }
 
@@ -39,10 +69,14 @@ func (c Recipe) ConvertAllToDTO(recipes []Recipe) []RecipeDTO {
 }
 
 type RecipeDTO struct {
-	ID           uuid.UUID `json:"id" example:"23582396-12a3-425b-a597-8a22052823da"`
-	Name         string    `gorm:"not null" json:"name" example:"apple pie"`
-	Description  string    `gorm:"size:65535;not null" json:"description" example:"pie with apples"`
-	ServingCount int       `gorm:"default:0" json:"serving_count" example:"4"`
+	ID           uuid.UUID  `json:"id" example:"23582396-12a3-425b-a597-8a22052823da"`
+	Name         string     `gorm:"not null" json:"name" example:"apple pie"`
+	Description  string     `gorm:"size:65535;not null" json:"description" example:"pie with apples"`
+	ServingCount int        `gorm:"default:0" json:"serving_count" example:"4"`
+	OwnerID      uuid.UUID  `json:"owner_id" example:"23582396-12a3-425b-a597-8a22052823da"`
+	Visibility   Visibility `json:"visibility" example:"private"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
 }
 
 func (r RecipeDTO) ConvertFromDTO() Recipe {
@@ -51,6 +85,10 @@ func (r RecipeDTO) ConvertFromDTO() Recipe {
 		Name:         r.Name,
 		Description:  r.Description,
 		ServingCount: r.ServingCount,
+		OwnerID:      r.OwnerID,
+		Visibility:   r.Visibility,
+		CreatedAt:    r.CreatedAt,
+		UpdatedAt:    r.UpdatedAt,
 	}
 }
 

@@ -50,6 +50,19 @@ ports:
   servicePort: 80
   containerPort: 8080
   protocol: TCP
+# Internal-only API (KIT-28): GET /internal/v1/recipe/:id/access, for
+# other services' shared/authz instances to call on a projection miss.
+# Exposed on the ClusterIP Service for in-cluster callers, but NEVER add
+# it to ingress.hosts[].paths below - the shared Helm library's ingress
+# template only ever forwards to service.port (80), so this is already
+# unreachable from outside the cluster through the Ingress regardless of
+# path. Defense in depth (a NetworkPolicy restricting which pods may
+# reach this port) isn't added here: the shared-library chart this
+# service uses has no NetworkPolicy template today.
+- name: internal
+  servicePort: 9090
+  containerPort: 9090
+  protocol: TCP
 
 # Health check probes
 livenessProbe:
@@ -159,6 +172,8 @@ config:
     config.yaml: |
       global:
         logLevel: TRACE
+        ListenPort: 8080
+        InternalListenPort: 9090
 
       cors:
         allowCredentials: false

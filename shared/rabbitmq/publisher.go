@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/wagslane/go-rabbitmq"
 )
 
@@ -32,10 +33,20 @@ func NewPublisher(conn *rabbitmq.Conn, exchangeName string) (*Publisher, error) 
 	return &Publisher{publisher: publisher}, nil
 }
 
+// Publish marshals event.Payload and sends it to event.RoutingKey.
+// event_id and schema_version travel as AMQP headers (not in the JSON
+// body) so transport metadata stays separate from the business payload;
+// a zero EventID gets one generated here so every call site doesn't have
+// to remember to set it.
 func (p *Publisher) Publish(event Event) error {
 	message, err := json.Marshal(event.Payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload for event %s: %w", event.Name, err)
+	}
+
+	eventID := event.EventID
+	if eventID == uuid.Nil {
+		eventID = uuid.New()
 	}
 
 	return p.publisher.Publish(
@@ -43,6 +54,10 @@ func (p *Publisher) Publish(event Event) error {
 		[]string{event.RoutingKey},
 		rabbitmq.WithPublishOptionsPersistentDelivery,
 		rabbitmq.WithPublishOptionsContentType("application/json"),
+		rabbitmq.WithPublishOptionsHeaders(rabbitmq.Table{
+			"event_id":       eventID.String(),
+			"schema_version": event.SchemaVersion,
+		}),
 	)
 }
 

@@ -13,6 +13,10 @@ type Config struct {
 type GlobalConfig struct {
 	LogLevel   string
 	ListenPort int
+	// InternalListenPort, when set, serves a service's internal-only API
+	// (not meant to be reachable through the ingress) - e.g.
+	// recipe-service's GET /internal/v1/recipe/:id/access (KIT-28).
+	InternalListenPort int
 }
 
 // DatabaseConfig holds database configuration items

@@ -7,6 +7,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/wagslane/go-rabbitmq v0.15.0
+	gorm.io/gorm v1.31.1
 )
 
 require (

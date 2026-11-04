@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	m "github.com/ihulsbus/cookbook/shared/models"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,18 +20,32 @@ type RecipeServiceMock struct {
 }
 
 var (
+	testRequesterID uuid.UUID = uuid.New()
+
 	recipes []m.RecipeDTO
 	recipe  m.RecipeDTO = m.RecipeDTO{
 		ID:           uuid.New(),
 		Name:         "recipe",
 		Description:  "description",
 		ServingCount: 1,
+		OwnerID:      testRequesterID,
+		Visibility:   m.VisibilityPrivate,
 	}
 )
 
+// authedContext builds a gin test context with testRequesterID set as the
+// authenticated principal, as oidc.Module.RequireAuth would before any
+// handler in this package runs.
+func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	oidc.SetPrincipal(c, &oidc.Principal{UserID: testRequesterID.String()})
+	return c
+}
+
 // ====== RecipeService ======
 
-func (s *RecipeServiceMock) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.RecipeDTO], error) {
+func (s *RecipeServiceMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID) (m.PaginatedResponse[m.RecipeDTO], error) {
 	switch recipe.Name {
 	case "findall":
 		return m.PaginatedResponse[m.RecipeDTO]{
@@ -42,7 +57,7 @@ func (s *RecipeServiceMock) FindAll(pagination m.PaginationRequest) (m.Paginated
 	}
 }
 
-func (s *RecipeServiceMock) FindSingle(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
+func (s *RecipeServiceMock) FindSingle(recipeDTO m.RecipeDTO, requesterID uuid.UUID) (m.RecipeDTO, error) {
 	switch recipe.Name {
 	case "find":
 		return recipe, nil
@@ -53,7 +68,7 @@ func (s *RecipeServiceMock) FindSingle(recipeDTO m.RecipeDTO) (m.RecipeDTO, erro
 	}
 }
 
-func (s *RecipeServiceMock) Create(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
+func (s *RecipeServiceMock) Create(recipeDTO m.RecipeDTO, ownerID uuid.UUID) (m.RecipeDTO, error) {
 	switch recipeDTO.Name {
 	case "create":
 		return recipe, nil
@@ -62,19 +77,23 @@ func (s *RecipeServiceMock) Create(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
 	}
 }
 
-func (s *RecipeServiceMock) Update(recipeDTO m.RecipeDTO) (m.RecipeDTO, error) {
+func (s *RecipeServiceMock) Update(recipeDTO m.RecipeDTO, requesterID uuid.UUID) (m.RecipeDTO, error) {
 	switch recipeDTO.Name {
 	case "update":
 		return recipe, nil
+	case "notfound":
+		return m.RecipeDTO{}, errors.New("not found")
 	default:
 		return m.RecipeDTO{}, errors.New("error")
 	}
 }
 
-func (s *RecipeServiceMock) Delete(recipeDTO m.RecipeDTO) error {
+func (s *RecipeServiceMock) Delete(recipeDTO m.RecipeDTO, requesterID uuid.UUID) error {
 	switch recipe.Name {
 	case "delete":
 		return nil
+	case "notfound":
+		return errors.New("not found")
 	default:
 		return errors.New("error")
 	}
@@ -89,6 +108,44 @@ func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
 
 // ==================================================================================================
+
+func TestPrincipalID_MissingPrincipal(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w) // no principal set
+	c.Request = req
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	assert.Equal(t, `{"error":"missing authenticated principal"}`, string(body))
+}
+
+func TestPrincipalID_NonUUIDSub(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	oidc.SetPrincipal(c, &oidc.Principal{UserID: "not-a-uuid"})
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid principal"}`, string(body))
+}
+
 func TestRecipeGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	recipes = append(recipes, recipe)
@@ -98,8 +155,7 @@ func TestRecipeGetAll_OK(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.GetAll(c)
 
@@ -122,8 +178,7 @@ func TestRecipeGetAll_Err(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.GetAll(c)
 
@@ -140,8 +195,7 @@ func TestRecipeGet_OK(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: recipe.ID.String()},
 	}
@@ -165,8 +219,7 @@ func TestRecipeGet_IDErr(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	recipe.Name = "find"
 
@@ -185,8 +238,7 @@ func TestRecipeGet_notFound(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: recipe.ID.String()},
 	}
@@ -208,8 +260,7 @@ func TestRecipeGet_FindErr(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: recipe.ID.String()},
 	}
@@ -236,8 +287,7 @@ func TestRecipeCreate_OK(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Create(c)
 
@@ -255,8 +305,7 @@ func TestRecipeCreate_UnmarshalErr(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Create(c)
 
@@ -278,8 +327,7 @@ func TestRecipeCreate_CreateErr(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Create(c)
 
@@ -299,8 +347,7 @@ func TestRecipeUpdate_OK(t *testing.T) {
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: recipe.ID.String()},
 	}
@@ -320,8 +367,7 @@ func TestRecipeUpdate_UnmarshalErr(t *testing.T) {
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: recipe.ID.String()},
 	}
@@ -343,8 +389,7 @@ func TestRecipeUpdate_IDRequiredErr(t *testing.T) {
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Update(c)
 
@@ -364,8 +409,7 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 
 	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: recipe.ID.String()},
 	}
@@ -379,6 +423,29 @@ func TestRecipeUpdate_UpdateErr(t *testing.T) {
 	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
+func TestRecipeUpdate_NotFoundErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	recipe.Name = "notfound"
+	reqBody, _ := json.Marshal(recipe)
+
+	req := httptest.NewRequest("PUT", "http://example.com/api/v2/recipe/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
+
+	h.Update(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"recipe not found"}`, string(body))
+}
+
 func TestRecipeDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
@@ -387,8 +454,7 @@ func TestRecipeDelete_OK(t *testing.T) {
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: recipe.ID.String()},
 	}
@@ -406,8 +472,7 @@ func TestRecipeDelete_IDRequiredErr(t *testing.T) {
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Delete(c)
 
@@ -426,8 +491,7 @@ func TestRecipeDelete_DeleteErr(t *testing.T) {
 
 	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: recipe.ID.String()},
 	}
@@ -439,4 +503,26 @@ func TestRecipeDelete_DeleteErr(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, []byte(`{"error":"error"}`), body)
+}
+
+func TestRecipeDelete_NotFoundErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	recipe.Name = "notfound"
+
+	req := httptest.NewRequest("DELETE", "http://example.com/api/v2/recipe/1", nil)
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: recipe.ID.String()},
+	}
+
+	h.Delete(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, []byte(`{"error":"recipe not found"}`), body)
 }

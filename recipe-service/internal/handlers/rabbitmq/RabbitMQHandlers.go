@@ -6,17 +6,23 @@ import (
 
 	m "github.com/ihulsbus/cookbook/shared/models"
 
+	"github.com/google/uuid"
 	"github.com/ihulsbus/cookbook/shared/models"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	"github.com/wagslane/go-rabbitmq"
 )
 
+// recipeService is declared only to type-constrain the service field this
+// handler is built with (RecipeService) - rabbitMQConsumerHandler below
+// doesn't currently call any of these methods (it's a TODO stub, see the
+// fmt.Println calls), so this just has to match RecipeService's real
+// signatures, not reflect how it's used.
 type recipeService interface {
-	FindAll(models.PaginationRequest) (models.PaginatedResponse[models.RecipeDTO], error)
-	FindSingle(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)
-	Create(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)
-	Update(recipeDTO models.RecipeDTO) (models.RecipeDTO, error)
-	Delete(recipeDTO models.RecipeDTO) error
+	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID) (models.PaginatedResponse[models.RecipeDTO], error)
+	FindSingle(recipeDTO models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error)
+	Create(recipeDTO models.RecipeDTO, ownerID uuid.UUID) (models.RecipeDTO, error)
+	Update(recipeDTO models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error)
+	Delete(recipeDTO models.RecipeDTO, requesterID uuid.UUID) error
 }
 
 type RabbitMQHandler struct {
