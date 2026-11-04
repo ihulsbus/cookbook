@@ -27,11 +27,14 @@ type DatabaseConfig struct {
 }
 
 type OauthConfig struct {
+	// Issuer and Audience validate inbound tokens (shared/oidc.NewModule).
+	Issuer   string
+	Audience string
+	// ClientID and ClientSecret authenticate this service's own outbound
+	// requests to other services via a client-credentials grant
+	// (shared/httpclient.NewHTTPClient). Not used for inbound validation.
 	ClientID     string
 	ClientSecret string
-	Audience     string
-	Url          string
-	Realm        string
 }
 
 type CorsConfig struct {

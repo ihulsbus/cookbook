@@ -54,189 +54,198 @@ func httpServer(ctx context.Context) {
 	metadata := v2.Group("/metadata")
 	{
 
+		// Recipe metadata is the per-recipe assignment of tags/category/
+		// etc, not a catalog lookup table itself - CRUD follows "full
+		// CRUD on their own recipes", any authenticated user.
 		recipe := metadata.Group("/recipe")
 		{
 			readMetadata := recipe.Group("")
-			readMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			readMetadata.Use(c.OIDCModule.RequireAuth())
 			{
 				readMetadata.GET("", c.MetadataHandlers.GetAll)
 				readMetadata.GET(":id", c.MetadataHandlers.Get)
 			}
 			createMetadata := recipe.Group("")
-			createMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			createMetadata.Use(c.OIDCModule.RequireAuth())
 			{
 				createMetadata.POST(":id", c.MetadataHandlers.Create)
 			}
 
 			updateMetadata := recipe.Group("")
-			updateMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			updateMetadata.Use(c.OIDCModule.RequireAuth())
 			{
 				updateMetadata.PUT(":id", c.MetadataHandlers.Update)
 			}
 
 			deleteMetadata := recipe.Group("")
-			deleteMetadata.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteMetadata.Use(c.OIDCModule.RequireAuth())
 			{
 				deleteMetadata.DELETE(":id", c.MetadataHandlers.Delete)
 			}
 		}
 
-		// Tag routes
+		// Tag routes - metadata lookup table: any user reads, only
+		// cookbook-admin writes.
 		tag := metadata.Group("/tag")
 		{
 			readTag := tag.Group("")
-			readTag.Use(c.KeycloakModule.Middleware("administrator"))
+			readTag.Use(c.OIDCModule.RequireAuth())
 			{
 				readTag.GET("", c.TagHandlers.GetAll)
 				readTag.GET(":id", c.TagHandlers.Get)
 			}
 
 			createTag := tag.Group("")
-			createTag.Use(c.KeycloakModule.Middleware("administrator"))
+			createTag.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				createTag.POST("", c.TagHandlers.Create)
 			}
 
 			updateTag := tag.Group("")
-			updateTag.Use(c.KeycloakModule.Middleware("administrator"))
+			updateTag.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				updateTag.PUT(":id", c.TagHandlers.Update)
 			}
 
 			deleteTag := tag.Group("")
-			deleteTag.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteTag.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				deleteTag.DELETE(":id", c.TagHandlers.Delete)
 			}
 		}
 
-		// Category routes
+		// Category routes - metadata lookup table: any user reads, only
+		// cookbook-admin writes.
 		category := metadata.Group("/category")
 		{
 			readCategory := category.Group("")
-			readCategory.Use(c.KeycloakModule.Middleware("administrator"))
+			readCategory.Use(c.OIDCModule.RequireAuth())
 			{
 				readCategory.GET("", c.CategoryHandlers.GetAll)
 				readCategory.GET(":id", c.CategoryHandlers.Get)
 			}
 
 			createCategory := category.Group("")
-			createCategory.Use(c.KeycloakModule.Middleware("administrator"))
+			createCategory.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				createCategory.POST("", c.CategoryHandlers.Create)
 			}
 
 			updateCategory := category.Group("")
-			updateCategory.Use(c.KeycloakModule.Middleware("administrator"))
+			updateCategory.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				updateCategory.PUT(":id", c.CategoryHandlers.Update)
 			}
 
 			deleteCategory := category.Group("")
-			deleteCategory.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteCategory.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				deleteCategory.DELETE(":id", c.CategoryHandlers.Delete)
 			}
 		}
 
-		// CuisineType routes
+		// CuisineType routes - metadata lookup table: any user reads,
+		// only cookbook-admin writes.
 		cuisineType := metadata.Group("/cuisinetype")
 		{
 			readCuisineType := cuisineType.Group("")
-			readCuisineType.Use(c.KeycloakModule.Middleware("administrator"))
+			readCuisineType.Use(c.OIDCModule.RequireAuth())
 			{
 				readCuisineType.GET("", c.CuisineTypeHandlers.GetAll)
 				readCuisineType.GET(":id", c.CuisineTypeHandlers.Get)
 			}
 
 			createCuisineType := cuisineType.Group("")
-			createCuisineType.Use(c.KeycloakModule.Middleware("administrator"))
+			createCuisineType.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				createCuisineType.POST("", c.CuisineTypeHandlers.Create)
 			}
 
 			updateCuisineType := cuisineType.Group("")
-			updateCuisineType.Use(c.KeycloakModule.Middleware("administrator"))
+			updateCuisineType.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				updateCuisineType.PUT(":id", c.CuisineTypeHandlers.Update)
 			}
 
 			deleteCuisineType := cuisineType.Group("")
-			deleteCuisineType.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteCuisineType.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				deleteCuisineType.DELETE(":id", c.CuisineTypeHandlers.Delete)
 			}
 		}
 
-		// DifficultyLevel routes
+		// DifficultyLevel routes - metadata lookup table: any user reads,
+		// only cookbook-admin writes.
 		DifficultyLevel := metadata.Group("/difficultylevel")
 		{
 			readDifficultyLevel := DifficultyLevel.Group("")
-			readDifficultyLevel.Use(c.KeycloakModule.Middleware("administrator"))
+			readDifficultyLevel.Use(c.OIDCModule.RequireAuth())
 			{
 				readDifficultyLevel.GET("", c.DifficultyLevelHandlers.GetAll)
 				readDifficultyLevel.GET(":id", c.DifficultyLevelHandlers.Get)
 			}
 
 			createDifficultyLevel := DifficultyLevel.Group("")
-			createDifficultyLevel.Use(c.KeycloakModule.Middleware("administrator"))
+			createDifficultyLevel.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				createDifficultyLevel.POST("", c.DifficultyLevelHandlers.Create)
 			}
 
 			updateDifficultyLevel := DifficultyLevel.Group("")
-			updateDifficultyLevel.Use(c.KeycloakModule.Middleware("administrator"))
+			updateDifficultyLevel.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				updateDifficultyLevel.PUT(":id", c.DifficultyLevelHandlers.Update)
 			}
 
 			deleteDifficultyLevel := DifficultyLevel.Group("")
-			deleteDifficultyLevel.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteDifficultyLevel.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				deleteDifficultyLevel.DELETE(":id", c.DifficultyLevelHandlers.Delete)
 			}
 		}
 
-		// PreparationTime routes
+		// PreparationTime routes - metadata lookup table: any user
+		// reads, only cookbook-admin writes.
 		PreparationTime := metadata.Group("/preparationtime")
 		{
 			readPreparationTime := PreparationTime.Group("")
-			readPreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
+			readPreparationTime.Use(c.OIDCModule.RequireAuth())
 			{
 				readPreparationTime.GET("", c.PreparationTimeHandler.GetAll)
 				readPreparationTime.GET(":id", c.PreparationTimeHandler.Get)
 			}
 
 			createPreparationTime := PreparationTime.Group("")
-			createPreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
+			createPreparationTime.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				createPreparationTime.POST("", c.PreparationTimeHandler.Create)
 			}
 
 			updatePreparationTime := PreparationTime.Group("")
-			updatePreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
+			updatePreparationTime.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				updatePreparationTime.PUT(":id", c.PreparationTimeHandler.Update)
 			}
 
 			deletePreparationTime := PreparationTime.Group("")
-			deletePreparationTime.Use(c.KeycloakModule.Middleware("administrator"))
+			deletePreparationTime.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				deletePreparationTime.DELETE(":id", c.PreparationTimeHandler.Delete)
 			}
 		}
 
-		// Search routes
+		// Search is a read operation (filters/looks up metadata) - any
+		// authenticated user.
 		search := metadata.Group("/search")
 		{
 			all := search.Group("/all")
-			all.Use(c.KeycloakModule.Middleware("administrator"))
+			all.Use(c.OIDCModule.RequireAuth())
 			{
 				all.GET("", c.SearchHandlers.GetAllMetadata)
 			}
 
 			createSearch := search.Group("")
-			createSearch.Use(c.KeycloakModule.Middleware("administrator"))
+			createSearch.Use(c.OIDCModule.RequireAuth())
 			{
 				createSearch.POST("", c.SearchHandlers.SearchMetadata)
 			}

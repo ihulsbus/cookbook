@@ -6,14 +6,13 @@ This docker-compose configuration provides all the infrastructure dependencies n
 
 ### Database (PostgreSQL 15)
 - **Single PostgreSQL instance** on Port 5432
-- **7 separate databases** (one per microservice + Keycloak):
+- **6 separate databases** (one per microservice):
   - `recipes` (user: recipe)
   - `ingredients` (user: ingredient)
   - `instructions` (user: instruction)
   - `metadata` (user: metadata)
   - `images` (user: image)
   - `search` (user: search)
-  - `keycloak` (user: keycloak) - for authentication
 
 ### Storage
 - **MinIO** (S3-compatible):
@@ -29,11 +28,9 @@ This docker-compose configuration provides all the infrastructure dependencies n
   - Credentials: `admin` / `wENbwHUirBwZQbHpRB46egb9C`
 
 ### Authentication
-- **Keycloak**:
-  - Port: 8081 (http://localhost:8081)
-  - Admin Credentials: `administrator` / `changeme` (configurable via env)
-  - Uses PostgreSQL for persistence
-  - Pre-configured for development
+Authentication is handled by **Authentik**, run separately - it's not part
+of this compose file. See `authentik/README.md` for the OIDC provider
+(application, groups, scope mappings) setup.
 
 ### Reverse Proxy
 - **Traefik 2.10**:
@@ -49,11 +46,16 @@ chmod +x init-db.sh
 ```
 
 ### 2. Set environment variables (optional)
+
+`OAUTH_ISSUER`, `OAUTH_CLIENTID` and `OAUTH_CLIENTSECRET` override the
+per-service Authentik client-credentials defaults in `docker-compose.yml`
+(used for service-to-service calls - see `authentik/README.md`):
 ```bash
 # Create a .env file in the project root
 cat > .env <<EOF
-KEYCLOAK_ADMIN_PASSWORD=mysecretpassword
-KEYCLOAK_POSTGRESQL_PASSWORD=keycloak_pass
+OAUTH_ISSUER=https://your-authentik-host/application/o/cookbook-web/
+OAUTH_CLIENTID=cookbook-service
+OAUTH_CLIENTSECRET=your-confidential-client-secret
 EOF
 ```
 
@@ -66,7 +68,6 @@ This will start:
 - PostgreSQL with automatic database initialization
 - MinIO with automatic bucket creation
 - RabbitMQ
-- Keycloak (with health checks)
 - Traefik reverse proxy
 
 ### 4. Verify all services are running
@@ -81,7 +82,7 @@ All services should show status as "Up" or "Up (healthy)".
 docker exec -it cookbook-postgres psql -U admin -d postgres -c '\l'
 ```
 
-You should see all 7 databases listed: `recipes`, `ingredients`, `instructions`, `metadata`, `images`, `search`, and `keycloak`.
+You should see all 6 databases listed: `recipes`, `ingredients`, `instructions`, `metadata`, `images`, and `search`.
 
 ### 6. Check service health
 ```bash
@@ -91,7 +92,6 @@ docker-compose logs -f
 # Check specific service
 docker-compose logs -f postgres
 docker-compose logs -f rabbitmq
-docker-compose logs -f keycloak
 ```
 
 ### 7. Access Management Interfaces
@@ -108,11 +108,6 @@ docker-compose logs -f keycloak
 
 - **Traefik Dashboard**: http://localhost:8080
   - View routing rules and service health
-
-- **Keycloak Admin Console**: http://localhost:8081
-  - Username: `administrator`
-  - Password: `changeme` (or value from .env)
-  - Configure realms, clients, and users
 
 ## Connecting Your Microservices
 
@@ -137,10 +132,10 @@ export cbb_rabbitmq_port=5672
 export cbb_rabbitmq_username=admin
 export cbb_rabbitmq_password=wENbwHUirBwZQbHpRB46egb9C
 
-# Keycloak (if using)
-export cbb_auth0_domain=http://localhost:8081
-export cbb_auth0_clientid=cookbook-client
-export cbb_auth0_audience=cookbook-api
+# Authentik (see authentik/README.md)
+export cbb_auth0_domain=https://your-authentik-host/application/o/cookbook-web/
+export cbb_auth0_clientid=cookbook-web
+export cbb_auth0_audience=cookbook-web
 
 # Debug
 export cbb_debug=true
@@ -226,7 +221,6 @@ All databases are in the **same PostgreSQL instance** on port **5432**:
 | Metadata | localhost | 5432 | metadata | metadata | metadata_pass |
 | Image | localhost | 5432 | images | image | image_pass |
 | Search | localhost | 5432 | search | search | search_pass |
-| Keycloak | localhost | 5432 | keycloak | keycloak | keycloak_pass |
 
 ### Connect with psql
 ```bash
@@ -278,7 +272,6 @@ docker-compose restart
 ```bash
 docker-compose restart postgres
 docker-compose restart rabbitmq
-docker-compose restart keycloak
 ```
 
 ### Stop and remove all containers
@@ -300,7 +293,6 @@ docker-compose logs -f
 docker-compose logs -f postgres
 docker-compose logs -f rabbitmq
 docker-compose logs -f minio
-docker-compose logs -f keycloak
 
 # Last 100 lines
 docker-compose logs --tail=100 postgres
@@ -311,29 +303,21 @@ docker-compose logs --tail=100 postgres
 docker stats
 ```
 
-## Keycloak Configuration
+## Authentik Configuration
 
-Keycloak is included for OAuth2/OIDC authentication.
-
-### Initial Setup
-
-1. Access Keycloak at http://localhost:8081
-2. Login with `administrator` / `changeme`
-3. Create a new realm called `cookbook`
-4. Create a client:
-   - Client ID: `cookbook-client`
-   - Client Protocol: `openid-connect`
-   - Access Type: `public` (for SPAs) or `confidential` (for backend)
-   - Valid Redirect URIs: `http://localhost:*`
-5. Create test users in the realm
-6. Note the realm endpoint: `http://localhost:8081/realms/cookbook`
+Authentik provides OAuth2/OIDC authentication - it runs separately from
+this compose file. See `authentik/README.md` and
+`authentik/blueprints/cookbook-oidc.yaml` for the public `cookbook-web`
+application/provider setup (frontend login), and
+`authentik/blueprints/cookbook-service.yaml` for the confidential provider
+backend services use for service-to-service calls.
 
 ### Environment Variables for Services
 
 ```bash
-export cbb_auth0_domain=http://localhost:8081/realms/cookbook
-export cbb_auth0_clientid=cookbook-client
-export cbb_auth0_audience=cookbook-api
+export cbb_auth0_domain=https://your-authentik-host/application/o/cookbook-web/
+export cbb_auth0_clientid=cookbook-web
+export cbb_auth0_audience=cookbook-web
 ```
 
 ## Troubleshooting
@@ -408,15 +392,6 @@ docker volume rm cookbook_rabbitmq-data
 docker-compose up -d rabbitmq
 ```
 
-### Keycloak taking too long to start
-
-Keycloak has a long startup time (2-5 minutes). Check logs:
-```bash
-docker-compose logs -f keycloak
-```
-
-Look for: `Keycloak ... started`
-
 ### Port conflicts
 
 If ports are already in use:
@@ -426,7 +401,6 @@ If ports are already in use:
 sudo lsof -i :5432  # PostgreSQL
 sudo lsof -i :9000  # MinIO
 sudo lsof -i :5672  # RabbitMQ
-sudo lsof -i :8081  # Keycloak
 
 # Stop conflicting service or change port in docker-compose.yml
 ```
@@ -459,13 +433,12 @@ All services are connected via the `cookbook-network` bridge network. Services c
 - `postgres` - PostgreSQL database
 - `rabbitmq` - Message queue
 - `minio` - S3-compatible storage
-- `keycloak` - Authentication server
 - `traefik` - Reverse proxy
 
 ## Data Persistence
 
 Data is persisted in Docker volumes:
-- `postgres-data` - All 7 databases (recipes, ingredients, instructions, metadata, images, search, keycloak)
+- `postgres-data` - All 6 databases (recipes, ingredients, instructions, metadata, images, search)
 - `minio-data` - S3 bucket data and objects
 - `rabbitmq-data` - Message queue data and configurations
 
@@ -538,10 +511,10 @@ minio:
 
 ## Benefits of Single PostgreSQL Instance
 
-✅ **Simpler management** - One container instead of 7
+✅ **Simpler management** - One container instead of 6
 ✅ **Lower resource usage** - Shared PostgreSQL processes
 ✅ **Easier backups** - Single pg_dumpall command
-✅ **Faster startup** - One healthcheck instead of 7
+✅ **Faster startup** - One healthcheck instead of 6
 ✅ **Better performance** - Shared buffer pool and connection pooling
 ✅ **Logical isolation** - Each service still has its own database and user
 ✅ **Transaction support** - Can use distributed transactions if needed

@@ -2,12 +2,15 @@ package httpclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/ihulsbus/cookbook/shared/oidc"
 )
 
 type LoggerInterface interface {
@@ -15,20 +18,29 @@ type LoggerInterface interface {
 	Warnf(format string, args ...interface{})
 }
 
-// HTTPClient provides a shared HTTP client with default settings.
+// HTTPClient provides a shared HTTP client with default settings. It
+// authenticates its own outbound requests to other services using an
+// OIDC client-credentials grant: the token endpoint is discovered from
+// Issuer's .well-known/openid-configuration document and cached on first
+// use, so this client is not tied to any specific provider's URL shape.
 type HTTPClient struct {
-	Client        *http.Client
-	AuthToken     string
-	TokenMutex    sync.RWMutex
-	KeycloakURL   string
-	KeycloakRealm string
-	ClientID      string
-	ClientSecret  string
-	Logger        LoggerInterface
+	Client     *http.Client
+	AuthToken  string
+	TokenMutex sync.RWMutex
+	Issuer     string
+
+	// tokenEndpoint is discovered from Issuer on first use and cached.
+	tokenEndpoint  string
+	discoveryMutex sync.Mutex
+	ClientID       string
+	ClientSecret   string
+	Logger         LoggerInterface
 }
 
-// NewHTTPClient initializes and returns an HTTPClient instance.
-func NewHTTPClient(timeout time.Duration, keycloakURL, keycloakRealm, clientID, clientSecret string, logger LoggerInterface) *HTTPClient {
+// NewHTTPClient initializes and returns an HTTPClient instance. issuer is
+// the OIDC provider's issuer URL, used to discover the token endpoint for
+// the client-credentials grant.
+func NewHTTPClient(timeout time.Duration, issuer, clientID, clientSecret string, logger LoggerInterface) *HTTPClient {
 	if timeout < time.Second || timeout > 10*time.Second {
 		panic("timeout must be between 1 and 10 seconds")
 	}
@@ -37,11 +49,10 @@ func NewHTTPClient(timeout time.Duration, keycloakURL, keycloakRealm, clientID, 
 		Client: &http.Client{
 			Timeout: timeout,
 		},
-		KeycloakURL:   keycloakURL,
-		KeycloakRealm: keycloakRealm,
-		ClientID:      clientID,
-		ClientSecret:  clientSecret,
-		Logger:        logger,
+		Issuer:       issuer,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Logger:       logger,
 	}
 }
 
@@ -77,11 +88,37 @@ func (h *HTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
+// resolveTokenEndpoint returns the provider's token endpoint, discovering
+// and caching it on first call.
+func (h *HTTPClient) resolveTokenEndpoint() (string, error) {
+	h.discoveryMutex.Lock()
+	defer h.discoveryMutex.Unlock()
+
+	if h.tokenEndpoint != "" {
+		return h.tokenEndpoint, nil
+	}
+
+	doc, err := oidc.Discover(context.Background(), h.Issuer)
+	if err != nil {
+		return "", err
+	}
+	if doc.TokenEndpoint == "" {
+		return "", fmt.Errorf("discovery document for %s is missing token_endpoint", h.Issuer)
+	}
+
+	h.tokenEndpoint = doc.TokenEndpoint
+	return h.tokenEndpoint, nil
+}
+
 func (h *HTTPClient) refreshAuthToken() error {
-	url := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", h.KeycloakURL, h.KeycloakRealm)
+	tokenEndpoint, err := h.resolveTokenEndpoint()
+	if err != nil {
+		return fmt.Errorf("failed to resolve token endpoint: %w", err)
+	}
+
 	data := fmt.Sprintf("client_id=%s&client_secret=%s&grant_type=client_credentials", h.ClientID, h.ClientSecret)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBufferString(data))
+	req, err := http.NewRequest("POST", tokenEndpoint, bytes.NewBufferString(data))
 	if err != nil {
 		return fmt.Errorf("failed to create token request: %w", err)
 	}

@@ -13,7 +13,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
-	"github.com/ihulsbus/cookbook/shared/keycloak"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -26,7 +26,7 @@ var (
 
 	Logger         *log.Logger = log.New()
 	DatabaseClient *gorm.DB
-	KeycloakModule *keycloak.KeycloakModule
+	OIDCModule     *oidc.Module
 	Cors           cors.Config
 	RabbitMQClient *rmq.RabbitMQ
 
@@ -63,7 +63,7 @@ func init() {
 
 	initDatabase()
 	initCors()
-	KeycloakModule, err = initOauth()
+	OIDCModule, err = initOauth()
 	if err != nil {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}

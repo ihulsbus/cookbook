@@ -22,7 +22,7 @@ Cookbook is a comprehensive recipe management system that provides APIs for crea
 - **Metadata Management**: Categories, cuisine types, difficulty levels, tags, and preparation times
 - **Pagination Support**: All list endpoints support pagination with customizable page size
 - **Event-Driven Architecture**: Services communicate via RabbitMQ for loose coupling
-- **Authentication**: OAuth2/OIDC integration with Keycloak
+- **Authentication**: OAuth2/OIDC integration with Authentik
 
 ## Architecture
 
@@ -47,7 +47,7 @@ The `shared/` directory contains common libraries used across all services:
 - **healthchecks**: Health check utilities
 - **http**: Common HTTP utilities and middleware
 - **httpclient**: Enhanced HTTP client with retry and circuit breaker patterns
-- **keycloak**: Keycloak authentication integration
+- **oidc**: Provider-agnostic OIDC authentication (validates tokens against Authentik)
 - **rabbitmq**: RabbitMQ publisher/consumer utilities
 - **recipeclient**: Client library for inter-service communication
 - **imageclient**: Client library for image service integration
@@ -58,7 +58,7 @@ The `shared/` directory contains common libraries used across all services:
 - **Database**: PostgreSQL 15
 - **Message Queue**: RabbitMQ 3
 - **Object Storage**: S3
-- **Authentication**: Keycloak / OAuth2 OIDC
+- **Authentication**: Authentik / OAuth2 OIDC
 - **Reverse Proxy**: Traefik
 - **API Documentation**: OpenAPI 3.1
 
@@ -88,8 +88,10 @@ docker-compose up -d
 # - PostgreSQL: localhost:5432
 # - MinIO: localhost:9000 (API), localhost:9001 (Console)
 # - RabbitMQ: localhost:5672 (AMQP), localhost:15672 (Management UI)
-# - Keycloak: localhost:8081
 # - Traefik Dashboard: localhost:8080
+#
+# Authentication is handled by Authentik, run separately (not part of this
+# compose file) - see authentik/README.md for the OIDC provider setup.
 ```
 
 ### Running Services Locally
@@ -201,7 +203,7 @@ cookbook/
 │   ├── healthchecks/      # Health check utilities
 │   ├── http/              # HTTP utilities
 │   ├── httpclient/        # Enhanced HTTP client
-│   ├── keycloak/          # Authentication
+│   ├── oidc/              # Authentication (Authentik)
 │   ├── rabbitmq/          # Message queue utilities
 │   ├── recipeclient/      # Inter-service client
 │   └── imageclient/       # Image service client
@@ -240,7 +242,6 @@ The project uses PostgreSQL with separate databases for each service. The `init-
 - `metadata` - Metadata service database
 - `images` - Image service database
 - `search` - Search service database
-- `keycloak` - Keycloak authentication database
 
 ### Code Quality
 

@@ -8,13 +8,13 @@ use (
 	./notification-service
 	./recipe-service
 	./search-service
+	./shared/cache
+	./shared/healthchecks
+	./shared/http
 	./shared/httpclient
 	./shared/imageclient
-	./shared/keycloak
+	./shared/models
+	./shared/oidc
 	./shared/rabbitmq
 	./shared/recipeclient
-	./shared/healthchecks
-	./shared/models
-	./shared/cache
-	./shared/http
 )

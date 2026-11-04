@@ -12,7 +12,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
-	"github.com/ihulsbus/cookbook/shared/keycloak"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
@@ -28,9 +28,9 @@ var (
 	Configuration searchConfig
 	err           error
 
-	Logger         *log.Logger = log.New()
-	Cors           cors.Config
-	KeycloakModule *keycloak.KeycloakModule
+	Logger     *log.Logger = log.New()
+	Cors       cors.Config
+	OIDCModule *oidc.Module
 
 	// Repositories
 	IngredientRepository *ir.IngredientRepository
@@ -64,7 +64,7 @@ func init() {
 	}
 
 	initCors()
-	KeycloakModule, err = initOauth()
+	OIDCModule, err = initOauth()
 	if err != nil {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}

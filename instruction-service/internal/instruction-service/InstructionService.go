@@ -52,34 +52,36 @@ func httpServer(ctx context.Context) {
 	// API versioning setup
 	v2 := router.Group("/api/v2")
 	{
+		// Instructions are a recipe's cooking steps - CRUD follows "full
+		// CRUD on their own recipes", any authenticated user.
 		instruction := v2.Group("/instruction")
 		{
 			searchInstruction := instruction.Group("")
-			searchInstruction.Use(c.KeycloakModule.Middleware("administrator"))
+			searchInstruction.Use(c.OIDCModule.RequireAuth())
 			{
 				searchInstruction.GET("/search", c.SearchHandlers.SearchInstruction)
 			}
 
 			readInstruction := instruction.Group("")
-			readInstruction.Use(c.KeycloakModule.Middleware("administrator"))
+			readInstruction.Use(c.OIDCModule.RequireAuth())
 			{
 				readInstruction.GET(":id", c.InstructionHandlers.Get)
 			}
 
 			createInstruction := instruction.Group("")
-			createInstruction.Use(c.KeycloakModule.Middleware("administrator"))
+			createInstruction.Use(c.OIDCModule.RequireAuth())
 			{
 				createInstruction.POST(":id", c.InstructionHandlers.Create)
 			}
 
 			updateInstruction := instruction.Group("")
-			updateInstruction.Use(c.KeycloakModule.Middleware("administrator"))
+			updateInstruction.Use(c.OIDCModule.RequireAuth())
 			{
 				updateInstruction.PUT(":id", c.InstructionHandlers.Update)
 			}
 
 			deleteInstruction := instruction.Group("")
-			deleteInstruction.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteInstruction.Use(c.OIDCModule.RequireAuth())
 			{
 				deleteInstruction.DELETE(":id", c.InstructionHandlers.Delete)
 			}

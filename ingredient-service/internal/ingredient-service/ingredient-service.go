@@ -46,81 +46,89 @@ func httpServer(ctx context.Context) {
 
 	v2 := router.Group("/api/v2")
 	{
+		// Amounts are recipe-scoped (an ingredient's quantity within a
+		// recipe) - CRUD follows "full CRUD on their own recipes", any
+		// authenticated user.
 		amount := v2.Group("/amount")
 		{
 			readAmounts := amount.Group("")
-			readAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			readAmounts.Use(c.OIDCModule.RequireAuth())
 			{
 				readAmounts.GET(":id", c.AmountHandlers.Find)
 			}
 			createAmounts := amount.Group("")
-			createAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			createAmounts.Use(c.OIDCModule.RequireAuth())
 			{
 				createAmounts.POST(":id", c.AmountHandlers.Create)
 			}
 
 			updateAmounts := amount.Group("")
-			updateAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			updateAmounts.Use(c.OIDCModule.RequireAuth())
 			{
 				updateAmounts.PUT(":id", c.AmountHandlers.Update)
 			}
 
 			deleteAmounts := amount.Group("")
-			deleteAmounts.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteAmounts.Use(c.OIDCModule.RequireAuth())
 			{
 				deleteAmounts.DELETE(":id", c.AmountHandlers.Delete)
 			}
 		}
+		// Ingredients are part of the shared catalog: any user can read
+		// it and create new ingredients (duplicate prevention is
+		// KIT-77), but only cookbook-admin can update/delete entries.
 		ingredient := v2.Group("/ingredient")
 		{
 			readIngredient := ingredient.Group("")
-			readIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			readIngredient.Use(c.OIDCModule.RequireAuth())
 			{
 				readIngredient.GET("", c.IngredientHandlers.GetAll)
 				readIngredient.GET(":id", c.IngredientHandlers.GetSingle)
 			}
 
 			createIngredient := ingredient.Group("")
-			createIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			createIngredient.Use(c.OIDCModule.RequireAuth())
 			{
 				createIngredient.POST("", c.IngredientHandlers.Create)
 			}
 
 			updateIngredient := ingredient.Group("")
-			updateIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			updateIngredient.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				updateIngredient.PUT(":id", c.IngredientHandlers.Update)
 			}
 
 			adminIngredient := ingredient.Group("")
-			adminIngredient.Use(c.KeycloakModule.Middleware("administrator"))
+			adminIngredient.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				adminIngredient.DELETE(":id", c.IngredientHandlers.Delete)
 			}
 		}
+		// Units are catalog-admin-only for all writes; any user can read
+		// them.
 		unit := v2.Group("/unit")
 		{
 			readUnit := unit.Group("")
-			readUnit.Use(c.KeycloakModule.Middleware("administrator"))
+			readUnit.Use(c.OIDCModule.RequireAuth())
 			{
 				readUnit.GET("", c.UnitHandlers.GetAll)
 				readUnit.GET(":id", c.UnitHandlers.GetSingle)
 			}
 
 			createUnit := unit.Group("")
-			createUnit.Use(c.KeycloakModule.Middleware("administrator"))
+			createUnit.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				createUnit.POST("", c.UnitHandlers.Create)
 			}
 
 			updateUnit := unit.Group("")
-			updateUnit.Use(c.KeycloakModule.Middleware("administrator"))
+			updateUnit.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				updateUnit.PUT(":id", c.UnitHandlers.Update)
 			}
 
 			deleteUnit := unit.Group("")
-			deleteUnit.Use(c.KeycloakModule.Middleware("administrator"))
+			deleteUnit.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
 				deleteUnit.DELETE(":id", c.UnitHandlers.Delete)
 			}

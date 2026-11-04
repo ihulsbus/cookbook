@@ -1,0 +1,84 @@
+version: 1
+metadata:
+  name: cookbook-oidc
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+
+# KIT-20: cookbook-web application + OIDC provider, a `cookbook-user`/
+# `cookbook-admin` group pair matching the roles shared/oidc.RequireRole()
+# checks after KIT-21/KIT-22 (see cookbook/TODO.md for the "administrator
+# only" gap this replaces), and a custom scope mapping so access tokens
+# carry a standard OIDC `groups` claim instead of Keycloak's
+# `resource_access` shape.
+
+entries:
+  - model: authentik_core.group
+    id: group-cookbook-admin
+    identifiers:
+      name: cookbook-admin
+    attrs:
+      name: cookbook-admin
+      is_superuser: false
+
+  - model: authentik_core.group
+    id: group-cookbook-user
+    identifiers:
+      name: cookbook-user
+    attrs:
+      name: cookbook-user
+      is_superuser: false
+
+  - model: authentik_providers_oauth2.scopemapping
+    id: scope-mapping-groups
+    identifiers:
+      name: "Cookbook: groups scope mapping"
+    attrs:
+      name: "Cookbook: groups scope mapping"
+      scope_name: groups
+      description: "Adds the user's Authentik group names to the access/ID token as a `groups` claim."
+      expression: |
+        return {
+            "groups": [group.name for group in request.user.ak_groups.all()],
+        }
+
+  - model: authentik_providers_oauth2.oauth2provider
+    id: provider-cookbook-web
+    identifiers:
+      name: cookbook-web
+    attrs:
+      name: cookbook-web
+      client_type: public
+      client_id: cookbook-web
+      sub_mode: hashed_user_id
+      include_claims_in_id_token: true
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      property_mappings:
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, "goauthentik.io/providers/oauth2/scope-openid"]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, "goauthentik.io/providers/oauth2/scope-email"]]
+        - !Find [authentik_providers_oauth2.scopemapping, [managed, "goauthentik.io/providers/oauth2/scope-profile"]]
+        - !KeyOf scope-mapping-groups
+      redirect_uris:
+        - matching_mode: strict
+          url: "http://localhost:4200/oidc/callback"
+        - matching_mode: strict
+          url: "http://localhost:4200/oidc/silent-renew"
+        - matching_mode: strict
+          url: "http://localhost:4200/loggedout"
+        - matching_mode: strict
+          url: "https://gourmedy.com/oidc/callback"
+        - matching_mode: strict
+          url: "https://gourmedy.com/oidc/silent-renew"
+        - matching_mode: strict
+          url: "https://gourmedy.com/loggedout"
+
+  - model: authentik_core.application
+    id: application-cookbook-web
+    identifiers:
+      slug: cookbook-web
+    attrs:
+      name: Cookbook Web
+      slug: cookbook-web
+      provider: !KeyOf provider-cookbook-web
+      open_in_new_tab: false

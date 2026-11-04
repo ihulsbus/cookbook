@@ -51,30 +51,32 @@ func httpServer(ctx context.Context) {
 
 	v2 := router.Group("/api/v2")
 	{
+		// "full CRUD on their own recipes" - any authenticated user
+		// (per-recipe ownership checks come from the ownership epic).
 		recipe := v2.Group("/recipe")
 		{
 			readRecipe := recipe.Group("")
-			readRecipe.Use(c.KeycloakModule.Middleware("administrator"))
+			readRecipe.Use(c.OIDCModule.RequireAuth())
 			{
 				readRecipe.GET("", c.HttpHandler.GetAll)
 				readRecipe.GET(":id", c.HttpHandler.Get)
 			}
 
 			createRecipe := recipe.Group("")
-			createRecipe.Use(c.KeycloakModule.Middleware("administrator"))
+			createRecipe.Use(c.OIDCModule.RequireAuth())
 			{
 				createRecipe.POST("", c.HttpHandler.Create)
 			}
 
 			updateRecipe := recipe.Group("")
-			updateRecipe.Use(c.KeycloakModule.Middleware("administrator"))
+			updateRecipe.Use(c.OIDCModule.RequireAuth())
 			{
 
 				updateRecipe.PUT(":id", c.HttpHandler.Update)
 			}
 
 			adminRecipe := recipe.Group("")
-			adminRecipe.Use(c.KeycloakModule.Middleware("administrator"))
+			adminRecipe.Use(c.OIDCModule.RequireAuth())
 			{
 				adminRecipe.DELETE(":id", c.HttpHandler.Delete)
 			}

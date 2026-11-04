@@ -48,8 +48,12 @@ func httpServer(ctx context.Context) {
 	{
 		image := v2.Group("/images")
 		{
+			// Images are owned by whatever recipe/ingredient they're
+			// attached to - any authenticated user, same as the recipe
+			// CRUD they ride along with (per-recipe ownership checks are
+			// out of scope here, see the ownership epic).
 			readImage := image.Group("")
-			readImage.Use(c.KeycloakModule.Middleware("administrator"))
+			readImage.Use(c.OIDCModule.RequireAuth())
 			{
 				readImage.GET("", c.HttpHandler.FindAll)
 				readImage.GET(":id", c.HttpHandler.Find)
@@ -58,20 +62,20 @@ func httpServer(ctx context.Context) {
 			}
 
 			createImage := image.Group("")
-			createImage.Use(c.KeycloakModule.Middleware("administrator"))
+			createImage.Use(c.OIDCModule.RequireAuth())
 			{
 				createImage.POST(":entityType/:entityID", c.HttpHandler.Create)
 			}
 
 			updateImage := image.Group("")
-			updateImage.Use(c.KeycloakModule.Middleware("administrator"))
+			updateImage.Use(c.OIDCModule.RequireAuth())
 			{
 
 				updateImage.PUT(":id", c.HttpHandler.Update)
 			}
 
 			adminImage := image.Group("")
-			adminImage.Use(c.KeycloakModule.Middleware("administrator"))
+			adminImage.Use(c.OIDCModule.RequireAuth())
 			{
 				adminImage.DELETE(":id", c.HttpHandler.Delete)
 			}

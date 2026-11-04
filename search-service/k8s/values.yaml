@@ -141,11 +141,10 @@ config:
         - HEAD
 
       oauth:
-        clientid: gourmedy
+        issuer: https://auth.gourmedy.com/application/o/cookbook-web/
+        audience: cookbook-web
+        clientid: cookbook-service
         clientsecret: ""
-        audience: gourmedyfr
-        url: https://auth-admin.gourmedy.com
-        realm: gourmedy
 
       database:
         host: private-pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com

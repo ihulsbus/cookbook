@@ -6,17 +6,6 @@ Items are sorted highest to lowest priority. Each item includes the file(s) to c
 
 ---
 
-## High — Required before frontend development
-
-### 3. All endpoints require `administrator` role — no read-only access
-**Files:** every `*-service.go` router file across all services
-
-Every single endpoint, including all GETs, is locked behind `c.KeycloakModule.Middleware("administrator")`. A frontend needs at minimum unauthenticated or lower-privilege read access to list and display data.
-
-Split route groups: keep `administrator` for writes (POST/PUT/DELETE), and either remove auth or introduce a `viewer`/`user` role for read-only GETs.
-
----
-
 ## Low — Code quality / minor issues
 
 ### 8. Search service has no RabbitMQ consumer
@@ -44,3 +33,4 @@ The following items from the previous review have been confirmed fixed:
 - ✅ `GET /api/v2/metadata/search/all` is not in the spec
 - ✅ Image service: `GET /images/search` uses same `Find` method as `GET /images/{id}`
 - ✅ No pagination on any collection endpoint
+- ✅ All endpoints required `administrator` role with no read-only access — split into `cookbook-user`/`cookbook-admin` (KIT-21/KIT-22)

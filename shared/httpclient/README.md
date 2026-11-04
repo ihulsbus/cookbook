@@ -287,8 +287,7 @@ go test -cover
 ```go
 client := httpclient.NewHTTPClient(
     5*time.Second,
-    keycloakURL,
-    keycloakRealm,
+    issuer,       // OIDC provider issuer URL - token endpoint is discovered
     clientID,
     clientSecret,
     logger,

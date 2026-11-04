@@ -39,10 +39,11 @@ func SearchService(ctx context.Context) {
 
 	v2 := router.Group("/api/v2")
 	{
+		// Search is a read operation - any authenticated user.
 		search := v2.Group("/search")
 		{
 			doSearch := search.Group("")
-			doSearch.Use(c.KeycloakModule.Middleware("administrator"))
+			doSearch.Use(c.OIDCModule.RequireAuth())
 			{
 				doSearch.POST("", c.SearchHandlers.Search)
 			}

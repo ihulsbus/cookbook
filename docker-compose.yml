@@ -99,53 +99,6 @@ services:
     networks:
       - cookbook-network
 
-  # Keycloak
-  keycloak:
-    image: docker.io/bitnamilegacy/keycloak:24.0.4-debian-12-r1
-    container_name: keycloak
-    environment:
-      BITNAMI_DEBUG: "false"
-      KEYCLOAK_ADMIN: administrator
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-changeme}
-      KEYCLOAK_HTTP_PORT: "8080"
-      KEYCLOAK_PROXY: "edge"
-      KEYCLOAK_ENABLE_STATISTICS: "false"
-      KEYCLOAK_DATABASE_HOST: postgres
-      KEYCLOAK_DATABASE_PORT: "5432"
-      KEYCLOAK_DATABASE_NAME: keycloak
-      KEYCLOAK_DATABASE_USER: keycloak
-      KEYCLOAK_DATABASE_PASSWORD: ${KEYCLOAK_POSTGRESQL_PASSWORD:-keycloak_pass}
-      KEYCLOAK_PRODUCTION: "false"
-      KEYCLOAK_ENABLE_HTTPS: "false"
-      KEYCLOAK_HTTP_RELATIVE_PATH: "/"
-      KEYCLOAK_LOG_OUTPUT: "default"
-      KEYCLOAK_LOG_LEVEL: "INFO"
-      KEYCLOAK_JDBC_PARAMS: ""
-      KEYCLOAK_CACHE_TYPE: "local"
-      KC_HEALTH_ENABLED: "false"
-      KC_METRICS_ENABLED: "false"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.keycloak.entrypoints: "websecure"
-      traefik.http.routers.keycloak.rule: "Host(`auth.gourmedy.com`) || Host(`auth-admin.gourmedy.com`)"
-      traefik.http.routers.keycloak.tls: "true"
-      traefik.http.routers.keycloak.tls.domains[0].main: "auth.gourmedy.com"
-      traefik.http.routers.keycloak.tls.domains[1].main: "auth-admin.gourmedy.com"
-      traefik.http.services.keycloak.loadbalancer.server.port: "8080"
-    ports:
-      - "8081:8080"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - cookbook-network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 300s
-
   # Recipe Service
   recipe-service:
     image: ghcr.io/ihulsbus/cookbook/recipe-service:latest
@@ -161,11 +114,19 @@ services:
       RABBITMQ_HOST: rabbitmq:5672
       RABBITMQ_USERNAME: admin
       RABBITMQ_PASSWORD: wENbwHUirBwZQbHpRB46egb9C
-      OAUTH_CLIENTID: gourmedy
-      OAUTH_CLIENTSECRET: ""
-      OAUTH_AUDIENCE: gourmedyfr
-      OAUTH_URL: http://keycloak:8080
-      OAUTH_REALM: gourmedy
+      # Issuer of the Authentik instance's cookbook-web provider, e.g.
+      # https://authentik.example.com/application/o/cookbook-web/ - see
+      # cookbook/authentik/README.md. Validates inbound tokens.
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
+      # Audience this service expects on inbound tokens - the cookbook-web
+      # provider's client ID.
+      OAUTH_AUDIENCE: cookbook-web
+      # This service's own confidential-client credentials for outbound
+      # client-credentials calls to other services (shared/httpclient).
+      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
+      # must still be set from your instance, it's never checked into git.
+      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
+      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
       GLOBAL_LOGLEVEL: INFO
     labels:
       traefik.enable: "true"
@@ -175,8 +136,6 @@ services:
       postgres:
         condition: service_healthy
       rabbitmq:
-        condition: service_healthy
-      keycloak:
         condition: service_healthy
     networks:
       - cookbook-network
@@ -198,11 +157,19 @@ services:
       DATABASE_PASSWORD: metadata_pass
       DATABASE_SSLMODE: disable
       DATABASE_TIMEZONE: Europe/Amsterdam
-      OAUTH_CLIENTID: gourmedy
-      OAUTH_CLIENTSECRET: ""
-      OAUTH_AUDIENCE: gourmedyfr
-      OAUTH_URL: http://keycloak:8080
-      OAUTH_REALM: gourmedy
+      # Issuer of the Authentik instance's cookbook-web provider, e.g.
+      # https://authentik.example.com/application/o/cookbook-web/ - see
+      # cookbook/authentik/README.md. Validates inbound tokens.
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
+      # Audience this service expects on inbound tokens - the cookbook-web
+      # provider's client ID.
+      OAUTH_AUDIENCE: cookbook-web
+      # This service's own confidential-client credentials for outbound
+      # client-credentials calls to other services (shared/httpclient).
+      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
+      # must still be set from your instance, it's never checked into git.
+      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
+      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
       GLOBAL_LOGLEVEL: INFO
     labels:
       traefik.enable: "true"
@@ -210,8 +177,6 @@ services:
       traefik.http.services.metadata-service.loadbalancer.server.port: "8080"
     depends_on:
       postgres:
-        condition: service_healthy
-      keycloak:
         condition: service_healthy
     networks:
       - cookbook-network
@@ -233,11 +198,19 @@ services:
       DATABASE_PASSWORD: ingredient_pass
       DATABASE_SSLMODE: disable
       DATABASE_TIMEZONE: Europe/Amsterdam
-      OAUTH_CLIENTID: gourmedy
-      OAUTH_CLIENTSECRET: ""
-      OAUTH_AUDIENCE: gourmedyfr
-      OAUTH_URL: http://keycloak:8080
-      OAUTH_REALM: gourmedy
+      # Issuer of the Authentik instance's cookbook-web provider, e.g.
+      # https://authentik.example.com/application/o/cookbook-web/ - see
+      # cookbook/authentik/README.md. Validates inbound tokens.
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
+      # Audience this service expects on inbound tokens - the cookbook-web
+      # provider's client ID.
+      OAUTH_AUDIENCE: cookbook-web
+      # This service's own confidential-client credentials for outbound
+      # client-credentials calls to other services (shared/httpclient).
+      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
+      # must still be set from your instance, it's never checked into git.
+      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
+      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
       GLOBAL_LOGLEVEL: INFO
     labels:
       traefik.enable: "true"
@@ -245,8 +218,6 @@ services:
       traefik.http.services.ingredient-service.loadbalancer.server.port: "8080"
     depends_on:
       postgres:
-        condition: service_healthy
-      keycloak:
         condition: service_healthy
     networks:
       - cookbook-network
@@ -268,11 +239,19 @@ services:
       DATABASE_PASSWORD: instruction_pass
       DATABASE_SSLMODE: disable
       DATABASE_TIMEZONE: Europe/Amsterdam
-      OAUTH_CLIENTID: gourmedy
-      OAUTH_CLIENTSECRET: ""
-      OAUTH_AUDIENCE: gourmedyfr
-      OAUTH_URL: http://keycloak:8080
-      OAUTH_REALM: gourmedy
+      # Issuer of the Authentik instance's cookbook-web provider, e.g.
+      # https://authentik.example.com/application/o/cookbook-web/ - see
+      # cookbook/authentik/README.md. Validates inbound tokens.
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
+      # Audience this service expects on inbound tokens - the cookbook-web
+      # provider's client ID.
+      OAUTH_AUDIENCE: cookbook-web
+      # This service's own confidential-client credentials for outbound
+      # client-credentials calls to other services (shared/httpclient).
+      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
+      # must still be set from your instance, it's never checked into git.
+      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
+      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
       RECIPECLIENT_BASEURL: http://recipe-service:8080/api/v2
       GLOBAL_LOGLEVEL: INFO
     labels:
@@ -281,8 +260,6 @@ services:
       traefik.http.services.instruction-service.loadbalancer.server.port: "8080"
     depends_on:
       postgres:
-        condition: service_healthy
-      keycloak:
         condition: service_healthy
       recipe-service:
         condition: service_healthy
@@ -309,11 +286,19 @@ services:
       RABBITMQ_HOST: rabbitmq:5672
       RABBITMQ_USERNAME: admin
       RABBITMQ_PASSWORD: wENbwHUirBwZQbHpRB46egb9C
-      OAUTH_CLIENTID: gourmedy
-      OAUTH_CLIENTSECRET: ""
-      OAUTH_AUDIENCE: gourmedyfr
-      OAUTH_URL: http://keycloak:8080
-      OAUTH_REALM: gourmedy
+      # Issuer of the Authentik instance's cookbook-web provider, e.g.
+      # https://authentik.example.com/application/o/cookbook-web/ - see
+      # cookbook/authentik/README.md. Validates inbound tokens.
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
+      # Audience this service expects on inbound tokens - the cookbook-web
+      # provider's client ID.
+      OAUTH_AUDIENCE: cookbook-web
+      # This service's own confidential-client credentials for outbound
+      # client-credentials calls to other services (shared/httpclient).
+      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
+      # must still be set from your instance, it's never checked into git.
+      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
+      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
       S3_REGION: us-east-1
       S3_AWSACCESSKEY: admin
       S3_AWSACCESSSECRET: adminpassword
@@ -328,8 +313,6 @@ services:
       postgres:
         condition: service_healthy
       rabbitmq:
-        condition: service_healthy
-      keycloak:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -353,11 +336,19 @@ services:
       DATABASE_PASSWORD: search_pass
       DATABASE_SSLMODE: disable
       DATABASE_TIMEZONE: Europe/Amsterdam
-      OAUTH_CLIENTID: gourmedy
-      OAUTH_CLIENTSECRET: ""
-      OAUTH_AUDIENCE: gourmedyfr
-      OAUTH_URL: http://keycloak:8080
-      OAUTH_REALM: gourmedy
+      # Issuer of the Authentik instance's cookbook-web provider, e.g.
+      # https://authentik.example.com/application/o/cookbook-web/ - see
+      # cookbook/authentik/README.md. Validates inbound tokens.
+      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
+      # Audience this service expects on inbound tokens - the cookbook-web
+      # provider's client ID.
+      OAUTH_AUDIENCE: cookbook-web
+      # This service's own confidential-client credentials for outbound
+      # client-credentials calls to other services (shared/httpclient).
+      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
+      # must still be set from your instance, it's never checked into git.
+      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
+      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
       GLOBAL_LOGLEVEL: INFO
     labels:
       traefik.enable: "true"
@@ -365,8 +356,6 @@ services:
       traefik.http.services.search-service.loadbalancer.server.port: "8080"
     depends_on:
       postgres:
-        condition: service_healthy
-      keycloak:
         condition: service_healthy
     networks:
       - cookbook-network

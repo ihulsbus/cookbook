@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/gin-contrib/cors"
-	"github.com/ihulsbus/cookbook/shared/keycloak"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
@@ -156,13 +156,14 @@ func initCors() {
 	}
 }
 
-func initOauth() (*keycloak.KeycloakModule, error) {
-	module, err := keycloak.NewKeycloakModule(keycloak.KeyCloakConfig{
-		Url:          Configuration.Oauth.Url,
-		Realm:        Configuration.Oauth.Realm,
-		ClientID:     Configuration.Oauth.ClientID,
-		ClientSecret: Configuration.Oauth.ClientSecret,
-	}, []string{Configuration.Oauth.ClientID, Configuration.Oauth.Audience})
+func initOauth() (*oidc.Module, error) {
+	module, err := oidc.NewModule(Ctx, oidc.Config{
+		Issuer: Configuration.Oauth.Issuer,
+		// Accept both the frontend's public client ID (end-user tokens)
+		// and this service's own confidential client ID (tokens from
+		// other services' client-credentials calls via shared/httpclient).
+		Audiences: []string{Configuration.Oauth.Audience, Configuration.Oauth.ClientID},
+	})
 	if err != nil {
 		return nil, err
 	}

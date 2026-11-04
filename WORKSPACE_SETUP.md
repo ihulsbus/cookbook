@@ -64,9 +64,9 @@ cookbook/
     ├── imageclient/
     │   ├── go.mod
     │   └── imageclient.go
-    ├── keycloak/
+    ├── oidc/
     │   ├── go.mod
-    │   └── keycloak.go
+    │   └── oidc.go
     ├── models/
     │   ├── go.mod
     │   └── *.go                    # All shared data models
@@ -100,7 +100,7 @@ use (
     ./shared/http
     ./shared/httpclient
     ./shared/imageclient
-    ./shared/keycloak
+    ./shared/oidc
     ./shared/models
     ./shared/rabbitmq
     ./shared/recipeclient
@@ -120,14 +120,14 @@ go 1.26.0
 
 require (
     github.com/ihulsbus/cookbook/shared/models v0.0.0
-    github.com/ihulsbus/cookbook/shared/keycloak v0.0.0
+    github.com/ihulsbus/cookbook/shared/oidc v0.0.1
     github.com/ihulsbus/cookbook/shared/rabbitmq v0.0.0
     // ... other dependencies
 )
 
 replace (
     github.com/ihulsbus/cookbook/shared/models => ../shared/models
-    github.com/ihulsbus/cookbook/shared/keycloak => ../shared/keycloak
+    github.com/ihulsbus/cookbook/shared/oidc => ../shared/oidc
     github.com/ihulsbus/cookbook/shared/rabbitmq => ../shared/rabbitmq
     github.com/ihulsbus/cookbook/shared/recipeclient => ../shared/recipeclient
 )
@@ -265,7 +265,7 @@ go work use -r ./old-service
 # Edit any file in the shared modules
 vim shared/models/PaginationModels.go
 vim shared/httpclient/httpclient.go
-vim shared/keycloak/keycloak.go
+vim shared/oidc/oidc.go
 ```
 
 ### 2. All services see changes immediately

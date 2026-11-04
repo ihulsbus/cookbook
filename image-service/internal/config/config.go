@@ -20,7 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
-	"github.com/ihulsbus/cookbook/shared/keycloak"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -37,10 +37,10 @@ var (
 	Ctx           context.Context
 	err           error
 
-	Logger         *log.Logger = log.New()
-	KeycloakModule *keycloak.KeycloakModule
-	Cors           cors.Config
-	Cache          *olric.DMap
+	Logger     *log.Logger = log.New()
+	OIDCModule *oidc.Module
+	Cors       cors.Config
+	Cache      *olric.DMap
 
 	// Clients
 	HttpClient     *hc.HTTPClient
@@ -89,7 +89,7 @@ func init() {
 		Logger.Panicf("error initialising cache: %v", err)
 	}
 
-	KeycloakModule, err = initOauth()
+	OIDCModule, err = initOauth()
 	if err != nil {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
@@ -108,7 +108,7 @@ func init() {
 		Configuration.RabbitMQ.Host,
 		Logger,
 	)
-	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
+	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Issuer, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
 	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
 	if err != nil {
 		Logger.Panicf("error initialising recipe client: %v", err)

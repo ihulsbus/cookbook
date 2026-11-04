@@ -24,7 +24,7 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
-	"github.com/ihulsbus/cookbook/shared/keycloak"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
@@ -40,9 +40,9 @@ var (
 	Ctx           context.Context
 	Configuration instructionConfig
 
-	Logger         = log.New()
-	KeycloakModule *keycloak.KeycloakModule
-	Cors           cors.Config
+	Logger     = log.New()
+	OIDCModule *oidc.Module
+	Cors       cors.Config
 
 	// Clients
 	DatabaseClient *gorm.DB
@@ -88,13 +88,13 @@ func init() {
 
 	initDatabase()
 	initCors()
-	KeycloakModule, err = initOauth()
+	OIDCModule, err = initOauth()
 	if err != nil {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
 	// Init clients
-	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Url, Configuration.Oauth.Realm, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
+	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Issuer, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
 	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
 	if err != nil {
 		Logger.Panicf("error initialising recipe client: %v", err)

@@ -1,0 +1,35 @@
+version: 1
+metadata:
+  name: cookbook-service
+  labels:
+    blueprints.goauthentik.io/instantiate: "true"
+
+# Confidential provider for service-to-service calls (shared/httpclient's
+# client-credentials grant - see cookbook/shared/httpclient/httpclient.go).
+
+entries:
+  - model: authentik_providers_oauth2.oauth2provider
+    id: provider-cookbook-service
+    identifiers:
+      name: cookbook-service
+    attrs:
+      name: cookbook-service
+      client_type: confidential
+      client_id: cookbook-service
+      # No client_secret here - Authentik generates one on creation.
+      # Retrieve it from the provider's page after import.
+      sub_mode: hashed_user_id
+      include_claims_in_id_token: false
+      signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
+      authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+      invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+
+  - model: authentik_core.application
+    id: application-cookbook-service
+    identifiers:
+      slug: cookbook-service
+    attrs:
+      name: Cookbook Service (inter-service calls)
+      slug: cookbook-service
+      provider: !KeyOf provider-cookbook-service
+      open_in_new_tab: false
