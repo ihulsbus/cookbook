@@ -39,6 +39,10 @@ jobs:
       working-directory: ${{ env.MODULE }}
       run: go mod download
 
+    - name: Vet
+      working-directory: ${{ env.MODULE }}
+      run: go vet ./...
+
     - name: Test
       uses: robherley/go-test-action@v1.1.0
       with:
@@ -46,7 +50,6 @@ jobs:
 
     - name: Go tests
       working-directory: ${{ env.MODULE }}
-      continue-on-error: true
       run: |
         go test -json -coverprofile=coverage.out ./... > test-report.out
 
