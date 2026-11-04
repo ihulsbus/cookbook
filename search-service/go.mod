@@ -15,6 +15,7 @@ require (
 require (
 	github.com/MicahParks/jwkset v0.11.3 // indirect
 	github.com/MicahParks/keyfunc/v3 v3.8.2 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 )
 
 require (
@@ -60,7 +61,7 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
-	gorm.io/gorm v1.31.1 // indirect
+	gorm.io/gorm v1.31.2 // indirect
 )
 
 replace github.com/ihulsbus/cookbook/shared/oidc => ../shared/oidc
