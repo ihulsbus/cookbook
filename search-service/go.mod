@@ -13,8 +13,9 @@ require (
 )
 
 require (
-	github.com/MicahParks/jwkset v0.11.3 // indirect
-	github.com/MicahParks/keyfunc/v3 v3.8.2 // indirect
+	github.com/MicahParks/jwkset v0.11.4 // indirect
+	github.com/MicahParks/keyfunc/v3 v3.9.1 // indirect
+	github.com/rogpeppe/go-internal v1.13.1 // indirect
 )
 
 require (
