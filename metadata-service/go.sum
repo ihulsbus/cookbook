@@ -2,10 +2,10 @@ cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMT
 github.com/DATA-DOG/go-sqlmock v1.5.2 h1:OcvFkGmslmlZibjAjaHm3L//6LiuBgolP7OputlJIzU=
 github.com/DATA-DOG/go-sqlmock v1.5.2/go.mod h1:88MAG/4G7SMwSE3CeA0ZKzrT5CiOU3OJ+JlNzwDqpNU=
 github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3tL4fMGNddJ+vMq1mwgfaqoQ=
-github.com/MicahParks/jwkset v0.11.3 h1:Phli4RdTDdIdLXZpuO7abkwZyzIk0RDTUPVVBHPRdkQ=
-github.com/MicahParks/jwkset v0.11.3/go.mod h1:U2oRhRaLgDCLjtpGL2GseNKGmZtLs/3O7p+OZaL5vo0=
-github.com/MicahParks/keyfunc/v3 v3.8.2 h1:eydEwk/pBAVrDIpmFfB/gkCcrp++xQ7YYXirrI2zlWE=
-github.com/MicahParks/keyfunc/v3 v3.8.2/go.mod h1:T4snFPe26GwMg45bBAdM5P6qWQyLxZHLwBhxR/9PnCs=
+github.com/MicahParks/jwkset v0.11.4 h1:sm6pqlEpa1YDu82Hoxho/O+Y291lPcksNImVIsV74gg=
+github.com/MicahParks/jwkset v0.11.4/go.mod h1:U2oRhRaLgDCLjtpGL2GseNKGmZtLs/3O7p+OZaL5vo0=
+github.com/MicahParks/keyfunc/v3 v3.9.1 h1:10dlh2kS3kRtfj5x2bokCxLhTpmIpf3WtsvBdJ2TfOo=
+github.com/MicahParks/keyfunc/v3 v3.9.1/go.mod h1:h8DMhdulFa3yjG1q74FqaehNDekB18HrVCXPl9Raa4I=
 github.com/RoaringBitmap/roaring v1.9.4 h1:yhEIoH4YezLYT04s1nHehNO64EKFTop/wBhxv2QzDdQ=
 github.com/RoaringBitmap/roaring v1.9.4/go.mod h1:6AXUsoIEzDTFFQCe1RbGA6uFONMhvejWj5rqITANK90=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
