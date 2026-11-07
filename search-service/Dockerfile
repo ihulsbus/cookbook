@@ -8,8 +8,13 @@ RUN update-ca-certificates
 
 WORKDIR /build
 
-# use modules
+# use modules - the build context is this module's own directory, but its
+# go.mod has replace directives pointing at ../shared/* (siblings in the
+# monorepo), so the workflow also supplies a "shared" build context
+# (see build-contexts: in the workflow) mapped here to /shared, a sibling
+# of /build - matching what ../shared/* resolves to from /build/go.mod.
 COPY . .
+COPY --from=shared . /shared
 
 ENV GO111MODULE=on
 RUN go mod download

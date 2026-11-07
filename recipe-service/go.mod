@@ -80,3 +80,7 @@ require (
 )
 
 replace github.com/ihulsbus/cookbook/shared/oidc => ../shared/oidc
+replace github.com/ihulsbus/cookbook/shared/healthchecks => ../shared/healthchecks
+replace github.com/ihulsbus/cookbook/shared/http => ../shared/http
+replace github.com/ihulsbus/cookbook/shared/models => ../shared/models
+replace github.com/ihulsbus/cookbook/shared/rabbitmq => ../shared/rabbitmq
