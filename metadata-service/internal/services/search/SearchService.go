@@ -1,12 +1,13 @@
 package services
 
 import (
+	"github.com/google/uuid"
 	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
 type SearchRepository interface {
-	GetAllRecipeMetadata() (*[]m.MetadataSearchResult, error)
-	SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error)
+	GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.MetadataSearchResult, error)
+	SearchMetadata(request m.MetadataSearchRequest, requesterID uuid.UUID) ([]m.MetadataSearchResult, error)
 }
 
 type SearchService struct {
@@ -20,8 +21,8 @@ func NewSearchService(repo SearchRepository) *SearchService {
 	}
 }
 
-func (s SearchService) GetAllRecipeMetadata() (*[]m.MetadataSearchResultDTO, error) {
-	results, err := s.repo.GetAllRecipeMetadata()
+func (s SearchService) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.MetadataSearchResultDTO, error) {
+	results, err := s.repo.GetAllRecipeMetadata(requesterID)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +31,7 @@ func (s SearchService) GetAllRecipeMetadata() (*[]m.MetadataSearchResultDTO, err
 	return &resultsDTO, nil
 }
 
-func (s SearchService) SearchMetadata(searchRequestDTO m.MetadataSearchRequestDTO) ([]m.MetadataSearchResultDTO, error) {
+func (s SearchService) SearchMetadata(searchRequestDTO m.MetadataSearchRequestDTO, requesterID uuid.UUID) ([]m.MetadataSearchResultDTO, error) {
 	var searchRequest m.MetadataSearchRequest = m.MetadataSearchRequest{
 		CategoryID:        &searchRequestDTO.CategoryID,
 		TagID:             &searchRequestDTO.TagID,
@@ -46,7 +47,7 @@ func (s SearchService) SearchMetadata(searchRequestDTO m.MetadataSearchRequestDT
 		searchRequest.MaxPrepTime = searchRequestDTO.MaxPrepTime
 	}
 
-	results, err := s.repo.SearchMetadata(searchRequest)
+	results, err := s.repo.SearchMetadata(searchRequest, requesterID)
 	if err != nil {
 		return nil, err
 	}

@@ -27,6 +27,33 @@ func (v Visibility) Valid() bool {
 	}
 }
 
+// RecipeListScope narrows GET /recipe (KIT-30) to a subset of what's
+// otherwise visible to the requester.
+type RecipeListScope string
+
+const (
+	// ScopeMine returns only recipes the requester owns.
+	ScopeMine RecipeListScope = "mine"
+	// ScopeShared returns recipes shared with the requester (owner
+	// excluded). Always empty until the recipe_shares model (KIT-32)
+	// exists to resolve explicit grants.
+	ScopeShared RecipeListScope = "shared"
+	// ScopeAll (the default) returns recipes the requester owns, plus
+	// every public recipe - the same set GET /recipe always returned
+	// before ?scope existed.
+	ScopeAll RecipeListScope = "all"
+)
+
+// Valid reports whether s is one of the defined RecipeListScope values.
+func (s RecipeListScope) Valid() bool {
+	switch s {
+	case ScopeMine, ScopeShared, ScopeAll:
+		return true
+	default:
+		return false
+	}
+}
+
 // Recipe struct to hold recipe data
 type Recipe struct {
 	ID           uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`

@@ -34,7 +34,7 @@ var (
 type RecipeRepositoryMock struct{}
 type LoggerMock struct{}
 
-func (RecipeRepositoryMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID) ([]m.Recipe, int64, error) {
+func (RecipeRepositoryMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, scope m.RecipeListScope) ([]m.Recipe, int64, error) {
 	switch findAllRecipe.Name {
 	case "findall":
 		return []m.Recipe{recipe}, 1, nil
@@ -102,7 +102,7 @@ func TestRecipeFindAll_OK(t *testing.T) {
 
 	findAllRecipe.Name = "findall"
 
-	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID)
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, m.ScopeAll)
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
@@ -114,7 +114,7 @@ func TestRecipeFindAll_Err(t *testing.T) {
 
 	findAllRecipe.Name = "error"
 
-	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID)
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, m.ScopeAll)
 
 	assert.Error(t, err)
 	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
@@ -126,11 +126,36 @@ func TestRecipeFindAll_NotFound(t *testing.T) {
 
 	findAllRecipe.Name = "notfound"
 
-	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID)
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, m.ScopeAll)
 
 	assert.Error(t, err)
 	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
 	assert.EqualError(t, err, "internal server error")
+}
+
+// TestRecipeFindAll_EmptyScopeDefaultsToAll: an empty ?scope (the param
+// omitted) must behave exactly like ScopeAll - GET /recipe's behavior
+// before ?scope existed (KIT-30).
+func TestRecipeFindAll_EmptyScopeDefaultsToAll(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
+
+	findAllRecipe.Name = "findall"
+
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, "")
+
+	assert.NoError(t, err)
+	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
+	assert.Len(t, result.Data, 1)
+}
+
+func TestRecipeFindAll_InvalidScope(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
+
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, "nonsense")
+
+	assert.Error(t, err)
+	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
+	assert.EqualError(t, err, "invalid scope")
 }
 
 func TestRecipeFindSingle_OK(t *testing.T) {

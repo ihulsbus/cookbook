@@ -154,3 +154,14 @@ config:
         database: search
         sslMode: require
         timezone: Europe/Amsterdam
+
+      # Downstream services this one fans a search out to (KIT-30) -
+      # assumes same-namespace deployment.
+      ingredientService:
+        baseURL: http://ingredient-service/api/v2
+
+      recipeService:
+        baseURL: http://recipe-service/api/v2
+
+      metadataService:
+        baseURL: http://metadata-service/api/v2

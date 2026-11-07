@@ -5,12 +5,14 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/ihulsbus/cookbook/shared/models"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 )
 
 type SearchService interface {
-	GetAllRecipeMetadata() (*[]models.MetadataSearchResultDTO, error)
-	SearchMetadata(models.MetadataSearchRequestDTO) ([]models.MetadataSearchResultDTO, error)
+	GetAllRecipeMetadata(requesterID uuid.UUID) (*[]models.MetadataSearchResultDTO, error)
+	SearchMetadata(request models.MetadataSearchRequestDTO, requesterID uuid.UUID) ([]models.MetadataSearchResultDTO, error)
 }
 
 type SearchHandlers struct {
@@ -25,9 +27,35 @@ func NewSearchHandlers(searchs SearchService, logger m.LoggerInterface) *SearchH
 	}
 }
 
-func (h *SearchHandlers) GetAllMetadata(ctx *gin.Context) {
+// principalID extracts the authenticated caller's user ID from the Gin
+// context (set by oidc.Module.RequireAuth, which both routes below
+// already run). Needed so search results can be filtered to recipes the
+// caller may read (KIT-30) - without it, a search result would leak the
+// existence of private recipes to any authenticated caller.
+func (h *SearchHandlers) principalID(ctx *gin.Context) (uuid.UUID, bool) {
+	principal, ok := oidc.PrincipalFromContext(ctx)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "missing authenticated principal"})
+		return uuid.Nil, false
+	}
 
-	MetadataDTO, err := h.searchService.GetAllRecipeMetadata()
+	id, err := uuid.Parse(principal.UserID)
+	if err != nil {
+		h.logger.Errorf("principal sub %q is not a UUID: %s", principal.UserID, err.Error())
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "invalid principal"})
+		return uuid.Nil, false
+	}
+
+	return id, true
+}
+
+func (h *SearchHandlers) GetAllMetadata(ctx *gin.Context) {
+	requesterID, ok := h.principalID(ctx)
+	if !ok {
+		return
+	}
+
+	MetadataDTO, err := h.searchService.GetAllRecipeMetadata(requesterID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -37,6 +65,11 @@ func (h *SearchHandlers) GetAllMetadata(ctx *gin.Context) {
 }
 
 func (h *SearchHandlers) SearchMetadata(ctx *gin.Context) {
+	requesterID, ok := h.principalID(ctx)
+	if !ok {
+		return
+	}
+
 	var searchRequestDTO models.MetadataSearchRequestDTO
 	var err error
 
@@ -45,7 +78,7 @@ func (h *SearchHandlers) SearchMetadata(ctx *gin.Context) {
 		return
 	}
 
-	searchResultDTO, err := h.searchService.SearchMetadata(searchRequestDTO)
+	searchResultDTO, err := h.searchService.SearchMetadata(searchRequestDTO, requesterID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

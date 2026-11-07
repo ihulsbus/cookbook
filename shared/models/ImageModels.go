@@ -50,6 +50,19 @@ type ImageDataDTO struct {
 	EntityID   uuid.UUID `json:"entity_id"`
 	Size       int64     `json:"size"`
 	Type       string    `json:"type"`
+	// URL is a short-lived signed GET URL for this image's object
+	// (KIT-72), set by the service layer only after the caller's access
+	// has already been checked. Empty when no URL was generated (e.g. a
+	// list response that doesn't presign every row).
+	URL string `json:"url,omitempty"`
+}
+
+// WithURL returns a copy of i carrying url. Set by the service layer
+// only after the caller's access has already been checked - never
+// populated here.
+func (i ImageDataDTO) WithURL(url string) ImageDataDTO {
+	i.URL = url
+	return i
 }
 
 func (i ImageDataDTO) ConvertFromDTO() ImageData {

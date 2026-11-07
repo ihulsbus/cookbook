@@ -9,7 +9,6 @@ use (
 	./recipe-service
 	./search-service
 	./shared/authz
-	./shared/cache
 	./shared/healthchecks
 	./shared/http
 	./shared/httpclient
@@ -17,5 +16,4 @@ use (
 	./shared/models
 	./shared/oidc
 	./shared/rabbitmq
-	./shared/recipeclient
 )

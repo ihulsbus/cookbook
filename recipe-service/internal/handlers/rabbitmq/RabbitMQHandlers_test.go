@@ -16,8 +16,8 @@ type MockRecipeService struct {
 	mock.Mock
 }
 
-func (m *MockRecipeService) FindAll(pagination models.PaginationRequest, requesterID uuid.UUID) (models.PaginatedResponse[models.RecipeDTO], error) {
-	args := m.Called(pagination, requesterID)
+func (m *MockRecipeService) FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error) {
+	args := m.Called(pagination, requesterID, scope)
 	return args.Get(0).(models.PaginatedResponse[models.RecipeDTO]), args.Error(1)
 }
 

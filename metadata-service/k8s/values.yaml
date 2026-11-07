@@ -161,3 +161,8 @@ config:
         database: metadata
         sslMode: require
         timezone: Europe/Amsterdam
+
+      # recipe-service's internal-only API (KIT-28/29), for Authorizer's
+      # projection-miss fallback only - assumes same-namespace deployment.
+      recipeServiceInternal:
+        baseURL: http://recipe-service:9090

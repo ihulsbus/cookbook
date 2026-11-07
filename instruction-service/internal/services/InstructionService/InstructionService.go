@@ -14,20 +14,17 @@ type InstructionRepository interface {
 	Delete(instruction *[]m.Instruction) error
 }
 
-type RecipeRepository interface {
-	RecipeExists(recipeID string) (bool, error)
-}
-
 type InstructionService struct {
-	repo   InstructionRepository
-	recipe RecipeRepository
+	repo InstructionRepository
 }
 
-// NewInstructionService creates a new RecipeService instance
-func NewInstructionService(instructionRepo InstructionRepository, recipe RecipeRepository) *InstructionService {
+// NewInstructionService creates a new RecipeService instance. Recipe
+// existence/access is no longer checked here (KIT-79) - the router's
+// authz.RequireRecipeAccess("id", authz.PermissionWrite) middleware
+// already confirmed both before this is ever called.
+func NewInstructionService(instructionRepo InstructionRepository) *InstructionService {
 	return &InstructionService{
-		repo:   instructionRepo,
-		recipe: recipe,
+		repo: instructionRepo,
 	}
 }
 
@@ -51,15 +48,6 @@ func (s InstructionService) Create(entityID uuid.UUID, instructionDTO *[]m.Instr
 	_, err := s.Find(entityID)
 	if err == nil {
 		return nil, errors.New("recipe has existing instructions. Use update or delete first")
-	}
-
-	ok, err := s.recipe.RecipeExists(entityID.String())
-	if err != nil {
-		return nil, err
-	}
-
-	if !ok {
-		return nil, errors.New("provided recipe does not exist. Cannot create instructions for a recipe that does not exist")
 	}
 
 	instructions := m.InstructionDTO{}.ConvertAllFromDTO(*instructionDTO)

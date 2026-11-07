@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	existingRecipe                  = "true"
 	recipeMetadata m.RecipeMetadata = m.RecipeMetadata{
 		RecipeID:          uuid.New(),
 		CuisineTypeID:     uuid.New(),
@@ -21,7 +20,6 @@ var (
 )
 
 type RecipeMetadataRepositoryMock struct{}
-type RecipeRepositoryMock struct{}
 
 func (*RecipeMetadataRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.RecipeMetadata, int64, error) {
 	switch recipeMetadata.ServingCount {
@@ -80,21 +78,10 @@ func (*RecipeMetadataRepositoryMock) Delete(meta *m.RecipeMetadata) error {
 	}
 }
 
-func (*RecipeRepositoryMock) RecipeExists(recipeID string) (bool, error) {
-	switch existingRecipe {
-	case "true":
-		return true, nil
-	case "false":
-		return false, nil
-	default:
-		return false, errors.New("error")
-	}
-}
-
 // ======================================================================
 
 func TestRecipeMetadataFindAll_OK(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 	recipeMetadata.ServingCount = 1
 
 	result, err := s.FindAll(m.NormalizePagination(1, 25))
@@ -105,7 +92,7 @@ func TestRecipeMetadataFindAll_OK(t *testing.T) {
 }
 
 func TestRecipeMetadataFindAll_err(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 	recipeMetadata.ServingCount = 99
 
 	result, err := s.FindAll(m.NormalizePagination(1, 25))
@@ -116,7 +103,7 @@ func TestRecipeMetadataFindAll_err(t *testing.T) {
 }
 
 func TestRecipeMetadataFindSingle_OK(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 2
 	result, err := s.Find(recipeMetadata.RecipeID)
@@ -128,7 +115,7 @@ func TestRecipeMetadataFindSingle_OK(t *testing.T) {
 }
 
 func TestRecipeMetadataFindSingle_Err(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 99
 	result, err := s.Find(recipeMetadata.RecipeID)
@@ -139,7 +126,7 @@ func TestRecipeMetadataFindSingle_Err(t *testing.T) {
 }
 
 func TestRecipeMetadataFindSingle_NotFound(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 0
 	result, err := s.Find(recipeMetadata.RecipeID)
@@ -150,7 +137,7 @@ func TestRecipeMetadataFindSingle_NotFound(t *testing.T) {
 }
 
 func TestRecipeMetadataCreate_OK(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 3
 	dto := recipeMetadata.ConvertToDTO()
@@ -161,7 +148,7 @@ func TestRecipeMetadataCreate_OK(t *testing.T) {
 }
 
 func TestRecipeMetadataCreate_IDErr(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 3
 	dto := recipeMetadata.ConvertToDTO()
@@ -169,39 +156,11 @@ func TestRecipeMetadataCreate_IDErr(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.IsType(t, &m.RecipeMetadataDTO{}, result)
-	assert.EqualError(t, err, "recipe id should not be nil")
-}
-
-func TestRecipeMetadataCreate_RecipeDoesNotExist(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
-
-	recipeMetadata.ServingCount = 3
-	existingRecipe = "false"
-	dto := recipeMetadata.ConvertToDTO()
-	result, err := s.Create(recipeMetadata.RecipeID, &dto)
-
-	assert.Error(t, err)
-	assert.IsType(t, &m.RecipeMetadataDTO{}, result)
-	assert.Nil(t, result)
-	assert.EqualError(t, err, "provided recipe does not exist. Cannot create metadata for a recipe that does not exist")
-}
-
-func TestRecipeMetadataCreate_RecipeExistsError(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
-
-	recipeMetadata.ServingCount = 3
-	existingRecipe = "error"
-	dto := recipeMetadata.ConvertToDTO()
-	result, err := s.Create(uuid.Nil, &dto)
-
-	assert.Error(t, err)
-	assert.IsType(t, &m.RecipeMetadataDTO{}, result)
-	assert.Nil(t, result)
 	assert.EqualError(t, err, "recipe id should not be nil")
 }
 
 func TestRecipeMetadataCreate_CreateErr(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 99
 	dto := recipeMetadata.ConvertToDTO()
@@ -214,10 +173,9 @@ func TestRecipeMetadataCreate_CreateErr(t *testing.T) {
 }
 
 func TestRecipeMetadataUpdate_OK(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 4
-	existingRecipe = "true"
 	dto := recipeMetadata.ConvertToDTO()
 	result, err := s.Update(dto.RecipeID, &dto)
 
@@ -226,7 +184,7 @@ func TestRecipeMetadataUpdate_OK(t *testing.T) {
 }
 
 func TestRecipeMetadataUpdate_NoExistingRecipe(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 99
 	dto := recipeMetadata.ConvertToDTO()
@@ -239,7 +197,7 @@ func TestRecipeMetadataUpdate_NoExistingRecipe(t *testing.T) {
 }
 
 func TestRecipeMetadataUpdate_UpdateErr(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 499
 	dto := recipeMetadata.ConvertToDTO()
@@ -252,7 +210,7 @@ func TestRecipeMetadataUpdate_UpdateErr(t *testing.T) {
 }
 
 func TestRecipeMetadataDelete_OK(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 5
 	err := s.Delete(recipeMetadata.RecipeID)
@@ -261,7 +219,7 @@ func TestRecipeMetadataDelete_OK(t *testing.T) {
 }
 
 func TestRecipeMetadataDelete_FindError(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 299
 	err := s.Delete(recipeMetadata.RecipeID)
@@ -271,7 +229,7 @@ func TestRecipeMetadataDelete_FindError(t *testing.T) {
 }
 
 func TestRecipeMetadataDelete_DeleteErr(t *testing.T) {
-	s := NewMetadataService(&RecipeMetadataRepositoryMock{}, &RecipeRepositoryMock{})
+	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 
 	recipeMetadata.ServingCount = 99
 	err := s.Delete(recipeMetadata.RecipeID)

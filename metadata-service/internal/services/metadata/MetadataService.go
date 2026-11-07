@@ -16,20 +16,17 @@ type MetadataRepository interface {
 	Delete(meta *m.RecipeMetadata) error
 }
 
-type RecipeRepository interface {
-	RecipeExists(recipeID string) (bool, error)
-}
-
 type MetadataService struct {
-	repo   MetadataRepository
-	recipe RecipeRepository
+	repo MetadataRepository
 }
 
-// NewMetadataService creates a new MetadataService instance
-func NewMetadataService(metadataRepo MetadataRepository, recipe RecipeRepository) *MetadataService {
+// NewMetadataService creates a new MetadataService instance. Recipe
+// existence/access is no longer checked here (KIT-79) - the router's
+// authz.RequireRecipeAccess("id", authz.PermissionWrite) middleware
+// already confirmed both before this is ever called.
+func NewMetadataService(metadataRepo MetadataRepository) *MetadataService {
 	return &MetadataService{
-		repo:   metadataRepo,
-		recipe: recipe,
+		repo: metadataRepo,
 	}
 }
 
@@ -71,15 +68,6 @@ func (s *MetadataService) Create(recipeID uuid.UUID, meta *m.RecipeMetadataDTO) 
 	var metadata = meta.ConvertFromDTO()
 	if recipeID == uuid.Nil {
 		return nil, fmt.Errorf("recipe id should not be nil")
-	}
-
-	ok, err := s.recipe.RecipeExists(recipeID.String())
-	if err != nil {
-		return nil, err
-	}
-
-	if !ok {
-		return nil, errors.New("provided recipe does not exist. Cannot create metadata for a recipe that does not exist")
 	}
 
 	metadata.RecipeID = recipeID

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	az "github.com/ihulsbus/cookbook/shared/authz"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -18,12 +19,14 @@ var (
 )
 
 func InstructionService(ctx context.Context) {
-	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "instructions", "cookbook")
+	// Keeps the recipe_access projection current; no synchronous call to
+	// recipe-service happens at startup (KIT-79).
+	consumer, err := c.Projector.StartConsumer(c.RabbitMQClient.Connection, "instruction-service-recipe-access", "cookbook")
 	if err != nil {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
 		return
 	}
-	defer c.RabbitMQHandler.StopConsuming()
+	defer consumer.Close()
 
 	httpServer(ctx)
 }
@@ -52,36 +55,37 @@ func httpServer(ctx context.Context) {
 	// API versioning setup
 	v2 := router.Group("/api/v2")
 	{
-		// Instructions are a recipe's cooking steps - CRUD follows "full
-		// CRUD on their own recipes", any authenticated user.
+		// Instructions are a recipe's cooking steps - :id/recipeID is the
+		// RECIPE id, so RequireRecipeAccess checks it directly. GET needs
+		// read; writes need write (KIT-29).
 		instruction := v2.Group("/instruction")
 		{
 			searchInstruction := instruction.Group("")
-			searchInstruction.Use(c.OIDCModule.RequireAuth())
+			searchInstruction.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccessQuery("recipeID", az.PermissionRead))
 			{
 				searchInstruction.GET("/search", c.SearchHandlers.SearchInstruction)
 			}
 
 			readInstruction := instruction.Group("")
-			readInstruction.Use(c.OIDCModule.RequireAuth())
+			readInstruction.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionRead))
 			{
 				readInstruction.GET(":id", c.InstructionHandlers.Get)
 			}
 
 			createInstruction := instruction.Group("")
-			createInstruction.Use(c.OIDCModule.RequireAuth())
+			createInstruction.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				createInstruction.POST(":id", c.InstructionHandlers.Create)
 			}
 
 			updateInstruction := instruction.Group("")
-			updateInstruction.Use(c.OIDCModule.RequireAuth())
+			updateInstruction.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				updateInstruction.PUT(":id", c.InstructionHandlers.Update)
 			}
 
 			deleteInstruction := instruction.Group("")
-			deleteInstruction.Use(c.OIDCModule.RequireAuth())
+			deleteInstruction.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				deleteInstruction.DELETE(":id", c.InstructionHandlers.Delete)
 			}

@@ -21,7 +21,6 @@ var (
 
 type InstructionRepositoryMock struct{}
 
-type RecipeClientMock struct{}
 type ImageClientMock struct{}
 
 func (InstructionRepositoryMock) Find(entityID uuid.UUID) (*[]m.Instruction, error) {
@@ -67,14 +66,10 @@ func (InstructionRepositoryMock) Delete(_ *[]m.Instruction) error {
 	}
 }
 
-func (RecipeClientMock) RecipeExists(recipeID string) (bool, error) {
-	return true, nil
-}
-
 // ========================================================================================================
 
 func TestFindInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "find"
 	result, err := s.Find(instruction.EntityID)
@@ -84,7 +79,7 @@ func TestFindInstruction_OK(t *testing.T) {
 }
 
 func TestFindInstruction_NotFoundErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "notfound"
 	result, err := s.Find(instruction.EntityID)
@@ -95,7 +90,7 @@ func TestFindInstruction_NotFoundErr(t *testing.T) {
 }
 
 func TestFindInstruction_Err(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "error"
 	result, err := s.Find(instruction.EntityID)
@@ -107,7 +102,7 @@ func TestFindInstruction_Err(t *testing.T) {
 }
 
 func TestCreateInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "create"
 
@@ -120,7 +115,7 @@ func TestCreateInstruction_OK(t *testing.T) {
 }
 
 func TestCreateInstruction_Err(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "error"
 
@@ -134,7 +129,7 @@ func TestCreateInstruction_Err(t *testing.T) {
 }
 
 func TestUpdateInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "update"
 
@@ -147,7 +142,7 @@ func TestUpdateInstruction_OK(t *testing.T) {
 }
 
 func TestUpdateInstruction_FindErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "error"
 
@@ -161,7 +156,7 @@ func TestUpdateInstruction_FindErr(t *testing.T) {
 }
 
 func TestUpdateInstruction_UpdateErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "find"
 
@@ -174,7 +169,7 @@ func TestUpdateInstruction_UpdateErr(t *testing.T) {
 }
 
 func TestDeleteInstruction_OK(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "delete"
 
@@ -184,7 +179,7 @@ func TestDeleteInstruction_OK(t *testing.T) {
 }
 
 func TestDeleteInstruction_FindErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "error"
 
@@ -195,7 +190,7 @@ func TestDeleteInstruction_FindErr(t *testing.T) {
 }
 
 func TestDeleteInstruction_DeleteErr(t *testing.T) {
-	s := NewInstructionService(&InstructionRepositoryMock{}, RecipeClientMock{})
+	s := NewInstructionService(&InstructionRepositoryMock{})
 
 	instruction.Description = "deleteError"
 

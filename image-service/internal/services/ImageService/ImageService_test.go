@@ -4,6 +4,7 @@ import (
 	"errors"
 	tc "image-service/internal/test_common"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	m "github.com/ihulsbus/cookbook/shared/models"
@@ -55,6 +56,15 @@ func (s3RepositoryMock) DeleteImage(imageInput m.ImageData) error {
 		return errors.New("error")
 	default:
 		return nil
+	}
+}
+
+func (s3RepositoryMock) PresignGetURL(image m.ImageData, expiresIn time.Duration) (string, error) {
+	switch image.EntityType {
+	case "presignFail":
+		return "", errors.New("presign error")
+	default:
+		return "https://example.com/signed", nil
 	}
 }
 
@@ -164,6 +174,19 @@ func TestFindImage_OK(t *testing.T) {
 	assert.NoError(t, err)
 	assert.IsType(t, m.ImageDataDTO{}, result)
 	assert.Equal(t, "find", result.EntityType)
+	assert.Equal(t, "https://example.com/signed", result.URL)
+}
+
+// TestFindImage_PresignErr: a presign failure is logged and the DTO is
+// still returned (without a URL), not treated as a request failure.
+func TestFindImage_PresignErr(t *testing.T) {
+	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
+
+	imageDataDTO.EntityType = "presignFail"
+	result, err := s.Find(imageDataDTO)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "", result.URL)
 }
 
 func TestFindImage_NotFoundErr(t *testing.T) {
@@ -204,6 +227,7 @@ func TestCreateImage_OK(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.ImageDataDTO{}, result)
+	assert.Equal(t, "https://example.com/signed", result.URL)
 }
 
 func TestCreateImage_S3Err(t *testing.T) {

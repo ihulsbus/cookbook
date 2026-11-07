@@ -198,6 +198,22 @@ func containsString(haystack []string, needle string) bool {
 // identified by the path parameter named param. It must run after
 // oidc.Module.RequireAuth (it reads the Principal RequireAuth stores).
 func (a *Authorizer) RequireRecipeAccess(param string, perm Permission) gin.HandlerFunc {
+	return a.requireRecipeAccess(perm, func(c *gin.Context) (string, bool) {
+		v := c.Param(param)
+		return v, v != ""
+	})
+}
+
+// RequireRecipeAccessQuery is RequireRecipeAccess for a recipe id carried
+// as a query parameter instead of a path parameter (e.g.
+// /instruction/search?recipeID=...).
+func (a *Authorizer) RequireRecipeAccessQuery(param string, perm Permission) gin.HandlerFunc {
+	return a.requireRecipeAccess(perm, func(c *gin.Context) (string, bool) {
+		return c.GetQuery(param)
+	})
+}
+
+func (a *Authorizer) requireRecipeAccess(perm Permission, extractID func(*gin.Context) (string, bool)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		principal, ok := oidc.PrincipalFromContext(c)
 		if !ok {
@@ -205,7 +221,13 @@ func (a *Authorizer) RequireRecipeAccess(param string, perm Permission) gin.Hand
 			return
 		}
 
-		recipeID, err := uuid.Parse(c.Param(param))
+		raw, ok := extractID(c)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "recipe id is required"})
+			return
+		}
+
+		recipeID, err := uuid.Parse(raw)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "invalid recipe id"})
 			return

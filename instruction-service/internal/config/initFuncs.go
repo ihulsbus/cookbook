@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-contrib/cors"
+	az "github.com/ihulsbus/cookbook/shared/authz"
 	m "github.com/ihulsbus/cookbook/shared/models"
 	"github.com/ihulsbus/cookbook/shared/oidc"
 	log "github.com/sirupsen/logrus"
@@ -89,6 +90,11 @@ func initDatabase() {
 		&m.Instruction{},
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
+	}
+	// recipe_access projection (KIT-27/79): kept current by Projector's
+	// RabbitMQ consumer, not by calling recipe-service at startup.
+	if err := az.AutoMigrate(DatabaseClient); err != nil {
+		Logger.Fatalf("Error while automigrating recipe_access table: %s", err.Error())
 	}
 
 	Logger.Info("connected!")

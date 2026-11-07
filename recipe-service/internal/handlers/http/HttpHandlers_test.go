@@ -45,13 +45,15 @@ func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context
 
 // ====== RecipeService ======
 
-func (s *RecipeServiceMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID) (m.PaginatedResponse[m.RecipeDTO], error) {
+func (s *RecipeServiceMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, scope m.RecipeListScope) (m.PaginatedResponse[m.RecipeDTO], error) {
 	switch recipe.Name {
 	case "findall":
 		return m.PaginatedResponse[m.RecipeDTO]{
 			Data:       recipes,
 			Pagination: m.NewPaginationMetadata(pagination.Page, pagination.Limit, int64(len(recipes))),
 		}, nil
+	case "invalidscope":
+		return m.PaginatedResponse[m.RecipeDTO]{}, errors.New("invalid scope")
 	default:
 		return m.PaginatedResponse[m.RecipeDTO]{}, errors.New("error")
 	}
@@ -187,6 +189,27 @@ func TestRecipeGetAll_Err(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, `{"error":"error"}`, string(body))
+}
+
+// TestRecipeGetAll_InvalidScope: the service's "invalid scope" error
+// (KIT-30) maps to 400, not the generic 500 every other service error gets.
+func TestRecipeGetAll_InvalidScope(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
+
+	recipe.Name = "invalidscope"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/recipe?scope=bogus", nil)
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+
+	h.GetAll(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	assert.Equal(t, `{"error":"invalid scope"}`, string(body))
 }
 
 func TestRecipeGet_OK(t *testing.T) {

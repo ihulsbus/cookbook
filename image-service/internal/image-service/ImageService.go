@@ -13,12 +13,14 @@ import (
 )
 
 func ImageService(ctx context.Context) {
-	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "images", "cookbook")
+	// Keeps the recipe_access projection current; no synchronous call to
+	// recipe-service happens at startup (KIT-79).
+	consumer, err := c.Projector.StartConsumer(c.RabbitMQClient.Connection, "image-service-recipe-access", "cookbook")
 	if err != nil {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
 		return
 	}
-	defer c.RabbitMQHandler.StopConsuming()
+	defer consumer.Close()
 
 	httpServer(ctx)
 }
@@ -48,17 +50,28 @@ func httpServer(ctx context.Context) {
 	{
 		image := v2.Group("/images")
 		{
-			// Images are owned by whatever recipe/ingredient they're
-			// attached to - any authenticated user, same as the recipe
-			// CRUD they ride along with (per-recipe ownership checks are
-			// out of scope here, see the ownership epic).
+			// Images attached to a recipe (EntityType "recipe") are
+			// authorized against that recipe; images attached to
+			// anything else (e.g. "ingredient") have no owner, so any
+			// authenticated caller may act on them (KIT-29). The
+			// resolve-then-authorize logic lives in HttpHandler, since
+			// Find/Update/Delete take an IMAGE id and need a DB lookup
+			// first to learn the owning recipe - RequireAuth is the only
+			// thing enforceable declaratively here.
+			//
+			// FindAll (list every image) has no cheap per-row filter
+			// against the projection, so it's admin-only instead.
+			adminReadImage := image.Group("")
+			adminReadImage.Use(c.OIDCModule.RequireRole("cookbook-admin"))
+			{
+				adminReadImage.GET("", c.HttpHandler.FindAll)
+			}
+
 			readImage := image.Group("")
 			readImage.Use(c.OIDCModule.RequireAuth())
 			{
-				readImage.GET("", c.HttpHandler.FindAll)
 				readImage.GET(":id", c.HttpHandler.Find)
 				readImage.GET("/search", c.HttpHandler.SearchByRecipe)
-				// readImage.GET(":entityType/:entityID", c.HttpHandler.Find)
 			}
 
 			createImage := image.Group("")

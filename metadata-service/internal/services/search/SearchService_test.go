@@ -27,11 +27,11 @@ var (
 
 type searchRepositoryMock struct{}
 
-func (*searchRepositoryMock) GetAllRecipeMetadata() (*[]m.MetadataSearchResult, error) {
+func (*searchRepositoryMock) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.MetadataSearchResult, error) {
 	return nil, nil
 }
 
-func (*searchRepositoryMock) SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error) {
+func (*searchRepositoryMock) SearchMetadata(request m.MetadataSearchRequest, requesterID uuid.UUID) ([]m.MetadataSearchResult, error) {
 	switch *request.MinPrepTime {
 	case 1:
 		var response []m.MetadataSearchResult
@@ -54,7 +54,7 @@ func (*searchRepositoryMock) SearchMetadata(request m.MetadataSearchRequest) ([]
 func TestSearchMetadata_OK(t *testing.T) {
 	s := NewSearchService(&searchRepositoryMock{})
 
-	result, err := s.SearchMetadata(searchRequest)
+	result, err := s.SearchMetadata(searchRequest, uuid.New())
 
 	assert.NoError(t, err)
 	assert.IsType(t, []m.MetadataSearchResultDTO{}, result)
@@ -65,7 +65,7 @@ func TestSearchMetadata_Error(t *testing.T) {
 
 	minTime = 2
 
-	_, err := s.SearchMetadata(searchRequest)
+	_, err := s.SearchMetadata(searchRequest, uuid.New())
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error")

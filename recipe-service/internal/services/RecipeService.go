@@ -10,7 +10,7 @@ import (
 )
 
 type RecipeRepository interface {
-	FindAll(pagination m.PaginationRequest, requesterID uuid.UUID) ([]m.Recipe, int64, error)
+	FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, scope m.RecipeListScope) ([]m.Recipe, int64, error)
 	FindSingle(recipe m.Recipe) (m.Recipe, error)
 	Create(recipe m.Recipe, outbox rmq.OutboxEvent) (m.Recipe, error)
 	Update(recipe m.Recipe, outbox rmq.OutboxEvent) (m.Recipe, error)
@@ -34,9 +34,16 @@ func NewRecipeService(recipeRepo RecipeRepository, logger m.LoggerInterface) *Re
 	}
 }
 
-// FindAll contains the business logic to get all recipes visible to requesterID.
-func (s RecipeService) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID) (m.PaginatedResponse[m.RecipeDTO], error) {
-	recipes, total, err := s.recipe.FindAll(pagination, requesterID)
+// FindAll contains the business logic to get all recipes visible to
+// requesterID, narrowed by scope (KIT-30: ?scope=mine|shared|all).
+func (s RecipeService) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, scope m.RecipeListScope) (m.PaginatedResponse[m.RecipeDTO], error) {
+	if scope == "" {
+		scope = m.ScopeAll
+	} else if !scope.Valid() {
+		return m.PaginatedResponse[m.RecipeDTO]{}, errors.New("invalid scope")
+	}
+
+	recipes, total, err := s.recipe.FindAll(pagination, requesterID, scope)
 	if err != nil {
 		return m.PaginatedResponse[m.RecipeDTO]{}, errors.New("internal server error")
 	}

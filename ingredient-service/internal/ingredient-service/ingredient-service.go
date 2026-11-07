@@ -8,17 +8,21 @@ import (
 	"strconv"
 	"time"
 
+	az "github.com/ihulsbus/cookbook/shared/authz"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func IngredientService(ctx context.Context) {
-	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "ingredients", "cookbook")
+	// Keeps the recipe_access projection current; this is the only
+	// cross-service data flow at startup, and it's event-driven (no
+	// synchronous call to recipe-service - see KIT-79).
+	consumer, err := c.Projector.StartConsumer(c.RabbitMQClient.Connection, "ingredient-service-recipe-access", "cookbook")
 	if err != nil {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
 		return
 	}
-	defer c.RabbitMQHandler.StopConsuming()
+	defer consumer.Close()
 
 	httpServer(ctx)
 }
@@ -47,29 +51,30 @@ func httpServer(ctx context.Context) {
 	v2 := router.Group("/api/v2")
 	{
 		// Amounts are recipe-scoped (an ingredient's quantity within a
-		// recipe) - CRUD follows "full CRUD on their own recipes", any
-		// authenticated user.
+		// recipe) - :id is the RECIPE id (see AmountHandlers), so
+		// RequireRecipeAccess checks it directly, no extra lookup needed.
+		// GET needs read; writes need write (KIT-29).
 		amount := v2.Group("/amount")
 		{
 			readAmounts := amount.Group("")
-			readAmounts.Use(c.OIDCModule.RequireAuth())
+			readAmounts.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionRead))
 			{
 				readAmounts.GET(":id", c.AmountHandlers.Find)
 			}
 			createAmounts := amount.Group("")
-			createAmounts.Use(c.OIDCModule.RequireAuth())
+			createAmounts.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				createAmounts.POST(":id", c.AmountHandlers.Create)
 			}
 
 			updateAmounts := amount.Group("")
-			updateAmounts.Use(c.OIDCModule.RequireAuth())
+			updateAmounts.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				updateAmounts.PUT(":id", c.AmountHandlers.Update)
 			}
 
 			deleteAmounts := amount.Group("")
-			deleteAmounts.Use(c.OIDCModule.RequireAuth())
+			deleteAmounts.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				deleteAmounts.DELETE(":id", c.AmountHandlers.Delete)
 			}

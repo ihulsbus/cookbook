@@ -2,8 +2,6 @@ package config
 
 import (
 	"context"
-	rh "instruction-service/internal/handlers/RabbitmqHandlers"
-	cs "instruction-service/internal/services/CacheService"
 	"time"
 
 	m "github.com/ihulsbus/cookbook/shared/models"
@@ -15,9 +13,9 @@ import (
 	ir "instruction-service/internal/repositories/instructions"
 	sr "instruction-service/internal/repositories/search"
 
+	az "github.com/ihulsbus/cookbook/shared/authz"
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	hc "github.com/ihulsbus/cookbook/shared/httpclient"
-	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 
 	is "instruction-service/internal/services/InstructionService"
 	ss "instruction-service/internal/services/SearchService"
@@ -31,8 +29,10 @@ import (
 )
 
 type instructionConfig struct {
-	m.Config     `mapstructure:",squash"`
-	RecipeClient m.ApiClient
+	m.Config `mapstructure:",squash"`
+	// RecipeServiceInternal is recipe-service's internal-only API (KIT-28),
+	// used only by Authorizer's projection-miss fallback.
+	RecipeServiceInternal m.ApiClient
 }
 
 var (
@@ -46,9 +46,7 @@ var (
 
 	// Clients
 	DatabaseClient *gorm.DB
-	HttpClient     *hc.HTTPClient
 	RabbitMQClient *rmq.RabbitMQ
-	RecipeClient   *rc.RecipeAPIClient
 
 	// Repositories
 	InstructionRepository *ir.InstructionRepository
@@ -57,13 +55,18 @@ var (
 	// Services
 	InstructionService *is.InstructionService
 	SearchService      *ss.SearchService
-	CacheService       *cs.CacheService
+
+	// Recipe access: see ingredient-service's config.go for the same
+	// pattern - Authorizer answers CanRead/CanWrite against a local
+	// projection kept current by Projector's RabbitMQ consumer, with a
+	// lazy fallback to recipe-service's internal endpoint on a miss.
+	Authorizer *az.Authorizer
+	Projector  *az.Projector
 
 	// Handlers
 	InstructionHandlers *ih.InstructionHandlers
 	SearchHandlers      *sh.SearchHandlers
 	HealthHandlers      *healthh.Handlers
-	RabbitMQHandler     *rh.RabbitMQHandler
 )
 
 func init() {
@@ -93,12 +96,9 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
-	// Init clients
-	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Issuer, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
-	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
-	if err != nil {
-		Logger.Panicf("error initialising recipe client: %v", err)
-	}
+	// RabbitMQClient.Connection is used by Projector's consumer (started
+	// in InstructionService.go) - no synchronous call to any other
+	// service happens during startup (KIT-79).
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
@@ -111,19 +111,16 @@ func init() {
 	SearchRepository = sr.NewSearchRepository(DatabaseClient)
 
 	// Init services
-	CacheService, err = cs.NewCacheService(Ctx, RecipeClient, Logger, Configuration.Global.ListenPort+1000)
-	if err != nil {
-		Logger.Fatalf("Error setting up cache: %v", err)
-	}
-	InstructionService = is.NewInstructionService(InstructionRepository, RecipeClient)
+	InstructionService = is.NewInstructionService(InstructionRepository)
 	SearchService = ss.NewSearchService(SearchRepository)
+
+	Projector = az.NewProjector(DatabaseClient)
+	Authorizer = az.NewAuthorizer(DatabaseClient, Logger)
+	fallbackClient := hc.NewInternalHTTPClient(5*time.Second, Logger, nil, nil)
+	Authorizer.SetMissFallback(az.NewRecipeServiceFallback(fallbackClient, Configuration.RecipeServiceInternal.BaseURL, Projector))
 
 	// Init handlers
 	InstructionHandlers = ih.NewInstructionHandlers(InstructionService, Logger)
 	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
 	HealthHandlers = healthh.NewHealthHandlers(DatabaseClient, Logger)
-	RabbitMQHandler, err = rh.NewRabbitMQHandler(CacheService, &Ctx, Logger)
-	if err != nil {
-		Logger.Fatalf("Error setting up RabbitMQ Consumer: %v", err)
-	}
 }

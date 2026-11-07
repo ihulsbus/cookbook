@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ihulsbus/cookbook/shared/models"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,11 +46,11 @@ var (
 
 // ====== SearchService ======
 
-func (s *SearchServiceMock) GetAllRecipeMetadata() (*[]models.MetadataSearchResultDTO, error) {
+func (s *SearchServiceMock) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]models.MetadataSearchResultDTO, error) {
 	return nil, nil
 }
 
-func (s *SearchServiceMock) SearchMetadata(request models.MetadataSearchRequestDTO) ([]models.MetadataSearchResultDTO, error) {
+func (s *SearchServiceMock) SearchMetadata(request models.MetadataSearchRequestDTO, requesterID uuid.UUID) ([]models.MetadataSearchResultDTO, error) {
 	switch *request.MinPrepTime {
 	case 1:
 		var response []models.MetadataSearchResultDTO
@@ -60,7 +61,35 @@ func (s *SearchServiceMock) SearchMetadata(request models.MetadataSearchRequestD
 	}
 }
 
+// authedContext builds a gin test context with a principal set, as
+// oidc.Module.RequireAuth would before either handler in this package runs.
+func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	oidc.SetPrincipal(c, &oidc.Principal{UserID: uuid.New().String()})
+	return c
+}
+
 // ====== Tests ======
+
+func TestSearch_MissingPrincipal(t *testing.T) {
+	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
+
+	reqBody, _ := json.Marshal(searchRequestDTO)
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w) // no principal set
+	c.Request = req
+
+	h.SearchMetadata(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+	assert.Equal(t, `{"error":"missing authenticated principal"}`, string(body))
+}
 
 func TestSearch_OK(t *testing.T) {
 	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})
@@ -69,8 +98,7 @@ func TestSearch_OK(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.SearchMetadata(c)
 
@@ -88,8 +116,7 @@ func TestSearch_UnmarshalErr(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader([]byte{}))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.SearchMetadata(c)
 
@@ -109,8 +136,7 @@ func TestSearch_SearchErr(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/tag/1", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.SearchMetadata(c)
 

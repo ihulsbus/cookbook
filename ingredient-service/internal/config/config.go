@@ -4,22 +4,20 @@ import (
 	"context"
 	ah "ingredient-service/internal/handlers/amounts"
 	ih "ingredient-service/internal/handlers/ingredients"
-	rh "ingredient-service/internal/handlers/rabbitmq"
 	uh "ingredient-service/internal/handlers/units"
 	ar "ingredient-service/internal/repositories/amounts"
 	ir "ingredient-service/internal/repositories/ingredients"
 	ur "ingredient-service/internal/repositories/units"
 	as "ingredient-service/internal/services/AmountService"
-	cs "ingredient-service/internal/services/CacheService"
 	is "ingredient-service/internal/services/IngredientService"
 	us "ingredient-service/internal/services/UnitService"
 	"time"
 
+	az "github.com/ihulsbus/cookbook/shared/authz"
 	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
 	hc "github.com/ihulsbus/cookbook/shared/httpclient"
 	m "github.com/ihulsbus/cookbook/shared/models"
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
-	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-contrib/cors"
@@ -30,8 +28,12 @@ import (
 )
 
 type ingredientConfig struct {
-	m.Config     `mapstructure:",squash"`
-	RecipeClient m.ApiClient
+	m.Config `mapstructure:",squash"`
+	// RecipeServiceInternal is recipe-service's internal-only API
+	// (never through the ingress - see recipe-service's
+	// GET /internal/v1/recipe/:id/access), used by Authorizer's
+	// projection-miss fallback, not by client-facing code.
+	RecipeServiceInternal m.ApiClient
 }
 
 var (
@@ -45,9 +47,7 @@ var (
 
 	// Clients
 	DatabaseClient *gorm.DB
-	HttpClient     *hc.HTTPClient
 	RabbitMQClient *rmq.RabbitMQ
-	RecipeClient   *rc.RecipeAPIClient
 
 	// Repositories
 	AmountRepository     *ar.AmountRepository
@@ -58,14 +58,19 @@ var (
 	AmountService     *as.AmountService
 	IngredientService *is.IngredientService
 	UnitService       *us.UnitService
-	CacheService      *cs.CacheService
+
+	// Recipe access: Authorizer answers CanRead/CanWrite against a local
+	// projection kept current by Projector's RabbitMQ consumer (started
+	// in ingredient-service.go), falling back to recipe-service's
+	// internal endpoint on a projection miss (see SetMissFallback below).
+	Authorizer *az.Authorizer
+	Projector  *az.Projector
 
 	// Handlers
 	AmountHandlers     *ah.AmountHandlers
 	IngredientHandlers *ih.IngredientHandlers
 	UnitHandlers       *uh.UnitHandlers
 	HealthHandler      *healthh.Handlers
-	RabbitMQHandler    *rh.RabbitMQHandler
 )
 
 func init() {
@@ -96,12 +101,11 @@ func init() {
 	initUnits()
 	initCors()
 
-	// Init clients
-	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Issuer, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
-	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
-	if err != nil {
-		Logger.Panicf("error initialising recipe client: %v", err)
-	}
+	// RabbitMQClient.Connection is used by Projector's consumer (started
+	// in ingredient-service.go) - no synchronous call to any other
+	// service happens during startup (KIT-79): recipe access state
+	// arrives via events, with a lazy, circuit-broken fallback call only
+	// made at request time on a projection miss.
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
@@ -115,22 +119,18 @@ func init() {
 	UnitRepository = ur.NewUnitRepository(DatabaseClient)
 
 	// Init services
-	Logger.Debugf("Setting up cache service on port %d", Configuration.Global.ListenPort+1000)
-	CacheService, err = cs.NewCacheService(Ctx, RecipeClient, Logger, Configuration.Global.ListenPort+1000)
-	if err != nil {
-		Logger.Fatalf("Error setting up cache: %v", err)
-	}
 	AmountService = as.NewAmountService(AmountRepository)
 	IngredientService = is.NewIngredientService(IngredientRepository)
 	UnitService = us.NewUnitService(UnitRepository)
+
+	Projector = az.NewProjector(DatabaseClient)
+	Authorizer = az.NewAuthorizer(DatabaseClient, Logger)
+	fallbackClient := hc.NewInternalHTTPClient(5*time.Second, Logger, nil, nil)
+	Authorizer.SetMissFallback(az.NewRecipeServiceFallback(fallbackClient, Configuration.RecipeServiceInternal.BaseURL, Projector))
 
 	// Init handlers
 	AmountHandlers = ah.NewAmountHandlers(AmountService, Logger)
 	IngredientHandlers = ih.NewIngredientHandlers(IngredientService, Logger)
 	UnitHandlers = uh.NewUnitHandlers(UnitService, Logger)
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
-	RabbitMQHandler, err = rh.NewRabbitMQHandler(CacheService, &Ctx, Logger)
-	if err != nil {
-		Logger.Fatalf("Error setting up RabbitMQ Consumer: %v", err)
-	}
 }

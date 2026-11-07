@@ -10,7 +10,7 @@ import (
 )
 
 type SearchService interface {
-	Search(ctx context.Context, req m.SearchRequest) (m.SearchResult, error)
+	Search(ctx context.Context, req m.SearchRequest, token string) (m.SearchResult, error)
 }
 
 type SearchHandlers struct {
@@ -33,7 +33,13 @@ func (h *SearchHandlers) Search(ctx *gin.Context) {
 		return
 	}
 
-	searchResult, err = h.service.Search(ctx, searchRequest)
+	// Forwarded as-is to each downstream service (KIT-30), so their own
+	// authorization/visibility filtering applies - this service does no
+	// filtering of its own. RequireAuth already ran, so this header is
+	// present and valid.
+	token := ctx.GetHeader("Authorization")
+
+	searchResult, err = h.service.Search(ctx, searchRequest, token)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

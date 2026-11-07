@@ -2,15 +2,7 @@ package config
 
 import (
 	"context"
-	rh "metadata-service/internal/handlers/RabbitmqHandlers"
 	"time"
-
-	chs "metadata-service/internal/services/CacheService"
-
-	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
-	hc "github.com/ihulsbus/cookbook/shared/httpclient"
-	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
-	rc "github.com/ihulsbus/cookbook/shared/recipeclient"
 
 	ch "metadata-service/internal/handlers/category"
 	cuh "metadata-service/internal/handlers/cuisinetype"
@@ -19,6 +11,11 @@ import (
 	ph "metadata-service/internal/handlers/preparationtimes"
 	sh "metadata-service/internal/handlers/search"
 	th "metadata-service/internal/handlers/tag"
+
+	az "github.com/ihulsbus/cookbook/shared/authz"
+	healthh "github.com/ihulsbus/cookbook/shared/healthchecks"
+	hc "github.com/ihulsbus/cookbook/shared/httpclient"
+	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 
 	cr "metadata-service/internal/repositories/category"
 	cur "metadata-service/internal/repositories/cuisinetype"
@@ -47,8 +44,10 @@ import (
 )
 
 type metadataConfig struct {
-	m.Config     `mapstructure:",squash"`
-	RecipeClient m.ApiClient
+	m.Config `mapstructure:",squash"`
+	// RecipeServiceInternal is recipe-service's internal-only API (KIT-28),
+	// used only by Authorizer's projection-miss fallback.
+	RecipeServiceInternal m.ApiClient
 }
 
 var (
@@ -62,8 +61,6 @@ var (
 
 	// Clients
 	DatabaseClient *gorm.DB
-	HttpClient     *hc.HTTPClient
-	RecipeClient   *rc.RecipeAPIClient
 	RabbitMQClient *rmq.RabbitMQ
 
 	// Repositories
@@ -82,8 +79,12 @@ var (
 	SearchService          *ss.SearchService
 	TagService             *ts.TagService
 	MetadataService        *ms.MetadataService
-	CacheService           *chs.CacheService
 	PreparationTimeService *ps.PreparationTime
+
+	// Recipe access: see ingredient-service's config.go for the same
+	// pattern.
+	Authorizer *az.Authorizer
+	Projector  *az.Projector
 
 	// Handlers
 	CategoryHandlers        *ch.CategoryHandlers
@@ -93,7 +94,6 @@ var (
 	TagHandlers             *th.TagHandlers
 	MetadataHandlers        *mh.MetadataHandlers
 	HealthHandler           *healthh.Handlers
-	RabbitMQHandler         *rh.RabbitMQHandler
 	PreparationTimeHandler  *ph.PreparationTime
 )
 
@@ -128,12 +128,9 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
-	// Init clients
-	HttpClient = hc.NewHTTPClient(5*time.Second, Configuration.Oauth.Issuer, Configuration.Oauth.ClientID, Configuration.Oauth.ClientSecret, Logger)
-	RecipeClient, err = rc.NewRecipeAPIClient(Configuration.RecipeClient.BaseURL, HttpClient)
-	if err != nil {
-		Logger.Panicf("error initialising recipe client: %v", err)
-	}
+	// RabbitMQClient.Connection is used by Projector's consumer (started
+	// in MetadataService.go) - no synchronous call to any other service
+	// happens during startup (KIT-79).
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
@@ -156,12 +153,13 @@ func init() {
 	DifficultyLevelService = ds.NewDifficultyLevelService(DifficultyLevelRepository)
 	SearchService = ss.NewSearchService(SearchRepository)
 	TagService = ts.NewTagService(TagRepository)
-	MetadataService = ms.NewMetadataService(MetadataRepository, RecipeClient)
+	MetadataService = ms.NewMetadataService(MetadataRepository)
 	PreparationTimeService = ps.NewPreparationTimeService(PreparationRepository)
-	CacheService, err = chs.NewCacheService(Ctx, RecipeClient, Logger, Configuration.Global.ListenPort+1000)
-	if err != nil {
-		Logger.Fatalf("Error setting up cache: %v", err)
-	}
+
+	Projector = az.NewProjector(DatabaseClient)
+	Authorizer = az.NewAuthorizer(DatabaseClient, Logger)
+	fallbackClient := hc.NewInternalHTTPClient(5*time.Second, Logger, nil, nil)
+	Authorizer.SetMissFallback(az.NewRecipeServiceFallback(fallbackClient, Configuration.RecipeServiceInternal.BaseURL, Projector))
 
 	// Init handlers
 	CategoryHandlers = ch.NewCategoryHandlers(CategoryService, Logger)
@@ -172,8 +170,4 @@ func init() {
 	MetadataHandlers = mh.NewMetadataHandlers(MetadataService, Logger)
 	PreparationTimeHandler = ph.NewPreparationTimeHandlers(PreparationTimeService, Logger)
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
-	RabbitMQHandler, err = rh.NewRabbitMQHandler(CacheService, &Ctx, Logger)
-	if err != nil {
-		Logger.Fatalf("Error setting up RabbitMQ Consumer: %v", err)
-	}
 }

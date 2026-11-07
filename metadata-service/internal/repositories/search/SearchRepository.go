@@ -18,13 +18,29 @@ func NewSearchRepository(db *gorm.DB) *SearchRepository {
 	}
 }
 
-func (r *SearchRepository) GetAllRecipeMetadata() (*[]m.MetadataSearchResult, error) {
+// visibleRecipeIDsClause plus visibleRecipeIDsArgs restricts a recipe_id
+// column to recipes requesterID may read, read from this service's own
+// recipe_access projection (shared/authz, kept current by consuming
+// recipe-service's ECST events - see KIT-29). Without this, a search
+// result leaks the existence (and other recipes' metadata linkage) of a
+// private recipe to anyone who can call this endpoint (KIT-30).
+// "shared" visibility isn't resolved here yet - that needs the
+// recipe_shares model (KIT-32).
+const visibleRecipeIDsClause = "recipe_id IN (SELECT recipe_id FROM recipe_accesses WHERE (owner_id = ? OR visibility = ?) AND NOT deleted)"
+
+func visibleRecipeIDsArgs(requesterID uuid.UUID) []interface{} {
+	return []interface{}{requesterID.String(), "public"}
+}
+
+func (r *SearchRepository) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.MetadataSearchResult, error) {
 	var recipeIDs []uuid.UUID
 
-	// Step 1: fetch all recipe IDs from base table
+	// Step 1: fetch all recipe IDs from base table, restricted to ones
+	// requesterID may read (KIT-30).
 	if err := r.db.
 		Table("recipe_difficulty_levels").
 		Distinct().
+		Where(visibleRecipeIDsClause, visibleRecipeIDsArgs(requesterID)...).
 		Pluck("recipe_id", &recipeIDs).Error; err != nil {
 		return nil, err
 	}
@@ -111,7 +127,7 @@ func (r *SearchRepository) GetAllRecipeMetadata() (*[]m.MetadataSearchResult, er
 	return &results, nil
 }
 
-func (r *SearchRepository) SearchMetadata(request m.MetadataSearchRequest) ([]m.MetadataSearchResult, error) {
+func (r *SearchRepository) SearchMetadata(request m.MetadataSearchRequest, requesterID uuid.UUID) ([]m.MetadataSearchResult, error) {
 	var results []m.MetadataSearchResult
 
 	// Start with base query. we do this on categories as all recipes need to have a category
@@ -121,6 +137,8 @@ func (r *SearchRepository) SearchMetadata(request m.MetadataSearchRequest) ([]m.
 		Joins("LEFT JOIN recipe_difficulty_levels ON recipe_categories.recipe_id = recipe_difficulty_levels.recipe_id").
 		Joins("LEFT JOIN recipe_preparation_times ON recipe_categories.recipe_id = recipe_preparation_times.recipe_id").
 		Joins("LEFT JOIN recipe_cuisine_types ON recipe_categories.recipe_id = recipe_cuisine_types.recipe_id").
+		// KIT-30: exclude recipes requesterID may not read.
+		Where("recipe_categories."+visibleRecipeIDsClause, visibleRecipeIDsArgs(requesterID)...).
 		Group("recipe_categories.recipe_id")
 
 	// Apply filters based on request

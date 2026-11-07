@@ -43,14 +43,128 @@ The project consists of the following microservices:
 The `shared/` directory contains common libraries used across all services:
 
 - **models**: Shared data models and DTOs with conversion methods
-- **cache**: Redis-based caching layer
+- **authz**: Recipe access control - a local `recipe_access` projection kept
+  current by consuming recipe-service's ECST events, plus the
+  `Authorizer`/`RequireRecipeAccess` middleware each service uses to check it
 - **healthchecks**: Health check utilities
 - **http**: Common HTTP utilities and middleware
 - **httpclient**: Enhanced HTTP client with retry and circuit breaker patterns
 - **oidc**: Provider-agnostic OIDC authentication (validates tokens against Authentik)
-- **rabbitmq**: RabbitMQ publisher/consumer utilities
-- **recipeclient**: Client library for inter-service communication
+- **rabbitmq**: RabbitMQ publisher/consumer utilities, plus a transactional
+  outbox and relay for reliable event publishing
 - **imageclient**: Client library for image service integration
+
+### No service calls another service at startup
+
+A service's startup must only depend on its own database and its own
+RabbitMQ connection (with retry/backoff) - never on another service being
+up and reachable. Cross-service data comes from one of two places:
+
+- **Events**: a service keeps a local projection (e.g. `shared/authz`'s
+  `recipe_access` table) current by consuming another service's events in
+  the background, starting from whatever state it finds at boot.
+- **Lazy, circuit-broken calls at request time**: if a projection is
+  missing a row (e.g. the read landed right after the row's owner was
+  created, before its event was consumed), fetch it on demand - never at
+  startup, and always through a client with retry/circuit-breaker
+  (`shared/httpclient`), never a raw, unretried call.
+
+A readiness probe may report degraded while a dependency is unavailable;
+liveness must not fail because of it. This replaced an earlier pattern
+(KIT-79) where ingredient/instruction/metadata/image-service each called
+recipe-service synchronously during startup to warm a cache, which meant
+all four went into a restart loop whenever recipe-service was down -
+backwards for services that don't otherwise depend on it being up.
+
+### Runbook: rebuilding a recipe-access projection (KIT-31)
+
+Each consumer of `shared/authz` (ingredient/instruction/metadata/image-
+service) keeps its own `recipe_access` projection current by consuming
+recipe-service's `recipe.*`/`recipe.access.changed` events as they
+happen. That's enough for normal operation, but it only covers events
+published *after* a consumer started listening - it does nothing for a
+consumer that's missing history, for example:
+
+- a **new consumer** (a service added after recipe-service already had
+  recipes), whose projection table starts empty;
+- a consumer **recovering from data loss** (its `recipe_access` table was
+  dropped, truncated, or restored from a backup older than recipe-
+  service's);
+- a consumer that's known to have **missed events** (e.g. it was down
+  past RabbitMQ's retention, or an outbox bug dropped rows before this
+  fix).
+
+`recipe-service --republish-access` fixes this by replaying the current
+access state of every recipe it has - including soft-deleted ones, so a
+consumer that missed the original delete still learns about it - as a
+`recipe.access.changed` event. It's a one-shot CLI flag, not a long-
+running mode: it writes one outbox row per recipe and exits.
+
+**When to run it**: after bringing up a new consumer, or restoring a
+consumer's `recipe_access` table, or after fixing an outage that's known
+to have caused missed events. Not part of routine deployment - normal
+event consumption is sufficient otherwise.
+
+It's the same binary as the live service, so it needs the same
+environment/config as a normal recipe-service start (database, RabbitMQ,
+and OIDC all get initialised before the flag is even checked) - run it
+with recipe-service's own config for the target environment, not a
+stripped-down one.
+
+**How to run it**:
+
+```bash
+# From recipe-service's own directory, pointed at the target environment's
+# config (same config.yaml / env vars the real service would use):
+go run ./cmd/recipe-service --republish-access
+```
+
+or, against a running container image:
+
+```bash
+docker run --rm <recipe-service-image> --republish-access
+```
+
+It connects to recipe-service's own database directly (the same
+`DatabaseClient` the live service uses) and only inserts outbox rows -
+it does **not** publish to RabbitMQ itself and does not need recipe-
+service's RabbitMQ consumer or HTTP servers running in the same process.
+The already-running recipe-service instance's outbox Relay drains those
+rows in the background; if no instance of recipe-service is currently
+running, start (or leave running) one afterwards so the queued rows
+actually get published.
+
+It prints a one-line summary when done:
+
+```
+republish-access: <total> recipes found, <queued> queued, <failed> failed
+```
+
+If `failed` is nonzero, check the logs for which recipe IDs failed (e.g.
+a marshalling error) and re-run - re-running is safe and idempotent on
+the consumer side (see below), though note each run inserts fresh outbox
+rows rather than deduplicating against a prior run's.
+
+**How to verify it worked**: compare row counts between recipe-service's
+own recipe count and the consumer's projection table, including soft-
+deleted rows on both sides:
+
+```sql
+-- On recipe-service's database:
+SELECT count(*) FROM recipes;
+
+-- On the consumer's database (e.g. ingredient-service):
+SELECT count(*) FROM recipe_accesses;
+```
+
+The two counts should match once the consumer has drained the queued
+events (check `rabbitmqctl list_queues` or the RabbitMQ management UI for
+the consumer's queue depth returning to zero). A replay is safe to run
+against a consumer that's already up to date: each event's `Version` is
+the recipe's own historical `UpdatedAt`/`DeletedAt`, not "now", so a
+consumer already at that version correctly drops the replayed row as
+stale instead of re-applying it - row counts (and the data itself) are
+unaffected either way.
 
 ## Technology Stack
 

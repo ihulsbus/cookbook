@@ -19,18 +19,33 @@ func NewDatabaseRepository(db *gorm.DB) *DatabaseRepository {
 	}
 }
 
-// FindAll retrieves a paginated list of recipes visible to requesterID:
-// recipes they own, plus every public recipe. ("shared" visibility isn't
-// included here yet - that needs the recipe_shares model from KIT-32.)
-func (r DatabaseRepository) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID) ([]m.Recipe, int64, error) {
+// FindAll retrieves a paginated list of recipes visible to requesterID,
+// narrowed by scope (KIT-30):
+//   - ScopeMine: only recipes requesterID owns.
+//   - ScopeShared: always empty - there's no recipe_shares table to read
+//     from until KIT-32 exists.
+//   - ScopeAll (default): recipes requesterID owns, plus every public
+//     recipe - the set GET /recipe always returned before ?scope existed.
+func (r DatabaseRepository) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, scope m.RecipeListScope) ([]m.Recipe, int64, error) {
 	var recipes []m.Recipe
 	var total int64
 
-	if err := r.db.Model(&m.Recipe{}).Where("owner_id = ? OR visibility = ?", requesterID, m.VisibilityPublic).Count(&total).Error; err != nil {
+	if scope == m.ScopeShared {
+		return recipes, 0, nil
+	}
+
+	where := "owner_id = ? OR visibility = ?"
+	args := []interface{}{requesterID, m.VisibilityPublic}
+	if scope == m.ScopeMine {
+		where = "owner_id = ?"
+		args = []interface{}{requesterID}
+	}
+
+	if err := r.db.Model(&m.Recipe{}).Where(where, args...).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := r.db.Where("owner_id = ? OR visibility = ?", requesterID, m.VisibilityPublic).Limit(pagination.Limit).Offset(pagination.Offset()).Find(&recipes).Error; err != nil {
+	if err := r.db.Where(where, args...).Limit(pagination.Limit).Offset(pagination.Offset()).Find(&recipes).Error; err != nil {
 		return nil, 0, err
 	}
 

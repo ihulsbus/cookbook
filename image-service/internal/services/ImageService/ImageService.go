@@ -2,14 +2,19 @@ package ImageService
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
+// presignTTL is how long a signed GET URL (KIT-72) stays valid.
+const presignTTL = 15 * time.Minute
+
 type S3Repository interface {
 	UploadImage(img m.ImageFile) error
 	DeleteImage(image m.ImageData) error
+	PresignGetURL(image m.ImageData, expiresIn time.Duration) (string, error)
 }
 
 type DatabaseRepository interface {
@@ -44,6 +49,22 @@ func NewImageService(databaseRepo DatabaseRepository, rabbitmqRepo RabbitMQRepos
 	}
 }
 
+// withPresignedURL attaches a signed GET URL to dto, best-effort: a
+// presign failure is logged and the DTO is still returned without a URL
+// rather than failing the whole request over it (consistent with how an
+// event-publish failure elsewhere in this service is handled).
+func (s ImageService) withPresignedURL(image m.ImageData, dto m.ImageDataDTO) m.ImageDataDTO {
+	url, err := s.s3Repo.PresignGetURL(image, presignTTL)
+	if err != nil {
+		s.logger.Errorf("failed presigning URL for image %s: %v", image.ID, err)
+		return dto
+	}
+	return dto.WithURL(url)
+}
+
+// FindAll is admin-only at the router level (KIT-29) - a bulk listing
+// doesn't presign every row, since none of the admin tooling that uses
+// it needs to actually load the image bytes.
 func (s ImageService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.ImageDataDTO], error) {
 	images, total, err := s.databaseRepo.FindAll(pagination)
 	if err != nil {
@@ -71,7 +92,7 @@ func (s ImageService) Find(imageDTO m.ImageDataDTO) (m.ImageDataDTO, error) {
 		}
 	}
 
-	return image.ConvertToDTO(), nil
+	return s.withPresignedURL(image, image.ConvertToDTO()), nil
 }
 
 func (s ImageService) Create(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error) {
@@ -99,7 +120,7 @@ func (s ImageService) Create(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error
 		return m.ImageDataDTO{}, err
 	}
 
-	return imageData.ConvertToDTO(), nil
+	return s.withPresignedURL(imageData, imageData.ConvertToDTO()), nil
 }
 
 func (s ImageService) Update(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error) {
@@ -133,10 +154,10 @@ func (s ImageService) Update(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error
 	err = s.rabbitmqRepo.ImageUpdatedEvent(image)
 	if err != nil {
 		s.logger.Errorf("failed publishing image update event to servicebus")
-		return image.ConvertToDTO(), nil
+		return s.withPresignedURL(image, image.ConvertToDTO()), nil
 	}
 
-	return image.ConvertToDTO(), nil
+	return s.withPresignedURL(image, image.ConvertToDTO()), nil
 }
 
 func (s ImageService) Delete(imageDTO m.ImageDataDTO) error {

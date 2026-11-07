@@ -13,7 +13,7 @@ import (
 )
 
 type RecipeService interface {
-	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID) (models.PaginatedResponse[models.RecipeDTO], error)
+	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error)
 	FindSingle(recipe models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error)
 	Create(recipe models.RecipeDTO, ownerID uuid.UUID) (models.RecipeDTO, error)
 	Update(recipe models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error)
@@ -55,6 +55,9 @@ func (h HttpHandlers) principalID(ctx *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 
+// GetAll serves GET /recipe. ?scope=mine|shared|all (KIT-30) narrows the
+// result; omitted defaults to "all" (owned + public), the behavior this
+// endpoint always had before ?scope existed.
 func (h HttpHandlers) GetAll(ctx *gin.Context) {
 	requesterID, ok := h.principalID(ctx)
 	if !ok {
@@ -67,10 +70,18 @@ func (h HttpHandlers) GetAll(ctx *gin.Context) {
 		return
 	}
 
-	recipeDTO, err := h.recipeService.FindAll(pagination, requesterID)
+	scope := models.RecipeListScope(ctx.Query("scope"))
+
+	recipeDTO, err := h.recipeService.FindAll(pagination, requesterID, scope)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		switch err.Error() {
+		case "invalid scope":
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		default:
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	ctx.JSON(http.StatusOK, recipeDTO)

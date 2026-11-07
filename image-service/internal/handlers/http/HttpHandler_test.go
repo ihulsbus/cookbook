@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	m "github.com/ihulsbus/cookbook/shared/models"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,6 +28,15 @@ var (
 	imgs       []m.ImageDataDTO
 	imgDataDTO m.ImageDataDTO
 	imgFileDTO m.ImageFileDTO
+
+	// findTrigger controls imgServiceMock.Find independently of
+	// imgDataDTO.EntityType, which Update/Delete also mutate to control
+	// their own mock behavior now that Find runs first to resolve the
+	// owning recipe (KIT-29). Defaults to "ok" so that resolve step
+	// always succeeds unless a test explicitly wants it to fail.
+	findTrigger = "ok"
+
+	testPrincipalID = uuid.New().String()
 )
 
 func init() {
@@ -57,6 +68,23 @@ func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
 
+// mockAuthorizer always allows by default; allow can be flipped per test
+// to exercise the denial path.
+type mockAuthorizer struct {
+	allow bool
+	err   error
+}
+
+func newAllowAllAuthorizer() *mockAuthorizer { return &mockAuthorizer{allow: true} }
+
+func (a *mockAuthorizer) CanRead(ctx context.Context, principal *oidc.Principal, recipeID uuid.UUID) (bool, error) {
+	return a.allow, a.err
+}
+
+func (a *mockAuthorizer) CanWrite(ctx context.Context, principal *oidc.Principal, recipeID uuid.UUID) (bool, error) {
+	return a.allow, a.err
+}
+
 func (s *imgServiceMock) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.ImageDataDTO], error) {
 	switch imgDataDTO.EntityType {
 	case "findall":
@@ -70,8 +98,8 @@ func (s *imgServiceMock) FindAll(pagination m.PaginationRequest) (m.PaginatedRes
 }
 
 func (s *imgServiceMock) Find(imDTO m.ImageDataDTO) (m.ImageDataDTO, error) {
-	switch imgDataDTO.EntityType {
-	case "find":
+	switch findTrigger {
+	case "ok":
 		return imgDataDTO, nil
 	case "notfound":
 		return m.ImageDataDTO{}, errors.New("not found")
@@ -107,12 +135,21 @@ func (s *imgServiceMock) Delete(imDTO m.ImageDataDTO) error {
 	}
 }
 
+// authedContext builds a gin test context with a principal set, as
+// oidc.Module.RequireAuth would before any handler in this package runs.
+func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	oidc.SetPrincipal(c, &oidc.Principal{UserID: testPrincipalID})
+	return c
+}
+
 // ==================================================================================================
 
 func TestImageGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	imgs = append(imgs, imgDataDTO)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "findall"
 
@@ -136,7 +173,7 @@ func TestImageGetAll_OK(t *testing.T) {
 func TestImageGetAll_Err(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	imgs = append(imgs, imgDataDTO)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "error"
 
@@ -156,14 +193,14 @@ func TestImageGetAll_Err(t *testing.T) {
 
 func TestImageGet_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	imgDataDTO.EntityType = "find"
+	findTrigger = "ok"
+	imgDataDTO.EntityType = "recipe"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
@@ -179,16 +216,60 @@ func TestImageGet_OK(t *testing.T) {
 	assert.Equal(t, expectedBody, body)
 }
 
-func TestImageGet_NoID(t *testing.T) {
+func TestImageGet_NotOwner_Denied(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, &mockAuthorizer{allow: false}, &LoggerInterfaceMock{})
 
-	imgDataDTO.EntityType = "notfound"
+	findTrigger = "ok"
+	imgDataDTO.EntityType = "recipe"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+	}
+
+	h.Find(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no images found"}`, string(body))
+}
+
+func TestImageGet_NonRecipeEntity_NoAuthzNeeded(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	// Authorizer would deny, but EntityType isn't "recipe" so it's never consulted.
+	h := NewHttpHandler(&imgServiceMock{}, &mockAuthorizer{allow: false}, &LoggerInterfaceMock{})
+
+	findTrigger = "ok"
+	imgDataDTO.EntityType = "ingredient"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+	}
+
+	h.Find(c)
+
+	resp := w.Result()
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func TestImageGet_NoID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
+
+	findTrigger = "notfound"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
 
 	h.Find(c)
 
@@ -201,14 +282,13 @@ func TestImageGet_NoID(t *testing.T) {
 
 func TestImageGet_NotFound(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	imgDataDTO.EntityType = "notfound"
+	findTrigger = "notfound"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
@@ -224,14 +304,13 @@ func TestImageGet_NotFound(t *testing.T) {
 
 func TestImageGet_Err(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	imgDataDTO.EntityType = "error"
+	findTrigger = "error"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
@@ -247,7 +326,7 @@ func TestImageGet_Err(t *testing.T) {
 
 func TestImageCreate_JpegOK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "create"
 
@@ -272,8 +351,7 @@ func TestImageCreate_JpegOK(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -292,7 +370,7 @@ func TestImageCreate_JpegOK(t *testing.T) {
 
 func TestImageCreate_PngOK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "create"
 
@@ -317,8 +395,7 @@ func TestImageCreate_PngOK(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -335,9 +412,32 @@ func TestImageCreate_PngOK(t *testing.T) {
 	assert.Equal(t, expectedBody, body)
 }
 
+func TestImageCreate_NotOwner_Denied(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandler(&imgServiceMock{}, &mockAuthorizer{allow: false}, &LoggerInterfaceMock{})
+
+	entityID := uuid.New()
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/img", nil)
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "entityID", Value: entityID.String()},
+		gin.Param{Key: "entityType", Value: "recipe"},
+	}
+
+	h.Create(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no images found"}`, string(body))
+}
+
 func TestImageCreate_EntityIDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -360,8 +460,7 @@ func TestImageCreate_EntityIDErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	imgDataDTO.EntityType = "create"
 	h.Create(c)
@@ -375,7 +474,7 @@ func TestImageCreate_EntityIDErr(t *testing.T) {
 
 func TestImageCreate_EntityTypeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -398,8 +497,7 @@ func TestImageCreate_EntityTypeErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 	}
@@ -416,7 +514,7 @@ func TestImageCreate_EntityTypeErr(t *testing.T) {
 
 func TestImageCreate_NoFileErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -439,8 +537,7 @@ func TestImageCreate_NoFileErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -458,7 +555,7 @@ func TestImageCreate_NoFileErr(t *testing.T) {
 
 func TestImageCreate_ImageFileTooLargeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 19000, 19000))
@@ -481,8 +578,7 @@ func TestImageCreate_ImageFileTooLargeErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -500,7 +596,7 @@ func TestImageCreate_ImageFileTooLargeErr(t *testing.T) {
 
 func TestImageCreate_InvalidFormatErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -523,8 +619,7 @@ func TestImageCreate_InvalidFormatErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -542,7 +637,7 @@ func TestImageCreate_InvalidFormatErr(t *testing.T) {
 
 func TestImageCreate_DecodeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -565,8 +660,7 @@ func TestImageCreate_DecodeErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -584,7 +678,7 @@ func TestImageCreate_DecodeErr(t *testing.T) {
 
 func TestImageCreate_ImageTooSmallErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 299, 299))
@@ -607,8 +701,7 @@ func TestImageCreate_ImageTooSmallErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -626,7 +719,7 @@ func TestImageCreate_ImageTooSmallErr(t *testing.T) {
 
 func TestImageCreate_ImageTooBigErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 1001, 1001))
@@ -649,8 +742,7 @@ func TestImageCreate_ImageTooBigErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -668,7 +760,7 @@ func TestImageCreate_ImageTooBigErr(t *testing.T) {
 
 func TestImageCreate_ImageCreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 300, 300))
@@ -691,8 +783,7 @@ func TestImageCreate_ImageCreateErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "entityID", Value: imgDataDTO.ID.String()},
 		gin.Param{Key: "entityType", Value: imgDataDTO.EntityType},
@@ -710,7 +801,9 @@ func TestImageCreate_ImageCreateErr(t *testing.T) {
 
 func TestImageUpdate_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
+
+	findTrigger = "ok"
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -733,8 +826,7 @@ func TestImageUpdate_OK(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
@@ -751,17 +843,39 @@ func TestImageUpdate_OK(t *testing.T) {
 	assert.Equal(t, expBody, respBody)
 }
 
+func TestImageUpdate_NotOwner_Denied(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandler(&imgServiceMock{}, &mockAuthorizer{allow: false}, &LoggerInterfaceMock{})
+
+	findTrigger = "ok"
+	imgDataDTO.EntityType = "recipe"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", bytes.NewReader(nil))
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+	}
+
+	h.Update(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no images found"}`, string(body))
+}
+
 func TestImageUpdate_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "update"
 	reqBody, _ := json.Marshal(imgDataDTO)
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Update(c)
 
@@ -772,9 +886,33 @@ func TestImageUpdate_IDRequiredErr(t *testing.T) {
 	assert.Equal(t, `{"error":"invalid image ID"}`, string(body))
 }
 
+func TestImageUpdate_ResolveErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
+
+	findTrigger = "notfound"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+	}
+
+	h.Update(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no images found"}`, string(body))
+}
+
 func TestImageUpdate_UpdateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
+
+	findTrigger = "ok"
 
 	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
@@ -797,8 +935,7 @@ func TestImageUpdate_UpdateErr(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", reqBody)
 	req.Header.Add("Content-Type", writer.FormDataContentType())
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
@@ -815,14 +952,14 @@ func TestImageUpdate_UpdateErr(t *testing.T) {
 
 func TestImageDelete_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
+	findTrigger = "ok"
 	imgDataDTO.EntityType = "delete"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}
@@ -834,16 +971,38 @@ func TestImageDelete_OK(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 
+func TestImageDelete_NotOwner_Denied(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandler(&imgServiceMock{}, &mockAuthorizer{allow: false}, &LoggerInterfaceMock{})
+
+	findTrigger = "ok"
+	imgDataDTO.EntityType = "recipe"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+	}
+
+	h.Delete(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, `{"error":"no images found"}`, string(body))
+}
+
 func TestImageDelete_IDRequiredErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
 	imgDataDTO.EntityType = "delete"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Delete(c)
 
@@ -854,16 +1013,38 @@ func TestImageDelete_IDRequiredErr(t *testing.T) {
 	assert.Equal(t, []byte(`{"error":"invalid image ID"}`), body)
 }
 
+func TestImageDelete_ResolveErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
+
+	findTrigger = "notfound"
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+	c.Params = gin.Params{
+		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
+	}
+
+	h.Delete(c)
+
+	resp := w.Result()
+	body, _ := io.ReadAll(resp.Body)
+
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	assert.Equal(t, []byte(`{"error":"no images found"}`), body)
+}
+
 func TestImageDelete_DeleteErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	h := NewHttpHandler(&imgServiceMock{}, &LoggerInterfaceMock{})
+	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
+	findTrigger = "ok"
 	imgDataDTO.EntityType = "error"
 
 	req := httptest.NewRequest("GET", "http://example.com/api/v2/img", nil)
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 	c.Params = gin.Params{
 		gin.Param{Key: "id", Value: imgDataDTO.ID.String()},
 	}

@@ -2641,6 +2641,7 @@ components:
           entity_id: 6c4e174f-e760-4a4d-af6e-d1d5849b0fe1
           size: 93055
           type: image/jpeg
+          url: https://s3.gourmedy.com/cbhbe/img/6d279760-11be-4adb-af72-1873cb90dc27.jpg?X-Amz-Signature=...
       x-tags:
         - image
       title: ImageData
@@ -2666,6 +2667,13 @@ components:
         type:
           type: string
           description: type of media
+        url:
+          type: string
+          description: >-
+            Short-lived signed URL (KIT-72) for reading this image's bytes
+            directly from storage, valid for about 15 minutes. Only
+            present when the caller's access to the owning recipe has
+            already been checked - absent from a bulk admin listing.
     Ingredient:
       type: object
       examples:

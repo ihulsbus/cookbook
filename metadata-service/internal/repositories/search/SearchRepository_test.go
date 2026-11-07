@@ -38,21 +38,26 @@ func TestSearch_OK(t *testing.T) {
 			searchRequest.MaxPrepTime,
 		).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id))
 
+	requesterID := uuid.New()
+
 	// Define expected query
 	mock.ExpectQuery(regexp.QuoteMeta(`
-        SELECT recipe_categories.recipe_id FROM "recipe_categories" 
-				LEFT JOIN recipe_tags ON recipe_categories.recipe_id = recipe_tags.recipe_id 
-				LEFT JOIN recipe_difficulty_levels ON recipe_categories.recipe_id = recipe_difficulty_levels.recipe_id 
-				LEFT JOIN recipe_preparation_times ON recipe_categories.recipe_id = recipe_preparation_times.recipe_id 
-				LEFT JOIN recipe_cuisine_types ON recipe_categories.recipe_id = recipe_cuisine_types.recipe_id 
-				WHERE recipe_categories.category_id = $1 
-				AND recipe_tags.tag_id = $2 
-				AND recipe_difficulty_levels.difficulty_level_id = $3 
-				AND recipe_cuisine_types.cuisine_type_id = $4 
-				AND recipe_preparation_times.preparation_time_id IN ($5) 
+        SELECT recipe_categories.recipe_id FROM "recipe_categories"
+				LEFT JOIN recipe_tags ON recipe_categories.recipe_id = recipe_tags.recipe_id
+				LEFT JOIN recipe_difficulty_levels ON recipe_categories.recipe_id = recipe_difficulty_levels.recipe_id
+				LEFT JOIN recipe_preparation_times ON recipe_categories.recipe_id = recipe_preparation_times.recipe_id
+				LEFT JOIN recipe_cuisine_types ON recipe_categories.recipe_id = recipe_cuisine_types.recipe_id
+				WHERE (recipe_categories.recipe_id IN (SELECT recipe_id FROM recipe_accesses WHERE (owner_id = $1 OR visibility = $2) AND NOT deleted))
+				AND recipe_categories.category_id = $3
+				AND recipe_tags.tag_id = $4
+				AND recipe_difficulty_levels.difficulty_level_id = $5
+				AND recipe_cuisine_types.cuisine_type_id = $6
+				AND recipe_preparation_times.preparation_time_id IN ($7)
 				GROUP BY "recipe_categories"."recipe_id"
     `)).
 		WithArgs(
+			requesterID.String(),
+			"public",
 			searchRequest.CategoryID,
 			searchRequest.TagID,
 			searchRequest.DifficultyLevelID,
@@ -67,7 +72,7 @@ func TestSearch_OK(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "preparation_time_id" FROM "recipe_preparation_times" WHERE recipe_id = $1`)).WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id))
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT "cuisine_type_id" FROM "recipe_cuisine_types" WHERE recipe_id = $1`)).WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id))
 
-	result, err := r.SearchMetadata(searchRequest)
+	result, err := r.SearchMetadata(searchRequest, requesterID)
 
 	assert.NoError(t, err)
 	assert.IsType(t, []m.MetadataSearchResult{}, result)
@@ -79,4 +84,49 @@ func TestSearch_OK(t *testing.T) {
 	assert.Equal(t, result[0].CuisineTypeID, id)
 	assert.Equal(t, result[0].PreparationTimeID, id)
 
+}
+
+// TestGetAllRecipeMetadata_FiltersToVisibleRecipes: KIT-30 - without the
+// recipe_accesses filter, this would return metadata for every recipe,
+// including ones the caller cannot read.
+func TestGetAllRecipeMetadata_FiltersToVisibleRecipes(t *testing.T) {
+	db, mock := co.NewMockDatabase(t)
+	r := NewSearchRepository(db)
+	requesterID := uuid.New()
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT DISTINCT "recipe_id" FROM "recipe_difficulty_levels" WHERE recipe_id IN (SELECT recipe_id FROM recipe_accesses WHERE (owner_id = $1 OR visibility = $2) AND NOT deleted)`)).
+		WithArgs(requesterID.String(), "public").
+		WillReturnRows(sqlmock.NewRows([]string{"recipe_id"}).AddRow(id))
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT recipe_id, category_id as value_id FROM "recipe_categories" WHERE recipe_id IN ($1)`)).
+		WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"recipe_id", "value_id"}).AddRow(id, id))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT recipe_id, tag_id as value_id FROM "recipe_tags" WHERE recipe_id IN ($1)`)).
+		WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"recipe_id", "value_id"}).AddRow(id, id))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT recipe_id, difficulty_level_id as value_id FROM "recipe_difficulty_levels" WHERE recipe_id IN ($1)`)).
+		WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"recipe_id", "value_id"}).AddRow(id, id))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT recipe_id, preparation_time_id as value_id FROM "recipe_preparation_times" WHERE recipe_id IN ($1)`)).
+		WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"recipe_id", "value_id"}).AddRow(id, id))
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT recipe_id, cuisine_type_id as value_id FROM "recipe_cuisine_types" WHERE recipe_id IN ($1)`)).
+		WithArgs(id).WillReturnRows(sqlmock.NewRows([]string{"recipe_id", "value_id"}).AddRow(id, id))
+
+	result, err := r.GetAllRecipeMetadata(requesterID)
+
+	assert.NoError(t, err)
+	assert.Len(t, *result, 1)
+	assert.Equal(t, id, (*result)[0].RecipeID)
+}
+
+func TestGetAllRecipeMetadata_Empty(t *testing.T) {
+	db, mock := co.NewMockDatabase(t)
+	r := NewSearchRepository(db)
+	requesterID := uuid.New()
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT DISTINCT "recipe_id" FROM "recipe_difficulty_levels" WHERE recipe_id IN (SELECT recipe_id FROM recipe_accesses WHERE (owner_id = $1 OR visibility = $2) AND NOT deleted)`)).
+		WithArgs(requesterID.String(), "public").
+		WillReturnRows(sqlmock.NewRows([]string{"recipe_id"}))
+
+	result, err := r.GetAllRecipeMetadata(requesterID)
+
+	assert.NoError(t, err)
+	assert.Len(t, *result, 0)
 }

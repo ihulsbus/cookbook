@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	az "github.com/ihulsbus/cookbook/shared/authz"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -18,12 +19,14 @@ var (
 )
 
 func MetadataService(ctx context.Context) {
-	err := c.RabbitMQHandler.StartConsuming(c.RabbitMQClient.Connection, "metadata", "cookbook")
+	// Keeps the recipe_access projection current; no synchronous call to
+	// recipe-service happens at startup (KIT-79).
+	consumer, err := c.Projector.StartConsumer(c.RabbitMQClient.Connection, "metadata-service-recipe-access", "cookbook")
 	if err != nil {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
 		return
 	}
-	defer c.RabbitMQHandler.StopConsuming()
+	defer consumer.Close()
 
 	httpServer(ctx)
 }
@@ -55,30 +58,37 @@ func httpServer(ctx context.Context) {
 	{
 
 		// Recipe metadata is the per-recipe assignment of tags/category/
-		// etc, not a catalog lookup table itself - CRUD follows "full
-		// CRUD on their own recipes", any authenticated user.
+		// etc, not a catalog lookup table itself. :id is the RECIPE id,
+		// so RequireRecipeAccess checks it directly (KIT-29). GetAll
+		// (list across every recipe) has no per-row filter to apply
+		// cheaply against the projection, so it's admin-only instead.
 		recipe := metadata.Group("/recipe")
 		{
-			readMetadata := recipe.Group("")
-			readMetadata.Use(c.OIDCModule.RequireAuth())
+			readAllMetadata := recipe.Group("")
+			readAllMetadata.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
-				readMetadata.GET("", c.MetadataHandlers.GetAll)
+				readAllMetadata.GET("", c.MetadataHandlers.GetAll)
+			}
+
+			readMetadata := recipe.Group("")
+			readMetadata.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionRead))
+			{
 				readMetadata.GET(":id", c.MetadataHandlers.Get)
 			}
 			createMetadata := recipe.Group("")
-			createMetadata.Use(c.OIDCModule.RequireAuth())
+			createMetadata.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				createMetadata.POST(":id", c.MetadataHandlers.Create)
 			}
 
 			updateMetadata := recipe.Group("")
-			updateMetadata.Use(c.OIDCModule.RequireAuth())
+			updateMetadata.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				updateMetadata.PUT(":id", c.MetadataHandlers.Update)
 			}
 
 			deleteMetadata := recipe.Group("")
-			deleteMetadata.Use(c.OIDCModule.RequireAuth())
+			deleteMetadata.Use(c.OIDCModule.RequireAuth(), c.Authorizer.RequireRecipeAccess("id", az.PermissionWrite))
 			{
 				deleteMetadata.DELETE(":id", c.MetadataHandlers.Delete)
 			}

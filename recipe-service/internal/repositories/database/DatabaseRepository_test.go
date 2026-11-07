@@ -100,7 +100,7 @@ func TestRecipeFindAll_OK(t *testing.T) {
 				recipe.Visibility,
 			))
 
-	data, total, err := r.FindAll(pagination, requesterID)
+	data, total, err := r.FindAll(pagination, requesterID, models.ScopeAll)
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 1)
@@ -120,7 +120,7 @@ func TestRecipeFindAll_Err(t *testing.T) {
 		WithArgs(requesterID, models.VisibilityPublic).
 		WillReturnError(errors.New("error"))
 
-	data, total, err := r.FindAll(pagination, requesterID)
+	data, total, err := r.FindAll(pagination, requesterID, models.ScopeAll)
 
 	assert.Error(t, err)
 	assert.Len(t, data, 0)
@@ -141,11 +141,56 @@ func TestRecipeFindAll_Empty(t *testing.T) {
 		WithArgs(requesterID, models.VisibilityPublic, 25).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count", "owner_id", "visibility"}))
 
-	data, total, err := r.FindAll(pagination, requesterID)
+	data, total, err := r.FindAll(pagination, requesterID, models.ScopeAll)
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 0)
 	assert.Equal(t, int64(0), total)
+}
+
+func TestRecipeFindAll_ScopeMine(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewDatabaseRepository(db)
+	pagination := models.NormalizePagination(1, 25)
+	requesterID := recipe.OwnerID
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE owner_id = $1 AND "recipes"."deleted_at" IS NULL`)).
+		WithArgs(requesterID).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE owner_id = $1 AND "recipes"."deleted_at" IS NULL LIMIT $2`)).
+		WithArgs(requesterID, 25).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count", "owner_id", "visibility"}).
+			AddRow(
+				recipe.ID,
+				recipe.Name,
+				recipe.Description,
+				recipe.ServingCount,
+				recipe.OwnerID,
+				recipe.Visibility,
+			))
+
+	data, total, err := r.FindAll(pagination, requesterID, models.ScopeMine)
+
+	assert.NoError(t, err)
+	assert.Len(t, data, 1)
+	assert.Equal(t, int64(1), total)
+}
+
+// TestRecipeFindAll_ScopeShared: always empty - there's no recipe_shares
+// table to read from until KIT-32 exists. No query should even run.
+func TestRecipeFindAll_ScopeShared(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewDatabaseRepository(db)
+	pagination := models.NormalizePagination(1, 25)
+	requesterID := recipe.OwnerID
+
+	data, total, err := r.FindAll(pagination, requesterID, models.ScopeShared)
+
+	assert.NoError(t, err)
+	assert.Len(t, data, 0)
+	assert.Equal(t, int64(0), total)
+	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestRecipeFindSingle_Ok(t *testing.T) {
