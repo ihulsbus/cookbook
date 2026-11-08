@@ -26,6 +26,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/PageParam'
         - $ref: '#/components/parameters/LimitParam'
+        - $ref: '#/components/parameters/ScopeParam'
       responses:
         '200':
           description: OK
@@ -48,6 +49,8 @@ paths:
                       total_pages: 1
                       has_next: false
                       has_previous: false
+        '400':
+          $ref: '#/components/responses/Bad-request'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
@@ -213,6 +216,135 @@ paths:
           text/plain:
             schema:
               type: string
+  '/recipe/{RecipeID}/shares':
+    parameters:
+      - $ref: '#/components/parameters/RecipeID'
+    get:
+      summary: List a recipe's shares
+      tags:
+        - recipe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecipeShare'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: get-recipe-shares
+      description: "List every explicit share on a recipe. Owner only - a non-owner gets 404, not 403, so a recipe's existence isn't leaked (same as GET /recipe/{RecipeID})."
+      requestBody:
+        description: No request body required
+        content:
+          text/plain:
+            schema:
+              type: string
+    put:
+      summary: Create or update a recipe share
+      tags:
+        - recipe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeShare'
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: upsert-recipe-share
+      description: "Creates a share, or updates its permission if one already exists for the same (target_type, target_id). Owner only. A write share does not grant re-sharing: only the owner can call this endpoint."
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeShare'
+            examples:
+              Example 1:
+                value:
+                  target_type: user
+                  target_id: 23582396-12a3-425b-a597-8a22052823da
+                  permission: read
+        description: created_by and created_at, if present, are ignored - the server always sets created_by to the caller and created_at to now.
+  '/recipe/{RecipeID}/shares/{TargetType}/{TargetID}':
+    parameters:
+      - $ref: '#/components/parameters/RecipeID'
+      - $ref: '#/components/parameters/TargetType'
+      - $ref: '#/components/parameters/TargetID'
+    delete:
+      summary: Delete a recipe share
+      tags:
+        - recipe
+      responses:
+        '204':
+          description: No Content is returned on a succesful delete
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: delete-recipe-share
+      description: Removes one explicit share from a recipe. Owner only. 404 covers both a recipe the caller doesn't own and a share that doesn't exist.
+      requestBody:
+        description: No request body required
+        content:
+          text/plain:
+            schema:
+              type: string
+  '/recipe/{RecipeID}/visibility':
+    parameters:
+      - $ref: '#/components/parameters/RecipeID'
+    put:
+      summary: Update recipe visibility
+      tags:
+        - recipe
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/Not-Found'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: update-recipe-visibility
+      description: A lighter-weight alternative to PUT /recipe/{RecipeID} when only the visibility needs to change. Owner only.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - visibility
+              properties:
+                visibility:
+                  $ref: '#/components/schemas/Visibility'
+            examples:
+              Example 1:
+                value:
+                  visibility: public
   /images:
     get:
       summary: Get all images
@@ -2994,6 +3126,57 @@ components:
           description: amount of servings a recipe makes
           x-stoplight:
             id: 2rx8kbenft4fm
+        owner_id:
+          type: string
+          format: uuid
+          description: ID of the recipe's owner. Set from the authenticated caller on create; read-only otherwise.
+        visibility:
+          $ref: '#/components/schemas/Visibility'
+    Visibility:
+      type: string
+      title: Visibility
+      description: Who besides the owner can read a recipe, before any explicit shares (see RecipeShare) are considered
+      enum:
+        - private
+        - shared
+        - public
+      default: private
+    RecipeShare:
+      type: object
+      title: RecipeShare
+      description: An explicit grant of read or write access to a recipe, for a single user or every member of a group
+      examples:
+        - target_type: user
+          target_id: 23582396-12a3-425b-a597-8a22052823da
+          permission: read
+      required:
+        - target_type
+        - target_id
+        - permission
+      properties:
+        target_type:
+          type: string
+          enum:
+            - user
+            - group
+          description: Whether target_id identifies a single user (by ID) or a group (by name)
+        target_id:
+          type: string
+          description: A user ID (UUID) for target_type "user", or a group name for target_type "group"
+        permission:
+          type: string
+          enum:
+            - read
+            - write
+          description: Access level this share grants. A write share also grants read.
+        created_by:
+          type: string
+          format: uuid
+          description: ID of the recipe's owner, who created this share. Read-only.
+        created_at:
+          type: string
+          format: date-time
+          description: When this share was created. Read-only.
     Error:
       title: Error
       x-stoplight:
@@ -3303,6 +3486,35 @@ components:
         type: string
         format: uuid
       description: UUID of a recipe
+    ScopeParam:
+      name: scope
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - mine
+          - shared
+          - all
+        default: all
+      description: Narrows the result to recipes the caller owns ("mine"), recipes explicitly shared with the caller directly or via a group ("shared"), or owned-plus-public, the default behavior ("all")
+    TargetType:
+      name: TargetType
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - user
+          - group
+      description: Whether TargetID identifies a single user or a group
+    TargetID:
+      name: TargetID
+      in: path
+      required: true
+      schema:
+        type: string
+      description: A user ID (UUID) when TargetType is "user", or a group name when TargetType is "group"
     TagID:
       name: TagID
       in: path

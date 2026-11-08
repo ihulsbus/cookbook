@@ -125,6 +125,20 @@ or, against a running container image:
 docker run --rm <recipe-service-image> --republish-access
 ```
 
+or, in a real k8s environment, as a one-shot Helm Job using the same
+chart, config, and secrets as the Deployment (off by default, so a
+normal `helm upgrade` never triggers it):
+
+```bash
+helm install recipe-service-republish-access recipe-service/k8s \
+  --set republishAccessJob.enabled=true \
+  --set republishAccessJob.runID=$(date +%s)
+```
+
+(`republishAccessJob.runID` keeps the Job name unique across runs,
+since a completed Job object can't be reused - uninstall the release
+with `helm uninstall recipe-service-republish-access` once it's done.)
+
 It connects to recipe-service's own database directly (the same
 `DatabaseClient` the live service uses) and only inserts outbox rows -
 it does **not** publish to RabbitMQ itself and does not need recipe-

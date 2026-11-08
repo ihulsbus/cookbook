@@ -1,0 +1,51 @@
+global:
+  logLevel: INFO
+  listenPort: 8080
+
+cors:
+  allowCredentials: false
+  allowedOrigins:
+  - http://localhost:4200
+  allowedHeaders:
+  - Authorization
+  - Content-Type
+  allowedMethods:
+  - GET
+  - POST
+  - PUT
+  - DELETE
+  - HEAD
+
+# Authentik (see cookbook/authentik/README.md) runs separately - it's not
+# part of this compose file. issuer validates inbound tokens; clientid/
+# clientsecret are this service's own confidential-client credentials for
+# outbound service-to-service calls (see
+# cookbook/authentik/blueprints/cookbook-service.yaml).
+#
+# Copy this file to config.yaml (gitignored, see docker-compose.yml's
+# volumes for this service) and fill in clientsecret from your own
+# instance - never commit a real value here.
+oauth:
+  issuer: https://auth.gourmedy.com/application/o/cookbook-web/
+  audience: cookbook-web
+  clientid: cookbook-web
+  clientsecret: ""
+
+database:
+  host: postgres
+  username: ingredient
+  password: ingredient_pass
+  port: 5432
+  database: ingredient
+  sslMode: disable
+  timezone: Europe/Amsterdam
+
+rabbitmq:
+  host: rabbitmq:5672
+  username: admin
+  password: wENbwHUirBwZQbHpRB46egb9C
+
+# recipe-service's internal-only API (KIT-28/29) - used only by
+# Authorizer's projection-miss fallback, never called at startup.
+recipeServiceInternal:
+  baseURL: http://recipe-service:9090

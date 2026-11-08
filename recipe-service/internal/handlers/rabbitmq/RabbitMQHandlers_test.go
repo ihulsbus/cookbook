@@ -16,13 +16,13 @@ type MockRecipeService struct {
 	mock.Mock
 }
 
-func (m *MockRecipeService) FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error) {
-	args := m.Called(pagination, requesterID, scope)
+func (m *MockRecipeService) FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error) {
+	args := m.Called(pagination, requesterID, requesterGroups, scope)
 	return args.Get(0).(models.PaginatedResponse[models.RecipeDTO]), args.Error(1)
 }
 
-func (m *MockRecipeService) FindSingle(recipeDTO models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error) {
-	args := m.Called(recipeDTO, requesterID)
+func (m *MockRecipeService) FindSingle(recipeDTO models.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (models.RecipeDTO, error) {
+	args := m.Called(recipeDTO, requesterID, requesterGroups)
 	return args.Get(0).(models.RecipeDTO), args.Error(1)
 }
 
@@ -31,8 +31,8 @@ func (m *MockRecipeService) Create(recipeDTO models.RecipeDTO, ownerID uuid.UUID
 	return args.Get(0).(models.RecipeDTO), args.Error(1)
 }
 
-func (m *MockRecipeService) Update(recipeDTO models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error) {
-	args := m.Called(recipeDTO, requesterID)
+func (m *MockRecipeService) Update(recipeDTO models.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (models.RecipeDTO, error) {
+	args := m.Called(recipeDTO, requesterID, requesterGroups)
 	return args.Get(0).(models.RecipeDTO), args.Error(1)
 }
 

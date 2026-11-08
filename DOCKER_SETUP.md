@@ -45,19 +45,12 @@ of this compose file. See `authentik/README.md` for the OIDC provider
 chmod +x init-db.sh
 ```
 
-### 2. Set environment variables (optional)
+### 2. Set up each service's config file
 
-`OAUTH_ISSUER`, `OAUTH_CLIENTID` and `OAUTH_CLIENTSECRET` override the
-per-service Authentik client-credentials defaults in `docker-compose.yml`
-(used for service-to-service calls - see `authentik/README.md`):
-```bash
-# Create a .env file in the project root
-cat > .env <<EOF
-OAUTH_ISSUER=https://your-authentik-host/application/o/cookbook-web/
-OAUTH_CLIENTID=cookbook-service
-OAUTH_CLIENTSECRET=your-confidential-client-secret
-EOF
-```
+Each of the 6 microservices reads its config from a file, not
+environment variables - see `docker/config/README.md` for the one-time
+copy step and filling in `oauth.clientsecret` from your Authentik
+instance (`authentik/README.md`).
 
 ### 3. Start all dependencies
 ```bash
@@ -111,103 +104,36 @@ docker-compose logs -f rabbitmq
 
 ## Connecting Your Microservices
 
-All services connect to the **same PostgreSQL instance** (`localhost:5432`) but use **different databases and users**.
+`docker-compose up` starts the 6 Go microservices themselves too (not just
+infrastructure) - each reads its configuration from a file mounted into
+its container, not from environment variables. See
+`docker/config/README.md` for the one-time setup (copying each service's
+`config.yaml.example` to a real, gitignored `config.yaml`) and how to
+change a setting afterwards.
 
-### Environment Variables for Services
+## Frontend
 
-#### Recipe Service
+To run `cookbook-frontend` against this compose stack's backend instead
+of the real production API:
+
 ```bash
-# Database
-export cbb_database_host=localhost
-export cbb_database_port=5432
-export cbb_database_database=recipes
-export cbb_database_username=recipe
-export cbb_database_password=recipe_pass
-export cbb_database_sslmode=disable
-export cbb_database_timezone=Europe/Amsterdam
-
-# RabbitMQ
-export cbb_rabbitmq_host=localhost
-export cbb_rabbitmq_port=5672
-export cbb_rabbitmq_username=admin
-export cbb_rabbitmq_password=wENbwHUirBwZQbHpRB46egb9C
-
-# Authentik (see authentik/README.md)
-export cbb_auth0_domain=https://your-authentik-host/application/o/cookbook-web/
-export cbb_auth0_clientid=cookbook-web
-export cbb_auth0_audience=cookbook-web
-
-# Debug
-export cbb_debug=true
+cd ../cookbook-frontend   # sibling directory to this repo
+npm install               # first time only
+npm run start:local
 ```
 
-#### Ingredient Service
-```bash
-export cbb_database_host=localhost
-export cbb_database_port=5432
-export cbb_database_database=ingredients
-export cbb_database_username=ingredient
-export cbb_database_password=ingredient_pass
-export cbb_database_sslmode=disable
-export cbb_database_timezone=Europe/Amsterdam
-```
+This uses the `local` Angular configuration (`angular.json`), which
+swaps in `src/environments/environment.local.ts` - pointed at
+`http://localhost` (this compose file's Traefik entrypoint, which routes
+`/api/v2/*` to each backend service by path) instead of
+`https://api.gourmedy.com`. OIDC still points at the real Authentik
+instance (`auth.gourmedy.com`) either way, since Authentik isn't part of
+this compose file (see above) and the backend services validate tokens
+against that same real instance regardless of where they're running.
 
-#### Instruction Service
-```bash
-export cbb_database_host=localhost
-export cbb_database_port=5432
-export cbb_database_database=instructions
-export cbb_database_username=instruction
-export cbb_database_password=instruction_pass
-export cbb_database_sslmode=disable
-export cbb_database_timezone=Europe/Amsterdam
-```
-
-#### Metadata Service
-```bash
-export cbb_database_host=localhost
-export cbb_database_port=5432
-export cbb_database_database=metadata
-export cbb_database_username=metadata
-export cbb_database_password=metadata_pass
-export cbb_database_sslmode=disable
-export cbb_database_timezone=Europe/Amsterdam
-```
-
-#### Image Service
-```bash
-# Database
-export cbb_database_host=localhost
-export cbb_database_port=5432
-export cbb_database_database=images
-export cbb_database_username=image
-export cbb_database_password=image_pass
-export cbb_database_sslmode=disable
-export cbb_database_timezone=Europe/Amsterdam
-
-# S3/MinIO
-export cbb_s3_endpoint=http://localhost:9000
-export cbb_s3_key=admin
-export cbb_s3_secret=adminpassword
-export cbb_s3_bucket=cbhbe
-
-# RabbitMQ
-export cbb_rabbitmq_host=localhost
-export cbb_rabbitmq_port=5672
-export cbb_rabbitmq_username=admin
-export cbb_rabbitmq_password=wENbwHUirBwZQbHpRB46egb9C
-```
-
-#### Search Service
-```bash
-export cbb_database_host=localhost
-export cbb_database_port=5432
-export cbb_database_database=search
-export cbb_database_username=search
-export cbb_database_password=search_pass
-export cbb_database_sslmode=disable
-export cbb_database_timezone=Europe/Amsterdam
-```
+The backend services' CORS config (`docker/config/*/config.yaml`) already
+allows `http://localhost:4200`, the default `ng serve` origin - no
+further setup needed on that side.
 
 ## Database Connections
 

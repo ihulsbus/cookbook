@@ -34,9 +34,9 @@ type RecipeListScope string
 const (
 	// ScopeMine returns only recipes the requester owns.
 	ScopeMine RecipeListScope = "mine"
-	// ScopeShared returns recipes shared with the requester (owner
-	// excluded). Always empty until the recipe_shares model (KIT-32)
-	// exists to resolve explicit grants.
+	// ScopeShared returns recipes shared with the requester directly or
+	// via one of their groups (owner excluded) - KIT-35, resolved against
+	// the recipe_shares table (KIT-32).
 	ScopeShared RecipeListScope = "shared"
 	// ScopeAll (the default) returns recipes the requester owns, plus
 	// every public recipe - the same set GET /recipe always returned
@@ -137,4 +137,105 @@ func (r RecipeDTO) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary implements encoding.BinaryUnmarshaler
 func (r *RecipeDTO) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, r)
+}
+
+// SharePermission is the access level a recipe_shares row grants its
+// target: read-only, or read+write.
+type SharePermission string
+
+const (
+	SharePermissionRead  SharePermission = "read"
+	SharePermissionWrite SharePermission = "write"
+)
+
+// Valid reports whether p is one of the defined SharePermission values.
+func (p SharePermission) Valid() bool {
+	switch p {
+	case SharePermissionRead, SharePermissionWrite:
+		return true
+	default:
+		return false
+	}
+}
+
+// ShareTargetType identifies what a recipe_shares row's TargetID refers
+// to: a single user (by OIDC sub / UUID) or every member of a group (by
+// group name, as carried in the OIDC token's `groups` claim).
+type ShareTargetType string
+
+const (
+	ShareTargetUser  ShareTargetType = "user"
+	ShareTargetGroup ShareTargetType = "group"
+)
+
+// Valid reports whether t is one of the defined ShareTargetType values.
+func (t ShareTargetType) Valid() bool {
+	switch t {
+	case ShareTargetUser, ShareTargetGroup:
+		return true
+	default:
+		return false
+	}
+}
+
+// RecipeShare is one explicit access grant on a recipe (KIT-32), to a
+// single user or every member of a group - layered on top of Visibility,
+// not a replacement for it: a private recipe can still have explicit
+// shares, independently of whatever Visibility is set to.
+//
+// Composite primary key (RecipeID, TargetType, TargetID): at most one
+// grant per target per recipe, so a second PUT for the same target
+// upserts the existing row (changing its Permission) rather than
+// creating a duplicate.
+type RecipeShare struct {
+	RecipeID uuid.UUID `gorm:"type:uuid;primaryKey" json:"recipe_id"`
+	// TargetType and TargetID together identify who this share is for -
+	// see ShareTargetType. TargetID is a UUID string for "user" (the
+	// OIDC sub) or a group name for "group"; stored as plain text either
+	// way since both share one column.
+	TargetType ShareTargetType `gorm:"type:varchar(10);primaryKey" json:"target_type" example:"user"`
+	TargetID   string          `gorm:"primaryKey" json:"target_id"`
+	Permission SharePermission `gorm:"type:varchar(10);not null" json:"permission" example:"read"`
+	// CreatedBy is always the recipe's owner - only the owner may manage
+	// shares (KIT-32) - kept as its own column rather than inferred from
+	// the recipe row so the grant's origin survives an ownership change,
+	// if that's ever introduced.
+	CreatedBy uuid.UUID `gorm:"type:uuid;not null" json:"created_by"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+}
+
+func (s RecipeShare) ConvertToDTO() RecipeShareDTO {
+	return RecipeShareDTO{
+		TargetType: s.TargetType,
+		TargetID:   s.TargetID,
+		Permission: s.Permission,
+		CreatedBy:  s.CreatedBy,
+		CreatedAt:  s.CreatedAt,
+	}
+}
+
+func (RecipeShare) ConvertAllToDTO(shares []RecipeShare) []RecipeShareDTO {
+	data := make([]RecipeShareDTO, 0, len(shares))
+	for _, share := range shares {
+		data = append(data, share.ConvertToDTO())
+	}
+	return data
+}
+
+type RecipeShareDTO struct {
+	TargetType ShareTargetType `json:"target_type" example:"user"`
+	TargetID   string          `json:"target_id"`
+	Permission SharePermission `json:"permission" example:"read"`
+	CreatedBy  uuid.UUID       `json:"created_by"`
+	CreatedAt  time.Time       `json:"created_at"`
+}
+
+func (d RecipeShareDTO) ConvertFromDTO(recipeID uuid.UUID, createdBy uuid.UUID) RecipeShare {
+	return RecipeShare{
+		RecipeID:   recipeID,
+		TargetType: d.TargetType,
+		TargetID:   d.TargetID,
+		Permission: d.Permission,
+		CreatedBy:  createdBy,
+	}
 }

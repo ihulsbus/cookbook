@@ -102,6 +102,7 @@ func httpServer(ctx context.Context) {
 			{
 				readRecipe.GET("", c.HttpHandler.GetAll)
 				readRecipe.GET(":id", c.HttpHandler.Get)
+				readRecipe.GET(":id/shares", c.HttpHandler.GetShares)
 			}
 
 			createRecipe := recipe.Group("")
@@ -115,6 +116,11 @@ func httpServer(ctx context.Context) {
 			{
 
 				updateRecipe.PUT(":id", c.HttpHandler.Update)
+				// Share management and visibility (KIT-32): owner-only,
+				// enforced in the service layer (RecipeService), not here.
+				updateRecipe.PUT(":id/shares", c.HttpHandler.UpsertShare)
+				updateRecipe.DELETE(":id/shares/:targetType/:targetId", c.HttpHandler.DeleteShare)
+				updateRecipe.PUT(":id/visibility", c.HttpHandler.UpdateVisibility)
 			}
 
 			adminRecipe := recipe.Group("")

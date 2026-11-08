@@ -89,6 +89,7 @@ func initDatabase() {
 	Logger.Info("performing database migrations")
 	if err := DatabaseClient.AutoMigrate(
 		&m.Recipe{},
+		&m.RecipeShare{},
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}

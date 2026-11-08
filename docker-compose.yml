@@ -99,33 +99,16 @@ services:
 
   # Recipe Service
   recipe-service:
-    image: ghcr.io/ihulsbus/cookbook/recipe-service:latest
+    image: ghcr.io/ihulsbus/cookbook/recipe-service:master
     container_name: recipe-service
-    environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: "5432"
-      DATABASE_NAME: recipe
-      DATABASE_USER: recipe
-      DATABASE_PASSWORD: recipe_pass
-      DATABASE_SSLMODE: disable
-      DATABASE_TIMEZONE: Europe/Amsterdam
-      RABBITMQ_HOST: rabbitmq:5672
-      RABBITMQ_USERNAME: admin
-      RABBITMQ_PASSWORD: wENbwHUirBwZQbHpRB46egb9C
-      # Issuer of the Authentik instance's cookbook-web provider, e.g.
-      # https://authentik.example.com/application/o/cookbook-web/ - see
-      # cookbook/authentik/README.md. Validates inbound tokens.
-      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
-      # Audience this service expects on inbound tokens - the cookbook-web
-      # provider's client ID.
-      OAUTH_AUDIENCE: cookbook-web
-      # This service's own confidential-client credentials for outbound
-      # client-credentials calls to other services (shared/httpclient).
-      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
-      # must still be set from your instance, it's never checked into git.
-      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
-      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
-      GLOBAL_LOGLEVEL: INFO
+    # Config comes from a mounted file, not environment: - the service
+    # fatals at startup if it can't find one (viper.ReadInConfig(), see
+    # internal/config/initFuncs.go), so environment vars alone were never
+    # enough. Copy docker/config/recipe-service/config.yaml.example to
+    # config.yaml (gitignored) and fill in oauth.clientsecret before
+    # first run - see docker/config/README.md.
+    volumes:
+      - ./docker/config/recipe-service/config.yaml:/config/config.yaml:ro
     labels:
       traefik.enable: "true"
       traefik.http.routers.recipe-service.rule: "PathPrefix(`/api/v2/recipe`)"
@@ -145,39 +128,20 @@ services:
 
   # Metadata Service
   metadata-service:
-    image: ghcr.io/ihulsbus/cookbook/metadata-service:latest
+    image: ghcr.io/ihulsbus/cookbook/metadata-service:master
     container_name: metadata-service
-    environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: "5432"
-      DATABASE_NAME: metadata
-      DATABASE_USER: metadata
-      DATABASE_PASSWORD: metadata_pass
-      DATABASE_SSLMODE: disable
-      DATABASE_TIMEZONE: Europe/Amsterdam
-      # Issuer of the Authentik instance's cookbook-web provider, e.g.
-      # https://authentik.example.com/application/o/cookbook-web/ - see
-      # cookbook/authentik/README.md. Validates inbound tokens.
-      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
-      # Audience this service expects on inbound tokens - the cookbook-web
-      # provider's client ID.
-      OAUTH_AUDIENCE: cookbook-web
-      # This service's own confidential-client credentials for outbound
-      # client-credentials calls to other services (shared/httpclient).
-      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
-      # must still be set from your instance, it's never checked into git.
-      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
-      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
-      # recipe-service's internal-only API - used only by
-      # Authorizer's projection-miss fallback, never called at startup.
-      RECIPESERVICEINTERNAL_BASEURL: http://recipe-service:9090
-      GLOBAL_LOGLEVEL: INFO
+    # Config comes from a mounted file - see recipe-service's comment
+    # above and docker/config/README.md.
+    volumes:
+      - ./docker/config/metadata-service/config.yaml:/config/config.yaml:ro
     labels:
       traefik.enable: "true"
       traefik.http.routers.metadata-service.rule: "PathPrefix(`/api/v2/metadata`)"
       traefik.http.services.metadata-service.loadbalancer.server.port: "8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - cookbook-network
@@ -189,39 +153,20 @@ services:
 
   # Ingredient Service
   ingredient-service:
-    image: ghcr.io/ihulsbus/cookbook/ingredient-service:latest
+    image: ghcr.io/ihulsbus/cookbook/ingredient-service:master
     container_name: ingredient-service
-    environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: "5432"
-      DATABASE_NAME: ingredient
-      DATABASE_USER: ingredient
-      DATABASE_PASSWORD: ingredient_pass
-      DATABASE_SSLMODE: disable
-      DATABASE_TIMEZONE: Europe/Amsterdam
-      # Issuer of the Authentik instance's cookbook-web provider, e.g.
-      # https://authentik.example.com/application/o/cookbook-web/ - see
-      # cookbook/authentik/README.md. Validates inbound tokens.
-      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
-      # Audience this service expects on inbound tokens - the cookbook-web
-      # provider's client ID.
-      OAUTH_AUDIENCE: cookbook-web
-      # This service's own confidential-client credentials for outbound
-      # client-credentials calls to other services (shared/httpclient).
-      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
-      # must still be set from your instance, it's never checked into git.
-      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
-      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
-      # recipe-service's internal-only API - used only by
-      # Authorizer's projection-miss fallback, never called at startup.
-      RECIPESERVICEINTERNAL_BASEURL: http://recipe-service:9090
-      GLOBAL_LOGLEVEL: INFO
+    # Config comes from a mounted file - see recipe-service's comment
+    # above and docker/config/README.md.
+    volumes:
+      - ./docker/config/ingredient-service/config.yaml:/config/config.yaml:ro
     labels:
       traefik.enable: "true"
       traefik.http.routers.ingredient-service.rule: "PathPrefix(`/api/v2/ingredient`) || PathPrefix(`/api/v2/unit`) || PathPrefix(`/api/v2/amount`)"
       traefik.http.services.ingredient-service.loadbalancer.server.port: "8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - cookbook-network
@@ -233,39 +178,20 @@ services:
 
   # Instruction Service
   instruction-service:
-    image: ghcr.io/ihulsbus/cookbook/instruction-service:latest
+    image: ghcr.io/ihulsbus/cookbook/instruction-service:master
     container_name: instruction-service
-    environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: "5432"
-      DATABASE_NAME: instruction
-      DATABASE_USER: instruction
-      DATABASE_PASSWORD: instruction_pass
-      DATABASE_SSLMODE: disable
-      DATABASE_TIMEZONE: Europe/Amsterdam
-      # Issuer of the Authentik instance's cookbook-web provider, e.g.
-      # https://authentik.example.com/application/o/cookbook-web/ - see
-      # cookbook/authentik/README.md. Validates inbound tokens.
-      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
-      # Audience this service expects on inbound tokens - the cookbook-web
-      # provider's client ID.
-      OAUTH_AUDIENCE: cookbook-web
-      # This service's own confidential-client credentials for outbound
-      # client-credentials calls to other services (shared/httpclient).
-      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
-      # must still be set from your instance, it's never checked into git.
-      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
-      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
-      # recipe-service's internal-only API - used only by
-      # Authorizer's projection-miss fallback, never called at startup.
-      RECIPESERVICEINTERNAL_BASEURL: http://recipe-service:9090
-      GLOBAL_LOGLEVEL: INFO
+    # Config comes from a mounted file - see recipe-service's comment
+    # above and docker/config/README.md.
+    volumes:
+      - ./docker/config/instruction-service/config.yaml:/config/config.yaml:ro
     labels:
       traefik.enable: "true"
       traefik.http.routers.instruction-service.rule: "PathPrefix(`/api/v2/instruction`)"
       traefik.http.services.instruction-service.loadbalancer.server.port: "8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - cookbook-network
@@ -277,41 +203,12 @@ services:
 
   # Image Service
   image-service:
-    image: ghcr.io/ihulsbus/cookbook/image-service:latest
+    image: ghcr.io/ihulsbus/cookbook/image-service:master
     container_name: image-service
-    environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: "5432"
-      DATABASE_NAME: image
-      DATABASE_USER: image
-      DATABASE_PASSWORD: image_pass
-      DATABASE_SSLMODE: disable
-      DATABASE_TIMEZONE: Europe/Amsterdam
-      RABBITMQ_HOST: rabbitmq:5672
-      RABBITMQ_USERNAME: admin
-      RABBITMQ_PASSWORD: wENbwHUirBwZQbHpRB46egb9C
-      # Issuer of the Authentik instance's cookbook-web provider, e.g.
-      # https://authentik.example.com/application/o/cookbook-web/ - see
-      # cookbook/authentik/README.md. Validates inbound tokens.
-      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
-      # Audience this service expects on inbound tokens - the cookbook-web
-      # provider's client ID.
-      OAUTH_AUDIENCE: cookbook-web
-      # This service's own confidential-client credentials for outbound
-      # client-credentials calls to other services (shared/httpclient).
-      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
-      # must still be set from your instance, it's never checked into git.
-      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
-      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
-      S3_REGION: us-east-1
-      S3_AWSACCESSKEY: admin
-      S3_AWSACCESSSECRET: adminpassword
-      S3_BUCKETNAME: cbhbe
-      S3_ENDPOINT: http://minio:9000
-      # recipe-service's internal-only API - used only by
-      # Authorizer's projection-miss fallback, never called at startup.
-      RECIPESERVICEINTERNAL_BASEURL: http://recipe-service:9090
-      GLOBAL_LOGLEVEL: INFO
+    # Config comes from a mounted file - see recipe-service's comment
+    # above and docker/config/README.md.
+    volumes:
+      - ./docker/config/image-service/config.yaml:/config/config.yaml:ro
     labels:
       traefik.enable: "true"
       traefik.http.routers.image-service.rule: "PathPrefix(`/api/v2/images`)"
@@ -333,40 +230,22 @@ services:
 
   # Search Service
   search-service:
-    image: ghcr.io/ihulsbus/cookbook/search-service:latest
+    image: ghcr.io/ihulsbus/cookbook/search-service:master
     container_name: search-service
-    environment:
-      DATABASE_HOST: postgres
-      DATABASE_PORT: "5432"
-      DATABASE_NAME: search
-      DATABASE_USER: search
-      DATABASE_PASSWORD: search_pass
-      DATABASE_SSLMODE: disable
-      DATABASE_TIMEZONE: Europe/Amsterdam
-      # Issuer of the Authentik instance's cookbook-web provider, e.g.
-      # https://authentik.example.com/application/o/cookbook-web/ - see
-      # cookbook/authentik/README.md. Validates inbound tokens.
-      OAUTH_ISSUER: ${OAUTH_ISSUER:-http://authentik:9000/application/o/cookbook-web/}
-      # Audience this service expects on inbound tokens - the cookbook-web
-      # provider's client ID.
-      OAUTH_AUDIENCE: cookbook-web
-      # This service's own confidential-client credentials for outbound
-      # client-credentials calls to other services (shared/httpclient).
-      # See authentik/blueprints/cookbook-service.yaml - OAUTH_CLIENTSECRET
-      # must still be set from your instance, it's never checked into git.
-      OAUTH_CLIENTID: ${OAUTH_CLIENTID:-cookbook-service}
-      OAUTH_CLIENTSECRET: ${OAUTH_CLIENTSECRET:-}
-      # Downstream services this one fans a search out to.
-      INGREDIENTSERVICE_BASEURL: http://ingredient-service:8080/api/v2
-      RECIPESERVICE_BASEURL: http://recipe-service:8080/api/v2
-      METADATASERVICE_BASEURL: http://metadata-service:8080/api/v2
-      GLOBAL_LOGLEVEL: INFO
+    # Config comes from a mounted file - see recipe-service's comment
+    # above and docker/config/README.md. search-service has no database
+    # or RabbitMQ of its own (it only fans requests out over HTTP), so
+    # its config.yaml has no database/rabbitmq section.
+    volumes:
+      - ./docker/config/search-service/config.yaml:/config/config.yaml:ro
     labels:
       traefik.enable: "true"
       traefik.http.routers.search-service.rule: "PathPrefix(`/api/v2/search`)"
       traefik.http.services.search-service.loadbalancer.server.port: "8080"
     depends_on:
       postgres:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     networks:
       - cookbook-network

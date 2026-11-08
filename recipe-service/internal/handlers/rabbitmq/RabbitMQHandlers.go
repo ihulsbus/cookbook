@@ -18,10 +18,10 @@ import (
 // fmt.Println calls), so this just has to match RecipeService's real
 // signatures, not reflect how it's used.
 type recipeService interface {
-	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error)
-	FindSingle(recipeDTO models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error)
+	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error)
+	FindSingle(recipeDTO models.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (models.RecipeDTO, error)
 	Create(recipeDTO models.RecipeDTO, ownerID uuid.UUID) (models.RecipeDTO, error)
-	Update(recipeDTO models.RecipeDTO, requesterID uuid.UUID) (models.RecipeDTO, error)
+	Update(recipeDTO models.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (models.RecipeDTO, error)
 	Delete(recipeDTO models.RecipeDTO, requesterID uuid.UUID) error
 }
 

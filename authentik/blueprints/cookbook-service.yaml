@@ -23,6 +23,10 @@ entries:
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
       authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
       invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+      # This provider is only ever used for the client_credentials grant
+      # (service-to-service, no browser involved) - nothing ever redirects
+      # here, but newer Authentik versions require the field regardless.
+      redirect_uris: []
 
   - model: authentik_core.application
     id: application-cookbook-service

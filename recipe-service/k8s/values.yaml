@@ -120,6 +120,21 @@ resources:
 autoscaling:
   enabled: false
 
+# One-shot Job that runs recipe-service with --republish-access (KIT-31) to
+# rebuild a consumer's recipe_access projection. Off by default - it must
+# never run as part of a normal deploy. Enable per-invocation, e.g.:
+#   helm install recipe-service-republish-access . \
+#     --set republishAccessJob.enabled=true \
+#     --set republishAccessJob.runID=$(date +%s)
+# See README.md's "Runbook: rebuilding a recipe-access projection (KIT-31)".
+republishAccessJob:
+  enabled: false
+  # Unique suffix for the Job name, so a later re-run (e.g. after a failed
+  # attempt) doesn't collide with an existing (immutable) Job object.
+  runID: ""
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 3600
+
 # Additional volumes on the output Deployment definition.
 volumes:
 - name: tmpfs
