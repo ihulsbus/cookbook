@@ -1,0 +1,38 @@
+############################
+# STEP 1 build executable binary
+############################
+FROM golang AS builder
+
+# Ensure ca-certficates are up to date
+RUN update-ca-certificates
+
+WORKDIR /build
+
+# use modules - the build context is this module's own directory, but its
+# go.mod has replace directives pointing at ../shared/* (siblings in the
+# monorepo), so the workflow also supplies a "shared" build context
+# (see build-contexts: in the workflow) mapped here to /shared, a sibling
+# of /build - matching what ../shared/* resolves to from /build/go.mod.
+COPY . .
+COPY --from=shared . /shared
+
+ENV GO111MODULE=on
+RUN go mod download
+RUN go mod verify
+
+
+# Build the binary.
+RUN CGO_ENABLED=0 go build cmd/user-service/main.go
+
+############################
+# STEP 2 build a small image
+############################
+FROM scratch
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+
+USER 1000
+COPY --from=builder /build/main /go/bin/main
+
+ENTRYPOINT [ "/go/bin/main" ]

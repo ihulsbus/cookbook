@@ -9,6 +9,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE USER metadata WITH PASSWORD 'metadata_pass';
     CREATE USER image WITH PASSWORD 'image_pass';
     CREATE USER search WITH PASSWORD 'search_pass';
+    -- "users", not "user" - USER is a reserved word in PostgreSQL's
+    -- grammar and can't be used unquoted as a role/database name here.
+    CREATE USER users WITH PASSWORD 'users_pass';
 
     -- Create databases
     CREATE DATABASE recipe OWNER recipe;
@@ -17,6 +20,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE metadata OWNER metadata;
     CREATE DATABASE image OWNER image;
     CREATE DATABASE search OWNER search;
+    CREATE DATABASE users OWNER users;
 
     -- Grant privileges
     GRANT ALL PRIVILEGES ON DATABASE recipe TO recipe;
@@ -25,6 +29,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     GRANT ALL PRIVILEGES ON DATABASE metadata TO metadata;
     GRANT ALL PRIVILEGES ON DATABASE image TO image;
     GRANT ALL PRIVILEGES ON DATABASE search TO search;
+    GRANT ALL PRIVILEGES ON DATABASE users TO users;
 EOSQL
 
 echo "All databases and users created successfully!"

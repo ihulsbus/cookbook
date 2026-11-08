@@ -37,6 +37,7 @@ The project consists of the following microservices:
 - **image-service**: Handles image uploads and storage with S3-compatible backends
 - **search-service**: Provides full-text search capabilities across all entities
 - **notification-service**: Handles notifications and events (in development)
+- **user-service**: Owns the identity concern - a local cache of user display names and household metadata, kept current against the Authentik API. The only service holding Authentik API credentials. Scaffolded (KIT-74); user/household lookup endpoints are still to come (KIT-33).
 
 ### Shared Components
 

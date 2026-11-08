@@ -28,6 +28,12 @@ const (
 	// Images
 	ImageUpdatedRoutingKey = "image.updated"
 	ImageDeletedRoutingKey = "image.deleted"
+
+	// Households (KIT-74) - published by user-service, for later use
+	// (pantry) once something manages household membership. No consumer
+	// exists yet.
+	HouseholdMemberAddedRoutingKey   = "household.member.added"
+	HouseholdMemberRemovedRoutingKey = "household.member.removed"
 )
 
 // CurrentSchemaVersion is the schema version stamped on every event
@@ -75,6 +81,20 @@ var (
 		Name:          "ImageDeleted",
 		RoutingKey:    ImageDeletedRoutingKey,
 		Payload:       ImagePayload{},
+		SchemaVersion: CurrentSchemaVersion,
+	}
+
+	// Households
+	HouseholdMemberAddedEvent = Event{
+		Name:          "HouseholdMemberAdded",
+		RoutingKey:    HouseholdMemberAddedRoutingKey,
+		Payload:       HouseholdMemberPayload{},
+		SchemaVersion: CurrentSchemaVersion,
+	}
+	HouseholdMemberRemovedEvent = Event{
+		Name:          "HouseholdMemberRemoved",
+		RoutingKey:    HouseholdMemberRemovedRoutingKey,
+		Payload:       HouseholdMemberPayload{},
 		SchemaVersion: CurrentSchemaVersion,
 	}
 )
@@ -140,4 +160,12 @@ type ImagePayload struct {
 	EntityID   uuid.UUID `json:"entity_id" example:"505BBD89-5E8A-447F-9B4A-462CF56B124B"`
 	Size       int64     `json:"size" example:"12345"`
 	Type       string    `json:"type" example:"jpeg"`
+}
+
+// HouseholdMemberPayload is the body for household.member.added/removed
+// (KIT-74) - published by user-service whenever household membership
+// changes.
+type HouseholdMemberPayload struct {
+	HouseholdID uuid.UUID `json:"household_id"`
+	UserID      uuid.UUID `json:"user_id"`
 }

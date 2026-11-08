@@ -1,0 +1,178 @@
+# Default values for user-service.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+pdb:
+  minAvailable: 1
+
+image:
+  repository: ghcr.io/ihulsbus/cookbook/user-service
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+
+podAnnotations: {}
+
+podLabels: {}
+
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  runAsNonRoot: true
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ports:
+- name: http
+  servicePort: 80
+  containerPort: 8080
+  protocol: TCP
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: api-staging.gourmedy.com
+      paths:
+        - path: /api/v2/user
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+    ephemeral-storage: 20Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+    ephemeral-storage: 20Mi
+
+autoscaling:
+  enabled: false
+
+# Additional volumes on the output Deployment definition.
+volumes:
+- name: tmpfs
+  emptyDir:
+    sizeLimit: 25Mi
+- name: config-volume
+  configMap:
+    name: user-service
+
+# Additional volumeMounts on the output Deployment definition.
+volumeMounts:
+- name: config-volume
+  mountPath: /config
+- name: tmpfs
+  mountPath: /tmp
+
+environment:
+- name: DATABASE_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: user-service-users-database
+      key: password
+- name: OAUTH_CLIENTSECRET
+  valueFrom:
+    secretKeyRef:
+      name: user-service-gourmedy-oauth
+      key: password
+# Service-account token for Authentik's admin API (KIT-74/33) - this is
+# the only service with this credential; every other service only
+# validates inbound tokens or authenticates its own outbound calls, never
+# calls Authentik's management API.
+- name: AUTHENTIK_APITOKEN
+  valueFrom:
+    secretKeyRef:
+      name: user-service-authentik-api-token
+      key: password
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+keyvault:
+  name: Gourmedy
+  secrets:
+  - gourmedy-oauth
+  - users-database
+  - authentik-api-token
+
+config:
+  mountPath: /config
+  templates:
+    config.yaml: |
+      global:
+        logLevel: TRACE
+
+      cors:
+        allowCredentials: false
+        allowedOrigins:
+        - http://localhost:4200
+        allowedHeaders:
+        - Authorization
+        - "Content-Type"
+        allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - HEAD
+
+      oauth:
+        issuer: https://auth.gourmedy.com/application/o/cookbook-web/
+        audience: cookbook-web
+        clientid: cookbook-service
+        clientsecret: ""
+
+      database:
+        host: private-pgsql-ams3-cls0-do-user-1590686-0.c.db.ondigitalocean.com
+        username: users
+        password: ""
+        port: 25060
+        database: users
+        sslMode: require
+        timezone: Europe/Amsterdam
+
+      rabbitmq:
+        host: rabbitmq:5672
+        username: admin
+        password: ""
+
+      # Service-account token for Authentik's admin API (KIT-33 uses this
+      # to resolve users/groups) - filled in from the AUTHENTIK_APITOKEN
+      # env var above via viper's automatic env binding, never committed
+      # here.
+      authentik:
+        apiToken: ""

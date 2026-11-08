@@ -96,3 +96,15 @@ func (p *Publisher) PublishImageDeleted(payload ImagePayload) error {
 	event.Payload = payload
 	return p.Publish(event)
 }
+
+func (p *Publisher) PublishHouseholdMemberAdded(payload HouseholdMemberPayload) error {
+	var event = HouseholdMemberAddedEvent
+	event.Payload = payload
+	return p.Publish(event)
+}
+
+func (p *Publisher) PublishHouseholdMemberRemoved(payload HouseholdMemberPayload) error {
+	var event = HouseholdMemberRemovedEvent
+	event.Payload = payload
+	return p.Publish(event)
+}

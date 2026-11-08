@@ -16,4 +16,5 @@ use (
 	./shared/models
 	./shared/oidc
 	./shared/rabbitmq
+	./user-service
 )
