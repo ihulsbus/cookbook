@@ -15,8 +15,7 @@ import (
 
 // UserService starts the HTTP server. There's no RabbitMQ consumer to
 // start (user-service only publishes household.member.added/removed,
-// KIT-74 - nothing in this service consumes events yet) and no business
-// routes either: user and household lookup (KIT-33) isn't built here.
+// KIT-74 - nothing in this service consumes events yet).
 func UserService(ctx context.Context) {
 	httpServer(ctx)
 }
@@ -42,11 +41,38 @@ func httpServer(ctx context.Context) {
 		health.GET("/startup", c.HealthHandler.Startup)
 	}
 
-	// /api/v2/user routes (user/household lookup, KIT-33) aren't built
-	// yet - this service only exists so far to own the identity DB and
-	// publish household events (KIT-74). The Traefik route for
-	// /api/v2/user is already wired (docker-compose.yml, k8s ingress)
-	// ahead of there being anything behind it to route to.
+	v2 := router.Group("/api/v2/user")
+	{
+		// User lookup (KIT-33): every route only requires a valid
+		// token - there's no ownership to enforce, just an exact-match
+		// search (to avoid user enumeration) and an id-to-display-name
+		// resolve.
+		users := v2.Group("/users")
+		users.Use(c.OIDCModule.RequireAuth())
+		{
+			users.GET("", c.HttpHandler.SearchUsers)
+			users.GET(":id", c.HttpHandler.GetUser)
+		}
+
+		me := v2.Group("/me")
+		me.Use(c.OIDCModule.RequireAuth())
+		{
+			me.GET("/households", c.HttpHandler.ListMyHouseholds)
+		}
+
+		// Self-service households (KIT-34): owner-only operations are
+		// enforced in the service layer, not here - same pattern
+		// recipe-service uses for its share endpoints (KIT-32).
+		households := v2.Group("/households")
+		households.Use(c.OIDCModule.RequireAuth())
+		{
+			households.POST("", c.HttpHandler.CreateHousehold)
+			households.POST(":id/members", c.HttpHandler.AddMember)
+			households.DELETE(":id/members/:userId", c.HttpHandler.RemoveMember)
+			households.POST(":id/leave", c.HttpHandler.LeaveHousehold)
+			households.DELETE(":id", c.HttpHandler.DeleteHousehold)
+		}
+	}
 
 	// Server startup
 	srv := &http.Server{

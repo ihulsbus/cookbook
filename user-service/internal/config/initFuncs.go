@@ -86,8 +86,9 @@ func initDatabase() {
 	}
 
 	Logger.Info("performing database migrations")
-	// User is a cache of display names, Household/HouseholdMember is
-	// metadata for later use - both populated by KIT-33, not here.
+	// User is a cache of display names, populated by KIT-33/34's
+	// service layer, not here. Household/HouseholdMember stay migrated
+	// but unused - see their doc comments in internal/models.
 	if err := DatabaseClient.AutoMigrate(
 		&um.User{},
 		&um.Household{},

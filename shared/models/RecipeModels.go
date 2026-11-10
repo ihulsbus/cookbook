@@ -159,8 +159,12 @@ func (p SharePermission) Valid() bool {
 }
 
 // ShareTargetType identifies what a recipe_shares row's TargetID refers
-// to: a single user (by OIDC sub / UUID) or every member of a group (by
-// group name, as carried in the OIDC token's `groups` claim).
+// to: a single user (by OIDC sub / UUID) or every member of a group, by
+// whatever identifier that group is carried as in the OIDC token's
+// `groups` claim - a name for an ordinary Authentik group (e.g.
+// "cookbook-admin"), or a UUID for a self-service household (KIT-34).
+// See authentik/blueprints/cookbook-oidc.yaml's groups scope mapping
+// for which groups get which shape.
 type ShareTargetType string
 
 const (
@@ -191,8 +195,10 @@ type RecipeShare struct {
 	RecipeID uuid.UUID `gorm:"type:uuid;primaryKey" json:"recipe_id"`
 	// TargetType and TargetID together identify who this share is for -
 	// see ShareTargetType. TargetID is a UUID string for "user" (the
-	// OIDC sub) or a group name for "group"; stored as plain text either
-	// way since both share one column.
+	// OIDC sub) or, for "group", whatever identifier that group carries
+	// in the `groups` claim (a name, or a household's UUID - see
+	// ShareTargetType); stored as plain text either way since both
+	// share one column.
 	TargetType ShareTargetType `gorm:"type:varchar(10);primaryKey" json:"target_type" example:"user"`
 	TargetID   string          `gorm:"primaryKey" json:"target_id"`
 	Permission SharePermission `gorm:"type:varchar(10);not null" json:"permission" example:"read"`

@@ -13,6 +13,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
+
+	"user-service/internal/authentik"
+	handlers "user-service/internal/handlers/http"
+	repositories "user-service/internal/repositories/database"
+	"user-service/internal/services"
 )
 
 // userConfig embeds the common shared/models.Config (global/cors/oauth/
@@ -41,9 +46,12 @@ var (
 	Cors              cors.Config
 	RabbitMQClient    *rmq.RabbitMQ
 	RabbitMQPublisher *rmq.Publisher
+	AuthentikClient   *authentik.Client
+	UserService       *services.UserService
 
 	// Handlers
 	HealthHandler *healthh.Handlers
+	HttpHandler   *handlers.HttpHandlers
 )
 
 func init() {
@@ -93,4 +101,18 @@ func init() {
 	}
 
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
+
+	// AuthentikClient calls Authentik's core API (KIT-33/34) with this
+	// service's service-account token - the only service configured
+	// with it (KIT-74). Its base URL is derived from the OIDC issuer
+	// rather than a separate config field: Authentik always serves its
+	// REST API at the same host as the issuer it hands out tokens for.
+	AuthentikClient, err = authentik.NewClient(Configuration.Oauth.Issuer, Configuration.Authentik.APIToken)
+	if err != nil {
+		Logger.Fatalf("error initialising Authentik client: %v", err)
+	}
+
+	userRepo := repositories.NewDatabaseRepository(DatabaseClient)
+	UserService = services.NewUserService(AuthentikClient, userRepo, Logger)
+	HttpHandler = handlers.NewHttpHandlers(UserService, Logger)
 }

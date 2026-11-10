@@ -35,10 +35,30 @@ entries:
     attrs:
       name: "Cookbook: groups scope mapping"
       scope_name: groups
-      description: "Adds the user's Authentik group names to the access/ID token as a `groups` claim."
+      description: "Adds the user's Authentik group identifiers to the access/ID token as a `groups` claim - names for ordinary groups, UUIDs for households."
+      # Two different consumers read this same claim and want two
+      # different identifier shapes:
+      #   - shared/oidc.RequireRole("cookbook-admin") and the frontend's
+      #     hasGroup() check fixed, human-chosen role group names
+      #     (KIT-20/21/22) - switching those to UUIDs would silently
+      #     lock every admin-only endpoint, so ordinary groups keep
+      #     emitting group.name, unchanged.
+      #   - recipe-service's recipe_shares target_id for
+      #     target_type=group (KIT-32/35), when the target is a
+      #     self-service household (KIT-34 "decided": the household's
+      #     Authentik group UUID is its target_id, consistent with the
+      #     UUID that identity everywhere else - user-service's own
+      #     household id, owner_id, sub).
+      # Households are the only groups with a cookbook_household
+      # attribute (set by user-service, see
+      # cookbook/user-service/internal/services/UserService.go), so
+      # that attribute is what picks the identifier shape per group.
       expression: |
         return {
-            "groups": [group.name for group in request.user.ak_groups.all()],
+            "groups": [
+                str(group.pk) if group.attributes.get("cookbook_household") else group.name
+                for group in request.user.ak_groups.all()
+            ],
         }
 
   - model: authentik_providers_oauth2.oauth2provider
@@ -49,7 +69,15 @@ entries:
       name: cookbook-web
       client_type: public
       client_id: cookbook-web
-      sub_mode: hashed_user_id
+      # KIT-33 "decided": sub must be the Authentik user's own UUID, so
+      # it maps 1:1 to the core API's /api/v3/core/users/?uuid= filter -
+      # user-service's only way to resolve a token's sub back to a
+      # user. hashed_user_id (the old value) produces a UUID-shaped but
+      # unrelated hash, which user-service could never resolve. Every
+      # owner_id/target_id column in this codebase is already typed as
+      # uuid on that assumption. NEVER change this again once real data
+      # exists, or every existing owner_id/target_id is orphaned.
+      sub_mode: user_uuid
       include_claims_in_id_token: true
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]
       authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
