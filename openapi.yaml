@@ -2610,7 +2610,7 @@ paths:
                   value:
                     - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
                       unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
-                      quantity: 3
+                      quantity: '3.0000'
         '400':
           $ref: '#/components/responses/Bad-request'
         '401':
@@ -2652,7 +2652,7 @@ paths:
                   value:
                     - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
                       unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
-                      quantity: 3
+                      quantity: '3.0000'
         '400':
           $ref: '#/components/responses/Bad-request'
         '401':
@@ -2680,7 +2680,7 @@ paths:
                 value:
                   - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
                     unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
-                    quantity: 3
+                    quantity: '3.0000'
     put:
       summary: Update recipe ingredient amounts
       tags:
@@ -2701,7 +2701,7 @@ paths:
                   value:
                     - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
                       unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
-                      quantity: 3
+                      quantity: '3.0000'
         '400':
           $ref: '#/components/responses/Bad-request'
         '401':
@@ -2728,7 +2728,7 @@ paths:
                 value:
                   - ingredientID: a796f891-d42f-4182-9ff7-893a41726643
                     unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
-                    quantity: 3
+                    quantity: '3.0000'
         description: Provide one or multiple ingredient amounts linked to the related recipe.
     delete:
       summary: Delete recipe ingredient amounts
@@ -2825,12 +2825,30 @@ components:
         name:
           type: string
           description: Name of the ingredient
+        density_g_per_ml:
+          type: [string, 'null']
+          format: decimal
+          description: >-
+            Grams per milliliter (KIT-38), used to convert this
+            ingredient between mass and volume units. Null when unknown
+            - conversions across dimensions then report no result
+            rather than guess.
+          example: '0.9200'
+        grams_per_piece:
+          type: [string, 'null']
+          format: decimal
+          description: >-
+            Grams per piece (KIT-38), used to convert this ingredient
+            between mass/volume and count units. Null when unknown.
+          example: '50.0000'
     Unit:
       type: object
       examples:
         - id: 7a449aa5-cbdc-44a3-ba2c-53db53c7329a
           full_name: Tablespoon
           short_name: tbsp
+          dimension: volume
+          to_base: '14.786800'
       description: Returns information about a unit of measurement
       title: Unit
       x-tags:
@@ -2839,6 +2857,8 @@ components:
         - id
         - full_name
         - short_name
+        - dimension
+        - to_base
       properties:
         id:
           type: string
@@ -2855,6 +2875,20 @@ components:
           description: Abbreviation of the unit
           x-stoplight:
             id: hbikll06uprkg
+        dimension:
+          type: string
+          enum: [mass, volume, count]
+          description: >-
+            The kind of quantity this unit measures (KIT-37). Converting
+            between units of different dimensions needs the ingredient's
+            density and/or grams-per-piece (KIT-38).
+        to_base:
+          type: string
+          format: decimal
+          description: >-
+            Conversion factor to this dimension's base unit - grams for
+            mass, milliliters for volume, pieces for count (KIT-37).
+          example: '14.786800'
     InstructionSearch:
       type: object
       description: Returns searchresult of instructions belonging to the queried recipe
@@ -3204,7 +3238,10 @@ components:
         - recipeID: 3142c13e-04d8-465e-bca8-dec957ae61dd
           ingredientID: a796f891-d42f-4182-9ff7-893a41726643
           unitID: b4d99423-9c40-4f80-82fa-5377fe7498b1
-          quantity: 3
+          quantity: '3.0000'
+          note: finely chopped
+          position: 0
+          optional: false
       x-tags:
         - amount
       required:
@@ -3223,9 +3260,23 @@ components:
             id: om2wbkm08scn6
           format: uuid
         quantity:
-          type: number
+          type: string
+          format: decimal
+          description: >-
+            An exact decimal (KIT-36), e.g. "0.0025" - never a JSON
+            number, to avoid float rounding. Parse with a decimal
+            library (decimal.js, big.js), never Number().
           x-stoplight:
             id: eyzfcp6nuz7bj
+        note:
+          type: string
+          description: Free-text aside, e.g. "finely chopped" (KIT-36).
+        position:
+          type: integer
+          description: Display order within the recipe's ingredient list (KIT-36).
+        optional:
+          type: boolean
+          description: Whether this ingredient can be skipped (KIT-36).
     RecipeMetadata:
       title: RecipeMetadata
       x-stoplight:

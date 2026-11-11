@@ -170,10 +170,12 @@ func TestUnitCreate_OK(t *testing.T) {
 	r := NewUnitRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "units" ("full_name","short_name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "units" ("full_name","short_name","dimension","to_base","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id"`)).
 		WithArgs(
 			unit.FullName,
 			unit.ShortName,
+			unit.Dimension,
+			unit.ToBase,
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
@@ -193,10 +195,12 @@ func TestUnitCreate_Err(t *testing.T) {
 	r := NewUnitRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "units" ("full_name","short_name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6) RETURNING "id"`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "units" ("full_name","short_name","dimension","to_base","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id"`)).
 		WithArgs(
 			unit.FullName,
 			unit.ShortName,
+			unit.Dimension,
+			unit.ToBase,
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),

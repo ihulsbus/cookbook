@@ -23,6 +23,7 @@ require (
 require (
 	github.com/MicahParks/jwkset v0.11.4 // indirect
 	github.com/MicahParks/keyfunc/v3 v3.9.1 // indirect
+	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/wagslane/go-rabbitmq v0.15.0 // indirect
 )
 
@@ -64,7 +65,6 @@ require (
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
@@ -82,8 +82,13 @@ require (
 )
 
 replace github.com/ihulsbus/cookbook/shared/oidc => ../shared/oidc
+
 replace github.com/ihulsbus/cookbook/shared/healthchecks => ../shared/healthchecks
+
 replace github.com/ihulsbus/cookbook/shared/httpclient => ../shared/httpclient
+
 replace github.com/ihulsbus/cookbook/shared/models => ../shared/models
+
 replace github.com/ihulsbus/cookbook/shared/rabbitmq => ../shared/rabbitmq
+
 replace github.com/ihulsbus/cookbook/shared/authz => ../shared/authz

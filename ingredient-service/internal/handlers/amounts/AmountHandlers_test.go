@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ihulsbus/cookbook/shared/models"
+	"github.com/shopspring/decimal"
 )
 
 type AmountServiceMock struct {
@@ -28,7 +29,7 @@ var (
 	amount  models.AmountDTO = models.AmountDTO{
 		IngredientID: uuid.New(),
 		UnitID:       uuid.New(),
-		Quantity:     1,
+		Quantity:     decimal.NewFromInt(1),
 	}
 )
 

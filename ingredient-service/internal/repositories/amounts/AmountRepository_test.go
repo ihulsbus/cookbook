@@ -11,6 +11,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	m "github.com/ihulsbus/cookbook/shared/models"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,8 +22,11 @@ var (
 	amount m.Amount = m.Amount{
 		RecipeID:     uuid.New(),
 		IngredientID: uuid.New(),
-		Quantity:     1,
+		Quantity:     decimal.RequireFromString("0.0025"),
 		UnitID:       uuid.New(),
+		Note:         "finely chopped",
+		Position:     1,
+		Optional:     true,
 	}
 )
 
@@ -73,12 +77,15 @@ func TestAmountFind_OK(t *testing.T) {
 	r := NewAmountRepository(db)
 
 	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "amounts" WHERE recipe_id = $1`)).
-		WillReturnRows(sqlmock.NewRows([]string{"recipe_id", "ingredient_id", "quantity", "unit_id"}).
+		WillReturnRows(sqlmock.NewRows([]string{"recipe_id", "ingredient_id", "quantity", "unit_id", "note", "position", "optional"}).
 			AddRow(
 				amount.RecipeID,
 				amount.IngredientID,
 				amount.Quantity,
 				amount.UnitID,
+				amount.Note,
+				amount.Position,
+				amount.Optional,
 			))
 
 	result, err := r.Find(amount.RecipeID)
@@ -122,12 +129,15 @@ func TestAmountCreate_OK(t *testing.T) {
 	r := NewAmountRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "amounts" ("recipe_id","ingredient_id","quantity","unit_id") VALUES ($1,$2,$3,$4)`)).
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "amounts" ("recipe_id","ingredient_id","quantity","unit_id","note","position","optional") VALUES ($1,$2,$3,$4,$5,$6,$7)`)).
 		WithArgs(
 			amount.RecipeID,
 			amount.IngredientID,
 			amount.Quantity,
 			amount.UnitID,
+			amount.Note,
+			amount.Position,
+			amount.Optional,
 		).WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
@@ -144,12 +154,15 @@ func TestAmountCreate_Err(t *testing.T) {
 	r := NewAmountRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "amounts" ("recipe_id","ingredient_id","quantity","unit_id") VALUES ($1,$2,$3,$4)`)).
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "amounts" ("recipe_id","ingredient_id","quantity","unit_id","note","position","optional") VALUES ($1,$2,$3,$4,$5,$6,$7)`)).
 		WithArgs(
 			amount.RecipeID,
 			amount.IngredientID,
 			amount.Quantity,
 			amount.UnitID,
+			amount.Note,
+			amount.Position,
+			amount.Optional,
 		).
 		WillReturnError(errors.New("error"))
 	mock.ExpectRollback()

@@ -169,9 +169,11 @@ func TestIngredientCreate_OK(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","density_g_per_ml","grams_per_piece","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
 		WithArgs(
 			ingredient.Name,
+			nil,
+			nil,
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			nil,
@@ -191,9 +193,11 @@ func TestIngredientCreate_Err(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5) RETURNING "id"`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","density_g_per_ml","grams_per_piece","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
 		WithArgs(
 			ingredient.Name,
+			nil,
+			nil,
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			nil,
