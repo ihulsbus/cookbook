@@ -21,7 +21,7 @@ func NewRabbitMQConnection(username, password, host string, logger *log.Logger) 
 	conn, err = rabbitmq.NewConn(
 		connString,
 		rabbitmq.WithConnectionOptionsLogger(logger),
-		rabbitmq.WithConnectionOptionsReconnectInterval(5*time.Second),
+		rabbitmq.WithConnectionOptionsBaseReconnectInterval(5*time.Second),
 	)
 	if err != nil {
 		return nil, err
