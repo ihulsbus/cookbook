@@ -30,8 +30,7 @@ import (
 
 type instructionConfig struct {
 	m.Config `mapstructure:",squash"`
-	// RecipeServiceInternal is recipe-service's internal-only API (KIT-28),
-	// used only by Authorizer's projection-miss fallback.
+	// RecipeServiceInternal is used only by Authorizer's projection-miss fallback.
 	RecipeServiceInternal m.ApiClient
 }
 
@@ -44,26 +43,21 @@ var (
 	OIDCModule *oidc.Module
 	Cors       cors.Config
 
-	// Clients
 	DatabaseClient *gorm.DB
 	RabbitMQClient *rmq.RabbitMQ
 
-	// Repositories
 	InstructionRepository *ir.InstructionRepository
 	SearchRepository      *sr.SearchRepository
 
-	// Services
 	InstructionService *is.InstructionService
 	SearchService      *ss.SearchService
 
-	// Recipe access: see ingredient-service's config.go for the same
-	// pattern - Authorizer answers CanRead/CanWrite against a local
-	// projection kept current by Projector's RabbitMQ consumer, with a
-	// lazy fallback to recipe-service's internal endpoint on a miss.
+	// Authorizer answers CanRead/CanWrite against a local projection kept
+	// current by Projector's RabbitMQ consumer, with a lazy fallback to
+	// recipe-service's internal endpoint on a miss.
 	Authorizer *az.Authorizer
 	Projector  *az.Projector
 
-	// Handlers
 	InstructionHandlers *ih.InstructionHandlers
 	SearchHandlers      *sh.SearchHandlers
 	HealthHandlers      *healthh.Handlers
@@ -96,9 +90,9 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
-	// RabbitMQClient.Connection is used by Projector's consumer (started
-	// in InstructionService.go) - no synchronous call to any other
-	// service happens during startup (KIT-79).
+	// RabbitMQClient.Connection is used by Projector's consumer (started in
+	// InstructionService.go) - no synchronous call to any other service
+	// happens during startup.
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
@@ -106,11 +100,9 @@ func init() {
 		Logger,
 	)
 
-	// Init repositories
 	InstructionRepository = ir.NewInstructionRepository(DatabaseClient)
 	SearchRepository = sr.NewSearchRepository(DatabaseClient)
 
-	// Init services
 	InstructionService = is.NewInstructionService(InstructionRepository)
 	SearchService = ss.NewSearchService(SearchRepository)
 
@@ -119,7 +111,6 @@ func init() {
 	fallbackClient := hc.NewInternalHTTPClient(5*time.Second, Logger, nil, nil)
 	Authorizer.SetMissFallback(az.NewRecipeServiceFallback(fallbackClient, Configuration.RecipeServiceInternal.BaseURL, Projector))
 
-	// Init handlers
 	InstructionHandlers = ih.NewInstructionHandlers(InstructionService, Logger)
 	SearchHandlers = sh.NewSearchHandlers(SearchService, Logger)
 	HealthHandlers = healthh.NewHealthHandlers(DatabaseClient, Logger)

@@ -31,7 +31,6 @@ func NewUnitHandlers(units UnitService, logger m.LoggerInterface) *UnitHandlers 
 	}
 }
 
-// GetAll Get all units
 func (h UnitHandlers) GetAll(ctx *gin.Context) {
 	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
@@ -48,7 +47,6 @@ func (h UnitHandlers) GetAll(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, unitDTO)
 }
 
-// GetSingle Get a single unit
 func (h UnitHandlers) GetSingle(ctx *gin.Context) {
 	var unitDTO models.UnitDTO
 	var err error
@@ -74,7 +72,6 @@ func (h UnitHandlers) GetSingle(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, unitDTO)
 }
 
-// Create creates a unit
 func (h UnitHandlers) Create(ctx *gin.Context) {
 	var unitDTO models.UnitDTO
 	var err error
@@ -93,7 +90,6 @@ func (h UnitHandlers) Create(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, unitDTO)
 }
 
-// Update updates a unit
 func (h UnitHandlers) Update(ctx *gin.Context) {
 	var unitDTO models.UnitDTO
 	var err error
@@ -109,8 +105,7 @@ func (h UnitHandlers) Update(ctx *gin.Context) {
 		return
 	}
 
-	// deliberately set this to ensure the parameter ID is used instead of an accidental id in body
-	// perhaps separate create/update DTO's are needed
+	// Deliberately overwritten so the URL param ID wins over any id in the body.
 	unitDTO.ID = id
 
 	unitDTO, err = h.unitService.Update(unitDTO)
@@ -122,7 +117,6 @@ func (h UnitHandlers) Update(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, unitDTO)
 }
 
-// Delete deletes a unit
 func (h UnitHandlers) Delete(ctx *gin.Context) {
 	var unitDTO models.UnitDTO
 	var err error

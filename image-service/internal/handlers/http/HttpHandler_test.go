@@ -29,11 +29,9 @@ var (
 	imgDataDTO m.ImageDataDTO
 	imgFileDTO m.ImageFileDTO
 
-	// findTrigger controls imgServiceMock.Find independently of
-	// imgDataDTO.EntityType, which Update/Delete also mutate to control
-	// their own mock behavior now that Find runs first to resolve the
-	// owning recipe (KIT-29). Defaults to "ok" so that resolve step
-	// always succeeds unless a test explicitly wants it to fail.
+	// findTrigger controls imgServiceMock.Find's dispatch independently of
+	// imgDataDTO.EntityType. Defaults to "ok" so the resolve step succeeds
+	// unless a test overrides it.
 	findTrigger = "ok"
 
 	testPrincipalID = uuid.New().String()
@@ -135,16 +133,13 @@ func (s *imgServiceMock) Delete(imDTO m.ImageDataDTO) error {
 	}
 }
 
-// authedContext builds a gin test context with a principal set, as
-// oidc.Module.RequireAuth would before any handler in this package runs.
+// authedContext builds a gin context with a principal set, mimicking oidc.Module.RequireAuth.
 func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 	oidc.SetPrincipal(c, &oidc.Principal{UserID: testPrincipalID})
 	return c
 }
-
-// ==================================================================================================
 
 func TestImageGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -330,13 +325,11 @@ func TestImageCreate_JpegOK(t *testing.T) {
 
 	imgDataDTO.EntityType = "create"
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -374,13 +367,11 @@ func TestImageCreate_PngOK(t *testing.T) {
 
 	imgDataDTO.EntityType = "create"
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := png.Encode(&buf, img)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -439,13 +430,11 @@ func TestImageCreate_EntityIDErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -476,13 +465,11 @@ func TestImageCreate_EntityTypeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -516,13 +503,11 @@ func TestImageCreate_NoFileErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -557,13 +542,11 @@ func TestImageCreate_ImageFileTooLargeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 19000, 19000))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -598,13 +581,11 @@ func TestImageCreate_InvalidFormatErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -639,13 +620,11 @@ func TestImageCreate_DecodeErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -680,13 +659,11 @@ func TestImageCreate_ImageTooSmallErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 299, 299))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -721,13 +698,11 @@ func TestImageCreate_ImageTooBigErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 1001, 1001))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -762,13 +737,11 @@ func TestImageCreate_ImageCreateErr(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandler(&imgServiceMock{}, newAllowAllAuthorizer(), &LoggerInterfaceMock{})
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 300, 300))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -805,13 +778,11 @@ func TestImageUpdate_OK(t *testing.T) {
 
 	findTrigger = "ok"
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)
@@ -914,13 +885,11 @@ func TestImageUpdate_UpdateErr(t *testing.T) {
 
 	findTrigger = "ok"
 
-	// Create a sample image
 	img := image.NewRGBA(image.Rect(0, 0, 400, 400))
 	var buf bytes.Buffer
 	err := jpeg.Encode(&buf, img, nil)
 	assert.NoError(t, err)
 
-	// Create a new multipart writer
 	reqBody := new(bytes.Buffer)
 	writer := multipart.NewWriter(reqBody)
 	header := make(textproto.MIMEHeader)

@@ -40,7 +40,6 @@ func TestSearch_OK(t *testing.T) {
 
 	requesterID := uuid.New()
 
-	// Define expected query
 	mock.ExpectQuery(regexp.QuoteMeta(`
         SELECT recipe_categories.recipe_id FROM "recipe_categories"
 				LEFT JOIN recipe_tags ON recipe_categories.recipe_id = recipe_tags.recipe_id
@@ -86,9 +85,8 @@ func TestSearch_OK(t *testing.T) {
 
 }
 
-// TestGetAllRecipeMetadata_FiltersToVisibleRecipes: KIT-30 - without the
-// recipe_accesses filter, this would return metadata for every recipe,
-// including ones the caller cannot read.
+// Without the recipe_accesses filter, this would return metadata for every
+// recipe, including ones the caller cannot read.
 func TestGetAllRecipeMetadata_FiltersToVisibleRecipes(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewSearchRepository(db)

@@ -204,12 +204,8 @@ func TestRequireAuth_Valid(t *testing.T) {
 	}
 }
 
-// TestRequireAuth_SecondAudience proves a Module configured with multiple
-// accepted audiences (e.g. the frontend's public client ID alongside a
-// confidential service-to-service client ID) accepts tokens for either -
-// needed so shared/httpclient's client-credentials calls (aud = the
-// calling service's own client ID) pass the same validation as end-user
-// tokens (aud = the frontend's client ID).
+// TestRequireAuth_SecondAudience checks that a Module configured with
+// multiple accepted audiences accepts tokens for either one.
 func TestRequireAuth_SecondAudience(t *testing.T) {
 	module, priv := newTestModule(t)
 

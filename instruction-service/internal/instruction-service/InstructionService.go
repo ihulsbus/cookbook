@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	az "github.com/ihulsbus/cookbook/shared/authz"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	az "github.com/ihulsbus/cookbook/shared/authz"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 
 func InstructionService(ctx context.Context) {
 	// Keeps the recipe_access projection current; no synchronous call to
-	// recipe-service happens at startup (KIT-79).
+	// recipe-service happens at startup.
 	consumer, err := c.Projector.StartConsumer(c.RabbitMQClient.Connection, "instruction-service-recipe-access", "cookbook")
 	if err != nil {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
@@ -35,13 +35,8 @@ func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
-	// Logging
 	router.Use(m.Logger(log))
-
-	// Panic recovery
 	router.Use(gin.Recovery())
-
-	// Cors handler
 	router.Use(cors.New(c.Cors))
 
 	// Health check endpoints (no auth required)
@@ -52,12 +47,10 @@ func httpServer(ctx context.Context) {
 		health.GET("/startup", c.HealthHandlers.Startup)
 	}
 
-	// API versioning setup
 	v2 := router.Group("/api/v2")
 	{
-		// Instructions are a recipe's cooking steps - :id/recipeID is the
-		// RECIPE id, so RequireRecipeAccess checks it directly. GET needs
-		// read; writes need write (KIT-29).
+		// :id/recipeID here is the RECIPE id (instructions are a recipe's
+		// cooking steps), so RequireRecipeAccess checks it directly.
 		instruction := v2.Group("/instruction")
 		{
 			searchInstruction := instruction.Group("")
@@ -92,7 +85,6 @@ func httpServer(ctx context.Context) {
 		}
 	}
 
-	// Server startup
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),

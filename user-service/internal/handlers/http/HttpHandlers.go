@@ -40,10 +40,8 @@ func NewHttpHandlers(userService UserService, logger *log.Logger) *HttpHandlers 
 }
 
 // principalID extracts the authenticated caller's user ID from the Gin
-// context (set by oidc.Module.RequireAuth, which every route in this
-// service's router already runs). KIT-33/34 never need group
-// memberships here - every ownership/membership check is against
-// Authentik's own group data, not the token's `groups` claim.
+// context (set by oidc.Module.RequireAuth upstream). Ownership checks
+// use Authentik's own group data, never the token's `groups` claim.
 func (h HttpHandlers) principalID(ctx *gin.Context) (uuid.UUID, bool) {
 	p, ok := oidc.PrincipalFromContext(ctx)
 	if !ok {
@@ -61,7 +59,7 @@ func (h HttpHandlers) principalID(ctx *gin.Context) (uuid.UUID, bool) {
 	return id, true
 }
 
-// SearchUsers serves GET /api/v2/user/users?query= (KIT-33).
+// SearchUsers serves GET /api/v2/user/users?query=.
 func (h HttpHandlers) SearchUsers(ctx *gin.Context) {
 	if _, ok := h.principalID(ctx); !ok {
 		return
@@ -83,7 +81,7 @@ func (h HttpHandlers) SearchUsers(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// GetUser serves GET /api/v2/user/users/:id (KIT-33).
+// GetUser serves GET /api/v2/user/users/:id.
 func (h HttpHandlers) GetUser(ctx *gin.Context) {
 	if _, ok := h.principalID(ctx); !ok {
 		return
@@ -109,7 +107,7 @@ func (h HttpHandlers) GetUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, user)
 }
 
-// ListMyHouseholds serves GET /api/v2/user/me/households (KIT-33).
+// ListMyHouseholds serves GET /api/v2/user/me/households.
 func (h HttpHandlers) ListMyHouseholds(ctx *gin.Context) {
 	userID, ok := h.principalID(ctx)
 	if !ok {
@@ -134,8 +132,8 @@ type createHouseholdRequest struct {
 	Name string `json:"name"`
 }
 
-// CreateHousehold serves POST /api/v2/user/households (KIT-34). The
-// caller becomes the household's owner.
+// CreateHousehold serves POST /api/v2/user/households. The caller
+// becomes the household's owner.
 func (h HttpHandlers) CreateHousehold(ctx *gin.Context) {
 	ownerID, ok := h.principalID(ctx)
 	if !ok {
@@ -168,8 +166,8 @@ type addMemberRequest struct {
 	Query string `json:"query"`
 }
 
-// AddMember serves POST /api/v2/user/households/:id/members (KIT-34).
-// Owner only, enforced in the service layer.
+// AddMember serves POST /api/v2/user/households/:id/members. Owner
+// only, enforced in the service layer.
 func (h HttpHandlers) AddMember(ctx *gin.Context) {
 	requesterID, ok := h.principalID(ctx)
 	if !ok {
@@ -208,8 +206,8 @@ func (h HttpHandlers) AddMember(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, household)
 }
 
-// RemoveMember serves DELETE /api/v2/user/households/:id/members/:userId
-// (KIT-34). Owner only, enforced in the service layer.
+// RemoveMember serves DELETE /api/v2/user/households/:id/members/:userId.
+// Owner only, enforced in the service layer.
 func (h HttpHandlers) RemoveMember(ctx *gin.Context) {
 	requesterID, ok := h.principalID(ctx)
 	if !ok {
@@ -246,7 +244,7 @@ func (h HttpHandlers) RemoveMember(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// LeaveHousehold serves POST /api/v2/user/households/:id/leave (KIT-34).
+// LeaveHousehold serves POST /api/v2/user/households/:id/leave.
 func (h HttpHandlers) LeaveHousehold(ctx *gin.Context) {
 	userID, ok := h.principalID(ctx)
 	if !ok {
@@ -275,8 +273,8 @@ func (h HttpHandlers) LeaveHousehold(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// DeleteHousehold serves DELETE /api/v2/user/households/:id (KIT-34).
-// Owner only, enforced in the service layer.
+// DeleteHousehold serves DELETE /api/v2/user/households/:id. Owner
+// only, enforced in the service layer.
 func (h HttpHandlers) DeleteHousehold(ctx *gin.Context) {
 	requesterID, ok := h.principalID(ctx)
 	if !ok {

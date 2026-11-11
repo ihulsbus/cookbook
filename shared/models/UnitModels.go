@@ -8,9 +8,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// Dimension is the kind of quantity a Unit measures (KIT-37). Convert
-// only crosses dimensions via an Ingredient's density/grams-per-piece
-// (KIT-38) - within one Dimension, each Unit's ToBase factor is enough.
+// Dimension is the kind of quantity a Unit measures. Convert only
+// crosses dimensions via an Ingredient's density/grams-per-piece -
+// within one Dimension, each Unit's ToBase factor is enough.
 type Dimension string
 
 const (
@@ -19,7 +19,6 @@ const (
 	DimensionCount  Dimension = "count"
 )
 
-// Valid reports whether d is one of the defined Dimension values.
 func (d Dimension) Valid() bool {
 	switch d {
 	case DimensionMass, DimensionVolume, DimensionCount:
@@ -30,11 +29,10 @@ func (d Dimension) Valid() bool {
 }
 
 var (
-	// DefaultUnits is seeded on startup (ingredient-service's
-	// initUnits, OnConflict DoNothing on the unique FullName/ShortName
-	// columns). ToBase is each unit's conversion factor to its
-	// Dimension's base unit - g for mass, ml for volume, piece for
-	// count (KIT-37) - so g, ml, cloves and pcs all have ToBase 1.
+	// DefaultUnits is seeded on startup. ToBase is each unit's
+	// conversion factor to its Dimension's base unit - g for mass, ml
+	// for volume, piece for count - so g, ml, cloves and pcs all have
+	// ToBase 1.
 	DefaultUnits = []Unit{
 		// Volume (base: ml)
 		{FullName: "Teaspoon", ShortName: "tsp", Dimension: DimensionVolume, ToBase: decimal.RequireFromString("4.92892")},
@@ -64,13 +62,12 @@ var (
 )
 
 type Unit struct {
-	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	ID        uuid.UUID `gorm:"type:uuid;default:uuidv7();primaryKey"`
 	FullName  string    `gorm:"not null;unique" json:"FullName" example:"Fluid ounce"`
 	ShortName string    `gorm:"not null;unique" json:"ShortName" example:"fl oz"`
-	// Dimension and ToBase (KIT-37) are what Convert (see Convert.go)
-	// uses to translate a quantity from one Unit to another - directly
-	// when both share a Dimension, via an Ingredient's density/
-	// grams-per-piece (KIT-38) otherwise.
+	// Dimension and ToBase are what Convert (see Convert.go) uses to
+	// translate between Units - directly when both share a Dimension,
+	// via an Ingredient's density/grams-per-piece otherwise.
 	Dimension Dimension       `gorm:"type:varchar(10);not null" json:"Dimension" example:"volume"`
 	ToBase    decimal.Decimal `gorm:"type:numeric(16,6);not null" json:"ToBase" swaggertype:"string" example:"29.5735"`
 	CreatedAt time.Time       `gorm:"autoCreateTime"`
@@ -79,7 +76,11 @@ type Unit struct {
 }
 
 func (unit *Unit) BeforeCreate(tx *gorm.DB) (err error) {
-	unit.ID = uuid.New()
+	// Time-ordered, not the DB's uuidv7() default; guarded so
+	// tests/imports that already supply an ID aren't overridden.
+	if unit.ID == uuid.Nil {
+		unit.ID = NewID()
+	}
 	return
 }
 

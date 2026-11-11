@@ -37,7 +37,7 @@ The project consists of the following microservices:
 - **image-service**: Handles image uploads and storage with S3-compatible backends
 - **search-service**: Provides full-text search capabilities across all entities
 - **notification-service**: Handles notifications and events (in development)
-- **user-service**: Owns the identity concern - a local cache of user display names and household metadata, kept current against the Authentik API. The only service holding Authentik API credentials. Scaffolded (KIT-74); user/household lookup endpoints are still to come (KIT-33).
+- **user-service**: Owns the identity concern - user/household lookup and self-service household management backed by the Authentik API. The only service holding Authentik API credentials.
 
 ### Shared Components
 
@@ -184,7 +184,7 @@ unaffected either way.
 ## Technology Stack
 
 - **Language**: Go 1.26+
-- **Database**: PostgreSQL 15
+- **Database**: PostgreSQL 18
 - **Message Queue**: RabbitMQ 3
 - **Object Storage**: S3
 - **Authentication**: Authentik / OAuth2 OIDC
@@ -197,7 +197,7 @@ unaffected either way.
 
 - Go 1.26 or later
 - Docker and Docker Compose
-- PostgreSQL 15 (or use Docker Compose)
+- PostgreSQL 18 (or use Docker Compose)
 - MinIO or S3-compatible storage (or use Docker Compose)
 - RabbitMQ (or use Docker Compose)
 

@@ -18,7 +18,6 @@ type CategoryService struct {
 	repo CategoryRepository
 }
 
-// NewCategoryService creates a new CategoryService instance
 func NewCategoryService(categoryRepo CategoryRepository) *CategoryService {
 	return &CategoryService{
 		repo: categoryRepo,

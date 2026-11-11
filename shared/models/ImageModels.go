@@ -12,12 +12,12 @@ func (ImageData) TableName() string {
 	return "images"
 }
 
-// ImageData represents the full internal structure of an image. It does not contain the actual file.
+// ImageData is an image's metadata; it does not contain the file itself.
 type ImageData struct {
-	ID         uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primary_key"`
+	ID         uuid.UUID      `gorm:"type:uuid;default:uuidv7();primary_key"`
 	EntityType string         `gorm:"type:varchar(50);not null"` // e.g., "recipe" or "ingredient"
 	EntityID   uuid.UUID      `gorm:"type:uuid;not null"`
-	Size       int64          `gorm:"not null"`                  // size in bytes
+	Size       int64          `gorm:"not null"`                  // bytes
 	Type       string         `gorm:"type:varchar(50);not null"` // e.g., "image/jpeg"
 	CreatedAt  time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt  time.Time      `gorm:"autoUpdateTime"`
@@ -50,16 +50,13 @@ type ImageDataDTO struct {
 	EntityID   uuid.UUID `json:"entity_id"`
 	Size       int64     `json:"size"`
 	Type       string    `json:"type"`
-	// URL is a short-lived signed GET URL for this image's object
-	// (KIT-72), set by the service layer only after the caller's access
-	// has already been checked. Empty when no URL was generated (e.g. a
-	// list response that doesn't presign every row).
+	// URL is a short-lived signed GET URL, set by the service layer only
+	// after access has been checked. Empty if not generated (e.g. a list
+	// response that doesn't presign every row).
 	URL string `json:"url,omitempty"`
 }
 
-// WithURL returns a copy of i carrying url. Set by the service layer
-// only after the caller's access has already been checked - never
-// populated here.
+// WithURL returns a copy of i carrying url; never populated here.
 func (i ImageDataDTO) WithURL(url string) ImageDataDTO {
 	i.URL = url
 	return i
@@ -74,8 +71,6 @@ func (i ImageDataDTO) ConvertFromDTO() ImageData {
 		Type:       i.Type,
 	}
 }
-
-// Models to create/update an image
 
 type ImageFile struct {
 	ID         uuid.UUID // No json tag as it will never be filled through an unmarshal

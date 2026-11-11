@@ -8,7 +8,6 @@ import (
 	"github.com/wagslane/go-rabbitmq"
 )
 
-// PublisherInterface defines the behavior of a publisher
 type PublisherInterface interface {
 	Publish(body []byte, routingKeys []string, options ...func(*rabbitmq.PublishOptions)) error
 	Close()
@@ -34,10 +33,9 @@ func NewPublisher(conn *rabbitmq.Conn, exchangeName string) (*Publisher, error) 
 }
 
 // Publish marshals event.Payload and sends it to event.RoutingKey.
-// event_id and schema_version travel as AMQP headers (not in the JSON
-// body) so transport metadata stays separate from the business payload;
-// a zero EventID gets one generated here so every call site doesn't have
-// to remember to set it.
+// event_id and schema_version travel as AMQP headers, not in the JSON
+// body; a zero EventID gets one generated here so callers don't have to
+// remember to set it.
 func (p *Publisher) Publish(event Event) error {
 	message, err := json.Marshal(event.Payload)
 	if err != nil {
@@ -46,7 +44,9 @@ func (p *Publisher) Publish(event Event) error {
 
 	eventID := event.EventID
 	if eventID == uuid.Nil {
-		eventID = uuid.New()
+		// Time-ordered (v7), not random v4; mirrors shared/models.NewID
+		// without depending on that package from here.
+		eventID = uuid.Must(uuid.NewV7())
 	}
 
 	return p.publisher.Publish(

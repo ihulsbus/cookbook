@@ -17,7 +17,6 @@ const (
 	VisibilityPublic  Visibility = "public"
 )
 
-// Valid reports whether v is one of the defined Visibility values.
 func (v Visibility) Valid() bool {
 	switch v {
 	case VisibilityPrivate, VisibilityShared, VisibilityPublic:
@@ -27,24 +26,20 @@ func (v Visibility) Valid() bool {
 	}
 }
 
-// RecipeListScope narrows GET /recipe (KIT-30) to a subset of what's
-// otherwise visible to the requester.
+// RecipeListScope narrows GET /recipe to a subset of what's otherwise
+// visible to the requester.
 type RecipeListScope string
 
 const (
-	// ScopeMine returns only recipes the requester owns.
 	ScopeMine RecipeListScope = "mine"
 	// ScopeShared returns recipes shared with the requester directly or
-	// via one of their groups (owner excluded) - KIT-35, resolved against
-	// the recipe_shares table (KIT-32).
+	// via a group (owner excluded), resolved against recipe_shares.
 	ScopeShared RecipeListScope = "shared"
-	// ScopeAll (the default) returns recipes the requester owns, plus
-	// every public recipe - the same set GET /recipe always returned
-	// before ?scope existed.
+	// ScopeAll (the default) returns owned plus every public recipe -
+	// the set GET /recipe always returned before ?scope existed.
 	ScopeAll RecipeListScope = "all"
 )
 
-// Valid reports whether s is one of the defined RecipeListScope values.
 func (s RecipeListScope) Valid() bool {
 	switch s {
 	case ScopeMine, ScopeShared, ScopeAll:
@@ -54,21 +49,20 @@ func (s RecipeListScope) Valid() bool {
 	}
 }
 
-// Recipe struct to hold recipe data
 type Recipe struct {
-	ID           uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	ID           uuid.UUID      `gorm:"type:uuid;default:uuidv7();primaryKey"`
 	CreatedAt    time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt    time.Time      `gorm:"autoUpdateTime"`
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 	Name         string         `gorm:"not null" json:"RecipeName" example:"apple pie"`
 	Description  string         `gorm:"size:65535;not null" json:"Description" example:"pie with apples"`
 	ServingCount int            `gorm:"default:0" json:"serving_count" example:"4"`
-	// OwnerID is the OIDC sub of the recipe's owner. Set from the
-	// authenticated Principal on create and never from client input.
+	// OwnerID is set from the authenticated Principal on create, never
+	// from client input.
 	OwnerID uuid.UUID `gorm:"type:uuid;not null;index" json:"owner_id"`
-	// Visibility controls read access for non-owners: private (owner only),
-	// shared (owner plus explicit shares - see shared/authz), or public
-	// (every authenticated user). Defaults to private.
+	// Visibility controls read access for non-owners: private (owner
+	// only), shared (plus explicit shares - see shared/authz), or public
+	// (any authenticated user).
 	Visibility Visibility `gorm:"type:varchar(10);not null;default:'private';index" json:"visibility" example:"private"`
 }
 
@@ -148,7 +142,6 @@ const (
 	SharePermissionWrite SharePermission = "write"
 )
 
-// Valid reports whether p is one of the defined SharePermission values.
 func (p SharePermission) Valid() bool {
 	switch p {
 	case SharePermissionRead, SharePermissionWrite:
@@ -159,12 +152,11 @@ func (p SharePermission) Valid() bool {
 }
 
 // ShareTargetType identifies what a recipe_shares row's TargetID refers
-// to: a single user (by OIDC sub / UUID) or every member of a group, by
-// whatever identifier that group is carried as in the OIDC token's
-// `groups` claim - a name for an ordinary Authentik group (e.g.
-// "cookbook-admin"), or a UUID for a self-service household (KIT-34).
-// See authentik/blueprints/cookbook-oidc.yaml's groups scope mapping
-// for which groups get which shape.
+// to: a single user (OIDC sub) or every member of a group, identified
+// however that group appears in the OIDC token's `groups` claim - a
+// name for an ordinary Authentik group, or a UUID for a self-service
+// household. See authentik/blueprints/cookbook-oidc.yaml's groups scope
+// mapping.
 type ShareTargetType string
 
 const (
@@ -172,7 +164,6 @@ const (
 	ShareTargetGroup ShareTargetType = "group"
 )
 
-// Valid reports whether t is one of the defined ShareTargetType values.
 func (t ShareTargetType) Valid() bool {
 	switch t {
 	case ShareTargetUser, ShareTargetGroup:
@@ -182,30 +173,23 @@ func (t ShareTargetType) Valid() bool {
 	}
 }
 
-// RecipeShare is one explicit access grant on a recipe (KIT-32), to a
-// single user or every member of a group - layered on top of Visibility,
-// not a replacement for it: a private recipe can still have explicit
-// shares, independently of whatever Visibility is set to.
+// RecipeShare is one explicit access grant on a recipe, to a user or a
+// group - layered on top of Visibility, not a replacement for it.
 //
 // Composite primary key (RecipeID, TargetType, TargetID): at most one
-// grant per target per recipe, so a second PUT for the same target
-// upserts the existing row (changing its Permission) rather than
-// creating a duplicate.
+// grant per target per recipe, so a repeat PUT for the same target
+// upserts rather than duplicates.
 type RecipeShare struct {
 	RecipeID uuid.UUID `gorm:"type:uuid;primaryKey" json:"recipe_id"`
 	// TargetType and TargetID together identify who this share is for -
-	// see ShareTargetType. TargetID is a UUID string for "user" (the
-	// OIDC sub) or, for "group", whatever identifier that group carries
-	// in the `groups` claim (a name, or a household's UUID - see
-	// ShareTargetType); stored as plain text either way since both
-	// share one column.
+	// see ShareTargetType. Both share one TargetID column, stored as
+	// plain text regardless of which type it is.
 	TargetType ShareTargetType `gorm:"type:varchar(10);primaryKey" json:"target_type" example:"user"`
 	TargetID   string          `gorm:"primaryKey" json:"target_id"`
 	Permission SharePermission `gorm:"type:varchar(10);not null" json:"permission" example:"read"`
-	// CreatedBy is always the recipe's owner - only the owner may manage
-	// shares (KIT-32) - kept as its own column rather than inferred from
-	// the recipe row so the grant's origin survives an ownership change,
-	// if that's ever introduced.
+	// CreatedBy is always the recipe's owner (only the owner may manage
+	// shares), kept as its own column rather than inferred from the
+	// recipe row so it survives a future ownership change.
 	CreatedBy uuid.UUID `gorm:"type:uuid;not null" json:"created_by"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 }

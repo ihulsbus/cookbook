@@ -9,17 +9,14 @@ type Config struct {
 	RabbitMQ RabbitMQConfig
 }
 
-// GlobalConfig holds global configuration items
 type GlobalConfig struct {
 	LogLevel   string
 	ListenPort int
 	// InternalListenPort, when set, serves a service's internal-only API
-	// (not meant to be reachable through the ingress) - e.g.
-	// recipe-service's GET /internal/v1/recipe/:id/access (KIT-28).
+	// not meant to be reachable through the ingress.
 	InternalListenPort int
 }
 
-// DatabaseConfig holds database configuration items
 type DatabaseConfig struct {
 	Host     string
 	Username string
@@ -31,12 +28,12 @@ type DatabaseConfig struct {
 }
 
 type OauthConfig struct {
-	// Issuer and Audience validate inbound tokens (shared/oidc.NewModule).
+	// Issuer and Audience validate inbound tokens.
 	Issuer   string
 	Audience string
-	// ClientID and ClientSecret authenticate this service's own outbound
-	// requests to other services via a client-credentials grant
-	// (shared/httpclient.NewHTTPClient). Not used for inbound validation.
+	// ClientID/ClientSecret authenticate this service's own outbound
+	// requests via a client-credentials grant; not used for inbound
+	// validation.
 	ClientID     string
 	ClientSecret string
 }

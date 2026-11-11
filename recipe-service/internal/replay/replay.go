@@ -15,27 +15,15 @@ type republishLogger interface {
 	Infof(format string, args ...interface{})
 }
 
-// RepublishAccess replays the current access state of every recipe in db -
-// including soft-deleted ones, so a consumer that missed the original
-// delete event still learns about it - as a recipe.access.changed outbox
-// row (KIT-31). It's for bootstrapping a new consumer's projection, or
-// recovering one that's known to have missed events, not for normal
-// operation.
+// RepublishAccess replays every recipe's current access state (including
+// soft-deleted ones) as a recipe.access.changed outbox row, for
+// bootstrapping or recovering a consumer's projection - not for normal
+// operation. Rows go through the same outbox/Relay path as every other
+// recipe event, so a crash partway through is safe to re-run.
 //
-// Rows are written to the outbox table, the same as every other recipe
-// event (see RecipeService.buildOutboxEntry) - never published directly -
-// so delivery goes through the existing Relay and gets its
-// retry-on-failure behaviour for free, and a crash partway through a
-// republish just leaves the remaining recipes to pick up on a re-run
-// (outbox inserts for already-processed recipes are already durable).
-//
-// Each row's Version is the recipe's own UpdatedAt (or DeletedAt for a
-// soft-deleted recipe, which GORM's default soft delete leaves UpdatedAt
-// unchanged for), i.e. the real historical point the state last changed,
-// not "now". That makes a replay a true no-op for a consumer already at
-// that Version - it drops the row as stale (Version <= stored) exactly
-// like it would an out-of-order duplicate of the original event - rather
-// than forcing every consumer's projection row to bump.
+// Each row's Version is the recipe's own UpdatedAt (or DeletedAt if
+// soft-deleted), not "now", so a replay is a true no-op for a consumer
+// already at that version rather than forcing its projection to bump.
 func RepublishAccess(ctx context.Context, db *gorm.DB, logger republishLogger) error {
 	const batchSize = 200
 

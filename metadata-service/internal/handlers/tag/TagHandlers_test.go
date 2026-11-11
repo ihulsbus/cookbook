@@ -26,8 +26,6 @@ var (
 	}
 )
 
-// ====== TagService ======
-
 func (s *TagServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.TagDTO], error) {
 	switch tag.Name {
 	case "findall":

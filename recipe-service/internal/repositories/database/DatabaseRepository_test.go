@@ -36,8 +36,7 @@ var (
 	}
 
 	// noopBuildOutbox is the buildOutbox callback for tests that don't
-	// care about the shares a mutation's transaction reads - it just
-	// returns testOutbox regardless.
+	// care about the shares read - it just returns testOutbox regardless.
 	noopBuildOutbox = func(shares []models.RecipeShare) (rmq.OutboxEvent, error) {
 		return testOutbox, nil
 	}
@@ -48,12 +47,12 @@ func newMockDatabase(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	var mockDB *gorm.DB
 
 	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
-			SlowThreshold:             time.Second, // Slow SQL threshold
-			LogLevel:                  logger.Info, // Log level
-			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-			Colorful:                  false,       // Disable color
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  false,
 		},
 	)
 
@@ -107,7 +106,7 @@ func TestRecipeFindAll_OK(t *testing.T) {
 				recipe.Visibility,
 			))
 
-	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeAll)
+	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeAll, "", "")
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 1)
@@ -127,7 +126,7 @@ func TestRecipeFindAll_Err(t *testing.T) {
 		WithArgs(requesterID, models.VisibilityPublic).
 		WillReturnError(errors.New("error"))
 
-	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeAll)
+	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeAll, "", "")
 
 	assert.Error(t, err)
 	assert.Len(t, data, 0)
@@ -148,11 +147,43 @@ func TestRecipeFindAll_Empty(t *testing.T) {
 		WithArgs(requesterID, models.VisibilityPublic, 25).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count", "owner_id", "visibility"}))
 
-	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeAll)
+	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeAll, "", "")
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 0)
 	assert.Equal(t, int64(0), total)
+}
+
+// TestRecipeFindAll_SortCreatedAtDesc confirms a validated sort
+// column/direction actually reaches the generated SQL as an ORDER BY
+// clause.
+func TestRecipeFindAll_SortCreatedAtDesc(t *testing.T) {
+	db, mock := newMockDatabase(t)
+	r := NewDatabaseRepository(db)
+	pagination := models.NormalizePagination(1, 25)
+	requesterID := recipe.OwnerID
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT count(*) FROM "recipes" WHERE (owner_id = $1 OR visibility = $2) AND "recipes"."deleted_at" IS NULL`)).
+		WithArgs(requesterID, models.VisibilityPublic).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "recipes" WHERE (owner_id = $1 OR visibility = $2) AND "recipes"."deleted_at" IS NULL ORDER BY created_at desc LIMIT $3`)).
+		WithArgs(requesterID, models.VisibilityPublic, 25).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "name", "description", "serving_count", "owner_id", "visibility"}).
+			AddRow(
+				recipe.ID,
+				recipe.Name,
+				recipe.Description,
+				recipe.ServingCount,
+				recipe.OwnerID,
+				recipe.Visibility,
+			))
+
+	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeAll, "created_at", "desc")
+
+	assert.NoError(t, err)
+	assert.Len(t, data, 1)
+	assert.Equal(t, int64(1), total)
 }
 
 func TestRecipeFindAll_ScopeMine(t *testing.T) {
@@ -177,7 +208,7 @@ func TestRecipeFindAll_ScopeMine(t *testing.T) {
 				recipe.Visibility,
 			))
 
-	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeMine)
+	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeMine, "", "")
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 1)
@@ -185,7 +216,7 @@ func TestRecipeFindAll_ScopeMine(t *testing.T) {
 }
 
 // TestRecipeFindAll_ScopeShared_NoGroups: requesterGroups empty - only the
-// direct-user-share subquery branch should run (KIT-35).
+// direct-user-share subquery branch should run.
 func TestRecipeFindAll_ScopeShared_NoGroups(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
@@ -208,7 +239,7 @@ func TestRecipeFindAll_ScopeShared_NoGroups(t *testing.T) {
 				recipe.Visibility,
 			))
 
-	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeShared)
+	data, total, err := r.FindAll(pagination, requesterID, nil, models.ScopeShared, "", "")
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 1)
@@ -216,7 +247,7 @@ func TestRecipeFindAll_ScopeShared_NoGroups(t *testing.T) {
 }
 
 // TestRecipeFindAll_ScopeShared_WithGroups: requesterGroups non-empty -
-// the group-share subquery branch is also included (KIT-35).
+// the group-share subquery branch is also included.
 func TestRecipeFindAll_ScopeShared_WithGroups(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	r := NewDatabaseRepository(db)
@@ -240,7 +271,7 @@ func TestRecipeFindAll_ScopeShared_WithGroups(t *testing.T) {
 				recipe.Visibility,
 			))
 
-	data, total, err := r.FindAll(pagination, requesterID, requesterGroups, models.ScopeShared)
+	data, total, err := r.FindAll(pagination, requesterID, requesterGroups, models.ScopeShared, "", "")
 
 	assert.NoError(t, err)
 	assert.Len(t, data, 1)

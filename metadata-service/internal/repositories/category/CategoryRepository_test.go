@@ -20,8 +20,6 @@ var (
 	}
 )
 
-// ========================================================================================================
-
 func TestCategoryFindAll_OK(t *testing.T) {
 	db, mock := co.NewMockDatabase(t)
 	r := NewCategoryRepository(db)

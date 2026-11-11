@@ -26,8 +26,6 @@ var (
 	}
 )
 
-// ====== CategoryService ======
-
 func (s *CategoryServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.CategoryDTO], error) {
 	switch category.Name {
 	case "findall":

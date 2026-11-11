@@ -13,8 +13,7 @@ import (
 )
 
 func ImageService(ctx context.Context) {
-	// Keeps the recipe_access projection current; no synchronous call to
-	// recipe-service happens at startup (KIT-79).
+	// Keeps the recipe_access projection current without a synchronous call to recipe-service.
 	consumer, err := c.Projector.StartConsumer(c.RabbitMQClient.Connection, "image-service-recipe-access", "cookbook")
 	if err != nil {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
@@ -29,13 +28,8 @@ func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
-	// Logging
 	router.Use(m.Logger(c.Logger))
-
-	// Panic recovery
 	router.Use(gin.Recovery())
-
-	// Cors handler
 	router.Use(cors.New(c.Cors))
 
 	// Health check endpoints (no auth required)
@@ -50,17 +44,8 @@ func httpServer(ctx context.Context) {
 	{
 		image := v2.Group("/images")
 		{
-			// Images attached to a recipe (EntityType "recipe") are
-			// authorized against that recipe; images attached to
-			// anything else (e.g. "ingredient") have no owner, so any
-			// authenticated caller may act on them (KIT-29). The
-			// resolve-then-authorize logic lives in HttpHandler, since
-			// Find/Update/Delete take an IMAGE id and need a DB lookup
-			// first to learn the owning recipe - RequireAuth is the only
-			// thing enforceable declaratively here.
-			//
-			// FindAll (list every image) has no cheap per-row filter
-			// against the projection, so it's admin-only instead.
+			// Resolve-then-authorize (DB lookup of the owning recipe) lives in
+			// HttpHandler since Find/Update/Delete only have an image id to start from.
 			adminReadImage := image.Group("")
 			adminReadImage.Use(c.OIDCModule.RequireRole("cookbook-admin"))
 			{
@@ -96,7 +81,6 @@ func httpServer(ctx context.Context) {
 
 	}
 
-	// Server startup
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),

@@ -10,27 +10,22 @@ import (
 	rmq "github.com/ihulsbus/cookbook/shared/rabbitmq"
 )
 
-// HTTPDoer is the minimal interface shared/httpclient's clients satisfy
-// (HTTPClient, EnhancedHTTPClient both have a Do(req) method with this
-// shape). Kept local, mirroring shared/recipeclient's pattern, so this
-// package depends on an interface rather than a specific client type.
+// HTTPDoer is kept local (rather than depending on a concrete client
+// type) so any client with a Do method - e.g.
+// shared/httpclient.EnhancedHTTPClient - can be used here.
 type HTTPDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// NewRecipeServiceFallback builds a MissFallback (see
-// Authorizer.SetMissFallback) that asks recipe-service's internal access
-// endpoint for the authoritative RecipeAccessState on a projection miss -
-// the window right after a recipe is created, before its event has
-// reached this service's Projector - and upserts the result into
-// projector before the Authorizer retries its lookup.
+// NewRecipeServiceFallback builds a MissFallback that asks recipe-service's
+// internal access endpoint for the authoritative RecipeAccessState on a
+// projection miss, and upserts the result into projector before the
+// Authorizer retries its lookup.
 //
 // client should be a shared/httpclient.EnhancedHTTPClient (retry + circuit
-// breaker; see shared/httpclient.NewInternalHTTPClient, which skips that
-// client's OAuth client-credentials flow since this is a network-internal
-// call, not one crossing the OIDC trust boundary). baseURL is
-// recipe-service's internal (non-ingress) base URL, e.g.
-// "http://recipe-service.cookbook.svc.cluster.local:9090".
+// breaker) built via NewInternalHTTPClient, since this network-internal
+// call skips the OAuth client-credentials flow. baseURL is recipe-service's
+// internal (non-ingress) base URL.
 func NewRecipeServiceFallback(client HTTPDoer, baseURL string, projector *Projector) MissFallback {
 	return func(ctx context.Context, recipeID uuid.UUID) error {
 		url := fmt.Sprintf("%s/internal/v1/recipe/%s/access", baseURL, recipeID)

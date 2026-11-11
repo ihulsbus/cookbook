@@ -33,8 +33,6 @@ func (*searchRepositoryMock) SearchInstruction(request m.InstructionSearchReques
 	}
 }
 
-// ======================================================================
-
 func TestSearchInstruction_OK(t *testing.T) {
 	s := NewSearchService(&searchRepositoryMock{})
 

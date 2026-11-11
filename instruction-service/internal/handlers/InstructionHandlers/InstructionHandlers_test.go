@@ -74,8 +74,6 @@ func (s *InstructionServiceMock) Delete(recipeID uuid.UUID) error {
 	}
 }
 
-// ========================================================================================================
-
 func TestGetInstruction_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewInstructionHandlers(&InstructionServiceMock{}, &models.LoggerInterfaceMock{})

@@ -13,7 +13,7 @@ import (
 )
 
 type RecipeService interface {
-	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error)
+	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope models.RecipeListScope, sort string) (models.PaginatedResponse[models.RecipeDTO], error)
 	FindSingle(recipe models.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (models.RecipeDTO, error)
 	Create(recipe models.RecipeDTO, ownerID uuid.UUID) (models.RecipeDTO, error)
 	Update(recipe models.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (models.RecipeDTO, error)
@@ -37,11 +37,9 @@ func NewHttpHandlers(recipes RecipeService, logger m.LoggerInterface) *HttpHandl
 }
 
 // principal extracts the authenticated caller's user ID and group
-// memberships from the Gin context (set by oidc.Module.RequireAuth, which
-// every route in this service's router already runs), parsing the user ID
-// as a UUID. It only fails when RequireAuth wasn't actually run upstream,
-// or the OIDC provider's `sub` claim isn't a UUID - both treated as 401,
-// since there's no valid caller identity to authorize against.
+// memberships from the Gin context set by oidc.Module.RequireAuth. Fails
+// with 401 if RequireAuth wasn't run upstream, or the `sub` claim isn't a
+// UUID.
 func (h HttpHandlers) principal(ctx *gin.Context) (uuid.UUID, []string, bool) {
 	p, ok := oidc.PrincipalFromContext(ctx)
 	if !ok {
@@ -66,9 +64,9 @@ func (h HttpHandlers) principalID(ctx *gin.Context) (uuid.UUID, bool) {
 	return id, ok
 }
 
-// GetAll serves GET /recipe. ?scope=mine|shared|all (KIT-30/KIT-35) narrows
-// the result; omitted defaults to "all" (owned + public), the behavior
-// this endpoint always had before ?scope existed.
+// GetAll serves GET /recipe. ?scope=mine|shared|all narrows the result;
+// omitted defaults to "all" (owned + public). ?sort=created_at:desc orders
+// the result; omitted leaves ordering unspecified.
 func (h HttpHandlers) GetAll(ctx *gin.Context) {
 	requesterID, requesterGroups, ok := h.principal(ctx)
 	if !ok {
@@ -82,11 +80,12 @@ func (h HttpHandlers) GetAll(ctx *gin.Context) {
 	}
 
 	scope := models.RecipeListScope(ctx.Query("scope"))
+	sort := ctx.Query("sort")
 
-	recipeDTO, err := h.recipeService.FindAll(pagination, requesterID, requesterGroups, scope)
+	recipeDTO, err := h.recipeService.FindAll(pagination, requesterID, requesterGroups, scope, sort)
 	if err != nil {
 		switch err.Error() {
-		case "invalid scope":
+		case "invalid scope", "invalid sort":
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		default:
@@ -172,8 +171,7 @@ func (h HttpHandlers) Update(ctx *gin.Context) {
 		return
 	}
 
-	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
-	// perhaps separate create/update DTO's are needed
+	// Use the path ID, not any ID in the body, to prevent spoofing.
 	recipeDTO.ID = id
 
 	recipeDTO, err = h.recipeService.Update(recipeDTO, requesterID, requesterGroups)
@@ -221,9 +219,8 @@ func (h HttpHandlers) Delete(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// GetShares serves GET /recipe/:id/shares (KIT-32) - the recipe's owner
-// only; see RecipeService.ListShares for why a non-owner gets the same
-// "not found" FindSingle uses rather than a distinct permission error.
+// GetShares is owner-only; see RecipeService.ListShares for why a
+// non-owner gets "not found" rather than a distinct permission error.
 func (h HttpHandlers) GetShares(ctx *gin.Context) {
 	requesterID, ok := h.principalID(ctx)
 	if !ok {
@@ -251,8 +248,8 @@ func (h HttpHandlers) GetShares(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, shares)
 }
 
-// UpsertShare serves PUT /recipe/:id/shares (KIT-32): creates a share, or
-// updates its permission if one already exists for the same target.
+// UpsertShare creates a share, or updates its permission if one already
+// exists for the same target.
 func (h HttpHandlers) UpsertShare(ctx *gin.Context) {
 	requesterID, ok := h.principalID(ctx)
 	if !ok {
@@ -289,8 +286,6 @@ func (h HttpHandlers) UpsertShare(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, shareDTO)
 }
 
-// DeleteShare serves DELETE /recipe/:id/shares/:targetType/:targetId
-// (KIT-32).
 func (h HttpHandlers) DeleteShare(ctx *gin.Context) {
 	requesterID, ok := h.principalID(ctx)
 	if !ok {
@@ -330,14 +325,12 @@ func (h HttpHandlers) DeleteShare(ctx *gin.Context) {
 	ctx.Status(http.StatusNoContent)
 }
 
-// visibilityRequest is PUT /recipe/:id/visibility's body (KIT-32).
 type visibilityRequest struct {
 	Visibility models.Visibility `json:"visibility"`
 }
 
-// UpdateVisibility serves PUT /recipe/:id/visibility (KIT-32) - a
-// lighter-weight alternative to a full recipe Update when only the
-// visibility needs to change.
+// UpdateVisibility is a lighter-weight alternative to a full Update when
+// only the visibility needs to change.
 func (h HttpHandlers) UpdateVisibility(ctx *gin.Context) {
 	requesterID, ok := h.principalID(ctx)
 	if !ok {

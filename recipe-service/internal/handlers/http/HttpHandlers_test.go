@@ -33,9 +33,8 @@ var (
 	}
 )
 
-// authedContext builds a gin test context with testRequesterID set as the
-// authenticated principal, as oidc.Module.RequireAuth would before any
-// handler in this package runs.
+// authedContext builds a gin context with testRequesterID set as the
+// authenticated principal, mimicking oidc.Module.RequireAuth.
 func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
@@ -43,9 +42,7 @@ func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context
 	return c
 }
 
-// ====== RecipeService ======
-
-func (s *RecipeServiceMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope) (m.PaginatedResponse[m.RecipeDTO], error) {
+func (s *RecipeServiceMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope, sort string) (m.PaginatedResponse[m.RecipeDTO], error) {
 	switch recipe.Name {
 	case "findall":
 		return m.PaginatedResponse[m.RecipeDTO]{
@@ -102,10 +99,8 @@ func (s *RecipeServiceMock) Delete(recipeDTO m.RecipeDTO, requesterID uuid.UUID)
 }
 
 // shareTrigger controls ListShares/UpsertShare/DeleteShare/UpdateVisibility
-// mock responses - set per test before calling the handler, since these
-// handlers' only input besides the body is the recipe ID path param
-// (shareTrigger stands in for a dedicated dispatch field, mirroring how
-// the other mocks above dispatch on recipe.Name/recipeDTO.Name).
+// mock responses, set per test - these handlers have no DTO field to
+// dispatch on like the mocks above do via recipe.Name.
 var shareTrigger string
 
 func (s *RecipeServiceMock) ListShares(recipeID uuid.UUID, requesterID uuid.UUID) ([]m.RecipeShareDTO, error) {
@@ -158,15 +153,12 @@ func (s *RecipeServiceMock) UpdateVisibility(recipeID uuid.UUID, requesterID uui
 	}
 }
 
-// Logging
 type LoggerInterfaceMock struct{}
 
 func (l *LoggerInterfaceMock) Debugf(format string, args ...interface{}) {}
 func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
-
-// ==================================================================================================
 
 func TestPrincipalID_MissingPrincipal(t *testing.T) {
 	gin.SetMode(gin.TestMode)
@@ -248,8 +240,8 @@ func TestRecipeGetAll_Err(t *testing.T) {
 	assert.Equal(t, `{"error":"error"}`, string(body))
 }
 
-// TestRecipeGetAll_InvalidScope: the service's "invalid scope" error
-// (KIT-30) maps to 400, not the generic 500 every other service error gets.
+// TestRecipeGetAll_InvalidScope: the service's "invalid scope" error maps
+// to 400, not the generic 500 every other service error gets.
 func TestRecipeGetAll_InvalidScope(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewHttpHandlers(&RecipeServiceMock{}, &LoggerInterfaceMock{})
@@ -826,11 +818,9 @@ func TestRecipeDeleteShare_OK(t *testing.T) {
 
 	resp := w.Result()
 
-	// Matches TestRecipeDelete_OK's assertion for the same reason: this
-	// harness's httptest.ResponseRecorder only picks up the real status
-	// code once something is actually written to the body, and
-	// ctx.Status(204) with no body never triggers that - it's seen here
-	// as 200, not the real 204 DeleteShare sends.
+	// httptest.ResponseRecorder only picks up the real status code once
+	// something is written to the body; ctx.Status(204) with no body
+	// never triggers that, so this sees 200, not the real 204.
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 }
 

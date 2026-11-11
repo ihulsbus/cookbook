@@ -105,8 +105,7 @@ func (h *DifficultyLevelHandlers) Update(ctx *gin.Context) {
 		return
 	}
 
-	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
-	// perhaps separate create/update DTO's are needed
+	// Use the URL param ID, not whatever ID the body may contain.
 	difficultyLevelDTO.ID = id
 
 	difficultyLevelDTO, err = h.difficultyLevelService.Update(difficultyLevelDTO)

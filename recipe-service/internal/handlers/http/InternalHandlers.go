@@ -15,11 +15,9 @@ type InternalRecipeService interface {
 	GetAccessState(recipeID uuid.UUID) (rmq.RecipeAccessState, error)
 }
 
-// InternalHandlers serves recipe-service's internal-only API: endpoints
-// meant for other services (shared/authz's projection-miss fallback,
-// KIT-28), not for clients. Must be mounted on a router that is never
-// exposed through the ingress - see httpInternalServer in
-// recipe-service.go, and k8s/values.yaml's "internal" port.
+// InternalHandlers serves endpoints meant for other services (shared/authz's
+// projection-miss fallback), not clients. Must be mounted on a router never
+// exposed through the ingress - see internalHttpServer in recipe-service.go.
 type InternalHandlers struct {
 	recipeService InternalRecipeService
 	logger        m.LoggerInterface
@@ -32,10 +30,9 @@ func NewInternalHandlers(recipes InternalRecipeService, logger m.LoggerInterface
 	}
 }
 
-// GetAccess serves GET /internal/v1/recipe/:id/access, the authoritative
-// RecipeAccessState for a recipe - called by another service's
-// shared/authz when its own projection hasn't caught up yet (e.g. right
-// after recipe.created, before the event has been consumed).
+// GetAccess returns the authoritative RecipeAccessState for a recipe,
+// called by another service's shared/authz when its own projection hasn't
+// caught up yet (e.g. right after recipe.created).
 func (h InternalHandlers) GetAccess(ctx *gin.Context) {
 	recipeID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {

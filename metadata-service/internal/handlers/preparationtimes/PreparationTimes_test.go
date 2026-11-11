@@ -28,8 +28,6 @@ var (
 	}
 )
 
-// ====== PreparationTimeService ======
-
 func (s *PreparationTimeServiceMock) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.PreparationTime], error) {
 	switch preparationTime.Duration {
 	case 1 * time.Minute:
@@ -43,8 +41,7 @@ func (s *PreparationTimeServiceMock) FindAll(pagination m.PaginationRequest) (m.
 }
 
 func (s *PreparationTimeServiceMock) FindSingle(input m.PreparationTime) (m.PreparationTime, error) {
-	// Use the global preparationTime variable's Duration to determine behavior
-	// The handler only passes the ID, so we need to check against global state
+	// Dispatch on global state since input only carries the ID.
 	switch preparationTime.Duration {
 	case 1 * time.Minute:
 		result := input
@@ -77,8 +74,7 @@ func (s *PreparationTimeServiceMock) Update(preparationTime m.PreparationTime) (
 }
 
 func (s *PreparationTimeServiceMock) Delete(input m.PreparationTime) error {
-	// Use the global preparationTime variable's Duration to determine behavior
-	// The handler only passes the ID, so we need to check against global state
+	// Dispatch on global state since input only carries the ID.
 	switch preparationTime.Duration {
 	case 1 * time.Minute:
 		return nil

@@ -14,24 +14,20 @@ import (
 	"github.com/sony/gobreaker"
 )
 
-// RetryConfig defines retry behavior
 type RetryConfig struct {
-	MaxRetries     int           // Maximum number of retry attempts (default: 3)
-	InitialBackoff time.Duration // Initial backoff duration (default: 100ms)
-	MaxBackoff     time.Duration // Maximum backoff duration (default: 5s)
-	BackoffFactor  float64       // Backoff multiplier (default: 2.0 for exponential)
+	MaxRetries     int           // default: 3
+	InitialBackoff time.Duration // default: 100ms
+	MaxBackoff     time.Duration // default: 5s
+	BackoffFactor  float64       // default: 2.0 (exponential)
 }
 
-// CircuitBreakerConfig defines circuit breaker behavior
 type CircuitBreakerConfig struct {
-	MaxRequests uint32        // Max requests allowed in half-open state (default: 3)
-	Interval    time.Duration // Interval to clear internal counters (default: 60s)
-	Timeout     time.Duration // Time in open state before attempting recovery (default: 30s)
-	// ReadyToTrip is called when a request fails. If it returns true, circuit opens
+	MaxRequests uint32        // max requests allowed in half-open state (default: 3)
+	Interval    time.Duration // interval to clear internal counters (default: 60s)
+	Timeout     time.Duration // time in open state before attempting recovery (default: 30s)
 	ReadyToTrip func(counts gobreaker.Counts) bool
 }
 
-// EnhancedHTTPClient provides HTTP client with circuit breaker and retry logic
 type EnhancedHTTPClient struct {
 	Client         *http.Client
 	AuthToken      string
@@ -45,15 +41,12 @@ type EnhancedHTTPClient struct {
 	RetryConfig    RetryConfig
 	requestCounter uint64
 	requestMutex   sync.Mutex
-	// SkipAuth, when true, skips the OAuth client-credentials token dance
-	// entirely (no Authorization header is set). For calls that never
-	// cross the OIDC trust boundary - e.g. a network-isolated internal
-	// endpoint reachable only from inside the cluster, protected by a
-	// NetworkPolicy rather than a bearer token. See NewInternalHTTPClient.
+	// SkipAuth skips the OAuth client-credentials flow entirely (no
+	// Authorization header set), for calls that never cross the OIDC
+	// trust boundary. See NewInternalHTTPClient.
 	SkipAuth bool
 }
 
-// DefaultRetryConfig returns sensible retry defaults
 func DefaultRetryConfig() RetryConfig {
 	return RetryConfig{
 		MaxRetries:     3,
@@ -63,23 +56,19 @@ func DefaultRetryConfig() RetryConfig {
 	}
 }
 
-// DefaultCircuitBreakerConfig returns sensible circuit breaker defaults
 func DefaultCircuitBreakerConfig() CircuitBreakerConfig {
 	return CircuitBreakerConfig{
 		MaxRequests: 3,
 		Interval:    60 * time.Second,
 		Timeout:     30 * time.Second,
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
-			// Open circuit if:
-			// - At least 10 requests have been made
-			// - More than 50% of recent requests failed
+			// Open circuit once >=10 requests seen and >=50% failed.
 			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
 			return counts.Requests >= 10 && failureRatio >= 0.5
 		},
 	}
 }
 
-// NewEnhancedHTTPClient creates an HTTP client with circuit breaker and retry logic
 func NewEnhancedHTTPClient(
 	timeout time.Duration,
 	keycloakURL, keycloakRealm, clientID, clientSecret string,
@@ -91,7 +80,6 @@ func NewEnhancedHTTPClient(
 		panic("timeout must be between 1 and 30 seconds")
 	}
 
-	// Use defaults if not provided
 	if retryConfig == nil {
 		defaultRetry := DefaultRetryConfig()
 		retryConfig = &defaultRetry
@@ -101,7 +89,6 @@ func NewEnhancedHTTPClient(
 		cbConfig = &defaultCB
 	}
 
-	// Create circuit breaker
 	cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
 		Name:        "HTTPClient",
 		MaxRequests: cbConfig.MaxRequests,
@@ -129,12 +116,9 @@ func NewEnhancedHTTPClient(
 
 // NewInternalHTTPClient creates an EnhancedHTTPClient (retry + circuit
 // breaker) with SkipAuth set, for calls to a network-internal endpoint
-// that isn't behind the OIDC trust boundary - e.g. recipe-service's
-// internal-only access endpoint, called by shared/authz's projection-miss
-// fallback. Unlike NewEnhancedHTTPClient, this never attempts the OAuth
-// client-credentials flow, so it isn't affected by that flow's
-// still-Keycloak-shaped token endpoint (KeycloakURL/KeycloakRealm) - there
-// is nothing to authenticate to a NetworkPolicy.
+// that isn't behind the OIDC trust boundary (e.g. one protected by a
+// NetworkPolicy instead). It never attempts the OAuth client-credentials
+// flow.
 func NewInternalHTTPClient(
 	timeout time.Duration,
 	logger LoggerInterface,
@@ -146,16 +130,13 @@ func NewInternalHTTPClient(
 	return client
 }
 
-// Do sends an HTTP request with circuit breaker and retry logic
 func (h *EnhancedHTTPClient) Do(req *http.Request) (*http.Response, error) {
-	// Ensure auth token is present (skipped entirely for SkipAuth clients)
 	if !h.SkipAuth {
 		if err := h.ensureAuthToken(); err != nil {
 			return nil, fmt.Errorf("failed to ensure auth token: %w", err)
 		}
 	}
 
-	// Execute with circuit breaker
 	result, err := h.CircuitBreaker.Execute(func() (interface{}, error) {
 		return h.doWithRetry(req)
 	})
@@ -167,31 +148,27 @@ func (h *EnhancedHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return result.(*http.Response), nil
 }
 
-// doWithRetry performs the request with exponential backoff retry
 func (h *EnhancedHTTPClient) doWithRetry(req *http.Request) (*http.Response, error) {
 	var lastErr error
 	backoff := h.RetryConfig.InitialBackoff
 
 	for attempt := 0; attempt <= h.RetryConfig.MaxRetries; attempt++ {
-		// Clone the request for retry (body might be consumed)
+		// Request body may already be consumed, so clone before each attempt.
 		clonedReq, err := h.cloneRequest(req)
 		if err != nil {
 			return nil, fmt.Errorf("failed to clone request: %w", err)
 		}
 
-		// Set authorization header (SkipAuth clients never set one - see Do)
 		if !h.SkipAuth {
 			h.TokenMutex.RLock()
 			clonedReq.Header.Set("Authorization", "Bearer "+h.AuthToken)
 			h.TokenMutex.RUnlock()
 		}
 
-		// Execute request
 		start := time.Now()
 		resp, err := h.Client.Do(clonedReq)
 		elapsed := time.Since(start)
 
-		// Log request
 		statusCode := 0
 		if resp != nil {
 			statusCode = resp.StatusCode
@@ -199,32 +176,26 @@ func (h *EnhancedHTTPClient) doWithRetry(req *http.Request) (*http.Response, err
 		h.Logger.Debugf("HTTP request: method=%s, url=%s, attempt=%d/%d, duration=%s, status=%d, error=%v",
 			clonedReq.Method, clonedReq.URL.String(), attempt+1, h.RetryConfig.MaxRetries+1, elapsed, statusCode, err)
 
-		// Success cases
 		if err == nil && resp.StatusCode < 500 {
 			return resp, nil
 		}
 
-		// Store error for potential return
 		if err != nil {
 			lastErr = err
 		} else {
-			// Server error (5xx)
 			lastErr = fmt.Errorf("server returned %d status code", resp.StatusCode)
 			resp.Body.Close()
 		}
 
-		// Don't retry on last attempt
 		if attempt == h.RetryConfig.MaxRetries {
 			break
 		}
 
-		// Exponential backoff
 		h.Logger.Warnf("Request failed (attempt %d/%d): %v. Retrying in %s...",
 			attempt+1, h.RetryConfig.MaxRetries+1, lastErr, backoff)
 
 		time.Sleep(backoff)
 
-		// Calculate next backoff with jitter
 		backoff = time.Duration(float64(backoff) * h.RetryConfig.BackoffFactor)
 		if backoff > h.RetryConfig.MaxBackoff {
 			backoff = h.RetryConfig.MaxBackoff
@@ -234,7 +205,6 @@ func (h *EnhancedHTTPClient) doWithRetry(req *http.Request) (*http.Response, err
 	return nil, fmt.Errorf("request failed after %d attempts: %w", h.RetryConfig.MaxRetries+1, lastErr)
 }
 
-// ensureAuthToken ensures we have a valid auth token
 func (h *EnhancedHTTPClient) ensureAuthToken() error {
 	h.TokenMutex.RLock()
 	hasToken := h.AuthToken != ""
@@ -247,7 +217,7 @@ func (h *EnhancedHTTPClient) ensureAuthToken() error {
 	h.TokenMutex.Lock()
 	defer h.TokenMutex.Unlock()
 
-	// Double-check after acquiring write lock
+	// Re-check: another goroutine may have refreshed while we waited for the lock.
 	if h.AuthToken != "" {
 		return nil
 	}
@@ -255,7 +225,6 @@ func (h *EnhancedHTTPClient) ensureAuthToken() error {
 	return h.refreshAuthToken()
 }
 
-// refreshAuthToken obtains a new authentication token
 func (h *EnhancedHTTPClient) refreshAuthToken() error {
 	url := fmt.Sprintf("%s/realms/%s/protocol/openid-connect/token", h.KeycloakURL, h.KeycloakRealm)
 	data := fmt.Sprintf("client_id=%s&client_secret=%s&grant_type=client_credentials", h.ClientID, h.ClientSecret)
@@ -292,39 +261,32 @@ func (h *EnhancedHTTPClient) refreshAuthToken() error {
 	return nil
 }
 
-// cloneRequest creates a copy of the request for retry purposes
 func (h *EnhancedHTTPClient) cloneRequest(req *http.Request) (*http.Request, error) {
-	// Clone the request
 	cloned := req.Clone(context.Background())
 
-	// If there's a body, we need to restore it
+	// Body is a stream that gets consumed; read it once and give both the
+	// original and the clone their own copy.
 	if req.Body != nil {
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
 			return nil, err
 		}
 
-		// Restore original body
 		req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-		// Set cloned body
 		cloned.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	}
 
 	return cloned, nil
 }
 
-// GetCircuitBreakerState returns the current state of the circuit breaker
 func (h *EnhancedHTTPClient) GetCircuitBreakerState() gobreaker.State {
 	return h.CircuitBreaker.State()
 }
 
-// GetCircuitBreakerCounts returns current circuit breaker statistics
 func (h *EnhancedHTTPClient) GetCircuitBreakerCounts() gobreaker.Counts {
 	return h.CircuitBreaker.Counts()
 }
 
-// calculateBackoff calculates exponential backoff with jitter
 func calculateBackoff(attempt int, config RetryConfig) time.Duration {
 	backoff := float64(config.InitialBackoff) * math.Pow(config.BackoffFactor, float64(attempt))
 	if backoff > float64(config.MaxBackoff) {

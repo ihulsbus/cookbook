@@ -63,7 +63,6 @@ func TestReadiness_DatabaseUp(t *testing.T) {
 	db, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	// Mock successful database ping
 	mock.ExpectPing()
 
 	handler := NewHealthHandlers(db, &MockLogger{})
@@ -84,39 +83,11 @@ func TestReadiness_DatabaseUp(t *testing.T) {
 	assert.Equal(t, "UP", response.Checks["database"])
 }
 
-//func TestReadiness_DatabaseDown(t *testing.T) {
-//	gin.SetMode(gin.TestMode)
-//	db, mock, sqlDB := setupMockDB(t)
-//	defer sqlDB.Close()
-//
-//
-//	// Mock failed database ping
-//	mock.ExpectPing().WillReturnError(sql.ErrConnDone)
-//
-//	handler := NewHealthHandlers(db, &MockLogger{})
-//
-//	router := gin.New()
-//	router.GET("/health/ready", handler.Readiness)
-//
-//	req, _ := http.NewRequest("GET", "/health/ready", nil)
-//	w := httptest.NewRecorder()
-//	router.ServeHTTP(w, req)
-//
-//	assert.Equal(t, http.StatusServiceUnavailable, w.Code)
-//
-//	var response Response
-//	err := json.Unmarshal(w.Body.Bytes(), &response)
-//	assert.NoError(t, err)
-//	assert.Equal(t, "DOWN", response.Status)
-//	assert.Contains(t, response.Checks["database"], "DOWN")
-//}
-
 func TestStartup_DatabaseUp(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	db, mock, sqlDB := setupMockDB(t)
 	defer sqlDB.Close()
 
-	// Mock successful database ping
 	mock.ExpectPing()
 
 	handler := NewHealthHandlers(db, &MockLogger{})

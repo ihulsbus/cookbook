@@ -18,7 +18,6 @@ type PreparationTime struct {
 	repo PreparationTimeRepository
 }
 
-// NewPreparationTimeService creates a new PreparationTime instance
 func NewPreparationTimeService(preparationTimeRepo PreparationTimeRepository) *PreparationTime {
 	return &PreparationTime{
 		repo: preparationTimeRepo,

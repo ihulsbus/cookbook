@@ -128,8 +128,6 @@ func (r rabbitmqRepositoryMock) ImageUpdatedEvent(imageInput m.ImageData) error 
 
 func (LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 
-// ========================================================================================================
-
 func TestFindAllImage_OK(t *testing.T) {
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
@@ -177,8 +175,7 @@ func TestFindImage_OK(t *testing.T) {
 	assert.Equal(t, "https://example.com/signed", result.URL)
 }
 
-// TestFindImage_PresignErr: a presign failure is logged and the DTO is
-// still returned (without a URL), not treated as a request failure.
+// A presign failure is logged, not treated as a request failure.
 func TestFindImage_PresignErr(t *testing.T) {
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
@@ -315,23 +312,7 @@ func TestUpdateImage_S3Err(t *testing.T) {
 	assert.IsType(t, m.ImageDataDTO{}, result)
 }
 
-// TODO: Cannot be fixed until this is switched to actual mocks
-// func TestUpdateImage_Err(t *testing.T) {
-// 	imageFileDTO.File, _ = tc.CreateFile()
-// 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
-
-// 	createImage := m.ImageFileDTO{
-// 		EntityID:   imageDataDTO.EntityID,
-// 		EntityType: "updateFail",
-// 		Size:       imageDataDTO.Size,
-// 		Type:       imageDataDTO.Type,
-// 		File:       imageFileDTO.File,
-// 	}
-// 	result, err := s.Update(createImage)
-
-// 	assert.Error(t, err)
-// 	assert.IsType(t, m.ImageDataDTO{}, result)
-// }
+// TODO: TestUpdateImage_Err can't be written until this switches to real mocks.
 
 func TestUpdateImage_RabbitmqErr(t *testing.T) {
 	imageFileDTO.File, _ = tc.CreateFile()
@@ -351,7 +332,6 @@ func TestUpdateImage_RabbitmqErr(t *testing.T) {
 }
 
 func TestDeleteImage_OK(t *testing.T) {
-	// imageDataDTO.File = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "delete"
@@ -361,7 +341,6 @@ func TestDeleteImage_OK(t *testing.T) {
 }
 
 func TestDeleteImage_FindErr(t *testing.T) {
-	// imageDataDTO.File = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "findFail"
@@ -372,7 +351,6 @@ func TestDeleteImage_FindErr(t *testing.T) {
 }
 
 func TestDeleteImage_DeleteS3Err(t *testing.T) {
-	// imageDataDTO.File = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "deleteS3Fail"
@@ -383,7 +361,6 @@ func TestDeleteImage_DeleteS3Err(t *testing.T) {
 }
 
 func TestDeleteImage_DeleteErr(t *testing.T) {
-	// imageDataDTO.File = tc.CreateFile()
 	s := NewImageService(&databaseRepositoryMock{}, &rabbitmqRepositoryMock{}, &s3RepositoryMock{}, &LoggerInterfaceMock{})
 
 	imageDataDTO.EntityType = "deleteFail"

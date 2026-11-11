@@ -26,8 +26,6 @@ var (
 	}
 )
 
-// ====== CuisineTypeService ======
-
 func (s *CuisineTypeServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.CuisineTypeDTO], error) {
 	switch cuisineType.Name {
 	case "findall":

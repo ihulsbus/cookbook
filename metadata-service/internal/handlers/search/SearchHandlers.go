@@ -27,11 +27,9 @@ func NewSearchHandlers(searchs SearchService, logger m.LoggerInterface) *SearchH
 	}
 }
 
-// principalID extracts the authenticated caller's user ID from the Gin
-// context (set by oidc.Module.RequireAuth, which both routes below
-// already run). Needed so search results can be filtered to recipes the
-// caller may read (KIT-30) - without it, a search result would leak the
-// existence of private recipes to any authenticated caller.
+// principalID extracts the caller's user ID (set by oidc.Module.RequireAuth)
+// so results can be filtered to recipes they may read; without this, results
+// would leak the existence of private recipes to any authenticated caller.
 func (h *SearchHandlers) principalID(ctx *gin.Context) (uuid.UUID, bool) {
 	principal, ok := oidc.PrincipalFromContext(ctx)
 	if !ok {

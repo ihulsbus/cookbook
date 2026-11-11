@@ -8,7 +8,6 @@ type Consumer struct {
 	consumer *rabbitmq.Consumer
 }
 
-// Setup a new RabbitMQ consumer that handles incoming messages.
 func NewConsumer(connection *rabbitmq.Conn, queueName string, routingKeys []string, exchangeName string, handler func(d rabbitmq.Delivery) rabbitmq.Action) (*Consumer, error) {
 	options := []func(*rabbitmq.ConsumerOptions){
 		rabbitmq.WithConsumerOptionsQueueDurable,
@@ -18,7 +17,6 @@ func NewConsumer(connection *rabbitmq.Conn, queueName string, routingKeys []stri
 		rabbitmq.WithConsumerOptionsExchangeDurable,
 	}
 
-	// add routing keys dynamically
 	for _, key := range routingKeys {
 		options = append(options, rabbitmq.WithConsumerOptionsRoutingKey(key))
 	}

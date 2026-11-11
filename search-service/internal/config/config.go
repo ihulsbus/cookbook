@@ -32,15 +32,12 @@ var (
 	Cors       cors.Config
 	OIDCModule *oidc.Module
 
-	// Repositories
 	IngredientRepository *ir.IngredientRepository
 	MetadataRepository   *mr.MetadataRepository
 	RecipeRepository     *rr.RecipeRepository
 
-	// Services
 	SearchService *ss.SearchService
 
-	// Handlers
 	SearchHandlers *sh.SearchHandlers
 	HealthHandler  *healthh.Handlers
 )
@@ -69,15 +66,12 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
-	// Init repositories
 	IngredientRepository = ir.NewIngredientRepository(Configuration.IngredientService.BaseURL)
 	MetadataRepository = mr.NewMetadataRepository(Configuration.MetadataService.BaseURL)
 	RecipeRepository = rr.NewRecipeRepository(Configuration.RecipeService.BaseURL)
 
-	// Init services
 	SearchService = ss.NewSearchService(RecipeRepository, IngredientRepository, MetadataRepository)
 
-	// Init handlers
 	SearchHandlers = sh.NewSearchHandlers(SearchService)
 	HealthHandler = healthh.NewHealthHandlers(nil, Logger)
 }

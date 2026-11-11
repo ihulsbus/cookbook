@@ -4,11 +4,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	m "github.com/ihulsbus/cookbook/shared/models"
 )
 
-// presignTTL is how long a signed GET URL (KIT-72) stays valid.
 const presignTTL = 15 * time.Minute
 
 type S3Repository interface {
@@ -49,10 +47,8 @@ func NewImageService(databaseRepo DatabaseRepository, rabbitmqRepo RabbitMQRepos
 	}
 }
 
-// withPresignedURL attaches a signed GET URL to dto, best-effort: a
-// presign failure is logged and the DTO is still returned without a URL
-// rather than failing the whole request over it (consistent with how an
-// event-publish failure elsewhere in this service is handled).
+// Best-effort: a presign failure is logged and dto is returned without a URL
+// rather than failing the whole request.
 func (s ImageService) withPresignedURL(image m.ImageData, dto m.ImageDataDTO) m.ImageDataDTO {
 	url, err := s.s3Repo.PresignGetURL(image, presignTTL)
 	if err != nil {
@@ -62,9 +58,8 @@ func (s ImageService) withPresignedURL(image m.ImageData, dto m.ImageDataDTO) m.
 	return dto.WithURL(url)
 }
 
-// FindAll is admin-only at the router level (KIT-29) - a bulk listing
-// doesn't presign every row, since none of the admin tooling that uses
-// it needs to actually load the image bytes.
+// Doesn't presign every row - the admin tooling that calls this doesn't need
+// to load the image bytes.
 func (s ImageService) FindAll(pagination m.PaginationRequest) (m.PaginatedResponse[m.ImageDataDTO], error) {
 	images, total, err := s.databaseRepo.FindAll(pagination)
 	if err != nil {
@@ -99,14 +94,13 @@ func (s ImageService) Create(imageFileDTO m.ImageFileDTO) (m.ImageDataDTO, error
 	var imageFile m.ImageFile = imageFileDTO.ConvertFromDTO()
 	var err error
 
-	// generate the image ID we will use to identify the file in storage
-	imageFile.ID = uuid.New()
+	// Time-ordered ID, not the DB's uuidv7() default.
+	imageFile.ID = m.NewID()
 
 	if err := s.s3Repo.UploadImage(imageFile); err != nil {
 		return m.ImageDataDTO{}, err
 	}
 
-	// Create the model for the database
 	var imageData m.ImageData = m.ImageData{
 		ID:         imageFile.ID,
 		EntityID:   imageFile.EntityID,

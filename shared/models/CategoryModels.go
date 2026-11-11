@@ -29,9 +29,8 @@ var (
 	}
 )
 
-// Database model
 type Category struct {
-	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuidv7();primaryKey"`
 	Name      string         `gorm:"type:varchar(100);unique;not null"`
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -55,12 +54,6 @@ func (c Category) ConvertAllToDTO(categories []Category) []CategoryDTO {
 	return data
 }
 
-//func (category *Category) BeforeCreate(tx *gorm.DB) (err error) {
-//	category.ID = uuid.New()
-//	return
-//}
-
-// DTO model
 type CategoryDTO struct {
 	ID   uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
 	Name string    `json:"name" binding:"required,min=1,max=255"`

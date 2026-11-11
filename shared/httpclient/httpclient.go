@@ -18,11 +18,9 @@ type LoggerInterface interface {
 	Warnf(format string, args ...interface{})
 }
 
-// HTTPClient provides a shared HTTP client with default settings. It
-// authenticates its own outbound requests to other services using an
-// OIDC client-credentials grant: the token endpoint is discovered from
-// Issuer's .well-known/openid-configuration document and cached on first
-// use, so this client is not tied to any specific provider's URL shape.
+// HTTPClient authenticates its outbound requests using an OIDC
+// client-credentials grant; the token endpoint is discovered from
+// Issuer's .well-known/openid-configuration document and cached.
 type HTTPClient struct {
 	Client     *http.Client
 	AuthToken  string
@@ -37,9 +35,8 @@ type HTTPClient struct {
 	Logger         LoggerInterface
 }
 
-// NewHTTPClient initializes and returns an HTTPClient instance. issuer is
-// the OIDC provider's issuer URL, used to discover the token endpoint for
-// the client-credentials grant.
+// NewHTTPClient creates an HTTPClient. issuer is the OIDC provider's
+// issuer URL, used to discover the token endpoint.
 func NewHTTPClient(timeout time.Duration, issuer, clientID, clientSecret string, logger LoggerInterface) *HTTPClient {
 	if timeout < time.Second || timeout > 10*time.Second {
 		panic("timeout must be between 1 and 10 seconds")
@@ -56,7 +53,6 @@ func NewHTTPClient(timeout time.Duration, issuer, clientID, clientSecret string,
 	}
 }
 
-// Do sends an HTTP request and returns the HTTP response.
 func (h *HTTPClient) Do(req *http.Request) (*http.Response, error) {
 	h.TokenMutex.RLock()
 	token := h.AuthToken

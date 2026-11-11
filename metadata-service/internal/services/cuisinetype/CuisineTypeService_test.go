@@ -71,8 +71,6 @@ func (*CuisineTypeRepositoryMock) Delete(cuisineType m.CuisineType) error {
 	}
 }
 
-// ======================================================================
-
 func TestCuisineTypeFindAll_OK(t *testing.T) {
 	s := NewCuisineTypeService(&CuisineTypeRepositoryMock{})
 	findAllCuisineType.Name = "findall"

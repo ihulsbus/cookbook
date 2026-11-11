@@ -100,11 +100,9 @@ func TestProjectorHandle_AppliesNewerVersion(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-// TestProjectorHandle_DropsOutOfOrderEvent is the out-of-order-events
-// case KIT-27 explicitly asks for: an event whose Version is not strictly
-// greater than what's already stored must be a no-op - no UPDATE query
-// at all - so a duplicate or late-arriving redelivery can never regress
-// the projection to older state.
+// TestProjectorHandle_DropsOutOfOrderEvent checks that an event whose
+// Version is not strictly greater than what's stored is a no-op (no
+// UPDATE), so a duplicate or late redelivery never regresses the state.
 func TestProjectorHandle_DropsOutOfOrderEvent(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	p := NewProjector(db)

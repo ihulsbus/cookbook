@@ -1,9 +1,8 @@
 version: '3.8'
 
 services:
-  # PostgreSQL - Single instance with multiple databases
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     container_name: cookbook-postgres
     environment:
       POSTGRES_USER: admin
@@ -13,7 +12,8 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      # PG18's alpine image moved PGDATA under /var/lib/postgresql/18/docker.
+      - postgres-data:/var/lib/postgresql
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     networks:
       - cookbook-network
@@ -23,7 +23,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # MinIO (S3-compatible storage)
   minio:
     image: minio/minio:latest
     container_name: minio
@@ -59,7 +58,6 @@ services:
     networks:
       - cookbook-network
 
-  # RabbitMQ
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq
@@ -79,7 +77,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # Traefik Reverse Proxy
   traefik:
     image: traefik:v2.10
     container_name: traefik
@@ -97,16 +94,11 @@ services:
     networks:
       - cookbook-network
 
-  # Recipe Service
   recipe-service:
     image: ghcr.io/ihulsbus/cookbook/recipe-service:master
     container_name: recipe-service
-    # Config comes from a mounted file, not environment: - the service
-    # fatals at startup if it can't find one (viper.ReadInConfig(), see
-    # internal/config/initFuncs.go), so environment vars alone were never
-    # enough. Copy docker/config/recipe-service/config.yaml.example to
-    # config.yaml (gitignored) and fill in oauth.clientsecret before
-    # first run - see docker/config/README.md.
+    # Copy docker/config/recipe-service/config.yaml.example to config.yaml
+    # (gitignored) and fill in oauth.clientsecret before first run.
     volumes:
       - ./docker/config/recipe-service/config.yaml:/config/config.yaml:ro
     labels:
@@ -126,12 +118,9 @@ services:
       timeout: 10s
       retries: 3
 
-  # Metadata Service
   metadata-service:
     image: ghcr.io/ihulsbus/cookbook/metadata-service:master
     container_name: metadata-service
-    # Config comes from a mounted file - see recipe-service's comment
-    # above and docker/config/README.md.
     volumes:
       - ./docker/config/metadata-service/config.yaml:/config/config.yaml:ro
     labels:
@@ -151,12 +140,9 @@ services:
       timeout: 10s
       retries: 3
 
-  # Ingredient Service
   ingredient-service:
     image: ghcr.io/ihulsbus/cookbook/ingredient-service:master
     container_name: ingredient-service
-    # Config comes from a mounted file - see recipe-service's comment
-    # above and docker/config/README.md.
     volumes:
       - ./docker/config/ingredient-service/config.yaml:/config/config.yaml:ro
     labels:
@@ -176,12 +162,9 @@ services:
       timeout: 10s
       retries: 3
 
-  # Instruction Service
   instruction-service:
     image: ghcr.io/ihulsbus/cookbook/instruction-service:master
     container_name: instruction-service
-    # Config comes from a mounted file - see recipe-service's comment
-    # above and docker/config/README.md.
     volumes:
       - ./docker/config/instruction-service/config.yaml:/config/config.yaml:ro
     labels:
@@ -201,12 +184,9 @@ services:
       timeout: 10s
       retries: 3
 
-  # Image Service
   image-service:
     image: ghcr.io/ihulsbus/cookbook/image-service:master
     container_name: image-service
-    # Config comes from a mounted file - see recipe-service's comment
-    # above and docker/config/README.md.
     volumes:
       - ./docker/config/image-service/config.yaml:/config/config.yaml:ro
     labels:
@@ -228,14 +208,9 @@ services:
       timeout: 10s
       retries: 3
 
-  # Search Service
   search-service:
     image: ghcr.io/ihulsbus/cookbook/search-service:master
     container_name: search-service
-    # Config comes from a mounted file - see recipe-service's comment
-    # above and docker/config/README.md. search-service has no database
-    # or RabbitMQ of its own (it only fans requests out over HTTP), so
-    # its config.yaml has no database/rabbitmq section.
     volumes:
       - ./docker/config/search-service/config.yaml:/config/config.yaml:ro
     labels:
@@ -255,15 +230,9 @@ services:
       timeout: 10s
       retries: 3
 
-  # User Service
   user-service:
     image: ghcr.io/ihulsbus/cookbook/user-service:master
     container_name: user-service
-    # Config comes from a mounted file - see recipe-service's comment
-    # above and docker/config/README.md. No handlers exist behind
-    # /api/v2/user yet (KIT-74 only scaffolds the service; user/household
-    # lookup is KIT-33), so the Traefik route below currently 404s past
-    # health checks - that's expected until KIT-33 lands.
     volumes:
       - ./docker/config/user-service/config.yaml:/config/config.yaml:ro
     labels:

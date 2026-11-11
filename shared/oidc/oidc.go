@@ -18,17 +18,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// Config configures a Module.
 type Config struct {
 	// Issuer is the OIDC provider's issuer URL, e.g.
 	// https://authentik.example.com/application/o/cookbook-web/. Its
 	// .well-known/openid-configuration is used to discover the JWKS URI.
 	Issuer string
-	// Audiences are the `aud` values this service accepts. A token is
-	// valid if its `aud` contains ANY of these. Needs more than one
-	// entry when a service accepts both end-user tokens (aud = the
-	// frontend's public client ID) and service-to-service tokens (aud =
-	// the calling service's own confidential client ID).
+	// Audiences are the `aud` values this service accepts; a token is
+	// valid if its `aud` contains ANY of these. Needs more than one entry
+	// when a service accepts both end-user and service-to-service tokens.
 	Audiences []string
 }
 
@@ -39,10 +36,8 @@ type Principal struct {
 	Username string // preferred_username
 	Email    string
 	Groups   []string
-	// Roles mirrors Groups today. Kept as a separate field so a future
-	// role-mapping layer (e.g. translating multiple groups into a smaller
-	// set of application roles) has somewhere to write distinct values
-	// without changing RequireRole's or Principal's shape.
+	// Roles mirrors Groups today; kept separate so a future role-mapping
+	// layer has somewhere to write distinct values.
 	Roles []string
 }
 
@@ -55,8 +50,7 @@ type claims struct {
 
 // DiscoveryDocument is the subset of an OIDC provider's
 // .well-known/openid-configuration document this module and its sibling
-// packages (e.g. shared/httpclient, for its own client-credentials calls)
-// care about.
+// packages care about.
 type DiscoveryDocument struct {
 	Issuer        string `json:"issuer"`
 	JWKSURI       string `json:"jwks_uri"`

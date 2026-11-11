@@ -33,10 +33,8 @@ func (h *SearchHandlers) Search(ctx *gin.Context) {
 		return
 	}
 
-	// Forwarded as-is to each downstream service (KIT-30), so their own
-	// authorization/visibility filtering applies - this service does no
-	// filtering of its own. RequireAuth already ran, so this header is
-	// present and valid.
+	// Forwarded as-is to downstream services, which apply their own
+	// authorization/visibility filtering; this service does none itself.
 	token := ctx.GetHeader("Authorization")
 
 	searchResult, err = h.service.Search(ctx, searchRequest, token)

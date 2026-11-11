@@ -31,10 +31,9 @@ var (
 	}
 
 	// notFoundID is a recipe ID FindSingle treats as missing regardless of
-	// Name - the share/visibility service methods (ListShares,
-	// UpsertShare, DeleteShare, UpdateVisibility) only have an ID to look
-	// up with (m.Recipe{ID: recipeID}, Name always ""), so they can't be
-	// dispatched by Name the way the older tests are.
+	// Name - the share/visibility service methods only have an ID to look
+	// up with (Name always ""), so they can't dispatch by Name like the
+	// older tests do.
 	notFoundID = uuid.New()
 
 	// repoErrID resolves normally via FindSingle (owned by ownerID), but
@@ -43,11 +42,11 @@ var (
 	repoErrID = uuid.New()
 
 	// shareOwnerID/shareTargetRecipe/shareTargetShares exercise canRead/
-	// canWrite granted by an explicit share (KIT-32), as opposed to
-	// ownership or public visibility. shareTargetShares is mutated per
-	// test to control what FindShares(shareTargetRecipe.ID) returns.
+	// canWrite granted by an explicit share, as opposed to ownership or
+	// public visibility. shareTargetShares is mutated per test to control
+	// what FindShares(shareTargetRecipe.ID) returns.
 	shareOwnerID      uuid.UUID = uuid.New()
-	shareTargetRecipe m.Recipe = m.Recipe{
+	shareTargetRecipe m.Recipe  = m.Recipe{
 		ID:           uuid.New(),
 		Name:         "shareaccess",
 		Description:  "description",
@@ -62,7 +61,7 @@ var (
 type RecipeRepositoryMock struct{}
 type LoggerMock struct{}
 
-func (RecipeRepositoryMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope) ([]m.Recipe, int64, error) {
+func (RecipeRepositoryMock) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope, sortColumn string, sortDirection string) ([]m.Recipe, int64, error) {
 	switch findAllRecipe.Name {
 	case "findall":
 		return []m.Recipe{recipe}, 1, nil
@@ -87,11 +86,9 @@ func (RecipeRepositoryMock) FindSingle(recipeInput m.Recipe) (m.Recipe, error) {
 		r.ID = repoErrID
 		return r, nil
 	}
-	// The share/visibility service methods (ListShares, UpsertShare,
-	// DeleteShare, UpdateVisibility) only have an ID to look up with -
-	// m.Recipe{ID: recipeID}, Name always "" - so shareTargetRecipe must
-	// be resolvable by ID alone, not just via the Name == "shareaccess"
-	// dispatch FindSingle/Update's tests use.
+	// The share/visibility service methods only have an ID to look up
+	// with (Name always ""), so shareTargetRecipe must be resolvable by
+	// ID alone, not just via the Name == "shareaccess" dispatch below.
 	if recipeInput.ID == shareTargetRecipe.ID {
 		return shareTargetRecipe, nil
 	}
@@ -142,11 +139,9 @@ func (RecipeRepositoryMock) Update(recipeInput m.Recipe, buildOutbox func(shares
 	}
 }
 
-// Delete is called with whatever FindSingle returned (the service layer
-// re-deletes the record it just looked up, not the caller's raw input),
-// so unlike the other mocks this dispatches on a distinct trigger value
-// ("repoerror") rather than on the same Name the caller used to reach
-// this point - see TestRecipeDelete_RepoErr.
+// Delete is called with whatever FindSingle returned, not the caller's
+// raw input, so unlike the other mocks this dispatches on a distinct
+// trigger value ("repoerror") - see TestRecipeDelete_RepoErr.
 func (RecipeRepositoryMock) Delete(recipeInput m.Recipe, buildOutbox func(shares []m.RecipeShare) (rmq.OutboxEvent, error)) error {
 	switch recipeInput.Name {
 	case "repoerror":
@@ -188,7 +183,7 @@ func TestRecipeFindAll_OK(t *testing.T) {
 
 	findAllRecipe.Name = "findall"
 
-	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll)
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll, "")
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
@@ -200,7 +195,7 @@ func TestRecipeFindAll_Err(t *testing.T) {
 
 	findAllRecipe.Name = "error"
 
-	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll)
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll, "")
 
 	assert.Error(t, err)
 	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
@@ -212,7 +207,7 @@ func TestRecipeFindAll_NotFound(t *testing.T) {
 
 	findAllRecipe.Name = "notfound"
 
-	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll)
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll, "")
 
 	assert.Error(t, err)
 	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
@@ -220,24 +215,68 @@ func TestRecipeFindAll_NotFound(t *testing.T) {
 }
 
 // TestRecipeFindAll_EmptyScopeDefaultsToAll: an empty ?scope (the param
-// omitted) must behave exactly like ScopeAll - GET /recipe's behavior
-// before ?scope existed (KIT-30).
+// omitted) must behave exactly like ScopeAll.
 func TestRecipeFindAll_EmptyScopeDefaultsToAll(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 
 	findAllRecipe.Name = "findall"
 
-	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, "")
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, "", "")
 
 	assert.NoError(t, err)
 	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
 	assert.Len(t, result.Data, 1)
 }
 
+// TestRecipeFindAll_EmptySortLeavesOrderingUnspecified: an empty ?sort
+// (the param omitted) must produce no error, with the repository called
+// with no ordering requested.
+func TestRecipeFindAll_EmptySortLeavesOrderingUnspecified(t *testing.T) {
+	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
+
+	findAllRecipe.Name = "findall"
+
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll, "")
+
+	assert.NoError(t, err)
+	assert.Len(t, result.Data, 1)
+}
+
+// TestRecipeFindAll_ValidSort covers every accepted ?sort value (field in
+// {created_at, updated_at}, direction in {asc, desc}).
+func TestRecipeFindAll_ValidSort(t *testing.T) {
+	for _, sort := range []string{"created_at:asc", "created_at:desc", "updated_at:asc", "updated_at:desc"} {
+		t.Run(sort, func(t *testing.T) {
+			s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
+			findAllRecipe.Name = "findall"
+
+			result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll, sort)
+
+			assert.NoError(t, err)
+			assert.Len(t, result.Data, 1)
+		})
+	}
+}
+
+// TestRecipeFindAll_InvalidSort covers every rejected ?sort value - an
+// unknown column or direction, or a malformed value missing the ":"
+// separator.
+func TestRecipeFindAll_InvalidSort(t *testing.T) {
+	for _, sort := range []string{"created_at", "name:desc", "created_at:sideways", "created_at:desc:extra", ":desc"} {
+		t.Run(sort, func(t *testing.T) {
+			s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
+
+			_, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, m.ScopeAll, sort)
+
+			assert.EqualError(t, err, "invalid sort")
+		})
+	}
+}
+
 func TestRecipeFindAll_InvalidScope(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 
-	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, "nonsense")
+	result, err := s.FindAll(m.NormalizePagination(1, 25), ownerID, nil, "nonsense", "")
 
 	assert.Error(t, err)
 	assert.IsType(t, m.PaginatedResponse[m.RecipeDTO]{}, result)
@@ -287,10 +326,9 @@ func TestRecipeFindSingle_NotFound(t *testing.T) {
 	assert.EqualError(t, err, "not found")
 }
 
-// TestRecipeFindSingle_PrivateNotOwner is the KIT-25 acceptance case: a
-// private recipe not owned by the requester, and not shared with them
-// (KIT-32), is reported as not found, not as a permission error, so its
-// existence isn't leaked.
+// TestRecipeFindSingle_PrivateNotOwner: a private recipe not owned by the
+// requester, and not shared with them, is reported as not found, not as
+// a permission error, so its existence isn't leaked.
 func TestRecipeFindSingle_PrivateNotOwner(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 
@@ -324,8 +362,8 @@ func TestRecipeFindSingle_PublicNotOwner_Allowed(t *testing.T) {
 }
 
 // TestRecipeFindSingle_UserShare_Allowed: a private recipe not owned by
-// the requester, but explicitly shared with them by user ID (KIT-32),
-// grants read.
+// the requester, but explicitly shared with them by user ID, grants
+// read.
 func TestRecipeFindSingle_UserShare_Allowed(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 
@@ -531,7 +569,7 @@ func TestRecipeUpdate_NotOwner(t *testing.T) {
 }
 
 // TestRecipeUpdate_WriteShare_Allowed: a requester holding a write share
-// (KIT-32) on a recipe they don't own may still update its content.
+// on a recipe they don't own may still update its content.
 func TestRecipeUpdate_WriteShare_Allowed(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 
@@ -716,8 +754,8 @@ func TestRecipeDelete_NotOwner(t *testing.T) {
 }
 
 // TestRecipeDelete_WriteShare_NotFound locks in a deliberate design
-// choice: unlike Update, a write share (KIT-32) does not grant Delete -
-// only the owner can delete a recipe outright.
+// choice: unlike Update, a write share does not grant Delete - only the
+// owner can delete a recipe outright.
 func TestRecipeDelete_WriteShare_NotFound(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 
@@ -917,8 +955,7 @@ func TestUpsertShare_RepoErr(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 
 	// "repoerror" is a group target (not UUID-validated, unlike "user")
-	// so it reaches the repository mock, which is wired to fail on this
-	// exact TargetID.
+	// so it reaches the repository mock, wired to fail on this TargetID.
 	shareDTO := m.RecipeShareDTO{
 		TargetType: m.ShareTargetGroup,
 		TargetID:   "repoerror",
@@ -1002,9 +1039,8 @@ func TestUpdateVisibility_RepoErr(t *testing.T) {
 }
 
 // TestGetAccessState_OK: GetAccessState builds its lookup with an empty
-// Name (it only has an ID to go on), which lands on the mock's "" case -
-// the same one FindSingle's other zero-Name callers hit - and returns
-// the recipe fixture.
+// Name (it only has an ID to go on), which lands on the mock's "" case
+// and returns the recipe fixture.
 func TestGetAccessState_OK(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 
@@ -1017,8 +1053,8 @@ func TestGetAccessState_OK(t *testing.T) {
 	assert.False(t, state.Deleted)
 }
 
-// TestGetAccessState_IncludesShares: the access state's Shares (KIT-32)
-// reflects the recipe's current recipe_shares rows, not an empty list.
+// TestGetAccessState_IncludesShares: the access state's Shares reflects
+// the recipe's current recipe_shares rows, not an empty list.
 func TestGetAccessState_IncludesShares(t *testing.T) {
 	s := NewRecipeService(&RecipeRepositoryMock{}, &LoggerMock{})
 

@@ -7,7 +7,6 @@ import (
 	"image/png"
 )
 
-// ====== Helpers ======
 func createImage() *image.RGBA {
 	width := 200
 	height := 100
@@ -17,19 +16,16 @@ func createImage() *image.RGBA {
 
 	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
 
-	// Colors are defined by Red, Green, Blue, Alpha uint8 values.
 	cyan := color.RGBA{100, 200, 200, 0xff}
 
-	// Set colour for each pixel.
 	for x := 0; x < width; x++ {
 		for y := 0; y < height; y++ {
 			switch {
-			case x < width/2 && y < height/2: // upper left quadrant
+			case x < width/2 && y < height/2:
 				img.Set(x, y, cyan)
-			case x >= width/2 && y >= height/2: // lower right quadrant
+			case x >= width/2 && y >= height/2:
 				img.Set(x, y, color.White)
 			default:
-				// Use zero value.
 			}
 		}
 	}

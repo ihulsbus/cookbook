@@ -20,14 +20,9 @@ func NewRecipeRepository(serviceURL string) *RecipeRepository {
 	}
 }
 
-// Query lists recipes visible to the caller (KIT-30). recipe-service has
-// no free-text search of its own, so req.Query isn't sent - there's
-// nothing on the other end to filter by it; what's returned is exactly
-// what GET /recipe would return for this caller: their own recipes plus
-// every public one. token is the caller's own bearer token
-// ("Bearer ..."), forwarded as-is so recipe-service's own owner/
-// visibility filter (KIT-25) - not this service - decides what's
-// visible; nothing here must do its own filtering on top.
+// Query lists recipes visible to the caller. recipe-service has no
+// free-text search, so req.Query is unused; recipe-service's own
+// owner/visibility filter decides what's returned, not this service.
 func (r *RecipeRepository) Query(ctx context.Context, req m.SearchRequest, token string) ([]m.RecipeResult, error) {
 	var results []m.RecipeResult
 

@@ -73,9 +73,8 @@ func initCors() {
 func initOauth() (*oidc.Module, error) {
 	module, err := oidc.NewModule(context.Background(), oidc.Config{
 		Issuer: Configuration.Oauth.Issuer,
-		// Accept both the frontend's public client ID (end-user tokens)
-		// and this service's own confidential client ID (tokens from
-		// other services' client-credentials calls via shared/httpclient).
+		// Accepts both end-user tokens (frontend client ID) and
+		// service-to-service tokens (this service's own client ID).
 		Audiences: []string{Configuration.Oauth.Audience, Configuration.Oauth.ClientID},
 	})
 	if err != nil {

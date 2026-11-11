@@ -3,12 +3,10 @@ package models
 type LoggerInterfaceMock struct{}
 
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{}) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {
-	//TODO implement me
 	panic("implement me")
 }
 

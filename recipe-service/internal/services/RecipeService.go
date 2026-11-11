@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,7 +11,7 @@ import (
 )
 
 type RecipeRepository interface {
-	FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope) ([]m.Recipe, int64, error)
+	FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope, sortColumn string, sortDirection string) ([]m.Recipe, int64, error)
 	FindSingle(recipe m.Recipe) (m.Recipe, error)
 	FindShares(recipeID uuid.UUID) ([]m.RecipeShare, error)
 	Create(recipe m.Recipe, outbox rmq.OutboxEvent) (m.Recipe, error)
@@ -26,11 +27,10 @@ type RecipeService struct {
 	logger m.LoggerInterface
 }
 
-// NewRecipeService creates a new RecipeService instance. Publishing recipe
-// events is no longer done here directly - Create/Update/Delete write an
-// outbox row in the same DB transaction as the change (see
-// RecipeRepository.Create/Update/Delete), and a shared/rabbitmq.Relay
-// publishes from the outbox in the background (wired in config.go).
+// NewRecipeService builds a RecipeService. Create/Update/Delete write an
+// outbox row in the same DB transaction as the change, and a
+// shared/rabbitmq.Relay publishes from the outbox in the background
+// (wired in config.go) - this service never publishes directly.
 func NewRecipeService(recipeRepo RecipeRepository, logger m.LoggerInterface) *RecipeService {
 	return &RecipeService{
 		recipe: recipeRepo,
@@ -38,18 +38,23 @@ func NewRecipeService(recipeRepo RecipeRepository, logger m.LoggerInterface) *Re
 	}
 }
 
-// FindAll contains the business logic to get all recipes visible to
-// requesterID, narrowed by scope (KIT-30: ?scope=mine|shared|all).
-// requesterGroups is only consulted for ScopeShared (KIT-35), to also
-// surface recipes shared with a group requesterID belongs to.
-func (s RecipeService) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope) (m.PaginatedResponse[m.RecipeDTO], error) {
+// FindAll gets all recipes visible to requesterID, narrowed by scope
+// (?scope=mine|shared|all) and ordered by sort (?sort=created_at:desc).
+// requesterGroups is only consulted for ScopeShared, to also surface
+// recipes shared with a group requesterID belongs to.
+func (s RecipeService) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope, sort string) (m.PaginatedResponse[m.RecipeDTO], error) {
 	if scope == "" {
 		scope = m.ScopeAll
 	} else if !scope.Valid() {
 		return m.PaginatedResponse[m.RecipeDTO]{}, errors.New("invalid scope")
 	}
 
-	recipes, total, err := s.recipe.FindAll(pagination, requesterID, requesterGroups, scope)
+	sortColumn, sortDirection, err := parseSort(sort)
+	if err != nil {
+		return m.PaginatedResponse[m.RecipeDTO]{}, err
+	}
+
+	recipes, total, err := s.recipe.FindAll(pagination, requesterID, requesterGroups, scope, sortColumn, sortDirection)
 	if err != nil {
 		return m.PaginatedResponse[m.RecipeDTO]{}, errors.New("internal server error")
 	}
@@ -60,10 +65,42 @@ func (s RecipeService) FindAll(pagination m.PaginationRequest, requesterID uuid.
 	}, nil
 }
 
-// FindSingle contains the business logic to get a specific recipe.
-// A private recipe not owned by requesterID, and not shared with them or
-// one of requesterGroups (KIT-32), is reported as not found, same as if
-// it didn't exist, so its existence isn't leaked to other users.
+// parseSort validates and splits a "field:direction" ?sort value (e.g.
+// "created_at:desc") into its column and direction. Only this small
+// allowlist is ever accepted, and the repository interpolates exactly
+// these pre-validated values into its ORDER BY, never the raw query
+// string, so this can never become a SQL injection vector.
+func parseSort(sort string) (column string, direction string, err error) {
+	if sort == "" {
+		return "", "", nil
+	}
+
+	parts := strings.SplitN(sort, ":", 2)
+	if len(parts) != 2 {
+		return "", "", errors.New("invalid sort")
+	}
+
+	switch parts[0] {
+	case "created_at", "updated_at":
+		column = parts[0]
+	default:
+		return "", "", errors.New("invalid sort")
+	}
+
+	switch parts[1] {
+	case "asc", "desc":
+		direction = parts[1]
+	default:
+		return "", "", errors.New("invalid sort")
+	}
+
+	return column, direction, nil
+}
+
+// FindSingle gets a specific recipe. A private recipe not owned by
+// requesterID, and not shared with them or one of requesterGroups, is
+// reported as not found, same as if it didn't exist, so its existence
+// isn't leaked to other users.
 func (s RecipeService) FindSingle(recipeDTO m.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (m.RecipeDTO, error) {
 	recipe, err := s.recipe.FindSingle(recipeDTO.ConvertFromDTO())
 	if err != nil {
@@ -89,10 +126,9 @@ func (s RecipeService) FindSingle(recipeDTO m.RecipeDTO, requesterID uuid.UUID, 
 }
 
 // canRead reports whether requesterID (member of requesterGroups) may
-// read recipe, given its owner, visibility, and explicit shares
-// (KIT-32). Mirrors shared/authz's evaluate() so the two stay consistent:
-// recipe-service enforces this on its own routes, shared/authz on every
-// other service's.
+// read recipe, given its owner, visibility, and explicit shares. Mirrors
+// shared/authz's evaluate() so the two stay consistent: recipe-service
+// enforces this on its own routes, shared/authz on every other service's.
 func canRead(recipe m.Recipe, shares []m.RecipeShare, requesterID uuid.UUID, requesterGroups []string) bool {
 	if recipe.OwnerID == requesterID {
 		return true
@@ -104,9 +140,9 @@ func canRead(recipe m.Recipe, shares []m.RecipeShare, requesterID uuid.UUID, req
 }
 
 // canWrite reports whether requesterID (member of requesterGroups) may
-// write recipe's content, given its owner and explicit shares (KIT-32).
-// Unlike canRead, visibility never grants write - only ownership or a
-// write share does.
+// write recipe's content, given its owner and explicit shares. Unlike
+// canRead, visibility never grants write - only ownership or a write
+// share does.
 func canWrite(recipe m.Recipe, shares []m.RecipeShare, requesterID uuid.UUID, requesterGroups []string) bool {
 	if recipe.OwnerID == requesterID {
 		return true
@@ -114,9 +150,9 @@ func canWrite(recipe m.Recipe, shares []m.RecipeShare, requesterID uuid.UUID, re
 	return hasShareAccess(shares, requesterID, requesterGroups, m.SharePermissionWrite)
 }
 
-// hasShareAccess reports whether any share in shares targets requesterID
-// directly or one of requesterGroups, with at least perm. A write share
-// also satisfies a read check, same as shared/authz's evaluate().
+// hasShareAccess reports whether any share targets requesterID directly
+// or one of requesterGroups, with at least perm. A write share also
+// satisfies a read check, same as shared/authz's evaluate().
 func hasShareAccess(shares []m.RecipeShare, requesterID uuid.UUID, requesterGroups []string, perm m.SharePermission) bool {
 	for _, share := range shares {
 		var targetsRequester bool
@@ -146,8 +182,8 @@ func containsString(haystack []string, needle string) bool {
 	return false
 }
 
-// Create handles the business logic for the creation of a recipe and passes the recipe object to the recipe repo for processing.
-// ownerID comes from the authenticated Principal, never from the client-supplied DTO.
+// Create handles recipe creation. ownerID comes from the authenticated
+// Principal, never from the client-supplied DTO.
 func (s RecipeService) Create(recipeDTO m.RecipeDTO, ownerID uuid.UUID) (m.RecipeDTO, error) {
 	s.logger.Infof("%+v", recipeDTO)
 
@@ -175,8 +211,9 @@ func (s RecipeService) Create(recipeDTO m.RecipeDTO, ownerID uuid.UUID) (m.Recip
 
 	recipe := recipeDTO.ConvertFromDTO()
 	// Generated here (not left to the DB default) so the outbox event
-	// below can carry the real recipe ID before the row is even inserted.
-	recipe.ID = uuid.New()
+	// below can carry the real recipe ID before the row is even
+	// inserted. NewID is time-ordered, unlike the DB's uuidv7() default.
+	recipe.ID = m.NewID()
 	recipe.OwnerID = ownerID
 
 	// A brand new recipe can't have any shares yet - nothing to look up.
@@ -194,7 +231,7 @@ func (s RecipeService) Create(recipeDTO m.RecipeDTO, ownerID uuid.UUID) (m.Recip
 }
 
 // Update applies changes to a recipe. The owner, or a requester holding a
-// write share on it (KIT-32), may update its content.
+// write share on it, may update its content.
 func (s RecipeService) Update(recipeDTO m.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (m.RecipeDTO, error) {
 	var updatedRecipe m.Recipe
 
@@ -245,7 +282,7 @@ func (s RecipeService) Update(recipeDTO m.RecipeDTO, requesterID uuid.UUID, requ
 }
 
 // Delete removes a recipe. Only the owner may delete it - a write share
-// (KIT-32) grants editing the recipe's content, not deleting it outright.
+// grants editing the recipe's content, not deleting it outright.
 func (s RecipeService) Delete(recipeDTO m.RecipeDTO, requesterID uuid.UUID) error {
 	originalRecipe, err := s.recipe.FindSingle(recipeDTO.ConvertFromDTO())
 	if err != nil {
@@ -265,9 +302,9 @@ func (s RecipeService) Delete(recipeDTO m.RecipeDTO, requesterID uuid.UUID) erro
 	return nil
 }
 
-// ListShares returns every explicit share on a recipe (KIT-32). Owner
-// only - reported as "not found" for anyone else, same masking FindSingle
-// uses, rather than a distinct permission error that would confirm the
+// ListShares returns every explicit share on a recipe. Owner only -
+// reported as "not found" for anyone else, same masking FindSingle uses,
+// rather than a distinct permission error that would confirm the
 // recipe's existence to a non-owner.
 func (s RecipeService) ListShares(recipeID uuid.UUID, requesterID uuid.UUID) ([]m.RecipeShareDTO, error) {
 	recipe, err := s.recipe.FindSingle(m.Recipe{ID: recipeID})
@@ -287,10 +324,9 @@ func (s RecipeService) ListShares(recipeID uuid.UUID, requesterID uuid.UUID) ([]
 	return m.RecipeShare{}.ConvertAllToDTO(shares), nil
 }
 
-// UpsertShare creates or updates one explicit share on a recipe (KIT-32).
-// Owner only; a write share does not grant re-sharing in v1 (ticket
-// text), so a write-share holder gets the same "not found" as anyone
-// else here, not a permission error.
+// UpsertShare creates or updates one explicit share on a recipe. Owner
+// only; a write share does not grant re-sharing, so a write-share holder
+// gets the same "not found" as anyone else here, not a permission error.
 func (s RecipeService) UpsertShare(recipeID uuid.UUID, requesterID uuid.UUID, shareDTO m.RecipeShareDTO) (m.RecipeShareDTO, error) {
 	recipe, err := s.recipe.FindSingle(m.Recipe{ID: recipeID})
 	if err != nil {
@@ -330,8 +366,8 @@ func (s RecipeService) UpsertShare(recipeID uuid.UUID, requesterID uuid.UUID, sh
 	return share.ConvertToDTO(), nil
 }
 
-// DeleteShare removes one explicit share from a recipe (KIT-32). Owner
-// only, same masking as UpsertShare/ListShares.
+// DeleteShare removes one explicit share from a recipe. Owner only, same
+// masking as UpsertShare/ListShares.
 func (s RecipeService) DeleteShare(recipeID uuid.UUID, requesterID uuid.UUID, targetType m.ShareTargetType, targetID string) error {
 	recipe, err := s.recipe.FindSingle(m.Recipe{ID: recipeID})
 	if err != nil {
@@ -351,8 +387,7 @@ func (s RecipeService) DeleteShare(recipeID uuid.UUID, requesterID uuid.UUID, ta
 	return nil
 }
 
-// UpdateVisibility changes a recipe's Visibility (PUT /recipe/:id/visibility,
-// KIT-32). Owner only.
+// UpdateVisibility changes a recipe's Visibility. Owner only.
 func (s RecipeService) UpdateVisibility(recipeID uuid.UUID, requesterID uuid.UUID, visibility m.Visibility) (m.RecipeDTO, error) {
 	recipe, err := s.recipe.FindSingle(m.Recipe{ID: recipeID})
 	if err != nil {
@@ -382,8 +417,8 @@ func (s RecipeService) UpdateVisibility(recipeID uuid.UUID, requesterID uuid.UUI
 // GetAccessState returns the authoritative RecipeAccessState for
 // recipeID, straight from the Recipe row and its current shares - no
 // visibility filtering, because this is for the internal-only access
-// endpoint (KIT-28) that other services' shared/authz instances call on
-// their own projection-miss, not for a client request.
+// endpoint that other services' shared/authz instances call on their own
+// projection-miss, not for a client request.
 func (s RecipeService) GetAccessState(recipeID uuid.UUID) (rmq.RecipeAccessState, error) {
 	recipe, err := s.recipe.FindSingle(m.Recipe{ID: recipeID})
 	if err != nil {
@@ -405,8 +440,6 @@ func (s RecipeService) GetAccessState(recipeID uuid.UUID) (rmq.RecipeAccessState
 	}, nil
 }
 
-// toShareEntries converts this service's RecipeShare rows to the
-// rmq.ShareEntry shape ECST events carry.
 func toShareEntries(shares []m.RecipeShare) []rmq.ShareEntry {
 	entries := make([]rmq.ShareEntry, 0, len(shares))
 	for _, share := range shares {
@@ -420,18 +453,14 @@ func toShareEntries(shares []m.RecipeShare) []rmq.ShareEntry {
 }
 
 // buildOutboxEntry fills eventTemplate's payload with recipe's full
-// content and access state - including shares (KIT-32), read by the
-// caller inside the same transaction the recipe row itself is written in
-// (see DatabaseRepository.Update/Delete) - and returns the outbox row
-// ready to insert alongside it.
+// content and access state, and returns the outbox row ready to insert
+// alongside it.
 //
-// version is captured by the caller (time.Now(), not recipe.UpdatedAt):
-// at this point the recipe row hasn't been written yet, so GORM's
-// autoUpdateTime hook hasn't run and UpdatedAt is still zero. Capturing
-// "now" here also guarantees deleted gets a version strictly after the
-// last update's, which recipe.UpdatedAt could collide with for a soft
-// delete (GORM's default soft-delete sets deleted_at only, not
-// updated_at).
+// version is captured by the caller as time.Now(), not recipe.UpdatedAt:
+// at this point the recipe row hasn't been written yet, so UpdatedAt is
+// still zero, and "now" also guarantees a delete gets a version strictly
+// after the last update's (GORM's soft-delete sets deleted_at only, not
+// updated_at, so UpdatedAt could otherwise collide).
 func buildOutboxEntry(eventTemplate rmq.Event, recipe m.Recipe, version time.Time, deleted bool, shares []m.RecipeShare) (rmq.OutboxEvent, error) {
 	event := eventTemplate
 	event.Payload = rmq.RecipePayload{
@@ -449,10 +478,10 @@ func buildOutboxEntry(eventTemplate rmq.Event, recipe m.Recipe, version time.Tim
 	return rmq.NewOutboxEntry(event)
 }
 
-// buildAccessOutboxEntry is buildOutboxEntry for recipe.access.changed
-// (KIT-32): used by the share/visibility endpoints, which change only a
-// recipe's access state, never its content, so there's no reason to
-// publish a full RecipePayload for them.
+// buildAccessOutboxEntry is buildOutboxEntry for recipe.access.changed:
+// used by the share/visibility endpoints, which change only a recipe's
+// access state, never its content, so there's no reason to publish a
+// full RecipePayload for them.
 func buildAccessOutboxEntry(recipe m.Recipe, version time.Time, deleted bool, shares []m.RecipeShare) (rmq.OutboxEvent, error) {
 	event := rmq.RecipeAccessChangedEvent
 	event.Payload = rmq.RecipeAccessState{

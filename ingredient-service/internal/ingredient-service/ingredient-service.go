@@ -8,15 +8,15 @@ import (
 	"strconv"
 	"time"
 
-	az "github.com/ihulsbus/cookbook/shared/authz"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	az "github.com/ihulsbus/cookbook/shared/authz"
 )
 
 func IngredientService(ctx context.Context) {
 	// Keeps the recipe_access projection current; this is the only
 	// cross-service data flow at startup, and it's event-driven (no
-	// synchronous call to recipe-service - see KIT-79).
+	// synchronous call to recipe-service).
 	consumer, err := c.Projector.StartConsumer(c.RabbitMQClient.Connection, "ingredient-service-recipe-access", "cookbook")
 	if err != nil {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
@@ -31,13 +31,8 @@ func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
-	// Logging
 	router.Use(m.Logger(c.Logger))
-
-	// Panic recovery
 	router.Use(gin.Recovery())
-
-	// Cors handler
 	router.Use(cors.New(c.Cors))
 
 	// Health check endpoints (no auth required)
@@ -50,10 +45,8 @@ func httpServer(ctx context.Context) {
 
 	v2 := router.Group("/api/v2")
 	{
-		// Amounts are recipe-scoped (an ingredient's quantity within a
-		// recipe) - :id is the RECIPE id (see AmountHandlers), so
-		// RequireRecipeAccess checks it directly, no extra lookup needed.
-		// GET needs read; writes need write (KIT-29).
+		// Amounts are recipe-scoped: :id here is the RECIPE id, so
+		// RequireRecipeAccess checks it directly with no extra lookup.
 		amount := v2.Group("/amount")
 		{
 			readAmounts := amount.Group("")
@@ -79,15 +72,17 @@ func httpServer(ctx context.Context) {
 				deleteAmounts.DELETE(":id", c.AmountHandlers.Delete)
 			}
 		}
-		// Ingredients are part of the shared catalog: any user can read
-		// it and create new ingredients (duplicate prevention is
-		// KIT-77), but only cookbook-admin can update/delete entries.
+		// Ingredients are a shared catalog: any user can read and create
+		// (duplicate prevention guards the catalog instead of an admin
+		// gate), but only cookbook-admin can update/delete entries.
 		ingredient := v2.Group("/ingredient")
 		{
 			readIngredient := ingredient.Group("")
 			readIngredient.Use(c.OIDCModule.RequireAuth())
 			{
 				readIngredient.GET("", c.IngredientHandlers.GetAll)
+				// Static segment must be registered before :id so it isn't swallowed by the param route.
+				readIngredient.GET("suggest", c.IngredientHandlers.Suggest)
 				readIngredient.GET(":id", c.IngredientHandlers.GetSingle)
 			}
 
@@ -140,7 +135,6 @@ func httpServer(ctx context.Context) {
 		}
 	}
 
-	// Server startup
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),

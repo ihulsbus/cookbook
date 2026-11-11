@@ -44,8 +44,6 @@ var (
 	}
 )
 
-// ====== SearchService ======
-
 func (s *SearchServiceMock) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]models.MetadataSearchResultDTO, error) {
 	return nil, nil
 }
@@ -69,8 +67,6 @@ func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context
 	oidc.SetPrincipal(c, &oidc.Principal{UserID: uuid.New().String()})
 	return c
 }
-
-// ====== Tests ======
 
 func TestSearch_MissingPrincipal(t *testing.T) {
 	h := NewSearchHandlers(&SearchServiceMock{}, &models.LoggerInterfaceMock{})

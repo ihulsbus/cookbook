@@ -50,8 +50,8 @@ ports:
   servicePort: 80
   containerPort: 8080
   protocol: TCP
-# Internal-only API (KIT-28): GET /internal/v1/recipe/:id/access, for
-# other services' shared/authz instances to call on a projection miss.
+# Internal-only API: GET /internal/v1/recipe/:id/access, for other
+# services' shared/authz instances to call on a projection miss.
 # Exposed on the ClusterIP Service for in-cluster callers, but NEVER add
 # it to ingress.hosts[].paths below - the shared Helm library's ingress
 # template only ever forwards to service.port (80), so this is already
@@ -120,13 +120,12 @@ resources:
 autoscaling:
   enabled: false
 
-# One-shot Job that runs recipe-service with --republish-access (KIT-31) to
-# rebuild a consumer's recipe_access projection. Off by default - it must
-# never run as part of a normal deploy. Enable per-invocation, e.g.:
+# One-shot Job that runs recipe-service with --republish-access to rebuild
+# a consumer's recipe_access projection. Off by default - it must never run
+# as part of a normal deploy. Enable per-invocation, e.g.:
 #   helm install recipe-service-republish-access . \
 #     --set republishAccessJob.enabled=true \
 #     --set republishAccessJob.runID=$(date +%s)
-# See README.md's "Runbook: rebuilding a recipe-access projection (KIT-31)".
 republishAccessJob:
   enabled: false
   # Unique suffix for the Job name, so a later re-run (e.g. after a failed

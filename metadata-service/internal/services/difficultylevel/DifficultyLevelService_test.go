@@ -71,8 +71,6 @@ func (*DifficultyLevelRepositoryMock) Delete(difficultyLevel m.DifficultyLevel) 
 	}
 }
 
-// ======================================================================
-
 func TestDifficultyLevelFindAll_OK(t *testing.T) {
 	s := NewDifficultyLevelService(&DifficultyLevelRepositoryMock{})
 	findAllDifficultyLevel.Level = 1

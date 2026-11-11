@@ -18,14 +18,10 @@ func NewSearchRepository(db *gorm.DB) *SearchRepository {
 	}
 }
 
-// visibleRecipeIDsClause plus visibleRecipeIDsArgs restricts a recipe_id
-// column to recipes requesterID may read, read from this service's own
-// recipe_access projection (shared/authz, kept current by consuming
-// recipe-service's ECST events - see KIT-29). Without this, a search
-// result leaks the existence (and other recipes' metadata linkage) of a
-// private recipe to anyone who can call this endpoint (KIT-30).
-// "shared" visibility isn't resolved here yet - that needs the
-// recipe_shares model (KIT-32).
+// visibleRecipeIDsClause restricts a recipe_id column to recipes requesterID
+// may read, via this service's own recipe_access projection. Without it, a
+// search result would leak a private recipe's existence/linkage to anyone.
+// "shared" visibility isn't resolved here yet.
 const visibleRecipeIDsClause = "recipe_id IN (SELECT recipe_id FROM recipe_accesses WHERE (owner_id = ? OR visibility = ?) AND NOT deleted)"
 
 func visibleRecipeIDsArgs(requesterID uuid.UUID) []interface{} {
@@ -35,8 +31,6 @@ func visibleRecipeIDsArgs(requesterID uuid.UUID) []interface{} {
 func (r *SearchRepository) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.MetadataSearchResult, error) {
 	var recipeIDs []uuid.UUID
 
-	// Step 1: fetch all recipe IDs from base table, restricted to ones
-	// requesterID may read (KIT-30).
 	if err := r.db.
 		Table("recipe_difficulty_levels").
 		Distinct().
@@ -49,13 +43,11 @@ func (r *SearchRepository) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.Met
 		return &[]m.MetadataSearchResult{}, nil
 	}
 
-	// Step 2: bulk fetch all related data
 	type row struct {
 		RecipeID uuid.UUID
 		ValueID  uuid.UUID
 	}
 
-	// Helper map builders
 	fetchMany := func(table, column string) (map[uuid.UUID][]uuid.UUID, error) {
 		var rows []row
 		result := make(map[uuid.UUID][]uuid.UUID)
@@ -89,7 +81,6 @@ func (r *SearchRepository) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.Met
 		return single, nil
 	}
 
-	// Fetch related metadata
 	categories, err := fetchMany("recipe_categories", "category_id")
 	if err != nil {
 		return nil, err
@@ -111,7 +102,6 @@ func (r *SearchRepository) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.Met
 		return nil, err
 	}
 
-	// Step 3: Assemble results
 	results := make([]m.MetadataSearchResult, 0, len(recipeIDs))
 	for _, id := range recipeIDs {
 		results = append(results, m.MetadataSearchResult{
@@ -130,18 +120,16 @@ func (r *SearchRepository) GetAllRecipeMetadata(requesterID uuid.UUID) (*[]m.Met
 func (r *SearchRepository) SearchMetadata(request m.MetadataSearchRequest, requesterID uuid.UUID) ([]m.MetadataSearchResult, error) {
 	var results []m.MetadataSearchResult
 
-	// Start with base query. we do this on categories as all recipes need to have a category
+	// Base query starts on categories since every recipe must have one.
 	query := r.db.Table("recipe_categories").
 		Select("recipe_categories.recipe_id").
 		Joins("LEFT JOIN recipe_tags ON recipe_categories.recipe_id = recipe_tags.recipe_id").
 		Joins("LEFT JOIN recipe_difficulty_levels ON recipe_categories.recipe_id = recipe_difficulty_levels.recipe_id").
 		Joins("LEFT JOIN recipe_preparation_times ON recipe_categories.recipe_id = recipe_preparation_times.recipe_id").
 		Joins("LEFT JOIN recipe_cuisine_types ON recipe_categories.recipe_id = recipe_cuisine_types.recipe_id").
-		// KIT-30: exclude recipes requesterID may not read.
 		Where("recipe_categories."+visibleRecipeIDsClause, visibleRecipeIDsArgs(requesterID)...).
 		Group("recipe_categories.recipe_id")
 
-	// Apply filters based on request
 	if *request.CategoryID != uuid.Nil {
 		query = query.Where("recipe_categories.category_id = ?", *request.CategoryID)
 	}
@@ -158,7 +146,6 @@ func (r *SearchRepository) SearchMetadata(request m.MetadataSearchRequest, reque
 		query = query.Where("recipe_cuisine_types.cuisine_type_id = ?", *request.CuisineTypeID)
 	}
 
-	// Handle preparation time range
 	if request.MinPrepTime != nil || request.MaxPrepTime != nil {
 		var prepTimeIDs []uuid.UUID
 
@@ -179,13 +166,11 @@ func (r *SearchRepository) SearchMetadata(request m.MetadataSearchRequest, reque
 		query = query.Where("recipe_preparation_times.preparation_time_id IN ?", prepTimeIDs)
 	}
 
-	// Scan results into a slice of recipe IDs
 	var recipeIDs []uuid.UUID
 	if err := query.Pluck("recipe_categories.recipe_id", &recipeIDs).Error; err != nil {
 		return nil, err
 	}
 
-	// Collect detailed metadata for each recipe ID
 	for _, recipeID := range recipeIDs {
 		var categoryID, tagID, difficultyLevelID, preparationTimeID, cuisineTypeID []uuid.UUID
 

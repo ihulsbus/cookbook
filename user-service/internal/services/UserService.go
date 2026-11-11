@@ -13,10 +13,8 @@ import (
 )
 
 // householdsParentGroupName is the top-level Authentik group every
-// household (KIT-34) is created under - resolved (or created, on first
-// use) by householdsParentPK. Scoping households under one parent keeps
-// them easy to tell apart from unrelated groups (e.g. cookbook-admin)
-// a user might also belong to.
+// household is created under, keeping them easy to tell apart from
+// unrelated groups (e.g. cookbook-admin) a user might also belong to.
 const householdsParentGroupName = "households"
 
 // AuthentikClient is the subset of authentik.Client's methods the
@@ -33,8 +31,8 @@ type AuthentikClient interface {
 	DeleteGroup(ctx context.Context, pk string) error
 }
 
-// UserRepository caches display names locally (KIT-33/KIT-74) so the
-// rest of the system isn't calling out to Authentik on every request.
+// UserRepository caches display names locally so the rest of the
+// system isn't calling Authentik on every request.
 type UserRepository interface {
 	GetDisplayName(id uuid.UUID) (string, error)
 	UpsertDisplayName(id uuid.UUID, displayName string) error
@@ -79,9 +77,9 @@ func toUserDTO(u authentik.User) (m.UserDTO, error) {
 	return m.UserDTO{ID: id, Username: u.Username, DisplayName: name}, nil
 }
 
-// SearchUser resolves query to exactly one user by an exact username or
-// email match (KIT-33's GET /api/v2/user/users?query=) - never a
-// partial match, so this endpoint can't be used to enumerate users.
+// SearchUser resolves query to exactly one user by an exact username
+// or email match - never partial, so this endpoint can't be used to
+// enumerate users.
 func (s *UserService) SearchUser(ctx context.Context, query string) (m.UserDTO, error) {
 	if query == "" {
 		return m.UserDTO{}, errors.New("query is required")
@@ -106,8 +104,7 @@ func (s *UserService) SearchUser(ctx context.Context, query string) (m.UserDTO, 
 }
 
 // GetDisplayName resolves id to a display name (e.g. for "shared by"
-// labels, KIT-33's GET /api/v2/user/users/:id) - the local cache first,
-// falling back to Authentik on a miss.
+// labels) - the local cache first, falling back to Authentik on a miss.
 func (s *UserService) GetDisplayName(ctx context.Context, id uuid.UUID) (m.UserDTO, error) {
 	if name, err := s.repo.GetDisplayName(id); err == nil {
 		return m.UserDTO{ID: id, DisplayName: name}, nil
@@ -146,26 +143,23 @@ func (s *UserService) householdsParentPK(ctx context.Context) (string, error) {
 	return g.PK, nil
 }
 
-// isHousehold reports whether g is a household group (KIT-34's
-// {cookbook_household: true} attribute marker), as opposed to some
-// unrelated Authentik group (e.g. cookbook-admin) the caller happens to
-// belong to.
+// isHousehold reports whether g is a household group (marked by the
+// cookbook_household attribute), as opposed to an unrelated Authentik
+// group (e.g. cookbook-admin) the caller happens to belong to.
 func isHousehold(g authentik.Group) bool {
 	v, ok := g.Attributes["cookbook_household"]
 	b, _ := v.(bool)
 	return ok && b
 }
 
-// householdOwnerID reads g's owner attribute (KIT-34).
 func householdOwnerID(g authentik.Group) (uuid.UUID, error) {
 	raw, _ := g.Attributes["owner"].(string)
 	return uuid.Parse(raw)
 }
 
-// toHouseholdDTO resolves g's member PKs to display names, caching each
-// along the way. A household is expected to be small (a handful of
-// people), so one Authentik call per member is an acceptable cost for
-// how rarely this list is read compared to how rarely it changes.
+// toHouseholdDTO resolves g's member PKs to display names, caching
+// each. Households are expected to be small, so one Authentik call per
+// member is an acceptable cost given how rarely this is read.
 func (s *UserService) toHouseholdDTO(ctx context.Context, g authentik.Group) (m.HouseholdDTO, error) {
 	ownerID, err := householdOwnerID(g)
 	if err != nil {
@@ -191,8 +185,7 @@ func (s *UserService) toHouseholdDTO(ctx context.Context, g authentik.Group) (m.
 	return m.HouseholdDTO{ID: g.PK, Name: g.Name, OwnerID: ownerID, Members: members}, nil
 }
 
-// ListMyHouseholds returns every household userID belongs to (KIT-33's
-// GET /api/v2/user/me/households).
+// ListMyHouseholds returns every household userID belongs to.
 func (s *UserService) ListMyHouseholds(ctx context.Context, userID uuid.UUID) ([]m.HouseholdDTO, error) {
 	au, err := s.authentik.FindUserByUUID(ctx, userID.String())
 	if err != nil {
@@ -223,9 +216,8 @@ func (s *UserService) ListMyHouseholds(ctx context.Context, userID uuid.UUID) ([
 	return households, nil
 }
 
-// CreateHousehold creates a new household group (KIT-34's POST
-// /api/v2/user/households), owned by ownerID, who is also its first
-// member.
+// CreateHousehold creates a new household group owned by ownerID, who
+// is also its first member.
 func (s *UserService) CreateHousehold(ctx context.Context, ownerID uuid.UUID, name string) (m.HouseholdDTO, error) {
 	if name == "" {
 		return m.HouseholdDTO{}, errors.New("name is required")
@@ -265,12 +257,10 @@ func (s *UserService) CreateHousehold(ctx context.Context, ownerID uuid.UUID, na
 	return dto, nil
 }
 
-// getOwnedHousehold fetches the household group at householdID and
-// verifies it's a KIT-34 household owned by requesterID. Returns
-// "not found" if it isn't a household at all (including if it doesn't
-// exist), "forbidden" if it is one but requesterID isn't its owner -
-// the same not-found masking RecipeService uses for owner-only
-// operations.
+// getOwnedHousehold fetches the household at householdID and verifies
+// it's owned by requesterID. Returns "not found" if it isn't a
+// household (or doesn't exist), "forbidden" if it is but requesterID
+// isn't the owner.
 func (s *UserService) getOwnedHousehold(ctx context.Context, householdID string, requesterID uuid.UUID) (authentik.Group, error) {
 	g, err := s.getHousehold(ctx, householdID)
 	if err != nil {
@@ -305,9 +295,8 @@ func (s *UserService) getHousehold(ctx context.Context, householdID string) (aut
 	return g, nil
 }
 
-// AddMember adds a user to a household by an exact username/email match
-// (KIT-34's POST /households/:id/members). Owner only; idempotent if the
-// user is already a member.
+// AddMember adds a user to a household by an exact username/email
+// match. Owner only; idempotent if the user is already a member.
 func (s *UserService) AddMember(ctx context.Context, householdID string, requesterID uuid.UUID, query string) (m.HouseholdDTO, error) {
 	if query == "" {
 		return m.HouseholdDTO{}, errors.New("query is required")
@@ -342,10 +331,9 @@ func (s *UserService) AddMember(ctx context.Context, householdID string, request
 	return dto, nil
 }
 
-// RemoveMember removes targetUserID from a household (KIT-34's DELETE
-// /households/:id/members/:userId). Owner only; idempotent if the
-// target already isn't a member. The owner can't be removed this way -
-// see DeleteHousehold.
+// RemoveMember removes targetUserID from a household. Owner only;
+// idempotent if the target already isn't a member. The owner can't be
+// removed this way - see DeleteHousehold.
 func (s *UserService) RemoveMember(ctx context.Context, householdID string, requesterID, targetUserID uuid.UUID) error {
 	g, err := s.getOwnedHousehold(ctx, householdID, requesterID)
 	if err != nil {
@@ -375,11 +363,9 @@ func (s *UserService) RemoveMember(ctx context.Context, householdID string, requ
 	return nil
 }
 
-// LeaveHousehold removes userID from a household they belong to (KIT-34's
-// POST /households/:id/leave). The owner can't leave this way - the
-// ticket allows either transferring ownership or requiring a delete
-// instead; this implementation takes the latter, since no
-// ownership-transfer endpoint is in scope.
+// LeaveHousehold removes userID from a household they belong to. The
+// owner can't leave this way - deleting the household is required
+// instead, since there's no ownership-transfer endpoint.
 func (s *UserService) LeaveHousehold(ctx context.Context, householdID string, userID uuid.UUID) error {
 	g, err := s.getHousehold(ctx, householdID)
 	if err != nil {
@@ -414,8 +400,7 @@ func (s *UserService) LeaveHousehold(ctx context.Context, householdID string, us
 	return nil
 }
 
-// DeleteHousehold deletes a household outright (KIT-34's DELETE
-// /households/:id). Owner only.
+// DeleteHousehold deletes a household outright. Owner only.
 func (s *UserService) DeleteHousehold(ctx context.Context, householdID string, requesterID uuid.UUID) error {
 	g, err := s.getOwnedHousehold(ctx, householdID, requesterID)
 	if err != nil {

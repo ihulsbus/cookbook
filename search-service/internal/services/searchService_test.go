@@ -57,8 +57,6 @@ func TestSearchService_Search_OK(t *testing.T) {
 	assert.Len(t, result.Recipes, 1)
 	assert.Len(t, result.Ingredients, 1)
 	assert.Len(t, result.Metadata, 1)
-	// Every downstream repo gets the caller's own token, forwarded as-is
-	// (KIT-30) - none of them is called with a different or missing one.
 	assert.Equal(t, "Bearer test-token", recipeRepo.gotToken)
 	assert.Equal(t, "Bearer test-token", ingredientRepo.gotToken)
 	assert.Equal(t, "Bearer test-token", metadataRepo.gotToken)

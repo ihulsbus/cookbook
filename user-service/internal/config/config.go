@@ -20,14 +20,10 @@ import (
 	"user-service/internal/services"
 )
 
-// userConfig embeds the common shared/models.Config (global/cors/oauth/
-// database/rabbitmq) and adds the one field specific to this service:
-// the Authentik service-account API token (KIT-74) user-service will use
-// (KIT-33) to call Authentik's admin API and resolve user/group info.
+// userConfig embeds the shared config and adds the Authentik
+// service-account API token used to call Authentik's admin API.
 // user-service is deliberately the only service configured with this
-// token - every other service only ever validates inbound tokens or
-// authenticates its own outbound calls, never calls the Authentik
-// management API itself.
+// token; every other service only ever validates inbound tokens.
 type userConfig struct {
 	m.Config  `mapstructure:",squash"`
 	Authentik struct {
@@ -49,7 +45,6 @@ var (
 	AuthentikClient   *authentik.Client
 	UserService       *services.UserService
 
-	// Handlers
 	HealthHandler *healthh.Handlers
 	HttpHandler   *handlers.HttpHandlers
 )
@@ -89,11 +84,9 @@ func init() {
 		Logger,
 	)
 
-	// RabbitMQPublisher is for household.member.added/removed (KIT-74) -
-	// published directly, not through an outbox, since nothing consumes
-	// them yet and there's no in-flight request whose outcome depends on
-	// delivery (same reasoning recipe-service's republish-access tool
-	// uses - see recipe-service/internal/replay/replay.go).
+	// RabbitMQPublisher publishes household.member.added/removed directly,
+	// not through an outbox, since nothing consumes them yet and no
+	// in-flight request depends on delivery.
 	RabbitMQPublisher, err = rmq.NewPublisher(RabbitMQClient.Connection, "cookbook")
 	if err != nil {
 		Logger.Errorf("Error setting up RabbitMQ publisher: %v", err)
@@ -102,11 +95,9 @@ func init() {
 
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 
-	// AuthentikClient calls Authentik's core API (KIT-33/34) with this
-	// service's service-account token - the only service configured
-	// with it (KIT-74). Its base URL is derived from the OIDC issuer
-	// rather than a separate config field: Authentik always serves its
-	// REST API at the same host as the issuer it hands out tokens for.
+	// AuthentikClient's base URL is derived from the OIDC issuer rather
+	// than a separate config field: Authentik always serves its REST API
+	// at the same host as the issuer it hands out tokens for.
 	AuthentikClient, err = authentik.NewClient(Configuration.Oauth.Issuer, Configuration.Authentik.APIToken)
 	if err != nil {
 		Logger.Fatalf("error initialising Authentik client: %v", err)

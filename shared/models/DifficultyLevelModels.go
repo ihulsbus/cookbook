@@ -17,9 +17,8 @@ var (
 	}
 )
 
-// Database model
 type DifficultyLevel struct {
-	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuidv7();primaryKey"`
 	Level     int            `gorm:"type:integer;unique;not null"`
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -43,12 +42,6 @@ func (d DifficultyLevel) ConvertAllToDTO(difficultyLevels []DifficultyLevel) []D
 	return data
 }
 
-//func (difficultyLevel *DifficultyLevel) BeforeCreate(tx *gorm.DB) (err error) {
-//	difficultyLevel.ID = uuid.New()
-//	return
-//}
-
-// DTO model
 type DifficultyLevelDTO struct {
 	ID    uuid.UUID `json:"id,omitempty" binding:"uuid"`
 	Level int       `json:"level" binding:"required,numeric,min=1,max=5"`

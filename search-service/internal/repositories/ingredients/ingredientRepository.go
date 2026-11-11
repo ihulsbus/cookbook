@@ -20,12 +20,9 @@ func NewIngredientRepository(serviceURL string) *IngredientRepository {
 	}
 }
 
-// Query lists ingredients. Ingredients are a shared catalog (no
-// owner/visibility), so there's no leak concern here (KIT-30) - unlike
-// the recipe and metadata queries, this is just a straight list.
-// ingredient-service has no free-text search either, so req.Query isn't
-// sent. token is the caller's own bearer token ("Bearer ..."), forwarded
-// as-is since the endpoint still requires authentication.
+// Query lists all ingredients from the shared catalog (no per-caller
+// visibility). ingredient-service has no free-text search, so req.Query
+// is not sent, but the endpoint still requires the caller's bearer token.
 func (r *IngredientRepository) Query(ctx context.Context, req m.SearchRequest, token string) ([]m.IngredientResult, error) {
 	var results []m.IngredientResult
 

@@ -14,7 +14,6 @@ type SearchService struct {
 	repo SearchRepository
 }
 
-// NewSearchService creates a new SearchService instance
 func NewSearchService(repo SearchRepository) *SearchService {
 	return &SearchService{
 		repo: repo,
@@ -39,7 +38,7 @@ func (s SearchService) SearchMetadata(searchRequestDTO m.MetadataSearchRequestDT
 		CuisineTypeID:     &searchRequestDTO.CuisineTypeID,
 	}
 
-	// do this separate, as otherwise both min and max will be 0 and we want nils
+	// Set separately: a direct assignment would turn an absent value into 0 instead of nil.
 	if searchRequestDTO.MinPrepTime != nil {
 		searchRequest.MinPrepTime = searchRequestDTO.MinPrepTime
 	}

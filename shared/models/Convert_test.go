@@ -162,10 +162,9 @@ func TestConvert(t *testing.T) {
 	}
 }
 
-// TestConvert_DefaultUnits sanity-checks the real seed data (KIT-37) -
-// not exact real-world unit equivalences (those are empirically rounded
-// constants and won't divide evenly), just that converting there and
-// back lands within a cent's worth of rounding.
+// TestConvert_DefaultUnits sanity-checks the real seed data: not exact
+// real-world unit equivalences (those are empirically rounded constants),
+// just that converting there and back lands within rounding error.
 func TestConvert_DefaultUnits(t *testing.T) {
 	byShortName := func(short string) Unit {
 		for _, u := range DefaultUnits {

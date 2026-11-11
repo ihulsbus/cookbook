@@ -95,13 +95,72 @@ func initDatabase() {
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}
-	// recipe_access projection (KIT-27/79): kept current by Projector's
-	// RabbitMQ consumer, not by calling recipe-service at startup.
+	// recipe_access is kept current by Projector's RabbitMQ consumer, not
+	// by calling recipe-service at startup.
 	if err := az.AutoMigrate(DatabaseClient); err != nil {
 		Logger.Fatalf("Error while automigrating recipe_access table: %s", err.Error())
 	}
 
+	initIngredientDuplicatePrevention()
+
 	Logger.Info("connected!")
+}
+
+// initIngredientDuplicatePrevention uses raw SQL, not GORM AutoMigrate,
+// since a STORED GENERATED column isn't something GORM's migrator can
+// declare. normalized_name is deliberately not a Go struct field on
+// models.Ingredient; the repository queries it by raw column name.
+//
+// Idempotent (every statement is CREATE ... IF NOT EXISTS / CREATE OR
+// REPLACE), so it's safe on every startup. Must run after AutoMigrate
+// (needs the "ingredients" table and "name" column to exist).
+func initIngredientDuplicatePrevention() {
+	Logger.Info("setting up ingredient duplicate prevention")
+
+	// unaccent and pg_trgm are "trusted" extensions (Postgres 13+), so
+	// this service's own DB role can create them without superuser.
+	if err := DatabaseClient.Exec(`CREATE EXTENSION IF NOT EXISTS unaccent`).Error; err != nil {
+		Logger.Fatalf("Error creating unaccent extension: %s", err.Error())
+	}
+	if err := DatabaseClient.Exec(`CREATE EXTENSION IF NOT EXISTS pg_trgm`).Error; err != nil {
+		Logger.Fatalf("Error creating pg_trgm extension: %s", err.Error())
+	}
+
+	// unaccent() is only STABLE, not IMMUTABLE, so Postgres refuses it in
+	// a generated column expression. This wrapper pins the dictionary and
+	// asserts IMMUTABLE - the standard documented workaround.
+	if err := DatabaseClient.Exec(`
+		CREATE OR REPLACE FUNCTION immutable_unaccent(text) RETURNS text AS $$
+			SELECT unaccent('unaccent', $1)
+		$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE
+	`).Error; err != nil {
+		Logger.Fatalf("Error creating immutable_unaccent function: %s", err.Error())
+	}
+
+	// Lowercased, unaccented, whitespace-collapsed - so "Tomaat ",
+	// "tomaat", and "TOMAAT" all normalize to the same value.
+	if err := DatabaseClient.Exec(`
+		ALTER TABLE ingredients ADD COLUMN IF NOT EXISTS normalized_name text
+			GENERATED ALWAYS AS (lower(immutable_unaccent(trim(regexp_replace(name, '\s+', ' ', 'g'))))) STORED
+	`).Error; err != nil {
+		Logger.Fatalf("Error adding normalized_name column: %s", err.Error())
+	}
+
+	// DB-enforced exact-duplicate prevention; IngredientRepository.Create
+	// also handles the race this closes.
+	if err := DatabaseClient.Exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS ingredients_normalized_name_key ON ingredients (normalized_name)
+	`).Error; err != nil {
+		Logger.Fatalf("Error creating normalized_name unique index: %s", err.Error())
+	}
+
+	// GIN trigram index so the "did you mean ...?" similarity() queries
+	// don't scan the whole table.
+	if err := DatabaseClient.Exec(`
+		CREATE INDEX IF NOT EXISTS ingredients_normalized_name_trgm_idx ON ingredients USING gin (normalized_name gin_trgm_ops)
+	`).Error; err != nil {
+		Logger.Fatalf("Error creating normalized_name trigram index: %s", err.Error())
+	}
 }
 
 func initUnits() {
@@ -133,9 +192,8 @@ func initCors() {
 func initOauth() (*oidc.Module, error) {
 	module, err := oidc.NewModule(Ctx, oidc.Config{
 		Issuer: Configuration.Oauth.Issuer,
-		// Accept both the frontend's public client ID (end-user tokens)
-		// and this service's own confidential client ID (tokens from
-		// other services' client-credentials calls via shared/httpclient).
+		// Accepts both the frontend's public client ID (end-user tokens)
+		// and this service's own confidential client ID (service calls).
 		Audiences: []string{Configuration.Oauth.Audience, Configuration.Oauth.ClientID},
 	})
 	if err != nil {

@@ -106,10 +106,10 @@ environment:
     secretKeyRef:
       name: user-service-gourmedy-oauth
       key: password
-# Service-account token for Authentik's admin API (KIT-74/33) - this is
-# the only service with this credential; every other service only
-# validates inbound tokens or authenticates its own outbound calls, never
-# calls Authentik's management API.
+# Service-account token for Authentik's admin API - this is the only
+# service with this credential; every other service only validates
+# inbound tokens or authenticates its own outbound calls, never calls
+# Authentik's management API.
 - name: AUTHENTIK_APITOKEN
   valueFrom:
     secretKeyRef:
@@ -170,9 +170,9 @@ config:
         username: admin
         password: ""
 
-      # Service-account token for Authentik's admin API (KIT-33 uses this
-      # to resolve users/groups) - filled in from the AUTHENTIK_APITOKEN
-      # env var above via viper's automatic env binding, never committed
+      # Service-account token for Authentik's admin API (resolves users
+      # /groups) - filled in from the AUTHENTIK_APITOKEN env var above via
+      # viper's automatic env binding, never committed
       # here.
       authentik:
         apiToken: ""

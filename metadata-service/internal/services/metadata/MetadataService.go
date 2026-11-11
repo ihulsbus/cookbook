@@ -21,9 +21,8 @@ type MetadataService struct {
 }
 
 // NewMetadataService creates a new MetadataService instance. Recipe
-// existence/access is no longer checked here (KIT-79) - the router's
-// authz.RequireRecipeAccess("id", authz.PermissionWrite) middleware
-// already confirmed both before this is ever called.
+// existence/access is not checked here - the router's
+// authz.RequireRecipeAccess middleware already confirmed both.
 func NewMetadataService(metadataRepo MetadataRepository) *MetadataService {
 	return &MetadataService{
 		repo: metadataRepo,

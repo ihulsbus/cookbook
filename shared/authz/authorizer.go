@@ -25,22 +25,19 @@ const (
 	visibilityPublic = "public"
 )
 
-// ErrProjectionMiss is returned when no projection row exists yet for a
-// recipe - e.g. the request landed in the short window right after
-// recipe.created before the event has been consumed. See SetMissFallback.
+// ErrProjectionMiss means no projection row exists yet for a recipe, e.g.
+// the request landed right after recipe.created but before the event was
+// consumed. See SetMissFallback.
 var ErrProjectionMiss = errors.New("authz: no projection for recipe")
 
-// LoggerInterface is the minimal logging surface this package needs.
 type LoggerInterface interface {
 	Warnf(format string, args ...interface{})
 	Errorf(format string, args ...interface{})
 }
 
-// MissFallback is called by the Authorizer when a projection-miss occurs,
-// so the caller can fetch the authoritative access state (e.g. from
-// recipe-service's internal endpoint, KIT-28) and feed it to a Projector
-// before the lookup is retried once. Returning an error leaves the miss
-// unresolved; the original ErrProjectionMiss is then surfaced.
+// MissFallback is invoked on a projection miss so the caller can fetch the
+// authoritative access state and feed it to a Projector before the lookup
+// is retried once. An error leaves the miss unresolved.
 type MissFallback func(ctx context.Context, recipeID uuid.UUID) error
 
 // Authorizer answers CanRead/CanWrite against the local RecipeAccess
@@ -60,26 +57,18 @@ func NewAuthorizer(db *gorm.DB, logger LoggerInterface) *Authorizer {
 	return &Authorizer{db: db, logger: logger}
 }
 
-// SetMissFallback installs f, called once per projection miss (see
-// MissFallback) before failing the request. Not set by this package
-// itself - KIT-28 wires one up using shared/httpclient against
-// recipe-service's internal access endpoint.
+// SetMissFallback installs f, called once per projection miss before
+// failing the request. Not set by this package itself.
 func (a *Authorizer) SetMissFallback(f MissFallback) {
 	a.onMiss = f
 }
 
-// MissCount returns how many projection misses have been observed. A
-// sustained non-zero rate is the signal KIT-28 asks for on the
-// projection-miss fallback path; wire this into whatever metrics
-// mechanism the embedding service has (none exists repo-wide today - see
-// the miss/hit log lines in the meantime).
+// MissCount returns how many projection misses have been observed. Wire
+// this into metrics if a sustained non-zero rate needs alerting.
 func (a *Authorizer) MissCount() uint64 { return atomic.LoadUint64(&a.missCount) }
 
-// HitCount returns how many lookups were served directly from the
-// projection, without needing the miss fallback.
 func (a *Authorizer) HitCount() uint64 { return atomic.LoadUint64(&a.hitCount) }
 
-// CanRead reports whether principal may read recipeID.
 func (a *Authorizer) CanRead(ctx context.Context, principal *oidc.Principal, recipeID uuid.UUID) (bool, error) {
 	row, err := a.lookup(ctx, recipeID)
 	if err != nil {
@@ -89,7 +78,6 @@ func (a *Authorizer) CanRead(ctx context.Context, principal *oidc.Principal, rec
 	return allowed, err
 }
 
-// CanWrite reports whether principal may write recipeID.
 func (a *Authorizer) CanWrite(ctx context.Context, principal *oidc.Principal, recipeID uuid.UUID) (bool, error) {
 	row, err := a.lookup(ctx, recipeID)
 	if err != nil {
@@ -144,11 +132,10 @@ func (a *Authorizer) fetch(ctx context.Context, recipeID uuid.UUID) (*RecipeAcce
 	return &row, nil
 }
 
-// evaluate is the rule matrix, kept as a pure function (no DB, no
-// fallback) so it's directly table-test-able: the owner can read and
-// write; a share targeting the principal (by user ID, or by group
-// membership) grants its own permission; public visibility grants read
-// to every authenticated principal. Everything else is denied.
+// evaluate is the rule matrix as a pure function (no DB, no fallback) for
+// table-testability: owner gets read/write; a share targeting the
+// principal (by user or group) grants its permission; public visibility
+// grants read to anyone. Everything else is denied.
 func evaluate(row *RecipeAccess, principal *oidc.Principal, perm Permission) (bool, error) {
 	if row.OwnerID == principal.UserID {
 		return true, nil
@@ -195,8 +182,8 @@ func containsString(haystack []string, needle string) bool {
 }
 
 // RequireRecipeAccess is a Gin middleware requiring perm on the recipe
-// identified by the path parameter named param. It must run after
-// oidc.Module.RequireAuth (it reads the Principal RequireAuth stores).
+// identified by path parameter param. Must run after
+// oidc.Module.RequireAuth, which stores the Principal it reads.
 func (a *Authorizer) RequireRecipeAccess(param string, perm Permission) gin.HandlerFunc {
 	return a.requireRecipeAccess(perm, func(c *gin.Context) (string, bool) {
 		v := c.Param(param)
@@ -205,8 +192,7 @@ func (a *Authorizer) RequireRecipeAccess(param string, perm Permission) gin.Hand
 }
 
 // RequireRecipeAccessQuery is RequireRecipeAccess for a recipe id carried
-// as a query parameter instead of a path parameter (e.g.
-// /instruction/search?recipeID=...).
+// as a query parameter instead of a path parameter.
 func (a *Authorizer) RequireRecipeAccessQuery(param string, perm Permission) gin.HandlerFunc {
 	return a.requireRecipeAccess(perm, func(c *gin.Context) (string, bool) {
 		return c.GetQuery(param)

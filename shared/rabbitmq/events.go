@@ -29,9 +29,7 @@ const (
 	ImageUpdatedRoutingKey = "image.updated"
 	ImageDeletedRoutingKey = "image.deleted"
 
-	// Households (KIT-74) - published by user-service, for later use
-	// (pantry) once something manages household membership. No consumer
-	// exists yet.
+	// Households - published by user-service; no consumer exists yet.
 	HouseholdMemberAddedRoutingKey   = "household.member.added"
 	HouseholdMemberRemovedRoutingKey = "household.member.removed"
 )
@@ -106,12 +104,10 @@ type ShareEntry struct {
 	Permission string `json:"permission" example:"read"` // "read" | "write"
 }
 
-// RecipePayload is the body for recipe.created/updated/deleted. It carries
-// the recipe's full content AND its full access state (not a delta), so
-// consumers - both the existing content caches (image-service,
-// ingredient-service) and shared/authz's projection - can apply it
-// idempotently and out of order: drop the event when Version <= the
-// consumer's own stored Version.
+// RecipePayload is the body for recipe.created/updated/deleted. It
+// carries the recipe's full content AND full access state (not a
+// delta), so consumers can apply it idempotently and out of order: drop
+// the event when Version <= the consumer's own stored Version.
 type RecipePayload struct {
 	ID           uuid.UUID `json:"id" example:"505BBD89-5E8A-447F-9B4A-462CF56B124B"`
 	Name         string    `json:"name" example:"apple pie"`
@@ -139,11 +135,10 @@ func (p RecipePayload) ToAccessState() RecipeAccessState {
 	}
 }
 
-// RecipeAccessState is the body for recipe.access.changed - published when
-// a recipe's ownership, visibility or shares change without a full content
-// update (e.g. a future share-management endpoint). It carries the full
-// access state, not a delta, for the same idempotent/out-of-order reasons
-// as RecipePayload.
+// RecipeAccessState is the body for recipe.access.changed - published
+// when ownership, visibility or shares change without a full content
+// update. Carries the full access state, not a delta, for the same
+// reasons as RecipePayload.
 type RecipeAccessState struct {
 	RecipeID   uuid.UUID    `json:"recipe_id"`
 	OwnerID    string       `json:"owner_id"`
@@ -153,7 +148,6 @@ type RecipeAccessState struct {
 	Deleted    bool         `json:"deleted"`
 }
 
-// Image payload definitions
 type ImagePayload struct {
 	ID         uuid.UUID `json:"id" example:"505BBD89-5E8A-447F-9B4A-462CF56B124B"`
 	EntityType string    `json:"entity_type" example:"recipe"`
@@ -162,9 +156,8 @@ type ImagePayload struct {
 	Type       string    `json:"type" example:"jpeg"`
 }
 
-// HouseholdMemberPayload is the body for household.member.added/removed
-// (KIT-74) - published by user-service whenever household membership
-// changes.
+// HouseholdMemberPayload is the body for household.member.added/removed,
+// published by user-service whenever household membership changes.
 type HouseholdMemberPayload struct {
 	HouseholdID uuid.UUID `json:"household_id"`
 	UserID      uuid.UUID `json:"user_id"`

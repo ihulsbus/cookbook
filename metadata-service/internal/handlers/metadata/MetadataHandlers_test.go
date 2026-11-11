@@ -35,8 +35,6 @@ var (
 	}
 )
 
-// ====== MetadataService ======
-
 func (s *MetadataServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.RecipeMetadataDTO], error) {
 	switch metadata.ServingCount {
 	case 1: // find all

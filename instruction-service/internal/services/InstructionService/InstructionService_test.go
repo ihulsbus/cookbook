@@ -66,8 +66,6 @@ func (InstructionRepositoryMock) Delete(_ *[]m.Instruction) error {
 	}
 }
 
-// ========================================================================================================
-
 func TestFindInstruction_OK(t *testing.T) {
 	s := NewInstructionService(&InstructionRepositoryMock{})
 

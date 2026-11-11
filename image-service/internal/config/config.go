@@ -26,8 +26,7 @@ import (
 
 type imageConfig struct {
 	m.Config `mapstructure:",squash"`
-	// RecipeServiceInternal is recipe-service's internal-only API (KIT-28),
-	// used only by Authorizer's projection-miss fallback.
+	// RecipeServiceInternal is used only by Authorizer's projection-miss fallback.
 	RecipeServiceInternal m.ApiClient
 }
 
@@ -40,25 +39,20 @@ var (
 	OIDCModule *oidc.Module
 	Cors       cors.Config
 
-	// Clients
 	S3Client       *s3.S3
 	DatabaseClient *gorm.DB
 	RabbitMQClient *rmq.RabbitMQ
 
-	// Repositories
 	DatabaseRepository *dr.DatabaseRepository
 	RabbitMQRepository *rr.RabbitMQRepository
 	S3Repository       *sr.S3Repository
 
-	// Services
 	ImageService *is.ImageService
 
-	// Recipe access: see ingredient-service's config.go for the same
-	// pattern.
+	// Mirrors ingredient-service's config.go pattern.
 	Authorizer *az.Authorizer
 	Projector  *az.Projector
 
-	// Handlers
 	HttpHandler   *hh.HttpHandler
 	HealthHandler *healthh.Handlers
 )
@@ -90,7 +84,6 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
-	// Init clients
 	initDatabase()
 	S3Client = initS3(
 		Configuration.S3.Endpoint,
@@ -98,9 +91,8 @@ func init() {
 		Configuration.S3.AWSAccessKey,
 		"us-east-1",
 	)
-	// RabbitMQClient.Connection is used by Projector's consumer (started
-	// in ImageService.go) - no synchronous call to any other service
-	// happens during startup (KIT-79).
+	// RabbitMQClient.Connection is consumed by Projector's consumer (started in
+	// ImageService.go); no synchronous call to another service happens at startup.
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
@@ -108,7 +100,6 @@ func init() {
 		Logger,
 	)
 
-	// Init repositories
 	DatabaseRepository = dr.NewDatabaseRepository(DatabaseClient)
 	RabbitMQRepository, err = rr.NewRabbitMQRepository(RabbitMQClient.Connection, "cookbook", Logger)
 	if err != nil {
@@ -116,7 +107,6 @@ func init() {
 	}
 	S3Repository = sr.NewS3Repository(S3Client, sr.S3Presigner{Client: S3Client}, Logger, Configuration.S3.BucketName)
 
-	// Init services
 	ImageService = is.NewImageService(DatabaseRepository, RabbitMQRepository, S3Repository, Logger)
 
 	Projector = az.NewProjector(DatabaseClient)
@@ -124,7 +114,6 @@ func init() {
 	fallbackClient := hc.NewInternalHTTPClient(5*time.Second, Logger, nil, nil)
 	Authorizer.SetMissFallback(az.NewRecipeServiceFallback(fallbackClient, Configuration.RecipeServiceInternal.BaseURL, Projector))
 
-	// Init handlers
 	HttpHandler = hh.NewHttpHandler(ImageService, Authorizer, Logger)
 	HealthHandler = healthh.NewHealthHandlers(DatabaseClient, Logger)
 }

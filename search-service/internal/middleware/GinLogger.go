@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Taken from gin-logrus github.com/toorop/gin-logrus, customized to align more with the app's logging output
+// Adapted from github.com/toorop/gin-logrus to match this app's logging output.
 func Logger(logger logrus.FieldLogger, notLogged ...string) gin.HandlerFunc {
 	hostname, err := os.Hostname()
 	if err != nil {
@@ -28,7 +28,7 @@ func Logger(logger logrus.FieldLogger, notLogged ...string) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		// other handler can change c.Path so:
+		// captured before c.Next(), since a handler may mutate c.Request.URL.Path
 		path := c.Request.URL.Path
 		start := time.Now()
 		c.Next()

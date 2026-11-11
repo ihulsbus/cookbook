@@ -33,8 +33,6 @@ var (
 	switchCheck string
 )
 
-// ====== SearchService ======
-
 func (s *SearchServiceMock) SearchInstruction(request models.InstructionSearchRequestDTO) (models.InstructionSearchResultDTO, error) {
 	switch switchCheck {
 	case "search":
@@ -43,8 +41,6 @@ func (s *SearchServiceMock) SearchInstruction(request models.InstructionSearchRe
 		return models.InstructionSearchResultDTO{}, errors.New("error")
 	}
 }
-
-// ====== Tests ======
 
 func TestSearch_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)

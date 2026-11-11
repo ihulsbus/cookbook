@@ -26,11 +26,11 @@ type UnitRepositoryMock struct{}
 
 func (UnitRepositoryMock) FindAll(pagination m.PaginationRequest) ([]m.Unit, int64, error) {
 	switch findAllUnit.FullName {
-	case "findall": // OK
+	case "findall":
 		return []m.Unit{unit}, 1, nil
 	case "notfound":
 		return nil, 0, errors.New("not found")
-	default: // ERR
+	default:
 		return nil, 0, errors.New("error")
 	}
 }

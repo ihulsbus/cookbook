@@ -30,9 +30,8 @@ var (
 	}
 )
 
-// Database model
 type CuisineType struct {
-	ID        uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	ID        uuid.UUID      `gorm:"type:uuid;default:uuidv7();primaryKey"`
 	Name      string         `gorm:"type:varchar(100);unique;not null"`
 	CreatedAt time.Time      `gorm:"autoCreateTime"`
 	UpdatedAt time.Time      `gorm:"autoUpdateTime"`
@@ -56,12 +55,6 @@ func (c CuisineType) ConvertAllToDTO(cuisineTypes []CuisineType) []CuisineTypeDT
 	return data
 }
 
-//func (cuisineType *CuisineType) BeforeCreate(tx *gorm.DB) (err error) {
-//	cuisineType.ID = uuid.New()
-//	return
-//}
-
-// DTO model
 type CuisineTypeDTO struct {
 	ID   uuid.UUID `json:"id,omitempty" binding:"uuid"` // ID can be omitted for create operations
 	Name string    `json:"name" binding:"required,min=1,max=255"`

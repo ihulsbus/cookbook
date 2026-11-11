@@ -17,7 +17,6 @@ type AmountService struct {
 	repo AmountRepository
 }
 
-// NewAmountService creates a new AmountService instance
 func NewAmountService(amountRepo AmountRepository) *AmountService {
 	return &AmountService{
 		repo: amountRepo,
@@ -55,7 +54,6 @@ func (s AmountService) Create(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[
 	case "not found":
 		amounts := m.AmountDTO{}.ConvertAllFromDTO(*amountsDTO)
 
-		// force set all ingredient recipeID fields to the provided recipeID
 		for i := range amounts {
 			amounts[i].RecipeID = recipeID
 		}
@@ -91,7 +89,6 @@ func (s AmountService) Update(recipeID uuid.UUID, amountsDTO *[]m.AmountDTO) (*[
 
 	amounts := m.AmountDTO{}.ConvertAllFromDTO(*amountsDTO)
 
-	// force set all ingredient recipeID fields to the provided recipeID
 	for i := range amounts {
 		amounts[i].RecipeID = recipeID
 	}

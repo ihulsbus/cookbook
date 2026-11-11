@@ -32,7 +32,7 @@ func (r InstructionRepository) Find(entityID uuid.UUID) (*[]m.Instruction, error
 	}
 
 	if len(instruction) == 0 {
-		// no rows => treat as “not found”
+		// GORM doesn't return ErrRecordNotFound for an empty slice result
 		return nil, errors.New("not found")
 	}
 

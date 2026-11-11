@@ -30,9 +30,8 @@ func sharesJSON(t *testing.T, shares []rmq.ShareEntry) []byte {
 	return b
 }
 
-// TestEvaluate_RuleMatrix is the rule matrix KIT-27 explicitly asks for:
-// owner read/write, share-granted read/write (user and group), public
-// read, and deny-by-default for everyone else.
+// TestEvaluate_RuleMatrix covers owner read/write, share-granted
+// read/write (user and group), public read, and deny-by-default.
 func TestEvaluate_RuleMatrix(t *testing.T) {
 	owner := "owner-1"
 	stranger := "stranger-1"
@@ -127,10 +126,9 @@ func TestAuthorizer_CanRead_ProjectionMiss_NoFallback(t *testing.T) {
 	assert.Equal(t, uint64(0), a.HitCount())
 }
 
-// TestAuthorizer_CanRead_ProjectionMiss_FallbackResolves is KIT-28's
-// contract from shared/authz's side: when the projection is missing,
-// SetMissFallback's function is called, and if it succeeds the lookup is
-// retried once rather than failing outright.
+// TestAuthorizer_CanRead_ProjectionMiss_FallbackResolves checks that when
+// the projection is missing, the fallback is called and, if it succeeds,
+// the lookup is retried once rather than failing outright.
 func TestAuthorizer_CanRead_ProjectionMiss_FallbackResolves(t *testing.T) {
 	db, mock := newMockDatabase(t)
 	a := NewAuthorizer(db, loggerMock{})

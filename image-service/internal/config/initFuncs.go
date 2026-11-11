@@ -95,8 +95,8 @@ func initDatabase() {
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}
-	// recipe_access projection (KIT-27/79): kept current by Projector's
-	// RabbitMQ consumer, not by calling recipe-service at startup.
+	// recipe_access is kept current by Projector's RabbitMQ consumer, not by
+	// calling recipe-service at startup.
 	if err := az.AutoMigrate(DatabaseClient); err != nil {
 		Logger.Fatalf("Error while automigrating recipe_access table: %s", err.Error())
 	}
@@ -134,9 +134,8 @@ func initCors() {
 func initOauth() (*oidc.Module, error) {
 	module, err := oidc.NewModule(Ctx, oidc.Config{
 		Issuer: Configuration.Oauth.Issuer,
-		// Accept both the frontend's public client ID (end-user tokens)
-		// and this service's own confidential client ID (tokens from
-		// other services' client-credentials calls via shared/httpclient).
+		// Accepts both end-user tokens (frontend client ID) and this
+		// service's own client-credentials tokens (its own client ID).
 		Audiences: []string{Configuration.Oauth.Audience, Configuration.Oauth.ClientID},
 	})
 	if err != nil {

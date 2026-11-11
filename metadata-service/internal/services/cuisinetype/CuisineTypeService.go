@@ -18,7 +18,6 @@ type CuisineTypeService struct {
 	repo CuisineTypeRepository
 }
 
-// NewCuisineTypeService creates a new CuisineTypeService instance
 func NewCuisineTypeService(cuisineTypeRepo CuisineTypeRepository) *CuisineTypeService {
 	return &CuisineTypeService{
 		repo: cuisineTypeRepo,

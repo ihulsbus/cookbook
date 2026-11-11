@@ -12,13 +12,11 @@ import (
 	"github.com/wagslane/go-rabbitmq"
 )
 
-// recipeService is declared only to type-constrain the service field this
-// handler is built with (RecipeService) - rabbitMQConsumerHandler below
-// doesn't currently call any of these methods (it's a TODO stub, see the
-// fmt.Println calls), so this just has to match RecipeService's real
-// signatures, not reflect how it's used.
+// recipeService only type-constrains the field RabbitMQHandler is built
+// with; rabbitMQConsumerHandler below doesn't call any of these methods
+// yet (it's a TODO stub - see the fmt.Println calls).
 type recipeService interface {
-	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error)
+	FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope models.RecipeListScope, sort string) (models.PaginatedResponse[models.RecipeDTO], error)
 	FindSingle(recipeDTO models.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (models.RecipeDTO, error)
 	Create(recipeDTO models.RecipeDTO, ownerID uuid.UUID) (models.RecipeDTO, error)
 	Update(recipeDTO models.RecipeDTO, requesterID uuid.UUID, requesterGroups []string) (models.RecipeDTO, error)

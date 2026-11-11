@@ -65,8 +65,6 @@ func (p PresignerMock) Presign(bucket, key string, expiresIn time.Duration) (str
 	return p.url, nil
 }
 
-// ========================================================================================================
-
 func TestImageUpload_OK(t *testing.T) {
 
 	r := NewS3Repository(&S3InterfaceMock{}, PresignerMock{}, &LoggerInterfaceMock{}, "bucket")
@@ -100,9 +98,7 @@ func TestImageDelete_OK(t *testing.T) {
 }
 
 func TestImageUpload_JpegOK(t *testing.T) {
-	// image/jpeg (the real Content-Type a browser sends for a JPEG, as
-	// opposed to the test fixtures' "image/jpg") must resolve to the
-	// same ".jpg" extension - this is the bug fileExtension fixes.
+	// "image/jpeg" (a real browser upload) must resolve to ".jpg" too, not just "image/jpg".
 	r := NewS3Repository(&S3InterfaceMock{}, PresignerMock{}, &LoggerInterfaceMock{}, "bucket")
 	filename = imgFile.ID.String()
 

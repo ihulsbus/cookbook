@@ -11,9 +11,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// LoggerInterface is the minimal logging surface outbox/relay code needs.
-// Defined locally (rather than importing shared/models) so this module
-// stays free of a dependency on a specific service's config stack.
+// LoggerInterface is defined locally (rather than importing shared/models)
+// so this module stays free of a dependency on a specific service's
+// config stack.
 type LoggerInterface interface {
 	Debugf(format string, args ...interface{})
 	Warnf(format string, args ...interface{})
@@ -23,10 +23,10 @@ type LoggerInterface interface {
 // OutboxEvent is a durable record of an event to publish, written in the
 // same DB transaction as the business change it describes. A Relay polls
 // for unpublished rows and publishes them, so a publish failure (e.g.
-// RabbitMQ is down) no longer loses the event - it just stays unpublished
-// and gets retried on the next poll, instead of being logged and dropped.
+// RabbitMQ down) leaves the row unpublished for retry instead of losing
+// the event.
 type OutboxEvent struct {
-	ID            uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	ID            uuid.UUID `gorm:"type:uuid;default:uuidv7();primaryKey"`
 	RoutingKey    string    `gorm:"not null"`
 	Payload       []byte    `gorm:"type:jsonb;not null"`
 	EventID       uuid.UUID `gorm:"type:uuid;not null;uniqueIndex"`
@@ -47,7 +47,9 @@ func NewOutboxEntry(event Event) (OutboxEvent, error) {
 
 	eventID := event.EventID
 	if eventID == uuid.Nil {
-		eventID = uuid.New()
+		// Time-ordered (v7), not random v4; mirrors shared/models.NewID
+		// without depending on that package from here.
+		eventID = uuid.Must(uuid.NewV7())
 	}
 
 	schemaVersion := event.SchemaVersion
@@ -63,17 +65,15 @@ func NewOutboxEntry(event Event) (OutboxEvent, error) {
 	}, nil
 }
 
-// AutoMigrateOutbox migrates the outbox table into db. Call once at
-// service startup alongside the service's own model migrations.
+// AutoMigrateOutbox migrates the outbox table into db.
 func AutoMigrateOutbox(db *gorm.DB) error {
 	return db.AutoMigrate(&OutboxEvent{})
 }
 
 // Relay polls the outbox table for unpublished events and publishes them,
 // marking each published on success. At-least-once delivery: a crash
-// between a successful publish and marking it published re-publishes that
-// event on the next poll, which is safe because every consumer in this
-// system is expected to apply events idempotently via Version.
+// between publish and marking published re-publishes that event on the
+// next poll - safe since consumers apply events idempotently via Version.
 type Relay struct {
 	db        *gorm.DB
 	publisher *Publisher
@@ -109,10 +109,8 @@ func (r *Relay) Start(ctx context.Context) {
 	}
 }
 
-// runOnce publishes one batch of unpublished events and returns how many
-// were published. Exported for tests; safe to call concurrently with Start
-// only if the caller doesn't also run Start (it's not re-entrant-safe
-// across processes, which is fine for this single-relay-per-service setup).
+// runOnce publishes one batch of unpublished events. Exported for tests;
+// not meant to run concurrently with Start in the same process.
 func (r *Relay) runOnce(ctx context.Context) error {
 	var pending []OutboxEvent
 	if err := r.db.WithContext(ctx).

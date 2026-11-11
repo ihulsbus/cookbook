@@ -11,7 +11,6 @@ import (
 	"github.com/wagslane/go-rabbitmq"
 )
 
-// MockPublisher is a mock implementation of the rabbitmq.Publisher
 type MockPublisher struct {
 	mock.Mock
 }

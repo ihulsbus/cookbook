@@ -11,12 +11,11 @@ import (
 	"github.com/wagslane/go-rabbitmq"
 )
 
-// MockRecipeService mocks the recipeService interface
 type MockRecipeService struct {
 	mock.Mock
 }
 
-func (m *MockRecipeService) FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope models.RecipeListScope) (models.PaginatedResponse[models.RecipeDTO], error) {
+func (m *MockRecipeService) FindAll(pagination models.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope models.RecipeListScope, sort string) (models.PaginatedResponse[models.RecipeDTO], error) {
 	args := m.Called(pagination, requesterID, requesterGroups, scope)
 	return args.Get(0).(models.PaginatedResponse[models.RecipeDTO]), args.Error(1)
 }
@@ -41,7 +40,6 @@ func (m *MockRecipeService) Delete(recipeDTO models.RecipeDTO, requesterID uuid.
 	return args.Error(0)
 }
 
-// MockLogger mocks the LoggerInterface
 type MockLogger struct {
 	mock.Mock
 }
@@ -62,7 +60,6 @@ func (m *MockLogger) Errorf(format string, args ...interface{}) {
 	m.Called(format, args)
 }
 
-// MockConsumer mocks the rmq.Consumer
 type MockConsumer struct {
 	mock.Mock
 }
@@ -76,7 +73,6 @@ func (m *MockConsumer) Close() {
 	m.Called()
 }
 
-// TestRabbitMQConsumerHandler tests the consumer handler logic
 func TestRabbitMQConsumerHandler(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -96,7 +92,6 @@ func TestRabbitMQConsumerHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Arrange
 			mockService := new(MockRecipeService)
 			mockLogger := new(MockLogger)
 
@@ -113,15 +108,12 @@ func TestRabbitMQConsumerHandler(t *testing.T) {
 			delivery.RoutingKey = tt.routingKey
 			delivery.Body = body
 
-			// Expect log calls
 			mockLogger.On("Infof", mock.Anything, mock.Anything).Maybe()
 			mockLogger.On("Errorf", mock.Anything, mock.Anything).Maybe()
 			mockLogger.On("Warnf", mock.Anything, mock.Anything).Maybe()
 
-			// Act
 			action := handler.rabbitMQConsumerHandler(delivery)
 
-			// Assert
 			assert.Equal(t, tt.expectedAction, action)
 
 			if tt.expectLog != "" {
@@ -131,30 +123,3 @@ func TestRabbitMQConsumerHandler(t *testing.T) {
 		})
 	}
 }
-
-// func TestRabbitMQConsumerHandler_ProcessError(t *testing.T) {
-// 	// Arrange
-// 	mockService := new(MockRecipeService)
-// 	mockLogger := new(MockLogger)
-// 	handler, _ := NewRabbitMQHandler(mockService, mockLogger)
-
-// 	event := models.RecipeDTO{Name: "ErrorRecipe"}
-// 	body, _ := json.Marshal(event)
-// 	delivery := rabbitmq.Delivery{}
-// 	delivery.RoutingKey = "image.created"
-// 	delivery.Body = body
-
-// 	mockLogger.On("Infof", mock.Anything, mock.Anything).Return()
-// 	mockLogger.On("Errorf", mock.Anything, mock.Anything).Return()
-// 	mockService.On("Create", event).Return(models.RecipeDTO{}, errors.New("processing error"))
-
-// 	// Act
-// 	result := handler.rabbitMQConsumerHandler(delivery)
-
-// 	// Assert
-// 	assert.Equal(t, rabbitmq.NackRequeue, result)
-// 	mockService.AssertCalled(t, "Create", event)
-// 	mockLogger.AssertCalled(t, "Errorf", mock.Anything, mock.Anything)
-// }
-
-// TestStartConsuming verifies that StartConsuming initializes the consumer

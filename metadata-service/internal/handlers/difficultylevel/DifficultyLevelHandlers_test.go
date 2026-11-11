@@ -26,8 +26,6 @@ var (
 	}
 )
 
-// ====== DifficultyLevelService ======
-
 func (s *DifficultyLevelServiceMock) FindAll(pagination models.PaginationRequest) (models.PaginatedResponse[models.DifficultyLevelDTO], error) {
 	switch difficultyLevel.Level {
 	case 1:

@@ -14,8 +14,8 @@ import (
 )
 
 // UserService starts the HTTP server. There's no RabbitMQ consumer to
-// start (user-service only publishes household.member.added/removed,
-// KIT-74 - nothing in this service consumes events yet).
+// start - this service only publishes events, nothing consumes them
+// yet.
 func UserService(ctx context.Context) {
 	httpServer(ctx)
 }
@@ -24,16 +24,11 @@ func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
-	// Logging
 	router.Use(m.Logger(c.Logger))
-
-	// Panic recovery
 	router.Use(gin.Recovery())
-
-	// Cors handler
 	router.Use(cors.New(c.Cors))
 
-	// Health check endpoints (no auth required)
+	// Health check endpoints - no auth required.
 	health := router.Group("/health")
 	{
 		health.GET("/live", c.HealthHandler.Liveness)
@@ -43,9 +38,8 @@ func httpServer(ctx context.Context) {
 
 	v2 := router.Group("/api/v2/user")
 	{
-		// User lookup (KIT-33): every route only requires a valid
-		// token - there's no ownership to enforce, just an exact-match
-		// search (to avoid user enumeration) and an id-to-display-name
+		// User lookup: every route only requires a valid token - no
+		// ownership to enforce, just an exact-match search and id
 		// resolve.
 		users := v2.Group("/users")
 		users.Use(c.OIDCModule.RequireAuth())
@@ -60,9 +54,8 @@ func httpServer(ctx context.Context) {
 			me.GET("/households", c.HttpHandler.ListMyHouseholds)
 		}
 
-		// Self-service households (KIT-34): owner-only operations are
-		// enforced in the service layer, not here - same pattern
-		// recipe-service uses for its share endpoints (KIT-32).
+		// Self-service households: owner-only operations are enforced
+		// in the service layer, not here.
 		households := v2.Group("/households")
 		households.Use(c.OIDCModule.RequireAuth())
 		{
@@ -74,7 +67,6 @@ func httpServer(ctx context.Context) {
 		}
 	}
 
-	// Server startup
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),

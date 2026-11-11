@@ -12,7 +12,6 @@ type SearchService struct {
 	repo SearchRepository
 }
 
-// NewSearchService creates a new SearchService instance
 func NewSearchService(repo SearchRepository) *SearchService {
 	return &SearchService{
 		repo: repo,

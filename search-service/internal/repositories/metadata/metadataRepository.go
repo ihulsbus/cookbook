@@ -20,17 +20,9 @@ func NewMetadataRepository(serviceURL string) *MetadataRepository {
 	}
 }
 
-// Query lists recipe metadata the caller may see. metadata-service's own
-// search is a structured filter (category/tag/difficulty/prep-time, see
-// shared/models.MetadataSearchRequest) with no free-text mode a
-// req.Query string could map onto, so this calls the unfiltered listing
-// endpoint instead - every recipe's metadata the caller can see, same as
-// recipe-service's own list. That endpoint is privacy-filtered against
-// metadata-service's own recipe_access projection (KIT-29/30): it already
-// excludes recipes the caller may not read, so there's no additional
-// filtering to do here. token is the caller's own bearer token
-// ("Bearer ..."), forwarded as-is - metadata-service's filter is keyed
-// off whatever principal that token resolves to.
+// Query calls metadata-service's unfiltered "all" listing, since that
+// service has no free-text search for req.Query to map onto. The endpoint
+// itself privacy-filters by the caller's token, so no filtering is needed here.
 func (r *MetadataRepository) Query(ctx context.Context, req m.SearchRequest, token string) ([]m.MetadataSearchResult, error) {
 	var results []m.MetadataSearchResult
 

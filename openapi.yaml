@@ -2197,6 +2197,15 @@ paths:
       summary: Create ingredient
       tags:
         - ingredient
+      parameters:
+        - name: force
+          in: query
+          description: >-
+            Skip the near-duplicate "did you mean ...?" block (KIT-77).
+            An exact normalized-name duplicate is never skippable.
+          schema:
+            type: boolean
+            default: false
       responses:
         '201':
           description: Created
@@ -2215,12 +2224,20 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Insufficient-permissions'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/Internal-server-error'
       operationId: create-ingredient
       x-stoplight:
         id: 05yjqvkz70fk2
-      description: Create an ingredient
+      description: >-
+        Create an ingredient. Any authenticated user may do this - the
+        shared catalog is kept clean by duplicate prevention (KIT-77),
+        not an admin gate: an exact normalized-name match (case,
+        accents and whitespace insensitive) always returns 409, and a
+        near-duplicate (similarity > 0.6) returns 409 with candidates
+        unless ?force=true.
       requestBody:
         description: 'Creates an ingredient. ID field must be omitted. If presented, field will be ignored'
         content:
@@ -2231,6 +2248,44 @@ paths:
               Example 1:
                 value:
                   name: Asparagus
+  /ingredient/suggest:
+    get:
+      summary: Suggest similar ingredients
+      tags:
+        - ingredient
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Name to find similar existing ingredients for.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+              examples:
+                Example 1:
+                  value:
+                    - id: d95751c7-6cf3-4a24-8e60-620121d7b050
+                      name: Tomaat
+        '400':
+          $ref: '#/components/responses/Bad-request'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/Internal-server-error'
+      operationId: suggest-ingredient
+      description: >-
+        Returns up to 5 ingredients similar to q (pg_trgm similarity,
+        KIT-77), for a type-ahead "pick an existing ingredient" UI -
+        the same similarity check POST /ingredient's duplicate
+        prevention uses.
   '/ingredient/{IngredientID}':
     parameters:
       - $ref: '#/components/parameters/IngredientID'
@@ -2841,6 +2896,14 @@ components:
             Grams per piece (KIT-38), used to convert this ingredient
             between mass/volume and count units. Null when unknown.
           example: '50.0000'
+        created_at:
+          type: string
+          format: date-time
+          description: When the ingredient was created (KIT-39). Read-only.
+        updated_at:
+          type: string
+          format: date-time
+          description: When the ingredient was last updated (KIT-39). Read-only.
     Unit:
       type: object
       examples:
@@ -3166,6 +3229,14 @@ components:
           description: ID of the recipe's owner. Set from the authenticated caller on create; read-only otherwise.
         visibility:
           $ref: '#/components/schemas/Visibility'
+        created_at:
+          type: string
+          format: date-time
+          description: When the recipe was created (KIT-39). Read-only.
+        updated_at:
+          type: string
+          format: date-time
+          description: When the recipe was last updated (KIT-39). Read-only.
     Visibility:
       type: string
       title: Visibility
@@ -3211,6 +3282,31 @@ components:
           type: string
           format: date-time
           description: When this share was created. Read-only.
+    IngredientConflict:
+      title: IngredientConflict
+      type: object
+      description: >-
+        Returned instead of Error when POST /ingredient is blocked by
+        duplicate prevention (KIT-77) - either an exact normalized-name
+        match, or a near-duplicate found without ?force=true.
+        `candidates` is the existing ingredient(s) to pick from instead.
+      examples:
+        - error: similar ingredient exists - did you mean one of these? pass force=true to create anyway
+          candidates:
+            - id: d95751c7-6cf3-4a24-8e60-620121d7b050
+              name: Tomaat
+      x-tags:
+        - ingredient
+      required:
+        - error
+        - candidates
+      properties:
+        error:
+          type: string
+        candidates:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ingredient'
     Error:
       title: Error
       x-stoplight:
@@ -3643,6 +3739,22 @@ components:
             Example 1:
               value:
                 error: this is an error message
+    Conflict:
+      description: >-
+        Response when the request conflicts with existing data -
+        currently only POST /ingredient's duplicate prevention
+        (KIT-77), which also returns the conflicting candidate(s).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/IngredientConflict'
+          examples:
+            Example 1:
+              value:
+                error: ingredient already exists
+                candidates:
+                  - id: d95751c7-6cf3-4a24-8e60-620121d7b050
+                    name: Asparagus
     Not-Found:
       description: Response when requested resource is not found
       content:

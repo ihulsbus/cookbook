@@ -105,8 +105,7 @@ func (h *CategoryHandlers) Update(ctx *gin.Context) {
 		return
 	}
 
-	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
-	// perhaps separate create/update DTO's are needed
+	// Use the URL param ID, not whatever ID the body may contain.
 	categoryDTO.ID = id
 
 	categoryDTO, err = h.categoryService.Update(categoryDTO)

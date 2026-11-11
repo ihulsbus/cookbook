@@ -240,11 +240,9 @@ func TestRemoveMember_OK(t *testing.T) {
 
 	h.RemoveMember(c)
 
-	// ctx.Status() alone doesn't flush headers to the underlying
-	// ResponseRecorder (gin defers that to the first body write, which a
-	// 204 response never has) - assert on the gin Writer's own status
-	// instead of w.Code, same reason DeleteHousehold's OK test below
-	// does.
+	// ctx.Status() doesn't flush to the ResponseRecorder until the first
+	// body write (which a 204 never has), so assert on the Writer's
+	// status instead of w.Code.
 	assert.Equal(t, http.StatusNoContent, c.Writer.Status())
 }
 

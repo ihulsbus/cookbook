@@ -18,7 +18,6 @@ type TagService struct {
 	repo TagRepository
 }
 
-// NewTagService creates a new TagService instance
 func NewTagService(tagRepo TagRepository) *TagService {
 	return &TagService{
 		repo: tagRepo,

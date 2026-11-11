@@ -20,25 +20,26 @@ func NewDatabaseRepository(db *gorm.DB) *DatabaseRepository {
 	}
 }
 
-// Every share/visibility mutation below takes a buildOutbox callback of
-// type func([]m.RecipeShare) (rmq.OutboxEvent, error) - written out in
-// full at each call site rather than as a named type, since a named
-// func type is a distinct type for Go interface satisfaction purposes
-// and RecipeRepository (services package) declares these methods with
-// the literal func type. buildOutbox is called with the recipe's current
-// shares, read inside the same transaction as the mutation itself -
-// never as a separate query afterwards, which would race a concurrent
-// share write and could publish a stale shares list.
+// Every share/visibility mutation below takes a buildOutbox callback
+// written out in full at each call site rather than as a named type,
+// since a named func type is distinct for Go interface satisfaction and
+// RecipeRepository declares these methods with the literal func type.
+// buildOutbox is always called with shares read inside the same
+// transaction as the mutation, never a separate query afterwards, which
+// would race a concurrent share write and could publish a stale list.
 
 // FindAll retrieves a paginated list of recipes visible to requesterID,
-// narrowed by scope (KIT-30):
+// narrowed by scope:
 //   - ScopeMine: only recipes requesterID owns.
 //   - ScopeShared: recipes shared with requesterID directly or via one
-//     of requesterGroups, excluding ones requesterID owns (KIT-35),
-//     resolved against the recipe_shares table (KIT-32).
+//     of requesterGroups, excluding ones requesterID owns.
 //   - ScopeAll (default): recipes requesterID owns, plus every public
-//     recipe - the set GET /recipe always returned before ?scope existed.
-func (r DatabaseRepository) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope) ([]m.Recipe, int64, error) {
+//     recipe.
+//
+// sortColumn/sortDirection are pre-validated by the caller
+// (RecipeService.parseSort) against a fixed allowlist, so interpolating
+// them directly into ORDER BY is safe here.
+func (r DatabaseRepository) FindAll(pagination m.PaginationRequest, requesterID uuid.UUID, requesterGroups []string, scope m.RecipeListScope, sortColumn string, sortDirection string) ([]m.Recipe, int64, error) {
 	var recipes []m.Recipe
 	var total int64
 
@@ -66,14 +67,17 @@ func (r DatabaseRepository) FindAll(pagination m.PaginationRequest, requesterID 
 		return nil, 0, err
 	}
 
-	if err := r.db.Where(where, args...).Limit(pagination.Limit).Offset(pagination.Offset()).Find(&recipes).Error; err != nil {
+	query := r.db.Where(where, args...)
+	if sortColumn != "" {
+		query = query.Order(sortColumn + " " + sortDirection)
+	}
+	if err := query.Limit(pagination.Limit).Offset(pagination.Offset()).Find(&recipes).Error; err != nil {
 		return nil, 0, err
 	}
 
 	return recipes, total, nil
 }
 
-// Find searches for a specific recipe in the database and returns it when found.
 func (r DatabaseRepository) FindSingle(recipe m.Recipe) (m.Recipe, error) {
 
 	result := r.db.First(&recipe)
@@ -95,13 +99,10 @@ func (r DatabaseRepository) FindShares(recipeID uuid.UUID) ([]m.RecipeShare, err
 	return shares, err
 }
 
-// Create handles the creation of a recipe and stores the relevant information in the database.
-// outbox is inserted in the same transaction as the recipe row, so a
-// recipe is never committed without its corresponding event becoming
-// durable (the Relay publishes it from the outbox table afterwards). A
-// brand new recipe can't have any recipe_shares rows yet, so unlike
-// Update/Delete below, Create takes a precomputed outbox rather than a
-// buildOutbox callback - there's nothing to read.
+// Create inserts outbox in the same transaction as the recipe row, so a
+// recipe is never committed without its event becoming durable. A brand
+// new recipe can't have any shares yet, so unlike Update/Delete, Create
+// takes a precomputed outbox rather than a buildOutbox callback.
 func (r DatabaseRepository) Create(recipe m.Recipe, outbox rmq.OutboxEvent) (m.Recipe, error) {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
@@ -124,10 +125,9 @@ func (r DatabaseRepository) Create(recipe m.Recipe, outbox rmq.OutboxEvent) (m.R
 }
 
 // Update applies changes to recipe and writes buildOutbox's event in the
-// same transaction, having given it the recipe's current shares (read
-// inside this transaction, not supplied by the caller) so the resulting
-// event's access state is never stale relative to a concurrent share
-// change.
+// same transaction, passing it shares read inside that same transaction
+// so the event's access state is never stale relative to a concurrent
+// share change.
 func (r DatabaseRepository) Update(recipe m.Recipe, buildOutbox func(shares []m.RecipeShare) (rmq.OutboxEvent, error)) (m.Recipe, error) {
 
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
@@ -230,9 +230,8 @@ func (r DatabaseRepository) DeleteShare(recipeID uuid.UUID, targetType m.ShareTa
 	})
 }
 
-// UpdateVisibility changes only recipe's Visibility column (PUT
-// /recipe/:id/visibility, KIT-32) and writes buildOutbox's event in the
-// same transaction.
+// UpdateVisibility changes only recipe's Visibility column and writes
+// buildOutbox's event in the same transaction.
 func (r DatabaseRepository) UpdateVisibility(recipe m.Recipe, buildOutbox func(shares []m.RecipeShare) (rmq.OutboxEvent, error)) (m.Recipe, error) {
 	if err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&m.Recipe{}).Where("id = ?", recipe.ID).Update("visibility", recipe.Visibility).Error; err != nil {

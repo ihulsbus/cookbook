@@ -5,22 +5,17 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// Amount struct to hold recipe ingredient data
 type Amount struct {
 	RecipeID     uuid.UUID `gorm:"primaryKey"`
 	IngredientID uuid.UUID `gorm:"primaryKey"`
-	// Quantity (KIT-36) is an exact decimal, not a float: precision
-	// matters down to e.g. 0.0025 g of an additive. Never convert it
-	// through float64 anywhere in this path.
+	// Exact decimal, not a float: precision matters down to e.g. 0.0025g
+	// of an additive. Never convert through float64.
 	Quantity decimal.Decimal `gorm:"type:numeric(12,4);not null" json:"Quantity" swaggertype:"string"`
 	UnitID   uuid.UUID       `json:"UnitID"`
 	Unit     Unit            `gorm:"references:ID"`
-	// Note, Position and Optional (KIT-36) describe how this amount is
-	// presented in the recipe's ingredient list - a free-text aside
-	// ("finely chopped"), the display order, and whether it's skippable.
-	Note     string `json:"Note"`
-	Position int    `json:"Position"`
-	Optional bool   `json:"Optional"`
+	Note     string          `json:"Note"`
+	Position int             `json:"Position"`
+	Optional bool            `json:"Optional"`
 }
 
 func (r Amount) ConvertToDTO() AmountDTO {

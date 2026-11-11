@@ -30,8 +30,6 @@ func TestMetadataQuery_OK(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "Bearer test-token", gotAuth)
-	// metadata-service has no free-text search (KIT-30) - this always
-	// hits the privacy-filtered "all" listing, never a query-shaped path.
 	assert.Equal(t, "/metadata/search/all", gotPath)
 	assert.Len(t, results, 1)
 	assert.Equal(t, recipeID, results[0].RecipeID)

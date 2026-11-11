@@ -8,7 +8,7 @@ import (
 )
 
 type Instruction struct {
-	ID          uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid();primary_key"`
+	ID          uuid.UUID      `gorm:"type:uuid;default:uuidv7();primary_key"`
 	Sequence    int            `gorm:"not null"`
 	Description string         `gorm:"type:text; not null"`
 	MediaID     uuid.UUID      `gorm:"type:uuid; not null"`
@@ -20,7 +20,11 @@ type Instruction struct {
 }
 
 func (instruction *Instruction) BeforeCreate(tx *gorm.DB) (err error) {
-	instruction.ID = uuid.New()
+	// Time-ordered, not the DB's uuidv7() default; guarded so
+	// tests/imports that already supply an ID aren't overridden.
+	if instruction.ID == uuid.Nil {
+		instruction.ID = NewID()
+	}
 	return
 }
 

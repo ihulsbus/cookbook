@@ -11,15 +11,22 @@ type IngredientRepository interface {
 	FindAll(pagination m.PaginationRequest) ([]m.Ingredient, int64, error)
 	FindSingle(ingredient m.Ingredient) (m.Ingredient, error)
 	FindByName(name string) (m.Ingredient, error)
+	// See IngredientRepository's doc comments for how "normalized" is computed.
+	FindByNormalizedName(name string) (m.Ingredient, error)
+	FindSimilar(name string, limit int) ([]m.Ingredient, error)
 	Create(ingredient m.Ingredient) (m.Ingredient, error)
 	Update(ingredient m.Ingredient) (m.Ingredient, error)
 	Delete(ingredient m.Ingredient) error
 }
+
+// similarityCandidateLimit is how many near-duplicates to surface, both
+// from the create-time "did you mean ...?" block and from Suggest.
+const similarityCandidateLimit = 5
+
 type IngredientService struct {
 	repo IngredientRepository
 }
 
-// NewIngredientService creates a new IngredientService instance
 func NewIngredientService(ingredientRepo IngredientRepository) *IngredientService {
 	return &IngredientService{
 		repo: ingredientRepo,
@@ -53,28 +60,70 @@ func (s IngredientService) FindSingle(ingredientDTO m.IngredientDTO) (m.Ingredie
 	return ingredient.ConvertToDTO(), nil
 }
 
-func (s IngredientService) Create(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {
-	var ingredient m.Ingredient
-
+// Create adds a new ingredient to the shared catalog - any authenticated
+// user may do this, not just cookbook-admin. createdBy is recorded for audit.
+//
+// Two things can block a create, returned via the candidates slice so
+// the handler can shape a 409 with "did you mean ...?" data:
+//   - "duplicate": the normalized_name already exists (always blocks).
+//   - "similar ingredients exist": a near-duplicate exists (pg_trgm
+//     similarity > 0.6) but isn't exact; blocks unless force is true.
+func (s IngredientService) Create(ingredientDTO m.IngredientDTO, createdBy uuid.UUID, force bool) (m.IngredientDTO, []m.IngredientDTO, error) {
 	if ingredientDTO.ID != uuid.Nil {
-		return m.IngredientDTO{}, errors.New("existing id on new element is not allowed")
+		return m.IngredientDTO{}, nil, errors.New("existing id on new element is not allowed")
 	}
 
 	if ingredientDTO.Name == "" {
-		return m.IngredientDTO{}, errors.New("name is empty")
+		return m.IngredientDTO{}, nil, errors.New("name is empty")
 	}
 
-	found, err := s.repo.FindByName(ingredientDTO.Name)
-	if err == nil && found.ID != uuid.Nil {
-		return m.IngredientDTO{}, errors.New("ingredient already exists")
-	}
-
-	ingredient, err = s.repo.Create(ingredientDTO.ConvertFromDTO())
+	exact, err := s.repo.FindByNormalizedName(ingredientDTO.Name)
 	if err != nil {
-		return m.IngredientDTO{}, err
+		return m.IngredientDTO{}, nil, errors.New("internal server error")
+	}
+	if exact.ID != uuid.Nil {
+		return m.IngredientDTO{}, []m.IngredientDTO{exact.ConvertToDTO()}, errors.New("duplicate")
 	}
 
-	return ingredient.ConvertToDTO(), nil
+	if !force {
+		similar, err := s.repo.FindSimilar(ingredientDTO.Name, similarityCandidateLimit)
+		if err != nil {
+			return m.IngredientDTO{}, nil, errors.New("internal server error")
+		}
+		if len(similar) > 0 {
+			return m.IngredientDTO{}, m.Ingredient{}.ConvertAllToDTO(similar), errors.New("similar ingredients exist")
+		}
+	}
+
+	ingredient := ingredientDTO.ConvertFromDTO()
+	ingredient.CreatedBy = createdBy
+
+	created, err := s.repo.Create(ingredient)
+	if err != nil {
+		if err.Error() == "duplicate" {
+			return m.IngredientDTO{}, nil, err
+		}
+		return m.IngredientDTO{}, nil, errors.New("internal server error")
+	}
+
+	return created.ConvertToDTO(), nil, nil
+}
+
+// Suggest returns up to 5 ingredients similar to q, for a type-ahead
+// "pick an existing ingredient" UI. Reuses FindSimilar's similarity >
+// 0.6 floor (the same one Create's near-duplicate check uses), so a
+// weak match returns an empty list rather than forcing 5 results.
+func (s IngredientService) Suggest(q string) ([]m.IngredientDTO, error) {
+	if q == "" {
+		return nil, errors.New("query is required")
+	}
+
+	similar, err := s.repo.FindSimilar(q, similarityCandidateLimit)
+	if err != nil {
+		return nil, errors.New("internal server error")
+	}
+
+	return m.Ingredient{}.ConvertAllToDTO(similar), nil
 }
 
 func (s IngredientService) Update(ingredientDTO m.IngredientDTO) (m.IngredientDTO, error) {

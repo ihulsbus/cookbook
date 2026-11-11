@@ -20,13 +20,8 @@ func SearchService(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
-	// Logging
 	router.Use(m.Logger(log))
-
-	// Panic recovery
 	router.Use(gin.Recovery())
-
-	// Cors handler
 	router.Use(cors.New(c.Cors))
 
 	// Health check endpoints (no auth required)
@@ -51,7 +46,6 @@ func SearchService(ctx context.Context) {
 
 	}
 
-	// Server startup
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),

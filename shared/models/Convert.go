@@ -6,21 +6,20 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// ErrNoConversion is returned by Convert when crossing dimensions needs
-// an Ingredient field (DensityGPerMl or GramsPerPiece, KIT-38) that is
-// nil. The caller's fallback is to keep showing the original unit.
+// ErrNoConversion is returned when crossing dimensions needs an
+// Ingredient field (DensityGPerMl or GramsPerPiece) that is nil. The
+// caller's fallback is to keep showing the original unit.
 var ErrNoConversion = errors.New("no conversion available")
 
-// Convert converts qty of from into the equivalent quantity of to
-// (KIT-37). Within one Dimension, each Unit's ToBase factor (its
-// conversion to that Dimension's base unit - g, ml or piece) is enough.
-// Crossing dimensions (mass<->volume<->count) additionally routes
-// through ing's DensityGPerMl and/or GramsPerPiece (KIT-38); whichever
-// of those is needed and nil makes this return ErrNoConversion.
+// Convert converts qty of from into the equivalent quantity of to.
+// Within one Dimension, each Unit's ToBase factor (its conversion to
+// that Dimension's base unit - g, ml or piece) is enough. Crossing
+// dimensions (mass<->volume<->count) additionally routes through ing's
+// DensityGPerMl and/or GramsPerPiece; if the one needed is nil, this
+// returns ErrNoConversion.
 func Convert(qty decimal.Decimal, from, to Unit, ing Ingredient) (decimal.Decimal, error) {
-	// qty expressed in from's own Dimension's base unit - the common
-	// starting point for both the same-Dimension and cross-Dimension
-	// paths below.
+	// qty in from's Dimension's base unit - the common starting point for
+	// both paths below.
 	baseQty := qty.Mul(from.ToBase)
 
 	if from.Dimension == to.Dimension {

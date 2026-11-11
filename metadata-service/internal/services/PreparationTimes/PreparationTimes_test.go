@@ -72,8 +72,6 @@ func (*PreparationTimeRepositoryMock) Delete(preparationTime m.PreparationTime) 
 	}
 }
 
-// ======================================================================
-
 func TestPreparationTimeFindAll_OK(t *testing.T) {
 	s := NewPreparationTimeService(&PreparationTimeRepositoryMock{})
 	findAllPreparationTime.Duration = 1 * time.Minute

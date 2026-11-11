@@ -29,10 +29,8 @@ import (
 
 type ingredientConfig struct {
 	m.Config `mapstructure:",squash"`
-	// RecipeServiceInternal is recipe-service's internal-only API
-	// (never through the ingress - see recipe-service's
-	// GET /internal/v1/recipe/:id/access), used by Authorizer's
-	// projection-miss fallback, not by client-facing code.
+	// RecipeServiceInternal is recipe-service's internal-only API (never
+	// through the ingress), used only by Authorizer's projection-miss fallback.
 	RecipeServiceInternal m.ApiClient
 }
 
@@ -45,28 +43,23 @@ var (
 	OIDCModule *oidc.Module
 	Cors       cors.Config
 
-	// Clients
 	DatabaseClient *gorm.DB
 	RabbitMQClient *rmq.RabbitMQ
 
-	// Repositories
 	AmountRepository     *ar.AmountRepository
 	IngredientRepository *ir.IngredientRepository
 	UnitRepository       *ur.UnitRepository
 
-	// Services
 	AmountService     *as.AmountService
 	IngredientService *is.IngredientService
 	UnitService       *us.UnitService
 
-	// Recipe access: Authorizer answers CanRead/CanWrite against a local
-	// projection kept current by Projector's RabbitMQ consumer (started
-	// in ingredient-service.go), falling back to recipe-service's
-	// internal endpoint on a projection miss (see SetMissFallback below).
+	// Authorizer answers CanRead/CanWrite against a local projection kept
+	// current by Projector's RabbitMQ consumer, falling back to
+	// recipe-service's internal endpoint on a projection miss.
 	Authorizer *az.Authorizer
 	Projector  *az.Projector
 
-	// Handlers
 	AmountHandlers     *ah.AmountHandlers
 	IngredientHandlers *ih.IngredientHandlers
 	UnitHandlers       *uh.UnitHandlers
@@ -101,11 +94,9 @@ func init() {
 	initUnits()
 	initCors()
 
-	// RabbitMQClient.Connection is used by Projector's consumer (started
-	// in ingredient-service.go) - no synchronous call to any other
-	// service happens during startup (KIT-79): recipe access state
-	// arrives via events, with a lazy, circuit-broken fallback call only
-	// made at request time on a projection miss.
+	// No synchronous call to another service happens at startup: recipe
+	// access state arrives via events (Projector's consumer), with a
+	// lazy, circuit-broken fallback only made at request time on a miss.
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
@@ -113,12 +104,10 @@ func init() {
 		Logger,
 	)
 
-	// Init repositories
 	AmountRepository = ar.NewAmountRepository(DatabaseClient)
 	IngredientRepository = ir.NewIngredientRepository(DatabaseClient)
 	UnitRepository = ur.NewUnitRepository(DatabaseClient)
 
-	// Init services
 	AmountService = as.NewAmountService(AmountRepository)
 	IngredientService = is.NewIngredientService(IngredientRepository)
 	UnitService = us.NewUnitService(UnitRepository)
@@ -128,7 +117,6 @@ func init() {
 	fallbackClient := hc.NewInternalHTTPClient(5*time.Second, Logger, nil, nil)
 	Authorizer.SetMissFallback(az.NewRecipeServiceFallback(fallbackClient, Configuration.RecipeServiceInternal.BaseURL, Projector))
 
-	// Init handlers
 	AmountHandlers = ah.NewAmountHandlers(AmountService, Logger)
 	IngredientHandlers = ih.NewIngredientHandlers(IngredientService, Logger)
 	UnitHandlers = uh.NewUnitHandlers(UnitService, Logger)

@@ -18,7 +18,6 @@ type UnitService struct {
 	repo UnitRepository
 }
 
-// NewUnitService creates a new UnitService instance
 func NewUnitService(unitRepo UnitRepository) *UnitService {
 	return &UnitService{
 		repo: unitRepo,

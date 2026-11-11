@@ -2,18 +2,15 @@
 set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-    -- Create users
     CREATE USER recipe WITH PASSWORD 'recipe_pass';
     CREATE USER ingredient WITH PASSWORD 'ingredient_pass';
     CREATE USER instruction WITH PASSWORD 'instruction_pass';
     CREATE USER metadata WITH PASSWORD 'metadata_pass';
     CREATE USER image WITH PASSWORD 'image_pass';
     CREATE USER search WITH PASSWORD 'search_pass';
-    -- "users", not "user" - USER is a reserved word in PostgreSQL's
-    -- grammar and can't be used unquoted as a role/database name here.
+    -- "users", not "user": USER is a reserved word in Postgres.
     CREATE USER users WITH PASSWORD 'users_pass';
 
-    -- Create databases
     CREATE DATABASE recipe OWNER recipe;
     CREATE DATABASE ingredient OWNER ingredient;
     CREATE DATABASE instruction OWNER instruction;
@@ -22,7 +19,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE search OWNER search;
     CREATE DATABASE users OWNER users;
 
-    -- Grant privileges
     GRANT ALL PRIVILEGES ON DATABASE recipe TO recipe;
     GRANT ALL PRIVILEGES ON DATABASE ingredient TO ingredient;
     GRANT ALL PRIVILEGES ON DATABASE instruction TO instruction;

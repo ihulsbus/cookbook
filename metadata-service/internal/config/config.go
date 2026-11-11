@@ -45,8 +45,7 @@ import (
 
 type metadataConfig struct {
 	m.Config `mapstructure:",squash"`
-	// RecipeServiceInternal is recipe-service's internal-only API (KIT-28),
-	// used only by Authorizer's projection-miss fallback.
+	// RecipeServiceInternal is used only by Authorizer's projection-miss fallback.
 	RecipeServiceInternal m.ApiClient
 }
 
@@ -59,11 +58,9 @@ var (
 	Cors       cors.Config
 	OIDCModule *oidc.Module
 
-	// Clients
 	DatabaseClient *gorm.DB
 	RabbitMQClient *rmq.RabbitMQ
 
-	// Repositories
 	CategoryRepository        *cr.CategoryRepository
 	CuisineTypeRepository     *cur.CuisineTypeRepository
 	DifficultyLevelRepository *dr.DifficultyLevelRepository
@@ -72,7 +69,6 @@ var (
 	MetadataRepository        *mr.RecipeMetadataRepository
 	PreparationRepository     *pr.PreparationTimeRepository
 
-	// Services
 	CategoryService        *cs.CategoryService
 	CuisineTypeService     *cus.CuisineTypeService
 	DifficultyLevelService *ds.DifficultyLevelService
@@ -81,12 +77,10 @@ var (
 	MetadataService        *ms.MetadataService
 	PreparationTimeService *ps.PreparationTime
 
-	// Recipe access: see ingredient-service's config.go for the same
-	// pattern.
+	// Recipe access: see ingredient-service's config.go for the same pattern.
 	Authorizer *az.Authorizer
 	Projector  *az.Projector
 
-	// Handlers
 	CategoryHandlers        *ch.CategoryHandlers
 	CuisineTypeHandlers     *cuh.CuisineTypeHandlers
 	DifficultyLevelHandlers *dh.DifficultyLevelHandlers
@@ -128,9 +122,8 @@ func init() {
 		Logger.Panicf("error initialising oauth: %v", err)
 	}
 
-	// RabbitMQClient.Connection is used by Projector's consumer (started
-	// in MetadataService.go) - no synchronous call to any other service
-	// happens during startup (KIT-79).
+	// RabbitMQClient.Connection is used by Projector's consumer (started in
+	// MetadataService.go); no synchronous call to another service happens here.
 	RabbitMQClient, err = rmq.NewRabbitMQConnection(
 		Configuration.RabbitMQ.Username,
 		Configuration.RabbitMQ.Password,
@@ -138,7 +131,6 @@ func init() {
 		Logger,
 	)
 
-	// Init repositories
 	CategoryRepository = cr.NewCategoryRepository(DatabaseClient)
 	CuisineTypeRepository = cur.NewCuisineTypeRepository(DatabaseClient)
 	DifficultyLevelRepository = dr.NewDifficultyLevelRepository(DatabaseClient)
@@ -147,7 +139,6 @@ func init() {
 	MetadataRepository = mr.NewRecipeMetadataRepository(DatabaseClient)
 	PreparationRepository = pr.NewPreparationTimeRepository(DatabaseClient)
 
-	// Init services
 	CategoryService = cs.NewCategoryService(CategoryRepository)
 	CuisineTypeService = cus.NewCuisineTypeService(CuisineTypeRepository)
 	DifficultyLevelService = ds.NewDifficultyLevelService(DifficultyLevelRepository)
@@ -161,7 +152,6 @@ func init() {
 	fallbackClient := hc.NewInternalHTTPClient(5*time.Second, Logger, nil, nil)
 	Authorizer.SetMissFallback(az.NewRecipeServiceFallback(fallbackClient, Configuration.RecipeServiceInternal.BaseURL, Projector))
 
-	// Init handlers
 	CategoryHandlers = ch.NewCategoryHandlers(CategoryService, Logger)
 	CuisineTypeHandlers = cuh.NewCuisineTypeHandlers(CuisineTypeService, Logger)
 	DifficultyLevelHandlers = dh.NewDifficultyLevelHandlers(DifficultyLevelService, Logger)

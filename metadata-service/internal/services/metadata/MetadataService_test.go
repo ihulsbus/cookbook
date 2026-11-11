@@ -78,8 +78,6 @@ func (*RecipeMetadataRepositoryMock) Delete(meta *m.RecipeMetadata) error {
 	}
 }
 
-// ======================================================================
-
 func TestRecipeMetadataFindAll_OK(t *testing.T) {
 	s := NewMetadataService(&RecipeMetadataRepositoryMock{})
 	recipeMetadata.ServingCount = 1

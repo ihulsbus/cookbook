@@ -44,7 +44,6 @@ type IngredientResult struct {
 	Name string    `json:"name" example:"asparagus"`
 }
 
-// request
 type MetadataSearchRequest struct {
 	RecipeID          *uuid.UUID `json:"recipe_id,omitempty"`
 	CategoryID        *uuid.UUID `json:"category_id,omitempty"`
@@ -77,14 +76,13 @@ func (s MetadataSearchRequestDTO) ConvertFromDTO() MetadataSearchRequest {
 	}
 }
 
-// result
 type MetadataSearchResult struct {
 	RecipeID          uuid.UUID   `json:"recipe_id,omitempty"`
 	CategoryIDs       []uuid.UUID `json:"category_ids,omitempty"`
 	TagIDs            []uuid.UUID `json:"tag_ids,omitempty"`
 	DifficultyLevelID uuid.UUID   `json:"difficulty_level_id,omitempty"`
 	CuisineTypeID     uuid.UUID   `json:"cuisine_type_id,omitempty"`
-	PreparationTimeID uuid.UUID   `json:"preparation_time_id,omitempty"` // in minutes
+	PreparationTimeID uuid.UUID   `json:"preparation_time_id,omitempty"`
 }
 
 type MetadataSearchResultDTO struct {
@@ -92,7 +90,7 @@ type MetadataSearchResultDTO struct {
 	CategoryIDs       []uuid.UUID `json:"category_ids"`
 	TagIDs            []uuid.UUID `json:"tag_ids"`
 	DifficultyLevelID uuid.UUID   `json:"difficulty_level"`
-	PreparationTimeID uuid.UUID   `json:"preparation_time"` // in minutes
+	PreparationTimeID uuid.UUID   `json:"preparation_time"`
 	CuisineTypeID     uuid.UUID   `json:"cuisine_type"`
 }
 

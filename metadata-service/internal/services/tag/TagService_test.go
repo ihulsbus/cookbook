@@ -71,8 +71,6 @@ func (*TagRepositoryMock) Delete(tag m.Tag) error {
 	}
 }
 
-// ======================================================================
-
 func TestTagFindAll_OK(t *testing.T) {
 	s := NewTagService(&TagRepositoryMock{})
 	findAllTag.Name = "findall"

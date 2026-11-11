@@ -93,8 +93,8 @@ func initDatabase() {
 	); err != nil {
 		Logger.Fatalf("Error while automigrating database: %s", err.Error())
 	}
-	// Outbox table for reliable event publishing (KIT-26): written in the
-	// same transaction as a Recipe change, relayed to RabbitMQ by OutboxRelay.
+	// Outbox table: written in the same transaction as a Recipe change,
+	// relayed to RabbitMQ by OutboxRelay.
 	if err := rmq.AutoMigrateOutbox(DatabaseClient); err != nil {
 		Logger.Fatalf("Error while automigrating outbox table: %s", err.Error())
 	}
@@ -116,9 +116,9 @@ func initCors() {
 func initOauth() (*oidc.Module, error) {
 	module, err := oidc.NewModule(context.Background(), oidc.Config{
 		Issuer: Configuration.Oauth.Issuer,
-		// Accept both the frontend's public client ID (end-user tokens)
-		// and this service's own confidential client ID (tokens from
-		// other services' client-credentials calls via shared/httpclient).
+		// Accepts both the frontend's public client ID (end-user tokens)
+		// and this service's own confidential client ID (service-to-service
+		// tokens via shared/httpclient).
 		Audiences: []string{Configuration.Oauth.Audience, Configuration.Oauth.ClientID},
 	})
 	if err != nil {

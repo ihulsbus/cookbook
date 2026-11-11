@@ -49,8 +49,6 @@ func (*searchRepositoryMock) SearchMetadata(request m.MetadataSearchRequest, req
 	}
 }
 
-// ======================================================================
-
 func TestSearchMetadata_OK(t *testing.T) {
 	s := NewSearchService(&searchRepositoryMock{})
 

@@ -22,11 +22,8 @@ import (
 const (
 	MaxImageSize = 5 << 20 // 5 MB
 
-	// entityTypeRecipe is the only EntityType recipe-access checks apply
-	// to. Other entity types (e.g. "ingredient") are a shared catalog,
-	// not owned by a user, so no recipe-level check is relevant - any
-	// authenticated caller may act on them, consistent with how
-	// ingredient-service's own catalog routes work.
+	// Other entity types (e.g. "ingredient") are a shared catalog with no
+	// owner, so any authenticated caller may act on them.
 	entityTypeRecipe = "recipe"
 )
 
@@ -38,9 +35,7 @@ type imageService interface {
 	Delete(imageDTO m.ImageDataDTO) error
 }
 
-// recipeAuthorizer is the subset of *authz.Authorizer this handler
-// needs, kept as a local interface (like imageService above) so it can
-// be tested without a real DB-backed Authorizer.
+// recipeAuthorizer is a local interface so tests can fake *authz.Authorizer.
 type recipeAuthorizer interface {
 	CanRead(ctx context.Context, principal *oidc.Principal, recipeID uuid.UUID) (bool, error)
 	CanWrite(ctx context.Context, principal *oidc.Principal, recipeID uuid.UUID) (bool, error)
@@ -60,9 +55,7 @@ func NewHttpHandler(service imageService, authorizer recipeAuthorizer, logger m.
 	}
 }
 
-// principal extracts the authenticated caller from the Gin context (set
-// by oidc.Module.RequireAuth, which every route in this service's router
-// already runs).
+// principal extracts the authenticated caller set by oidc.Module.RequireAuth.
 func (h HttpHandler) principal(ctx *gin.Context) (*oidc.Principal, bool) {
 	principal, ok := oidc.PrincipalFromContext(ctx)
 	if !ok {
@@ -72,11 +65,9 @@ func (h HttpHandler) principal(ctx *gin.Context) (*oidc.Principal, bool) {
 	return principal, true
 }
 
-// checkRecipeAccess authorizes principal for perm on recipeID when
-// entityType is "recipe"; any other entity type (e.g. "ingredient") has
-// no recipe-level access model and is allowed through (RequireAuth
-// already ran). On denial it writes the response itself (404, matching
-// recipe-service's "don't reveal existence" behavior) and returns false.
+// checkRecipeAccess authorizes non-"recipe" entity types through unconditionally.
+// On denial it writes a 404 itself, matching recipe-service's behavior of not
+// revealing existence.
 func (h HttpHandler) checkRecipeAccess(ctx *gin.Context, principal *oidc.Principal, entityType string, recipeID uuid.UUID, perm az.Permission) bool {
 	if entityType != entityTypeRecipe {
 		return true
@@ -108,9 +99,8 @@ func (h HttpHandler) checkRecipeAccess(ctx *gin.Context, principal *oidc.Princip
 	return true
 }
 
-// FindAll lists every image regardless of owner - admin-only at the
-// router level (KIT-29), since there's no cheap way to filter this list
-// against the recipe_access projection row by row.
+// FindAll is admin-only (enforced at the router) since there's no cheap way to
+// filter the list against the recipe_access projection row by row.
 func (h HttpHandler) FindAll(ctx *gin.Context) {
 	pagination, err := hh.ParsePagination(ctx)
 	if err != nil {
@@ -154,9 +144,7 @@ func (h HttpHandler) Find(ctx *gin.Context) {
 		}
 	}
 
-	// :id is an IMAGE id, not a recipe id - the image must be resolved
-	// first (above) to learn which recipe it belongs to before it can be
-	// authorized (KIT-29).
+	// :id is an IMAGE id, so it must be resolved first to learn which recipe it belongs to.
 	if !h.checkRecipeAccess(ctx, principal, imageDTO.EntityType, imageDTO.EntityID, az.PermissionRead) {
 		return
 	}
@@ -271,12 +259,10 @@ func (h HttpHandler) Update(ctx *gin.Context) {
 		return
 	}
 
-	// deliberaly set this to ensure the parameter ID is used instead of an accidental id in body
-	// perhaps separate create/update DTO's are needed
+	// Set from the path param, not the body, so a body ID can't override it.
 	imageFileDTO.ID = id
 
-	// :id is an IMAGE id - resolve it first to learn which recipe it
-	// belongs to before authorizing the write (KIT-29).
+	// :id is an IMAGE id, so it must be resolved first to learn which recipe it belongs to.
 	existing, err := h.imageService.Find(m.ImageDataDTO{ID: id})
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "no images found"})
@@ -328,8 +314,7 @@ func (h HttpHandler) Delete(ctx *gin.Context) {
 		return
 	}
 
-	// :id is an IMAGE id - resolve it first to learn which recipe it
-	// belongs to before authorizing the delete (KIT-29).
+	// :id is an IMAGE id, so it must be resolved first to learn which recipe it belongs to.
 	existing, err := h.imageService.Find(imageDTO)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "no images found"})
@@ -351,14 +336,12 @@ func (h HttpHandler) Delete(ctx *gin.Context) {
 func (h HttpHandler) verifyImage(imageFileDTO *m.ImageFileDTO, file io.Reader, header *multipart.FileHeader) error {
 	var err error
 
-	// Check file size
 	imageFileDTO.Size = header.Size
 	if imageFileDTO.Size > MaxImageSize {
 
 		return errors.New("image file is too large")
 	}
 
-	// Decode the image regardless of the format
 	var img image.Image
 	imageFileDTO.Type = header.Header.Get("Content-Type")
 	switch imageFileDTO.Type {
@@ -373,7 +356,6 @@ func (h HttpHandler) verifyImage(imageFileDTO *m.ImageFileDTO, file io.Reader, h
 		return fmt.Errorf("invalid image: %v", err)
 	}
 
-	// Check image dimensions
 	width := img.Bounds().Dx()
 	height := img.Bounds().Dy()
 	if width < 300 || height < 300 {

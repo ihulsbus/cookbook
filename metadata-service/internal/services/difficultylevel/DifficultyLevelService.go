@@ -18,7 +18,6 @@ type DifficultyLevelService struct {
 	repo DifficultyLevelRepository
 }
 
-// NewDifficultyLevelService creates a new DifficultyLevelService instance
 func NewDifficultyLevelService(difficultyLevelRepo DifficultyLevelRepository) *DifficultyLevelService {
 	return &DifficultyLevelService{
 		repo: difficultyLevelRepo,

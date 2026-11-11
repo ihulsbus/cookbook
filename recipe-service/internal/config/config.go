@@ -32,13 +32,10 @@ var (
 	RabbitMQPublisher *rmq.Publisher
 	OutboxRelay       *rmq.Relay
 
-	// Repositories
 	DatabaseRepository *dr.DatabaseRepository
 
-	// Services
 	RecipeService *s.RecipeService
 
-	// Handlers
 	HttpHandler     *hh.HttpHandlers
 	InternalHandler *hh.InternalHandlers
 	RabbitMQHandler *rh.RabbitMQHandler
@@ -81,14 +78,11 @@ func init() {
 		Logger,
 	)
 
-	// Init repositories
 	DatabaseRepository = dr.NewDatabaseRepository(DatabaseClient)
 
-	// Recipe events are written to the outbox table in the same DB
-	// transaction as the change (DatabaseRepository.Create/Update/Delete)
-	// and relayed to RabbitMQ in the background - see OutboxRelay below.
-	// RabbitMQPublisher is the Relay's only use of the connection; it is
-	// not called directly by the service layer.
+	// RabbitMQPublisher is only used by OutboxRelay, which relays events
+	// written to the outbox table in the same DB transaction as the
+	// change; the service layer never publishes directly.
 	RabbitMQPublisher, err = rmq.NewPublisher(RabbitMQClient.Connection, "cookbook")
 	if err != nil {
 		Logger.Errorf("Error setting up RabbitMQ publisher: %v", err)
@@ -96,10 +90,8 @@ func init() {
 	}
 	OutboxRelay = rmq.NewRelay(DatabaseClient, RabbitMQPublisher, Logger, 2*time.Second, 50)
 
-	// Init services
 	RecipeService = s.NewRecipeService(DatabaseRepository, Logger)
 
-	// Init handlers
 	HttpHandler = hh.NewHttpHandlers(RecipeService, Logger)
 	InternalHandler = hh.NewInternalHandlers(RecipeService, Logger)
 	RabbitMQHandler, err = rh.NewRabbitMQHandler(RecipeService, Logger)

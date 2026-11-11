@@ -4,7 +4,7 @@ This docker-compose configuration provides all the infrastructure dependencies n
 
 ## Services Included
 
-### Database (PostgreSQL 15)
+### Database (PostgreSQL 18)
 - **Single PostgreSQL instance** on Port 5432
 - **6 separate databases** (one per microservice):
   - `recipes` (user: recipe)

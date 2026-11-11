@@ -4,12 +4,9 @@ metadata:
   labels:
     blueprints.goauthentik.io/instantiate: "true"
 
-# KIT-20: cookbook-web application + OIDC provider, a `cookbook-user`/
-# `cookbook-admin` group pair matching the roles shared/oidc.RequireRole()
-# checks after KIT-21/KIT-22 (see cookbook/TODO.md for the "administrator
-# only" gap this replaces), and a custom scope mapping so access tokens
-# carry a standard OIDC `groups` claim instead of Keycloak's
-# `resource_access` shape.
+# cookbook-web application + OIDC provider, a cookbook-user/cookbook-admin
+# group pair matching shared/oidc.RequireRole(), and a scope mapping that
+# carries a standard OIDC `groups` claim.
 
 entries:
   - model: authentik_core.group
@@ -36,23 +33,10 @@ entries:
       name: "Cookbook: groups scope mapping"
       scope_name: groups
       description: "Adds the user's Authentik group identifiers to the access/ID token as a `groups` claim - names for ordinary groups, UUIDs for households."
-      # Two different consumers read this same claim and want two
-      # different identifier shapes:
-      #   - shared/oidc.RequireRole("cookbook-admin") and the frontend's
-      #     hasGroup() check fixed, human-chosen role group names
-      #     (KIT-20/21/22) - switching those to UUIDs would silently
-      #     lock every admin-only endpoint, so ordinary groups keep
-      #     emitting group.name, unchanged.
-      #   - recipe-service's recipe_shares target_id for
-      #     target_type=group (KIT-32/35), when the target is a
-      #     self-service household (KIT-34 "decided": the household's
-      #     Authentik group UUID is its target_id, consistent with the
-      #     UUID that identity everywhere else - user-service's own
-      #     household id, owner_id, sub).
-      # Households are the only groups with a cookbook_household
-      # attribute (set by user-service, see
-      # cookbook/user-service/internal/services/UserService.go), so
-      # that attribute is what picks the identifier shape per group.
+      # Role checks (RequireRole, frontend hasGroup()) need the fixed
+      # group names; household-targeted recipe shares need the group's
+      # UUID. The cookbook_household attribute picks which shape a given
+      # group emits.
       expression: |
         return {
             "groups": [
@@ -69,14 +53,9 @@ entries:
       name: cookbook-web
       client_type: public
       client_id: cookbook-web
-      # KIT-33 "decided": sub must be the Authentik user's own UUID, so
-      # it maps 1:1 to the core API's /api/v3/core/users/?uuid= filter -
-      # user-service's only way to resolve a token's sub back to a
-      # user. hashed_user_id (the old value) produces a UUID-shaped but
-      # unrelated hash, which user-service could never resolve. Every
-      # owner_id/target_id column in this codebase is already typed as
-      # uuid on that assumption. NEVER change this again once real data
-      # exists, or every existing owner_id/target_id is orphaned.
+      # sub must be the Authentik user's own UUID - user-service resolves
+      # it via /api/v3/core/users/?uuid=. NEVER change once real data
+      # exists, or every owner_id/target_id is orphaned.
       sub_mode: user_uuid
       include_claims_in_id_token: true
       signing_key: !Find [authentik_crypto.certificatekeypair, [name, "authentik Self-signed Certificate"]]

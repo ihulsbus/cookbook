@@ -20,11 +20,9 @@ func NewDatabaseRepository(db *gorm.DB) *DatabaseRepository {
 	}
 }
 
-// GetDisplayName returns the locally cached display name for id, or
-// "user not found" if nothing has been cached for it yet - the service
-// layer then falls back to Authentik (see
-// services.UserService.GetDisplayName) and caches the result via
-// UpsertDisplayName.
+// GetDisplayName returns the cached display name for id, or
+// "user not found" if nothing is cached yet; the service layer falls
+// back to Authentik and re-caches via UpsertDisplayName.
 func (r DatabaseRepository) GetDisplayName(id uuid.UUID) (string, error) {
 	var user um.User
 	if err := r.db.First(&user, "id = ?", id).Error; err != nil {
@@ -37,8 +35,6 @@ func (r DatabaseRepository) GetDisplayName(id uuid.UUID) (string, error) {
 	return user.DisplayName, nil
 }
 
-// UpsertDisplayName inserts id's display name into the cache, or
-// refreshes it if already present.
 func (r DatabaseRepository) UpsertDisplayName(id uuid.UUID, displayName string) error {
 	user := um.User{ID: id, DisplayName: displayName}
 

@@ -1,8 +1,7 @@
 // Package authentik is a minimal client for Authentik's core REST API
-// (api/v3/core), used by user-service to resolve users and manage
-// household groups (KIT-33/KIT-34). user-service is deliberately the
-// only service configured with the service-account token this client
-// sends - see user-service/internal/config/config.go and KIT-74.
+// (api/v3/core), used to resolve users and manage household groups.
+// user-service is deliberately the only service configured with the
+// service-account token this client sends.
 package authentik
 
 import (
@@ -22,19 +21,16 @@ import (
 var ErrNotFound = errors.New("authentik: not found")
 
 // User is the subset of Authentik's core user fields this client needs.
-// UUID is the stable identifier used as the OIDC `sub` claim (KIT-33's
-// "Subject mode: Based on the User's UUID" decision - see
-// authentik/blueprints/cookbook-oidc.yaml). PK is Authentik's own
-// internal integer id, needed only for group membership mutations,
-// since a group's `users` field is a list of PKs, not UUIDs.
+// UUID is the stable identifier used as the OIDC `sub` claim. PK is
+// Authentik's internal integer id, needed because a group's `users`
+// field is a list of PKs, not UUIDs.
 type User struct {
 	PK       int    `json:"pk"`
 	UUID     string `json:"uuid"`
 	Username string `json:"username"`
 	Name     string `json:"name"`
 	Email    string `json:"email"`
-	// Groups is the list of group PKs (UUIDs) this user belongs to, as
-	// returned alongside the user by Authentik's core user endpoints.
+	// Groups holds the group PKs (UUIDs) this user belongs to.
 	Groups []string `json:"groups,omitempty"`
 }
 
@@ -65,9 +61,8 @@ type Client struct {
 }
 
 // NewClient builds a Client against the Authentik instance that issued
-// oidcIssuer - its REST API always lives at the same host, under
-// /api/v3/ (see cookbook/authentik/blueprints) - authenticating every
-// request with token.
+// oidcIssuer - its REST API always lives at the same host - authenticating
+// every request with token.
 func NewClient(oidcIssuer, token string) (*Client, error) {
 	u, err := url.Parse(oidcIssuer)
 	if err != nil {
@@ -85,9 +80,8 @@ func NewClient(oidcIssuer, token string) (*Client, error) {
 }
 
 // do sends one API request and decodes a JSON response into out (when
-// non-nil). A 404 response is reported as ErrNotFound so callers can
-// branch on it with errors.Is, same as gorm.ErrRecordNotFound elsewhere
-// in this codebase.
+// non-nil). A 404 is reported as ErrNotFound so callers can branch on
+// it with errors.Is.
 func (c *Client) do(ctx context.Context, method, path string, query url.Values, body, out any) error {
 	var reqBody io.Reader
 	if body != nil {
@@ -148,9 +142,9 @@ func (c *Client) FindUserByUUID(ctx context.Context, userUUID string) (User, err
 	return list.Results[0], nil
 }
 
-// FindUserExact looks up a user by an exact username or email match only
-// (KIT-33) - never a fuzzy/partial match, to avoid user enumeration via
-// a search endpoint. Tries username first, then email.
+// FindUserExact looks up a user by an exact username or email match
+// only - never fuzzy/partial, to avoid user enumeration. Tries
+// username first, then email.
 func (c *Client) FindUserExact(ctx context.Context, query string) (User, error) {
 	var list userList
 	if err := c.do(ctx, http.MethodGet, "/api/v3/core/users/", url.Values{"username": {query}}, nil, &list); err != nil {
@@ -200,7 +194,6 @@ func (c *Client) FindGroupByName(ctx context.Context, name, parentPK string) (Gr
 	return list.Results[0], nil
 }
 
-// GetGroup fetches one group by PK.
 func (c *Client) GetGroup(ctx context.Context, pk string) (Group, error) {
 	var g Group
 	if err := c.do(ctx, http.MethodGet, "/api/v3/core/groups/"+pk+"/", nil, nil, &g); err != nil {
@@ -209,8 +202,6 @@ func (c *Client) GetGroup(ctx context.Context, pk string) (Group, error) {
 	return g, nil
 }
 
-// CreateGroup creates a group (POST /api/v3/core/groups/) and returns it
-// with its server-assigned PK.
 func (c *Client) CreateGroup(ctx context.Context, g Group) (Group, error) {
 	var created Group
 	if err := c.do(ctx, http.MethodPost, "/api/v3/core/groups/", nil, g, &created); err != nil {
@@ -219,14 +210,12 @@ func (c *Client) CreateGroup(ctx context.Context, g Group) (Group, error) {
 	return created, nil
 }
 
-// UpdateGroupUsers replaces a group's member list (KIT-34's
-// AddMember/RemoveMember/LeaveHousehold - each reads the group's current
-// Users, adjusts it, and writes the whole list back).
+// UpdateGroupUsers replaces a group's whole member list; callers must
+// read the current Users, adjust it, and write the full list back.
 func (c *Client) UpdateGroupUsers(ctx context.Context, pk string, userPKs []int) error {
 	return c.do(ctx, http.MethodPatch, "/api/v3/core/groups/"+pk+"/", nil, map[string]any{"users": userPKs}, nil)
 }
 
-// DeleteGroup deletes a group outright (KIT-34's DELETE /households/:id).
 func (c *Client) DeleteGroup(ctx context.Context, pk string) error {
 	return c.do(ctx, http.MethodDelete, "/api/v3/core/groups/"+pk+"/", nil, nil, nil)
 }

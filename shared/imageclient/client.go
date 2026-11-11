@@ -16,7 +16,6 @@ type HttpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// NewImageAPIClient initializes and returns a ImageAPIClient instance.
 func NewImageAPIClient(baseURL string, httpClient HttpClient) *ImageAPIClient {
 	return &ImageAPIClient{
 		BaseURL:    baseURL,
@@ -24,7 +23,6 @@ func NewImageAPIClient(baseURL string, httpClient HttpClient) *ImageAPIClient {
 	}
 }
 
-// ImageExists checks if a image exists by its ID.
 func (c *ImageAPIClient) ImageExists(imageID string) (bool, error) {
 	url := fmt.Sprintf("%s/images/%s", c.BaseURL, imageID)
 	req, err := http.NewRequest("GET", url, nil)

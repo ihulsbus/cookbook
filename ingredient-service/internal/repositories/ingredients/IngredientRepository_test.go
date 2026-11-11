@@ -19,8 +19,9 @@ import (
 
 var (
 	ingredient m.Ingredient = m.Ingredient{
-		ID:   uuid.New(),
-		Name: "ingredient",
+		ID:        uuid.New(),
+		Name:      "ingredient",
+		CreatedBy: uuid.New(),
 	}
 )
 
@@ -29,12 +30,12 @@ func newMockDatabase(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	var mockDB *gorm.DB
 
 	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
-			SlowThreshold:             time.Second, // Slow SQL threshold
-			LogLevel:                  logger.Info, // Log level
-			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-			Colorful:                  false,       // Disable color
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  false,
 		},
 	)
 
@@ -169,11 +170,12 @@ func TestIngredientCreate_OK(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","density_g_per_ml","grams_per_piece","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","density_g_per_ml","grams_per_piece","created_by","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id"`)).
 		WithArgs(
 			ingredient.Name,
 			nil,
 			nil,
+			ingredient.CreatedBy,
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			nil,
@@ -193,11 +195,12 @@ func TestIngredientCreate_Err(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","density_g_per_ml","grams_per_piece","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "id"`)).
+	mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "ingredients" ("name","density_g_per_ml","grams_per_piece","created_by","created_at","updated_at","deleted_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "id"`)).
 		WithArgs(
 			ingredient.Name,
 			nil,
 			nil,
+			ingredient.CreatedBy,
 			sqlmock.AnyArg(),
 			sqlmock.AnyArg(),
 			nil,
@@ -216,9 +219,10 @@ func TestIngredientUpdate_OK(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "name"=$1,"updated_at"=$2 WHERE "ingredients"."deleted_at" IS NULL AND "id" = $3`)).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "name"=$1,"created_by"=$2,"updated_at"=$3 WHERE "ingredients"."deleted_at" IS NULL AND "id" = $4`)).
 		WithArgs(
 			ingredient.Name,
+			ingredient.CreatedBy,
 			sqlmock.AnyArg(),
 			ingredient.ID,
 		).
@@ -235,9 +239,10 @@ func TestIngredientUpdate_Err(t *testing.T) {
 	r := NewIngredientRepository(db)
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "name"=$1,"updated_at"=$2 WHERE "ingredients"."deleted_at" IS NULL AND "id" = $3`)).
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "ingredients" SET "name"=$1,"created_by"=$2,"updated_at"=$3 WHERE "ingredients"."deleted_at" IS NULL AND "id" = $4`)).
 		WithArgs(
 			ingredient.Name,
+			ingredient.CreatedBy,
 			sqlmock.AnyArg(),
 			ingredient.ID,
 		).

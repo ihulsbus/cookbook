@@ -85,7 +85,6 @@ func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 
-// ==================================================================================================
 func TestUnitGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	units = nil

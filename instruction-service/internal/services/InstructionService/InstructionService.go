@@ -18,10 +18,9 @@ type InstructionService struct {
 	repo InstructionRepository
 }
 
-// NewInstructionService creates a new RecipeService instance. Recipe
-// existence/access is no longer checked here (KIT-79) - the router's
-// authz.RequireRecipeAccess("id", authz.PermissionWrite) middleware
-// already confirmed both before this is ever called.
+// Recipe existence/access is not checked here - the router's
+// authz.RequireRecipeAccess middleware already confirmed both
+// before this is ever called.
 func NewInstructionService(instructionRepo InstructionRepository) *InstructionService {
 	return &InstructionService{
 		repo: instructionRepo,
@@ -29,7 +28,6 @@ func NewInstructionService(instructionRepo InstructionRepository) *InstructionSe
 }
 
 func (s InstructionService) Find(recipeID uuid.UUID) (*[]m.InstructionDTO, error) {
-	// TODO create logic
 	instruction, err := s.repo.Find(recipeID)
 	if err != nil {
 		switch err.Error() {
@@ -52,7 +50,7 @@ func (s InstructionService) Create(entityID uuid.UUID, instructionDTO *[]m.Instr
 
 	instructions := m.InstructionDTO{}.ConvertAllFromDTO(*instructionDTO)
 
-	// force set all ingredient entityID fields to the provided entityID/type
+	// override any client-supplied entityID/type with the provided values
 	for i := range instructions {
 		instructions[i].EntityID = entityID
 		instructions[i].EntityType = "recipe"
@@ -85,7 +83,7 @@ func (s InstructionService) Update(entityID uuid.UUID, instructionDTO *[]m.Instr
 
 	instructions := m.InstructionDTO{}.ConvertAllFromDTO(*instructionDTO)
 
-	// force set all ingredient entityID fields to the provided entityID/type
+	// override any client-supplied entityID/type with the provided values
 	for i := range instructions {
 		instructions[i].EntityID = entityID
 		instructions[i].EntityType = "recipe"

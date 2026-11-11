@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	az "github.com/ihulsbus/cookbook/shared/authz"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	az "github.com/ihulsbus/cookbook/shared/authz"
 )
 
 var (
@@ -20,7 +20,7 @@ var (
 
 func MetadataService(ctx context.Context) {
 	// Keeps the recipe_access projection current; no synchronous call to
-	// recipe-service happens at startup (KIT-79).
+	// recipe-service happens at startup.
 	consumer, err := c.Projector.StartConsumer(c.RabbitMQClient.Connection, "metadata-service-recipe-access", "cookbook")
 	if err != nil {
 		c.Logger.Fatalf("Startup of RabbitMQ Consumer encountered fatal error: %v", err.Error())
@@ -35,13 +35,8 @@ func httpServer(ctx context.Context) {
 	router := gin.New()
 	gin.SetMode(gin.ReleaseMode)
 
-	// Logging
 	router.Use(m.Logger(log))
-
-	// Panic recovery
 	router.Use(gin.Recovery())
-
-	// Cors handler
 	router.Use(cors.New(c.Cors))
 
 	// Health check endpoints (no auth required)
@@ -52,16 +47,14 @@ func httpServer(ctx context.Context) {
 		health.GET("/startup", c.HealthHandler.Startup)
 	}
 
-	// API versioning setup
 	v2 := router.Group("/api/v2")
 	metadata := v2.Group("/metadata")
 	{
 
-		// Recipe metadata is the per-recipe assignment of tags/category/
-		// etc, not a catalog lookup table itself. :id is the RECIPE id,
-		// so RequireRecipeAccess checks it directly (KIT-29). GetAll
-		// (list across every recipe) has no per-row filter to apply
-		// cheaply against the projection, so it's admin-only instead.
+		// Recipe metadata is per-recipe (not a catalog lookup table), so
+		// :id is the RECIPE id and RequireRecipeAccess checks it directly.
+		// GetAll has no per-row filter to apply against the projection, so
+		// it's admin-only instead.
 		recipe := metadata.Group("/recipe")
 		{
 			readAllMetadata := recipe.Group("")
@@ -94,8 +87,6 @@ func httpServer(ctx context.Context) {
 			}
 		}
 
-		// Tag routes - metadata lookup table: any user reads, only
-		// cookbook-admin writes.
 		tag := metadata.Group("/tag")
 		{
 			readTag := tag.Group("")
@@ -124,8 +115,6 @@ func httpServer(ctx context.Context) {
 			}
 		}
 
-		// Category routes - metadata lookup table: any user reads, only
-		// cookbook-admin writes.
 		category := metadata.Group("/category")
 		{
 			readCategory := category.Group("")
@@ -154,8 +143,6 @@ func httpServer(ctx context.Context) {
 			}
 		}
 
-		// CuisineType routes - metadata lookup table: any user reads,
-		// only cookbook-admin writes.
 		cuisineType := metadata.Group("/cuisinetype")
 		{
 			readCuisineType := cuisineType.Group("")
@@ -184,8 +171,6 @@ func httpServer(ctx context.Context) {
 			}
 		}
 
-		// DifficultyLevel routes - metadata lookup table: any user reads,
-		// only cookbook-admin writes.
 		DifficultyLevel := metadata.Group("/difficultylevel")
 		{
 			readDifficultyLevel := DifficultyLevel.Group("")
@@ -214,8 +199,6 @@ func httpServer(ctx context.Context) {
 			}
 		}
 
-		// PreparationTime routes - metadata lookup table: any user
-		// reads, only cookbook-admin writes.
 		PreparationTime := metadata.Group("/preparationtime")
 		{
 			readPreparationTime := PreparationTime.Group("")
@@ -244,8 +227,6 @@ func httpServer(ctx context.Context) {
 			}
 		}
 
-		// Search is a read operation (filters/looks up metadata) - any
-		// authenticated user.
 		search := metadata.Group("/search")
 		{
 			all := search.Group("/all")
@@ -262,7 +243,6 @@ func httpServer(ctx context.Context) {
 		}
 	}
 
-	// Server startup
 	srv := &http.Server{
 		Handler:      router,
 		Addr:         ":" + strconv.Itoa(c.Configuration.Global.ListenPort),

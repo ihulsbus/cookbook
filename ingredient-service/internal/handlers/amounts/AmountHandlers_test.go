@@ -78,15 +78,8 @@ func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 
-// ==================================================================================================
-// Note: Tests below are placeholders and need to be properly implemented for AmountHandlers
-// They currently have incorrect method calls and test structure
-//
-// TODO: Implement proper tests for:
-// - Find (uses recipe ID)
-// - Create (uses recipe ID and amounts array)
-// - Update (uses recipe ID and amounts array)
-// - Delete (uses recipe ID)
+// TODO: tests below are disabled placeholders with incorrect method calls;
+// rewrite for Find/Create/Update/Delete using recipe ID (plus amounts array for Create/Update).
 
 /* DISABLED - These tests are incorrect for AmountHandlers
 func TestIngredientCreate_OK(t *testing.T) {

@@ -12,8 +12,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/ihulsbus/cookbook/shared/models"
+	"github.com/ihulsbus/cookbook/shared/oidc"
 	"github.com/stretchr/testify/assert"
 )
+
+var testCreatedBy = uuid.New()
+
+// authedContext builds a gin test context with testCreatedBy set as the
+// authenticated principal, as oidc.Module.RequireAuth would before this runs.
+func authedContext(w *httptest.ResponseRecorder, req *http.Request) *gin.Context {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+	oidc.SetPrincipal(c, &oidc.Principal{UserID: testCreatedBy.String()})
+	return c
+}
 
 type IngredientServiceMock struct {
 }
@@ -57,12 +69,32 @@ func (s *IngredientServiceMock) FindSingle(ingredientDTO models.IngredientDTO) (
 	}
 }
 
-func (s *IngredientServiceMock) Create(ingredientDTO models.IngredientDTO) (models.IngredientDTO, error) {
+func (s *IngredientServiceMock) Create(ingredientDTO models.IngredientDTO, createdBy uuid.UUID, force bool) (models.IngredientDTO, []models.IngredientDTO, error) {
 	switch ingredientDTO.Name {
 	case "create":
-		return ingredient, nil
+		return ingredient, nil, nil
+	case "duplicate":
+		return models.IngredientDTO{}, []models.IngredientDTO{ingredient}, errors.New("duplicate")
+	case "similar":
+		if force {
+			return ingredient, nil, nil
+		}
+		return models.IngredientDTO{}, []models.IngredientDTO{ingredient}, errors.New("similar ingredients exist")
+	case "":
+		return models.IngredientDTO{}, nil, errors.New("name is empty")
 	default:
-		return ingredient, errors.New("error")
+		return ingredient, nil, errors.New("error")
+	}
+}
+
+func (s *IngredientServiceMock) Suggest(q string) ([]models.IngredientDTO, error) {
+	switch q {
+	case "":
+		return nil, errors.New("query is required")
+	case "error":
+		return nil, errors.New("error")
+	default:
+		return []models.IngredientDTO{ingredient}, nil
 	}
 }
 
@@ -91,7 +123,6 @@ func (l *LoggerInterfaceMock) Warnf(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Infof(format string, args ...interface{})  {}
 func (l *LoggerInterfaceMock) Errorf(format string, args ...interface{}) {}
 
-// ==================================================================================================
 func TestIngredientGetAll_OK(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	ingredients = nil
@@ -239,8 +270,7 @@ func TestIngredientCreate_OK(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Create(c)
 
@@ -252,7 +282,7 @@ func TestIngredientCreate_OK(t *testing.T) {
 	assert.Equal(t, assertBody, body)
 }
 
-func TestIngredientCreate_UnmarshallErr(t *testing.T) {
+func TestIngredientCreate_NoPrincipal(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
 
@@ -260,6 +290,19 @@ func TestIngredientCreate_UnmarshallErr(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+
+	h.Create(c)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestIngredientCreate_UnmarshallErr(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader([]byte{}))
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
 
 	h.Create(c)
 
@@ -281,8 +324,7 @@ func TestIngredientCreate_CreateErr(t *testing.T) {
 
 	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader(reqBody))
 	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = req
+	c := authedContext(w, req)
 
 	h.Create(c)
 
@@ -291,6 +333,81 @@ func TestIngredientCreate_CreateErr(t *testing.T) {
 
 	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
 	assert.Equal(t, `{"error":"error"}`, string(body))
+}
+
+// An exact normalized-name match: 409, with the existing ingredient as a candidate.
+func TestIngredientCreate_Duplicate(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	reqBody, _ := json.Marshal(models.IngredientDTO{Name: "duplicate"})
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+
+	h.Create(c)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Contains(t, w.Body.String(), `"error":"ingredient already exists"`)
+}
+
+// A near-duplicate without force=true: 409, with candidates to pick from.
+func TestIngredientCreate_Similar(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	reqBody, _ := json.Marshal(models.IngredientDTO{Name: "similar"})
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient?force=false", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+
+	h.Create(c)
+
+	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Contains(t, w.Body.String(), "did you mean")
+}
+
+// The same near-duplicate, but force=true bypasses the block.
+func TestIngredientCreate_SimilarForced(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	reqBody, _ := json.Marshal(models.IngredientDTO{Name: "similar"})
+	req := httptest.NewRequest("POST", "http://example.com/api/v2/ingredient?force=true", bytes.NewReader(reqBody))
+	w := httptest.NewRecorder()
+	c := authedContext(w, req)
+
+	h.Create(c)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+}
+
+func TestIngredientSuggest_OK(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/suggest?q=tomat", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Suggest(c)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestIngredientSuggest_EmptyQuery(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := NewIngredientHandlers(&IngredientServiceMock{}, &LoggerInterfaceMock{})
+
+	req := httptest.NewRequest("GET", "http://example.com/api/v2/ingredient/suggest", nil)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = req
+
+	h.Suggest(c)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 func TestIngredientUpdate_OK(t *testing.T) {

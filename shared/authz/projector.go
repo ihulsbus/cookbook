@@ -21,11 +21,9 @@ func NewProjector(db *gorm.DB) *Projector {
 	return &Projector{db: db}
 }
 
-// Handle upserts the projection for event.RecipeID, applying it only when
-// event.Version is strictly greater than what's stored (or nothing is
-// stored yet) - the idempotent, out-of-order-safe rule the ECST events
-// are designed for: every recipe.created/updated/deleted/access.changed
-// event carries the FULL access state, not a delta, so applying the
+// Handle upserts the projection for event.RecipeID, applying it only if
+// event.Version is strictly greater than what's stored. Each ECST event
+// carries the full access state (not a delta), so applying the
 // highest-Version one seen is always correct regardless of delivery order
 // or duplicate redelivery.
 func (p *Projector) Handle(event rmq.RecipeAccessState) error {
@@ -55,8 +53,7 @@ func (p *Projector) Handle(event rmq.RecipeAccessState) error {
 		}
 
 		if event.Version <= existing.Version {
-			// Stale or duplicate delivery - already applied a
-			// newer-or-equal state, nothing to do.
+			// Stale or duplicate delivery; already applied.
 			return nil
 		}
 
@@ -67,8 +64,7 @@ func (p *Projector) Handle(event rmq.RecipeAccessState) error {
 }
 
 // StartConsumer subscribes to recipe-service's lifecycle events and feeds
-// each one to Handle, so an embedding service only has to call this once
-// at startup to keep its projection current.
+// each one to Handle.
 func (p *Projector) StartConsumer(connection *rabbitmqlib.Conn, queueName, exchangeName string) (*rmq.Consumer, error) {
 	routingKeys := []string{
 		rmq.RecipeCreatedRoutingKey,

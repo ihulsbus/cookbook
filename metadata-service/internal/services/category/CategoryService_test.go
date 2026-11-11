@@ -73,8 +73,6 @@ func (*CategoryRepositoryMock) Delete(category m.Category) error {
 	}
 }
 
-// ======================================================================
-
 func TestCategoryFindAll_OK(t *testing.T) {
 	s := NewCategoryService(&CategoryRepositoryMock{})
 	findAllCategory.Name = "findall"
