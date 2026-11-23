@@ -28,7 +28,7 @@ require (
 )
 
 require (
-	github.com/MicahParks/jwkset v0.11.4 // indirect
+	github.com/MicahParks/jwkset v0.12.0 // indirect
 	github.com/MicahParks/keyfunc/v3 v3.9.1 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
 	github.com/bytedance/sonic v1.15.5 // indirect
